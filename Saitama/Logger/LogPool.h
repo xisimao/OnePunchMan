@@ -1,0 +1,230 @@
+﻿#pragma once
+#include <sstream>
+#include <set>
+#include <string>
+
+#include "FileConfig.h"
+#include "Logger.h"
+#include "ConsoleLogger.h"
+#include "FileLogger.h"
+
+namespace Saitama
+{
+	//#define Stack(level,...) LogPool::Socket(level ,"[",__FILE__,":" __LINE__," ", __FUNCTION__,"]",##__VA_ARGS__);
+	
+	// 日志池 
+	class LogPool
+	{
+	public:
+
+		/**
+		* @brief: 析构函数
+		*/
+		~LogPool();
+
+		/**
+		* @brief: 调试日志
+		* @param: t 日志的内容
+		* @param: ...u 日志的内容
+		*/
+		template<typename T, typename ...U>
+		static void Debug(T t, U ...u)
+		{
+			Debug(LogEvent::None, t, u...);
+		}
+
+		/**
+		* @brief: 调试日志
+		* @param: logEvent 日志事件
+		* @param: t 日志的内容
+		* @param: ...u 日志的内容
+		*/
+		template<typename T, typename ...U>
+		static void Debug(LogEvent logEvent, T t, U ...u)
+		{
+			_instance.Log(NULL, LogLevel::Debug, logEvent, t, u...);
+		}
+
+		/**
+		* @brief: 消息日志
+		* @param: t 日志的内容
+		* @param: ...u 日志的内容
+		*/
+		template<typename T, typename ...U>
+		static void Information(T t, U ...u)
+		{
+			Information(LogEvent::None, t, u...);
+		}
+
+		/**
+		* @brief: 消息日志
+		* @param: logEvent 日志事件
+		* @param: t 日志的内容
+		* @param: ...u 日志的内容
+		*/
+		template<typename T, typename ...U>
+		static void Information(LogEvent logEvent, T t, U ...u)
+		{
+			_instance.Log(NULL, LogLevel::Information, logEvent, t, u...);
+		}
+
+		/**
+		* @brief: 警告日志
+		* @param: t 日志的内容
+		* @param: ...u 日志的内容
+		*/
+		template<typename T, typename ...U>
+		static void Warning(T t, U ...u)
+		{
+			Warning(LogEvent::None, t, u...);
+		}
+
+		/**
+		* @brief: 警告日志
+		* @param: logEvent 日志事件
+		* @param: t 日志的内容
+		* @param: ...u 日志的内容
+		*/
+		template<typename T, typename ...U>
+		static void Warning(LogEvent logEvent, T t, U ...u)
+		{
+			_instance.Log(NULL, LogLevel::Warning, logEvent, t, u...);
+		}
+
+		/**
+		* @brief: 错误日志
+		* @param: t 日志的内容
+		* @param: ...u 日志的内容
+		*/
+		template<typename T, typename ...U>
+		static void Error(T t, U ...u)
+		{
+			Error(LogEvent::None, t, u...);
+		}
+
+		/**
+		* @brief: 错误日志
+		* @param: logEvent 日志事件
+		* @param: t 日志的内容
+		* @param: ...u 日志的内容
+		*/
+		template<typename T, typename ...U>
+		static void Error(LogEvent logEvent, T t, U ...u)
+		{
+			_instance.Log(NULL, LogLevel::Error, logEvent, t, u...);
+		}
+
+		/**
+		* @brief: 自定义日志
+		* @param: logLevel 日志的级别
+		* @param: logEvent 日志事件
+		* @param: t 日志的内容
+		* @param: ...u 日志的内容
+		*/
+		template<typename T, typename ...U>
+		static void Target(Logger* logger,LogLevel logLevel, LogEvent logEvent, T t, U ...u)
+		{
+			_instance.Log(logger, logLevel, logEvent, t, u...);
+		}
+
+	private:
+
+		/**
+		* @brief: 构造函数
+		*/
+		LogPool();
+
+		/**
+		* @brief: 从配置文件读取日志类型
+		* @param: config 配置文件
+		* @param: key 日志级别对应的配置项key
+		* @return: 如果读取成功返回类型，否则返回None
+		*/
+		static LogType ReadType(const FileConfig& config, const std::string& key);
+
+		/**
+		* @brief: 从配置文件读取日志名
+		* @param: config 配置文件
+		* @param: key 日志级别对应的配置项key
+		* @return: 如果读取成功返回名称否则返回空字符串
+		*/
+		static std::string ReadName(const FileConfig& config, const std::string& key);
+
+		/**
+		* @brief: 从配置文件读取日志级别
+		* @param: config 配置文件
+		* @param: key 日志级别对应的配置项key
+		* @return: 如果读取成功返回级别，否则返回None
+		*/
+		static LogLevel ReadLevel(const FileConfig& config, const std::string& key);
+
+		/**
+		* @brief: 添加日志写入器
+		* @param: logger 日志写入器
+		*/
+		static void AddLogger(Logger* logger);
+
+		/**
+		* @brief: 移除日志写入器
+		* @param: logger 日志写入器
+		*/
+		static void RemoveLogger(Logger* logger);
+
+		/**
+		* @brief: 写日志
+		* @param: level 日志级别
+		* @param: t  日志的内容
+		* @param: ...u 日志的内容
+		*/
+		template<typename T, typename ...U>
+		void Log(Logger* logger,LogLevel logLevel, LogEvent logEvent, T t, U ...u)
+		{
+			std::stringstream ss;
+			ss << "[" << DateTime::Now().ToString() << "]";
+			ss << "[" << (int)logLevel << "]";
+			ss << "[" << (int)logEvent << "] ";
+			ContentFormat(&ss, t, u...);
+			if (logger == NULL)
+			{
+				std::lock_guard<std::mutex> lck(_mutex);
+				for (std::set<Logger*>::iterator it = _loggers.begin(); it != _loggers.end(); ++it)
+				{
+					(*it)->Log(logLevel, ss.str());
+				}
+			}
+			else
+			{
+				logger->Log(logLevel, ss.str());
+			}
+		}
+
+		/**
+		* @brief: 日志内容格式
+		* @param: t日志内容
+		* @param: ...u 日志内容
+		*/
+		template<typename T, typename ...U>
+		void ContentFormat(std::stringstream* ss, T t, U ...u)
+		{
+			(*ss) << t << " ";
+			ContentFormat(ss, u...);
+		}
+
+		/**
+		* @brief: 日志内容格式
+		* @param: t日志内容
+		*/
+		template<typename T>
+		void ContentFormat(std::stringstream* ss, T t)
+		{
+			(*ss) << t << std::endl;
+		}
+
+		// 单例引用
+		static LogPool _instance;
+		//写日志同步锁
+		std::mutex _mutex;
+		//日志集合
+		std::set<Logger*> _loggers;
+	};
+}

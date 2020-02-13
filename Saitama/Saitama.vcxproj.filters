@@ -1,0 +1,79 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Core">
+      <UniqueIdentifier>{f73050c6-b926-4b18-8949-bcf166b2c97f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Logger">
+      <UniqueIdentifier>{c5828014-1def-4259-8663-0d238db78a1e}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Saitama.cpp" />
+    <ClCompile Include="Core\Text.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\FileConfig.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\DateTime.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Path.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Logger\ConsoleLogger.cpp">
+      <Filter>Logger</Filter>
+    </ClCompile>
+    <ClCompile Include="Logger\FileLogger.cpp">
+      <Filter>Logger</Filter>
+    </ClCompile>
+    <ClCompile Include="Logger\LogPool.cpp">
+      <Filter>Logger</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\ByteFormatter.cpp" />
+    <ClCompile Include="Core\Security.cpp" />
+    <ClCompile Include="Core\Thread.cpp" />
+    <ClCompile Include="Core\AsyncQueue.cpp" />
+    <ClCompile Include="Core\Command.cpp" />
+    <ClCompile Include="Core\StringFormatter.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Core\Text.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\FileConfig.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\DateTime.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Path.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Logger\ConsoleLogger.h">
+      <Filter>Logger</Filter>
+    </ClInclude>
+    <ClInclude Include="Logger\FileLogger.h">
+      <Filter>Logger</Filter>
+    </ClInclude>
+    <ClInclude Include="Logger\Logger.h">
+      <Filter>Logger</Filter>
+    </ClInclude>
+    <ClInclude Include="Logger\LogPool.h">
+      <Filter>Logger</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\ByteFormatter.h" />
+    <ClInclude Include="Core\JsonFormatter.h" />
+    <ClInclude Include="Core\Security.h" />
+    <ClInclude Include="Core\Thread.h" />
+    <ClInclude Include="Core\AsyncQueue.h" />
+    <ClInclude Include="Core\Command.h" />
+    <ClInclude Include="Core\IObserver.h" />
+    <ClInclude Include="Core\Observable.h" />
+    <ClInclude Include="Core\StringFormatter.h" />
+  </ItemGroup>
+</Project>
