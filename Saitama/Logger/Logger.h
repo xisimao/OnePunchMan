@@ -30,7 +30,18 @@ namespace Saitama
 	enum class LogEvent :int
 	{
 		None=0,
-		Thread=1
+		Thread=1,
+		Mqtt=2
+	};
+
+	//日志项
+	class LogItem
+	{
+	public:
+		std::string Time;
+		std::string Level;
+		std::string Event;
+		std::string Content;
 	};
 	
 	// 日志类

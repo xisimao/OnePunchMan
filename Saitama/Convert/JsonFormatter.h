@@ -2,9 +2,8 @@
 #include <string>
 #include <vector>
 #include <set>
-#include <sstream>
 
-#include "Text.h"
+#include "StringEx.h"
 
 namespace Saitama
 {
@@ -94,12 +93,81 @@ namespace Saitama
 		{
 			const std::string& key = std::get<0>(t);
 			T* value = std::get<1>(t);
-			std::string pattern = "\"" + key + "\":";
-			size_t start = json.find(pattern);
-			if (start != std::string::npos)
+			size_t startIndex = FindValue(json, key);
+			if (startIndex != std::string::npos)
 			{
-				DeserializeValue(json, start+pattern.size(), value);
+				DeserializeValue(json, startIndex, value);
 			}
+		}
+
+		/**
+		* @brief: 获取json字符串中的字段。
+		* @param: json json字符串
+		* @param: key 字段的键
+		* @return: 返回字段的值,如果未获取到返回空字符串
+		*/
+		static std::vector<std::string> GetArray(const std::string& json, const std::string key)
+		{
+			std::vector<std::string> result;
+			size_t startIndex = FindValue(json, key);
+			if (startIndex != std::string::npos)
+			{
+				const char Head = '[';
+				const char Tail = ']';
+				int headCount = 0;
+				int tailCount = 0;
+				startIndex = json.find_first_of(Head, startIndex);
+				size_t endIndex = std::string::npos;
+				for (std::string::const_iterator it = json.begin() + startIndex; it !=json.end(); ++it)
+				{
+					if (*it == Head)
+					{
+						headCount += 1;
+					}
+					else if (*it == Tail)
+					{
+						tailCount += 1;
+						if (headCount == tailCount)
+						{
+							endIndex = it - json.begin();
+							break;
+						}
+					}
+				}
+				if (endIndex != std::string::npos)
+				{
+					while (true)
+					{
+						std::string value = GetClassValue(json, startIndex, endIndex);
+						if (value.empty())
+						{
+							break;
+						}
+						else
+						{
+							startIndex += value.size() + 1;
+							result.push_back(value);
+						}
+					}
+				}			
+			}
+			return result;
+		}	
+
+		/**
+		* @brief: 获取json字符串中的字段。
+		* @param: json json字符串
+		* @param: key 字段的键
+		* @retion: 返回字段的值,如果未获取到返回空字符串
+		*/
+		static std::string GetClass(const std::string& json, const std::string key)
+		{
+			size_t startIndex = FindValue(json, key);
+			if (startIndex != std::string::npos)
+			{
+				return GetClassValue(json, startIndex,json.size());
+			}
+			return std::string();
 		}
 
 	private:
@@ -141,9 +209,7 @@ namespace Saitama
 		*/
 		static void SerializeKey(std::string* json, const std::string& key)
 		{
-			std::stringstream ss;
-			ss << "\"" << key << "\":";
-			json->append(ss.str());
+			json->append(StringEx::Combine("\"",key, "\":"));
 		}
 
 		/**
@@ -154,9 +220,7 @@ namespace Saitama
 		template<typename T>
 		static void SerializeValue(std::string* json, const T& value)
 		{
-			std::stringstream ss;
-			ss << value<<",";
-			json->append(ss.str());
+			json->append(StringEx::Combine(value,","));
 		}
 
 		/**
@@ -166,24 +230,25 @@ namespace Saitama
 		*/
 		static void SerializeValue(std::string* json, const std::string& value)
 		{
-			std::stringstream ss;
 			if (value.empty())
 			{
-				ss << "\"" << value << "\",";
+				json->append(StringEx::Combine("\"" , value , "\","));
+
 			}
 			else
 			{
 				if ((value[0] == '{'&&value[value.size() - 1] == '}') ||
 					(value[0] == '['&&value[value.size() - 1] == ']'))
 				{
-					ss << value << ",";
+
+					json->append(StringEx::Combine(value ,","));
 				}
 				else
 				{
-					ss << "\"" << value << "\",";
+					json->append(StringEx::Combine("\"", value, "\","));
 				}
 			}
-			json->append(ss.str());
+		
 		}
 
 		/**
@@ -242,7 +307,7 @@ namespace Saitama
 			size_t end = json.find_first_of(Tail, start);
 			if (end != std::string::npos)
 			{
-				Text::Convert<T>(json.substr(start, end - start), t);
+				StringEx::Convert<T>(json.substr(start, end - start), t);
 			}
 			return end;
 		}
@@ -332,6 +397,61 @@ namespace Saitama
 				}
 				index = index + 1;
 			}
+		}
+
+		/**
+		* @brief: 获取指定开始和结束序列的中的一个类元素。
+		* @param: json json字符串
+		* @param: startIndex 开始序号
+		* @param: startIndex 结束序号
+		* @return: 搜索成功返回值类的json字符串，否则返回空字符串。
+		*/
+		static std::string GetClassValue(const std::string& json,size_t startIndex, size_t endIndex)
+		{
+			if (startIndex < endIndex)
+			{
+				const char Head = '{';
+				const char Tail = '}';
+				int headCount = 0;
+				int tailCount = 0;
+				std::string findHead;
+				findHead.push_back(Head);
+				startIndex = json.find_first_of(findHead.c_str(), startIndex, endIndex - startIndex);
+				if (startIndex != std::string::npos)
+				{
+					for (std::string::const_iterator it = json.begin() + startIndex; it < json.begin() + endIndex; ++it)
+					{
+						if (*it == Head)
+						{
+							headCount += 1;
+						}
+						else if (*it == Tail)
+						{
+							tailCount += 1;
+							if (headCount == tailCount)
+							{
+								endIndex = it - json.begin();
+								return json.substr(startIndex, endIndex - startIndex + 1);
+							}
+						}
+					}
+				}
+			}
+			
+			return std::string();
+		}
+
+		/**
+		* @brief: 搜索指定键的值。
+		* @param: json json字符串
+		* @param: key 键
+		* @return: 搜索成功返回值的开始序号，否则返回-1
+		*/
+		static size_t FindValue(const std::string& json, const std::string& key)
+		{
+			std::string pattern = "\"" + key + "\":";
+			size_t keyIndex = json.find(pattern);
+			return keyIndex==std::string::npos?std::string::npos:keyIndex + pattern.size();
 		}
 	};
 }

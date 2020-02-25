@@ -22,11 +22,11 @@ FileConfig::FileConfig(const string& filePath)
 			if (i != string::npos)
 			{
 				string key = line.substr(0, i);
-				key = Text::Trim(key);
+				key = StringEx::Trim(key);
 				if (!key.empty() && key[0] != '#')
 				{
 					string value = line.substr(i + 1, line.length() - i - 1);
-					value = Text::Trim(value);
+					value = StringEx::Trim(value);
 					_configs.insert(pair<string, string>(key, value));
 				}
 			}

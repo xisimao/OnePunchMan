@@ -1,7 +1,6 @@
 ﻿#pragma once
 #include <thread>
 #include <string>
-#include <sstream>
 #include <set>
 
 #include "LogPool.h"

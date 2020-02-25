@@ -116,7 +116,7 @@ namespace Saitama
 		bool Empty() const;
 
 		/**
-		* @brief: 根据指定格式返回日期时间字符串，例如：%d-%.2d-%.2d %.2d:%.2d:%.2d.%.3d
+		* @brief: 根据指定格式返回日期时间字符串，例如：%Y-%m-%d %H:%M:%S
 		* @return: 日期时间字符串
 		*/
 		std::string ToString(const std::string& format) const;

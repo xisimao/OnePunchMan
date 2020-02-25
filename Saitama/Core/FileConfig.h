@@ -4,7 +4,7 @@
 #include <vector>
 #include <map>
 
-#include "Text.h"
+#include "StringEx.h"
 
 namespace Saitama
 {
@@ -40,7 +40,7 @@ namespace Saitama
 			else
 			{
 				const std::string value = _configs.at(key);
-				return Text::Convert<T>(value, t);
+				return StringEx::Convert<T>(value, t);
 			}
 		}
 
@@ -65,7 +65,7 @@ namespace Saitama
 				{
 					end = value.find(',', start);
 					T t;
-					Text::Convert<T>(value.substr(start, end - start), &t);
+					StringEx::Convert<T>(value.substr(start, end - start), &t);
 					v->push_back(t);
 					start = end + 1;
 

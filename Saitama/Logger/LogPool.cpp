@@ -10,31 +10,40 @@ LogPool::LogPool()
 	//读取文件日志参数
 	FileConfig config;
 
+	//读取目录
+	if (!config.ReadConfig<string>("Logger.File.Directory", &_directory))
+	{
+		_directory = "Log";
+	}
+
+	if (!config.ReadConfig<unsigned int>("Logger.File.HoldDays", &_holdDays))
+	{
+		_holdDays = 0;
+	}
 	//添加文件日志
 	unsigned int index = 1;
-	stringstream ss;
-	ss << "Logger." << index;
+	string loggerTag = StringEx::Combine("Logger.", index);
+
 	LogType type;
-	while ((type=ReadType(config,ss.str()+".Type"))!=LogType::None)
+	while ((type=ReadType(config, loggerTag +".Type"))!=LogType::None)
 	{
-		LogLevel minLevel = ReadLevel(config, ss.str() + ".MinLevel");
-		LogLevel maxLevel = ReadLevel(config, ss.str() + ".MaxLevel");
+		LogLevel minLevel = ReadLevel(config, loggerTag + ".MinLevel");
+		LogLevel maxLevel = ReadLevel(config, loggerTag + ".MaxLevel");
 		if (type == LogType::Console)
 		{
 			_loggers.insert(new ConsoleLogger(minLevel, maxLevel));
 		}
 		else if (type == LogType::File)
 		{
-			string name = ReadName(config, ss.str() + ".Name");
+			string name = ReadName(config, loggerTag + ".Name");
 			if (!name.empty())
 			{
-				_loggers.insert(new FileLogger(name,minLevel, maxLevel));
+				_loggers.insert(new FileLogger(minLevel, maxLevel, name, _directory,_holdDays));
 			}
 		}
 
 		++index;
-		ss.str("");
-		ss << "Logger." << index;
+		loggerTag = StringEx::Combine("Logger.", index);
 	}
 }
 
@@ -44,6 +53,16 @@ LogPool::~LogPool()
 	
 		delete logger;
 	});
+}
+
+string LogPool::Directory()
+{
+	return _instance._directory;
+}
+
+int LogPool::HoldDays()
+{
+	return _instance._holdDays;
 }
 
 void LogPool::AddLogger(Logger* logger)
@@ -63,7 +82,7 @@ LogType LogPool::ReadType(const FileConfig& config, const string& key)
 	string value;
 	if (config.ReadConfig<string>(key, &value))
 	{
-		value = Text::ToUpper(value);
+		value = StringEx::ToUpper(value);
 		if (value.compare("CONSOLE") == 0)
 		{
 			return LogType::Console;
@@ -88,7 +107,7 @@ LogLevel LogPool::ReadLevel(const FileConfig& config, const string& key)
 	string value;
 	if (config.ReadConfig<string>(key, &value))
 	{
-		value = Text::ToUpper(value);
+		value = StringEx::ToUpper(value);
 		if (value.compare("DEBUG") == 0)
 		{
 			return LogLevel::Debug;

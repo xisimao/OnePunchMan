@@ -10,7 +10,7 @@
 namespace Saitama
 {
 	//文本操作类
-	class Text
+	class StringEx
 	{
 	public:
 
@@ -74,7 +74,7 @@ namespace Saitama
 		static std::vector<std::string> Split(const std::string& value, const std::string& separator, bool filterEmpty = false);
 
 		/**
-		* @brief: 将字符串变为32位有符号整数filterEmpty
+		* @brief: 将字符串变为整数或布尔类型
 		* @return: 第一个参数表示转换是否成功，如果为true，第二个参数表示转换结果
 		*/
 		template<typename T>
@@ -106,6 +106,42 @@ namespace Saitama
 		* @return: 四舍五入后的字符串
 		*/
 		static std::string Rounding(float value, int precision);
+
+		/**
+		* @brief: 将多个元素组合成一个字符串。
+		* @param: t 由字符串的各部分构成的元素
+		* @param: u... 由字符串的各部分构成的元素
+		* @return: 已组合的字符串。
+		*/
+		template<typename T, typename ...U>
+		static std::string Combine(T t, U ...u)
+		{
+			std::stringstream ss;
+			Combine(&ss, t, u...);
+			return ss.str();
+		}
+
+		/**
+		* @brief: 将多个元素组合成一个字符串。
+		* @param: t 由字符串的各部分构成的元素。
+		* @param: u... 由字符串的各部分构成的元素。
+		*/
+		template<typename T, typename ...U>
+		static void Combine(std::stringstream* ss, T t, U ...u)
+		{
+			(*ss) << t;
+			Combine(ss, u...);
+		}
+
+		/**
+		* @brief: 将最后一个元素拼接到字符串上。
+		* @param: t 组成字符串的最后一个的元素。
+		*/
+		template<typename T>
+		static void Combine(std::stringstream* ss, T t)
+		{
+			(*ss) << t;
+		}
 	};
 }
 

@@ -1,7 +1,6 @@
 ﻿#pragma once
 #include <string>
 #include <fstream>
-#include <sstream>
 
 #ifdef _WIN32 
 #include <direct.h>
@@ -30,12 +29,20 @@ namespace Saitama
 		* @param: minLevel 日志最小级别
 		* @param: maxLevel 日志最大级别
 		*/
-		FileLogger(const std::string& name,LogLevel minLevel,LogLevel maxLevel);
+		FileLogger(LogLevel minLevel, LogLevel maxLevel, const std::string& name, const std::string& directory, int holdDays);
 
 		/**
 		* @brief: 析构函数
 		*/
 		~FileLogger();
+
+		/**
+		* @brief: 获取日志文件名
+		* @param: name 日志名称
+		* @param: DateTime 日志日期
+		* @return: 日志文件名
+		*/
+		static std::string GetLogFileName(const std::string& logName, const DateTime& logDate);
 
 	protected:
 

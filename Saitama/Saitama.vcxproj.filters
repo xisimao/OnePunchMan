@@ -7,19 +7,22 @@
     <Filter Include="Logger">
       <UniqueIdentifier>{c5828014-1def-4259-8663-0d238db78a1e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Mqtt">
+      <UniqueIdentifier>{3445cfe4-0224-47ab-a3e5-26c7b64194df}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Convert">
+      <UniqueIdentifier>{11c5238b-ff2e-46c4-a10c-083c07b82774}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Text">
+      <UniqueIdentifier>{515fc182-9c11-4876-9764-6158a60a1b1a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Saitama.cpp" />
-    <ClCompile Include="Core\Text.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
     <ClCompile Include="Core\FileConfig.cpp">
       <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="Core\DateTime.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Path.cpp">
       <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="Logger\ConsoleLogger.cpp">
@@ -31,27 +34,43 @@
     <ClCompile Include="Logger\LogPool.cpp">
       <Filter>Logger</Filter>
     </ClCompile>
-    <ClCompile Include="Core\ByteFormatter.cpp" />
-    <ClCompile Include="Core\Security.cpp" />
-    <ClCompile Include="Core\Thread.cpp" />
-    <ClCompile Include="Core\AsyncQueue.cpp" />
-    <ClCompile Include="Core\Command.cpp" />
-    <ClCompile Include="Core\StringFormatter.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="app.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="Core\Text.h">
+    <ClCompile Include="Core\AsyncQueue.cpp">
       <Filter>Core</Filter>
-    </ClInclude>
+    </ClCompile>
+    <ClCompile Include="Core\Command.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Thread.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Logger\LogReader.cpp">
+      <Filter>Logger</Filter>
+    </ClCompile>
+    <ClCompile Include="Convert\ByteFormatter.cpp">
+      <Filter>Convert</Filter>
+    </ClCompile>
+    <ClCompile Include="Convert\StringFormatter.cpp">
+      <Filter>Convert</Filter>
+    </ClCompile>
+    <ClCompile Include="Text\StringEx.cpp">
+      <Filter>Text</Filter>
+    </ClCompile>
+    <ClCompile Include="Text\Security.cpp">
+      <Filter>Text</Filter>
+    </ClCompile>
+    <ClCompile Include="Text\Path.cpp">
+      <Filter>Text</Filter>
+    </ClCompile>
+    <ClCompile Include="Speed.cpp" />
+    <ClCompile Include="Mqtt\MqttChannel.cpp">
+      <Filter>Mqtt</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
     <ClInclude Include="Core\FileConfig.h">
       <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Core\DateTime.h">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Path.h">
       <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Logger\ConsoleLogger.h">
@@ -66,14 +85,57 @@
     <ClInclude Include="Logger\LogPool.h">
       <Filter>Logger</Filter>
     </ClInclude>
-    <ClInclude Include="Core\ByteFormatter.h" />
-    <ClInclude Include="Core\JsonFormatter.h" />
-    <ClInclude Include="Core\Security.h" />
-    <ClInclude Include="Core\Thread.h" />
-    <ClInclude Include="Core\AsyncQueue.h" />
-    <ClInclude Include="Core\Command.h" />
-    <ClInclude Include="Core\IObserver.h" />
-    <ClInclude Include="Core\Observable.h" />
-    <ClInclude Include="Core\StringFormatter.h" />
+    <ClInclude Include="Core\AsyncQueue.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Command.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Observable.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Thread.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Mqtt\mosquittopp.h">
+      <Filter>Mqtt</Filter>
+    </ClInclude>
+    <ClInclude Include="Mqtt\mosquitto.h">
+      <Filter>Mqtt</Filter>
+    </ClInclude>
+    <ClInclude Include="Mqtt\mosquitto_plugin.h">
+      <Filter>Mqtt</Filter>
+    </ClInclude>
+    <ClInclude Include="Logger\LogReader.h">
+      <Filter>Logger</Filter>
+    </ClInclude>
+    <ClInclude Include="Convert\ByteFormatter.h">
+      <Filter>Convert</Filter>
+    </ClInclude>
+    <ClInclude Include="Convert\JsonFormatter.h">
+      <Filter>Convert</Filter>
+    </ClInclude>
+    <ClInclude Include="Convert\StringFormatter.h">
+      <Filter>Convert</Filter>
+    </ClInclude>
+    <ClInclude Include="Text\StringEx.h">
+      <Filter>Text</Filter>
+    </ClInclude>
+    <ClInclude Include="Text\Security.h">
+      <Filter>Text</Filter>
+    </ClInclude>
+    <ClInclude Include="Text\Path.h">
+      <Filter>Text</Filter>
+    </ClInclude>
+    <ClInclude Include="Speed.h" />
+    <ClInclude Include="Mqtt\MqttChannel.h">
+      <Filter>Mqtt</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Shape.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
   </ItemGroup>
 </Project>

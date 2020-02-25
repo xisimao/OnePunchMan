@@ -1,16 +1,16 @@
-#include "Text.h"
+#include "StringEx.h"
 
 using namespace std;
 using namespace Saitama;
 
-string Text::ToHex(int value)
+string StringEx::ToHex(int value)
 {
 	char temp[9] = { 0 };
 	sprintf(temp, "%x", value);
 	return std::string(temp);
 }
 
-string Text::ToHex(string::const_iterator begin, string::const_iterator end)
+string StringEx::ToHex(string::const_iterator begin, string::const_iterator end)
 {
 	std::string str;
 	char temp[3];
@@ -23,7 +23,7 @@ string Text::ToHex(string::const_iterator begin, string::const_iterator end)
 	return str;
 }
 
-string Text::ToHex(const char* buffer, unsigned int size)
+string StringEx::ToHex(const char* buffer, unsigned int size)
 {
 	std::string str;
 	char temp[3];
@@ -36,7 +36,7 @@ string Text::ToHex(const char* buffer, unsigned int size)
 	return str;
 }
 
-string Text::ToBytes(const std::string& value, char separator)
+string StringEx::ToBytes(const std::string& value, char separator)
 {
 	string buffer;
 	size_t start = 0;
@@ -55,19 +55,19 @@ string Text::ToBytes(const std::string& value, char separator)
 	return buffer;
 }
 
-char Text::Xor(const char* buffer, unsigned int size)
+char StringEx::Xor(const char* buffer, unsigned int size)
 {
 	return (char)accumulate(buffer, buffer + size, 0, [](char a, char b) {return a ^ b; });
 }
 
-string Text::ToUpper(const string& str)
+string StringEx::ToUpper(const string& str)
 {
 	string result(str);
 	transform(result.begin(), result.end(), result.begin(), ::toupper);
 	return result;
 }
 
-string Text::Trim(const string& str)
+string StringEx::Trim(const string& str)
 {
 	string result(str);
 	if (result.empty())
@@ -89,7 +89,7 @@ string Text::Trim(const string& str)
 	return result;
 }
 
-vector<string> Text::Split(const string& value, const string& separator, bool filterEmpty)
+vector<string> StringEx::Split(const string& value, const string& separator, bool filterEmpty)
 {
 	vector<string> result;
 	size_t end = 0;
@@ -135,7 +135,7 @@ vector<string> Text::Split(const string& value, const string& separator, bool fi
 	return result;
 }
 
-string Text::Rounding(float value, int precision)
+string StringEx::Rounding(float value, int precision)
 {
 	stringstream ss;
 	ss << setiosflags(ios::fixed) << setprecision(1);

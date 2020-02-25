@@ -127,6 +127,18 @@ namespace Saitama
 			_instance.Log(logger, logLevel, logEvent, t, u...);
 		}
 
+		/**
+		* @brief: 获取文件日志保存目录
+		* @return: 文件日志保存目录
+		*/
+		static std::string Directory();
+
+		/**
+		* @brief: 获取文件日志保存天数
+		* @return: 文件日志保存天数
+		*/
+		static int HoldDays();
+
 	private:
 
 		/**
@@ -222,6 +234,12 @@ namespace Saitama
 
 		// 单例引用
 		static LogPool _instance;
+
+		//文件保存目录 
+		std::string _directory;
+		//日志保存天数
+		unsigned int _holdDays;
+
 		//写日志同步锁
 		std::mutex _mutex;
 		//日志集合
