@@ -158,7 +158,7 @@
     <ClCompile Include="Core\DateTime.cpp" />
     <ClCompile Include="Core\FileConfig.cpp" />
     <ClCompile Include="Mqtt\MqttChannel.cpp" />
-    <ClCompile Include="Speed.cpp" />
+    <ClCompile Include="Traffic.cpp" />
     <ClCompile Include="Text\Path.cpp" />
     <ClCompile Include="Text\Security.cpp" />
     <ClCompile Include="Convert\StringFormatter.cpp" />
@@ -180,7 +180,7 @@
     <ClInclude Include="Core\Observable.h" />
     <ClInclude Include="Mqtt\MqttChannel.h" />
     <ClInclude Include="Core\Shape.h" />
-    <ClInclude Include="Speed.h" />
+    <ClInclude Include="Traffic.h" />
     <ClInclude Include="Text\Path.h" />
     <ClInclude Include="Text\Security.h" />
     <ClInclude Include="Convert\StringFormatter.h" />

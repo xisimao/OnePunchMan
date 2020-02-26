@@ -61,10 +61,10 @@
     <ClCompile Include="Text\Path.cpp">
       <Filter>Text</Filter>
     </ClCompile>
-    <ClCompile Include="Speed.cpp" />
     <ClCompile Include="Mqtt\MqttChannel.cpp">
       <Filter>Mqtt</Filter>
     </ClCompile>
+    <ClCompile Include="Traffic.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Core\FileConfig.h">
@@ -127,13 +127,13 @@
     <ClInclude Include="Text\Path.h">
       <Filter>Text</Filter>
     </ClInclude>
-    <ClInclude Include="Speed.h" />
     <ClInclude Include="Mqtt\MqttChannel.h">
       <Filter>Mqtt</Filter>
     </ClInclude>
     <ClInclude Include="Core\Shape.h">
       <Filter>Core</Filter>
     </ClInclude>
+    <ClInclude Include="Traffic.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

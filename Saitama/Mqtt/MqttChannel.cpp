@@ -3,6 +3,9 @@
 using namespace std;
 using namespace Saitama;
 
+const int MqttChannel::KeepAlive = 60;
+const int MqttChannel::ConnectSpan = 5000;
+
 MqttChannel::MqttChannel(const string& ip, int port)
     :ThreadObject("mqtt"),_ip(ip),_port(port)
 {
@@ -59,11 +62,11 @@ void MqttChannel::StartCore()
             }
             else
             {
-                connectResult = mosquitto_connect(mosq, _ip.c_str(), _port, 60);
+                connectResult = mosquitto_connect(mosq, _ip.c_str(), _port, KeepAlive);
             }
             if (connectResult != 0)
             {
-                this_thread::sleep_for(chrono::milliseconds(5000));
+                this_thread::sleep_for(chrono::milliseconds(ConnectSpan));
             }
         }
         mosquitto_disconnect(mosq);

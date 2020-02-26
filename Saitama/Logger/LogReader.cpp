@@ -51,7 +51,7 @@ tuple<vector<LogItem>, int> LogReader::ReadLogs(const std::string logDirectory, 
                     pageSize -= 1;
                     vector<string> datas=StringEx::Split(preLine, "]");
                     //4¸ö]1¸ö¿Õ¸ñ
-                    int headLength = datas[0].size() + datas[1].size() + datas[2].size() + 4;
+                    int headLength = static_cast<int>(datas[0].size() + datas[1].size() + datas[2].size() + 4);
                     LogItem item;
                     item.Time = datas[0].substr(1, datas[0].size() - 1);
                     item.Level = datas[1].substr(1, datas[1].size() - 1);

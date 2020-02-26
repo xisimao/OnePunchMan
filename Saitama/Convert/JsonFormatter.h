@@ -416,7 +416,7 @@ namespace Saitama
 				int tailCount = 0;
 				std::string findHead;
 				findHead.push_back(Head);
-				startIndex = json.find_first_of(findHead.c_str(), startIndex, endIndex - startIndex);
+				startIndex = json.find_first_of(findHead.c_str(), startIndex);
 				if (startIndex != std::string::npos)
 				{
 					for (std::string::const_iterator it = json.begin() + startIndex; it < json.begin() + endIndex; ++it)

@@ -1,15 +1,15 @@
-#pragma once
-#include <math.h>
+ï»¿#pragma once
+#include <algorithm>
 
 namespace Saitama
 {
-	//µã
+	//ç‚¹
 	class Point
 	{
 	public:
 
 		/**
-		* @brief: ¹¹Ôìº¯Êı
+		* @brief: æ„é€ å‡½æ•°
 		*/
 		Point()
 			:Point(0, 0)
@@ -18,9 +18,9 @@ namespace Saitama
 		}
 
 		/**
-		* @brief: ¹¹Ôìº¯Êı
-		* @param: x µãµÄxÖµ
-		* @param: y µãµÄyÖµ
+		* @brief: æ„é€ å‡½æ•°
+		* @param: x ç‚¹çš„xå€¼
+		* @param: y ç‚¹çš„yå€¼
 		*/
 		Point(int x, int y)
 			:_x(x), _y(y)
@@ -28,10 +28,20 @@ namespace Saitama
 
 		}
 
+		int X() const
+		{
+			return _x;
+		}
+
+		int Y() const
+		{
+			return _y;
+		}
+
 		/**
-		* @brief: ¼ÆËã¸Äµãµ½µãµÄ¾àÀë
-		* @param: p ÁíÍâÒ»¸öµã
-		* @return: Á½µãµÄ¾àÀë
+		* @brief: è®¡ç®—æ”¹ç‚¹åˆ°ç‚¹çš„è·ç¦»
+		* @param: p å¦å¤–ä¸€ä¸ªç‚¹
+		* @return: ä¸¤ç‚¹çš„è·ç¦»
 		*/
 		double Distance(const Point& p) const
 		{
@@ -42,19 +52,19 @@ namespace Saitama
 
 	private:
 
-		//µãµÄxÖµ
+		//ç‚¹çš„xå€¼
 		int _x;
-		//µãµÄyÖµ
+		//ç‚¹çš„yå€¼
 		int _y;
 	};
 
-	//¾ØĞÎ
+	//çŸ©å½¢
 	class Rectangle
 	{
 	public:
 
 		/**
-		* @brief: ¹¹Ôìº¯Êı
+		* @brief: æ„é€ å‡½æ•°
 		*/
 		Rectangle()
 			:Rectangle(0, 0, 0, 0)
@@ -63,35 +73,100 @@ namespace Saitama
 		}
 
 		/**
-		* @brief: ¹¹Ôìº¯Êı
-		* @param: x ¾ØĞÎ×óÉÏ½ÇµÄxÖµ
-		* @param: y ¾ØĞÎ×óÉÏ½ÇµÄyÖµ
-		* @param: width ¾ØĞÎµÄ¿í¶È
-		* @param: height ¾ØĞÎµÄ¸ß¶È
+		* @brief: æ„é€ å‡½æ•°
+		* @param: x çŸ©å½¢å·¦ä¸Šè§’çš„xå€¼
+		* @param: y çŸ©å½¢å·¦ä¸Šè§’çš„yå€¼
+		* @param: width çŸ©å½¢çš„å®½åº¦
+		* @param: height çŸ©å½¢çš„é«˜åº¦
 		*/
 		Rectangle(int x, int y, int width, int height)
-			:_top(x, y), _width(width), _height(height)
+			:_top(x, y), _width(width), _height(height), _hitPoint(x+width/2,y)
 		{
 
 		}
 
 		/**
-		* @brief: »ñÈ¡¾ØĞÎ×óÉÏ½ÇµÄµã
-		* @return: ¾ØĞÎ×óÉÏ½ÇµÄµã
+		* @brief: è·å–çŸ©å½¢å·¦ä¸Šè§’çš„ç‚¹
+		* @return: çŸ©å½¢å·¦ä¸Šè§’çš„ç‚¹
 		*/
-		const Point& Top() const
+		const Point& HitPoint() const
 		{
-			return _top;
+			return _hitPoint;
 		}
 
 	private:
 
-		//¾ØĞÎ×óÉÏ½ÇµÄµã
+		//çŸ©å½¢å·¦ä¸Šè§’çš„ç‚¹
 		Point _top;
-		//¾ØĞÎµÄ¿í¶È
+		//çŸ©å½¢çš„å®½åº¦
 		int _width;
-		//¾ØĞÎµÄ¸ß¶È
+		//çŸ©å½¢çš„é«˜åº¦
 		int _height;
+
+		//ç¢°æ’æµ‹è¯•ç‚¹
+		Point _hitPoint;
+	};
+
+	//å¤šè¾¹å½¢
+	class Polygon
+	{
+	public:
+
+		/**
+		* @brief: æ„é€ å‡½æ•°
+		*/
+		Polygon()
+			:Polygon(std::vector<Point>())
+		{
+
+		}
+
+		/**
+		* @brief: æ„é€ å‡½æ•°
+		* @param: points ç‚¹é›†åˆ
+		*/
+		Polygon(const std::vector<Point>& points)
+			:_points(points)
+		{
+			
+		}
+
+		/**
+		* @brief: æµ‹è¯•ç‚¹æ˜¯å¦åŒ…å«åœ¨å¤šè¾¹å½¢
+		* @param: point ç‚¹
+		* @return: ç‚¹åœ¨å¤šè¾¹å½¢å†…è¿”å›trueï¼Œå¦åˆ™è¿”å›false
+		*/
+		bool Contains(const Point& point)
+		{
+			int intersectCount= 0;
+			Point p1= _points[0];
+			for (int i = 1; i <= _points.size(); i++) {
+				Point p2 = _points[i % _points.size()];
+				if ((point.X() - p1.X()) * (p2.Y() - p1.Y()) == (p2.X() - p1.X()) * (point.Y() - p1.Y())
+					&& point.X() >= std::min(p1.X(), p2.X())
+					&& point.X() <= std::max(p1.X(), p2.X())
+					&& point.Y() >= std::min(p1.Y(), p2.Y())
+					&& point.Y() <= std::max(p1.Y(), p2.Y())) {
+					return true;
+				}
+				if (point.Y() > std::min(p1.Y(), p2.Y())
+					&& point.Y() <= std::max(p1.Y(), p2.Y())
+					&& point.X() <= std::max(p1.X(), p2.X())
+					&& p1.Y() != p2.Y()
+					&& (p1.X() == p2.X() || point.X() <= (point.Y() - p1.Y()) * (p2.X() - p1.X()) / (p2.Y() - p1.Y()) + p1.X())) 
+				{
+					intersectCount++;
+					
+				}
+				p1 = p2;
+			}
+			return intersectCount % 2 == 1;
+		}
+
+	private:
+
+		//ç‚¹é›†åˆ
+		std::vector<Point> _points;
 	};
 }
 

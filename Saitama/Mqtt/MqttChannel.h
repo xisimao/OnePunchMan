@@ -80,10 +80,16 @@ namespace Saitama
 
     private:
 
+        //检测mqtt服务端网络的时间间隔(秒)
+        static const int KeepAlive;
+        //连接mqtt服务端的时间间隔(毫秒)
+        static const int ConnectSpan;
+
         //mqtt服务端地址
         std::string _ip;
         //mqtt服务端端口
         int _port;
+
 
     };
 }
