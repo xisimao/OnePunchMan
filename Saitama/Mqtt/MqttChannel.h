@@ -13,19 +13,10 @@ namespace Saitama
     public:
 
         /**
-* @brief: 分页读取日志
-* @param: logDIrectory 日志目录
-* @param: logName 日志名称
-* @param: logDate 日志日期
-* @param: logLevel 日志级别，为0时查询所有
-* @param: logEvent 日志事件，为0时查询所有
-* @param: pageNum 分页页码
-* @param: pageSize 分页数量
-* @param: hasTotal 是否查询总数
-* @return: 第一个参数表示日志查询结果集合，第二个参数表示总数，如果hasTotal为false则返回0
-*/
+        * @brief: 构造函数
+        */
         MqttReceivedEventArgs()
-            :Message()
+            :Topic(),Message()
         {
 
         }
@@ -34,12 +25,14 @@ namespace Saitama
         * @brief: 构造函数
         * @param: message mqtt接收到的消息
         */
-        MqttReceivedEventArgs(const char* message)
-            :Message(message)
+        MqttReceivedEventArgs(const char* topic,const char* message)
+            :Topic(topic),Message(message)
         {
 
         }
 
+        //mqtt接收到的主题
+        std::string Topic;
         //mqtt接收到的消息
         std::string Message;
     };
@@ -53,8 +46,9 @@ namespace Saitama
         * @brief: 构造函数
         * @param: ip mqtt服务端地址
         * @param: port mqtt服务端端口，默认为1883
+        * @param: topics 订阅的主题集合
         */
-        MqttChannel(const std::string& ip, int port=1883);
+        MqttChannel(const std::string& ip, int port,std::vector<std::string> topics);
 
         /**
         * @brief: mqtt连接回调函数
@@ -74,6 +68,15 @@ namespace Saitama
 
         //mqtt接收消息事件
         Observable<MqttReceivedEventArgs> MqttReceived;
+
+        /**
+         * @brief: mqtt发送消息
+         * @param: topic 主题
+         * @param: message 发送的消息
+         * @return: 返回true表示发送成功
+         */
+        bool Send(const std::string& topic,const std::string& message);
+
     protected:
 
         void StartCore();
@@ -85,10 +88,15 @@ namespace Saitama
         //连接mqtt服务端的时间间隔(毫秒)
         static const int ConnectSpan;
 
+        //mosq实例
+        struct mosquitto* _mosq;
+
         //mqtt服务端地址
         std::string _ip;
         //mqtt服务端端口
         int _port;
+        //订阅的主题集合
+        std::vector<std::string> _topics;
 
 
     };

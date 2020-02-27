@@ -38,9 +38,13 @@ namespace Saitama
 	class LogItem
 	{
 	public:
+		//时间
 		std::string Time;
+		//级别
 		std::string Level;
+		//事件
 		std::string Event;
+		//内容
 		std::string Content;
 	};
 	

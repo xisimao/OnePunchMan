@@ -74,8 +74,10 @@ namespace Saitama
 		static std::vector<std::string> Split(const std::string& value, const std::string& separator, bool filterEmpty = false);
 
 		/**
-		* @brief: 将字符串变为整数或布尔类型
-		* @return: 第一个参数表示转换是否成功，如果为true，第二个参数表示转换结果
+		* @brief: 将字符串变为数字或布尔类型
+		* @param: value 字符串
+		* @param: t 数字或布尔类型指针
+		* @return: 转换成功返回true
 		*/
 		template<typename T>
 		static bool Convert(const std::string& value, T* t)
@@ -84,6 +86,18 @@ namespace Saitama
 			ss << value;
 			ss >> *t;
 			return !ss.fail();
+		}
+
+		/**
+		* @brief: 将字符串变为字符串,该方法是为了泛型做补充
+		* @param: value 字符串
+		* @param: t 字符串指针
+		* @return: 固定返回true
+		*/
+		static bool Convert(const std::string& value, std::string* t)
+		{
+			t->assign(value);
+			return true;
 		}
 
 		/**
@@ -114,7 +128,7 @@ namespace Saitama
 		* @return: 已组合的字符串。
 		*/
 		template<typename T, typename ...U>
-		static std::string Combine(T t, U ...u)
+		static std::string Combine(const T& t, const U& ...u)
 		{
 			std::stringstream ss;
 			Combine(&ss, t, u...);
@@ -127,7 +141,7 @@ namespace Saitama
 		* @param: u... 由字符串的各部分构成的元素。
 		*/
 		template<typename T, typename ...U>
-		static void Combine(std::stringstream* ss, T t, U ...u)
+		static void Combine(std::stringstream* ss, const T& t, const U& ...u)
 		{
 			(*ss) << t;
 			Combine(ss, u...);
@@ -138,7 +152,7 @@ namespace Saitama
 		* @param: t 组成字符串的最后一个的元素。
 		*/
 		template<typename T>
-		static void Combine(std::stringstream* ss, T t)
+		static void Combine(std::stringstream* ss, const T& t)
 		{
 			(*ss) << t;
 		}

@@ -16,6 +16,9 @@
     <Filter Include="Text">
       <UniqueIdentifier>{515fc182-9c11-4876-9764-6158a60a1b1a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Traffic">
+      <UniqueIdentifier>{ff9ffd51-d482-462f-a7c2-6ad645aabff1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Saitama.cpp" />
@@ -64,7 +67,15 @@
     <ClCompile Include="Mqtt\MqttChannel.cpp">
       <Filter>Mqtt</Filter>
     </ClCompile>
-    <ClCompile Include="Traffic.cpp" />
+    <ClCompile Include="Traffic\VideoChannel.cpp">
+      <Filter>Traffic</Filter>
+    </ClCompile>
+    <ClCompile Include="Traffic\Lane.cpp">
+      <Filter>Traffic</Filter>
+    </ClCompile>
+    <ClCompile Include="DataChannel.cpp">
+      <Filter>Traffic</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Core\FileConfig.h">
@@ -130,10 +141,21 @@
     <ClInclude Include="Mqtt\MqttChannel.h">
       <Filter>Mqtt</Filter>
     </ClInclude>
-    <ClInclude Include="Core\Shape.h">
-      <Filter>Core</Filter>
+    <ClInclude Include="Traffic\Shape.h">
+      <Filter>Traffic</Filter>
     </ClInclude>
-    <ClInclude Include="Traffic.h" />
+    <ClInclude Include="Traffic\VideoChannel.h">
+      <Filter>Traffic</Filter>
+    </ClInclude>
+    <ClInclude Include="Traffic\Lane.h">
+      <Filter>Traffic</Filter>
+    </ClInclude>
+    <ClInclude Include="Traffic\Detect.h">
+      <Filter>Traffic</Filter>
+    </ClInclude>
+    <ClInclude Include="DataChannel.h">
+      <Filter>Traffic</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

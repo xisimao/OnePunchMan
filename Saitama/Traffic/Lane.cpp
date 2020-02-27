@@ -3,24 +3,23 @@
 using namespace std;
 using namespace Saitama;
 
-Lane::Lane()
-	:Lane(Polygon())
+Lane::Lane(const string& id,Polygon region)
+	:_id(id),_region(region), _persons(0),_bikes(0), _motorcycles(0), _cars(0),_tricycles(0), _buss(0),_vans(0),_trucks(0),  _totalDistance(0.0), _totalTime(0.0), _lastInRegion(0), _vehicles(0), _totalSpan(0.0)
 {
 
 }
 
-Lane::Lane(Polygon region)
-	:_region(region), _persons(0),_bikes(0), _motorcycles(0), _cars(0),_tricycles(0), _buss(0),_vans(0),_trucks(0),  _totalDistance(0.0), _totalTime(0.0), _lastInRegion(0), _vehicles(0), _totalSpan(0.0)
+const string& Lane::Id() const
 {
-
+	return _id;
 }
 
-void Lane::CollectVehicle(const Rectangle& detectRegion, long long timeStamp, const string& message)
+void Lane::PushVehicle(const Rectangle& detectRegion, long long timeStamp, const string& data)
 {
 	if (_region.Contains(detectRegion.HitPoint()))
 	{
 		string id;
-		JsonFormatter::Deserialize(message, tuple<string, string*>("GUID", &id));
+		JsonFormatter::Deserialize(data, "GUID", &id);
 		DetectItem item(id, timeStamp, detectRegion);
 
 		std::lock_guard<std::mutex> lck(_mutex);
@@ -32,7 +31,7 @@ void Lane::CollectVehicle(const Rectangle& detectRegion, long long timeStamp, co
 		if (mit == _items.end())
 		{
 			int type = 0;
-			JsonFormatter::Deserialize(message, tuple<string, int*>("Type", &type));
+			JsonFormatter::Deserialize(data,"Type", &type);
 			if (type == (int)DetectType::Car)
 			{
 				_cars += 1;
@@ -77,12 +76,12 @@ void Lane::CollectVehicle(const Rectangle& detectRegion, long long timeStamp, co
 	}
 }
 
-void Lane::CollectBike(const Rectangle& detectRegion, long long timeStamp, const string& message)
+void Lane::PushBike(const Rectangle& detectRegion, long long timeStamp, const string& data)
 {
 	if (_region.Contains(detectRegion.HitPoint()))
 	{
 		string id;
-		JsonFormatter::Deserialize(message, tuple<string, string*>("GUID", &id));
+		JsonFormatter::Deserialize(data,"GUID", &id);
 		DetectItem item(id, timeStamp, detectRegion);
 
 		std::lock_guard<std::mutex> lck(_mutex);
@@ -90,7 +89,7 @@ void Lane::CollectBike(const Rectangle& detectRegion, long long timeStamp, const
 		if (mit == _items.end())
 		{
 			int type = 0;
-			JsonFormatter::Deserialize(message, tuple<string, int*>("Type", &type));
+			JsonFormatter::Deserialize(data, "Type", &type);
 			if (type == (int)DetectType::Bike)
 			{
 				_bikes += 1;
@@ -104,12 +103,12 @@ void Lane::CollectBike(const Rectangle& detectRegion, long long timeStamp, const
 	}
 }
 
-void Lane::CollectPedestrain(const Rectangle& detectRegion, long long timeStamp, const string& message)
+void Lane::PushPedestrain(const Rectangle& detectRegion, long long timeStamp, const string& data)
 {
 	if (_region.Contains(detectRegion.HitPoint()))
 	{
 		string id;
-		JsonFormatter::Deserialize(message, tuple<string, string*>("GUID", &id));
+		JsonFormatter::Deserialize(data, "GUID", &id);
 		DetectItem item(id, timeStamp, detectRegion);
 
 		std::lock_guard<std::mutex> lck(_mutex);
@@ -122,11 +121,10 @@ void Lane::CollectPedestrain(const Rectangle& detectRegion, long long timeStamp,
 	}
 }
 
-TrafficItem Lane::Calculate()
+LaneItem Lane::Collect()
 {
-	
 	std::lock_guard<std::mutex> lck(_mutex);
-	TrafficItem item;
+	LaneItem item;
 	item.Persons = _persons;
 	item.Bikes = _bikes;
 	item.Motorcycles = _motorcycles;

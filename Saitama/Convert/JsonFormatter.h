@@ -7,451 +7,313 @@
 
 namespace Saitama
 {
-	//二进制序列化
+	//json序列化
 	class JsonFormatter
 	{
 	public:
 
 		/**
-		* @brief: 递归序列化Json。
-		* @param: json 用于存放序列化结果的字符串
-		* @param: t 当前递归到的序列化的第一项
-		* @param: ...u 序列化的其他项
-		*/
-		template<typename T, typename ...U>
-		static void Serialize(std::string* json, const std::tuple<std::string, T>& t, const std::tuple<std::string, U> ...u)
-		{
-			json->append("{");
-			SerializeItem(json,t);
-			SerializeItem(json,u...);
-			if (!json->empty() && json->at(json->size() - 1) == ',')
-			{
-				json->erase(json->end() - 1, json->end());
-			}
-			json->append("}");
-		}
-
-		/**
 		* @brief: 序列化Json
 		* @param: json 用于存放序列化结果的字符串
-		* @param: t 第一项表示key，第二项表示value
+		* @param: key 字段的键
+		* @param: value 字段的值
 		*/
 		template<typename T>
-		static void Serialize(std::string* json, const std::tuple<std::string, T>& t)
+		static void Serialize(std::string* json, const std::string& key,const T& value)
 		{
-			json->append("{");
-			SerializeItem(json,t);
-			if (!json->empty() && json->at(json->size() - 1) == ',')
+			if (json->empty())
+			{
+				json->append("{");
+			}
+			else
 			{
 				json->erase(json->end() - 1, json->end());
-			}
-			json->append("}");
-		}
-
-		/**
-		* @brief: 序列化数组的Json
-		* @param: json 用于存放序列化结果的字符串
-		* @param: v 实现了ToJson函数的列表
-		*/
-		template<typename T>
-		static void Serialize(std::string* json, const std::vector<T>& v)
-		{
-			json->append("[");
-			for_each(v.begin(), v.end(), [&json](const T& t) {
-
-				json->append(t.ToJson());
 				json->append(",");
-
-			});
-			if (!json->empty() && json->at(json->size() - 1) == ',')
-			{
-				json->erase(json->end() - 1, json->end());
 			}
-			json->append("]");
-		}
-
-		/**
-		* @brief: 递归反序列化可变参数。
-		* @param: json json字符串
-		* @param: t 当前递归到的反序列化的第一项
-		* @param: ...u 反序列化的其他项
-		*/
-		template<typename T, typename ...U>
-		static void Deserialize(const std::string& json, const std::tuple<std::string, T*>& t, const std::tuple<std::string, U*>& ... u)
-		{
-			Deserialize(json, t);
-			Deserialize(json, u...);
+			json->append(StringEx::Combine("\"", key, "\":"));
+			SerializeValue(json, value);
+			json->append("}");
 		}
 
 		/**
 		* @brief: 反序列化字段。
 		* @param: json json字符串
-		* @param: t 字段的键和值指针
+		* @param: key 字段键
+		* @param: t 字段值的指针
 		*/
 		template<typename T>
-		static void Deserialize(const std::string& json, const std::tuple<std::string, T*>& t)
+		static void Deserialize(const std::string& json, const std::string& key,T* t)
 		{
-			const std::string& key = std::get<0>(t);
-			T* value = std::get<1>(t);
-			size_t startIndex = FindValue(json, key);
-			if (startIndex != std::string::npos)
+			std::string pattern = "\"" + key + "\":";
+			size_t index = json.find(pattern);
+			if (index != std::string::npos)
 			{
-				DeserializeValue(json, startIndex, value);
+				DeserializeValue(json, t, index + pattern.size());
 			}
 		}
 
 		/**
-		* @brief: 获取json字符串中的字段。
+		* @brief: 反序列化字段的值为列表。
 		* @param: json json字符串
-		* @param: key 字段的键
-		* @return: 返回字段的值,如果未获取到返回空字符串
+		* @param: v 字段值列表的指针
+		* @param: offset 从开头略过的字符数
 		*/
-		static std::vector<std::string> GetArray(const std::string& json, const std::string key)
+		template<typename T>
+		static void DeserializeValue(const std::string& json, std::vector<T>* v,size_t offset=0)
 		{
-			std::vector<std::string> result;
-			size_t startIndex = FindValue(json, key);
-			if (startIndex != std::string::npos)
+			std::string arrayValue;
+			DeserializeValue(json, &arrayValue, offset);
+			if (!arrayValue.empty())
 			{
-				const char Head = '[';
-				const char Tail = ']';
-				int headCount = 0;
-				int tailCount = 0;
-				startIndex = json.find_first_of(Head, startIndex);
-				size_t endIndex = std::string::npos;
-				for (std::string::const_iterator it = json.begin() + startIndex; it !=json.end(); ++it)
+				offset = 1;
+				while (true)
 				{
-					if (*it == Head)
+					std::string value;
+					offset += DeserializeValue(arrayValue, &value, offset);
+					if (value.empty())
 					{
-						headCount += 1;
+						break;
 					}
-					else if (*it == Tail)
+					else
 					{
-						tailCount += 1;
-						if (headCount == tailCount)
-						{
-							endIndex = it - json.begin();
-							break;
-						}
+						T t;
+						StringEx::Convert(value, &t);
+						v->push_back(t);
 					}
 				}
-				if (endIndex != std::string::npos)
-				{
-					while (true)
-					{
-						std::string value = GetClassValue(json, startIndex, endIndex);
-						if (value.empty())
-						{
-							break;
-						}
-						else
-						{
-							startIndex += value.size() + 1;
-							result.push_back(value);
-						}
-					}
-				}			
 			}
-			return result;
-		}	
+		}
 
 		/**
-		* @brief: 获取json字符串中的字段。
+		* @brief: 反序列化字段的值为集合。
 		* @param: json json字符串
-		* @param: key 字段的键
-		* @retion: 返回字段的值,如果未获取到返回空字符串
+		* @param: s 字段值集合的指针
+		* @param: offset 从开头略过的字符数
 		*/
-		static std::string GetClass(const std::string& json, const std::string key)
+		template<typename T>
+		static void DeserializeValue(const std::string& json, std::set<T>* s, size_t offset = 0)
 		{
-			size_t startIndex = FindValue(json, key);
-			if (startIndex != std::string::npos)
+			std::string arrayValue;
+			DeserializeValue(json, &arrayValue, offset);
+			if (!arrayValue.empty())
 			{
-				return GetClassValue(json, startIndex,json.size());
+				offset = 1;
+				while (true)
+				{
+					std::string value;
+					offset += DeserializeValue(arrayValue, &value, offset);
+					if (value.empty())
+					{
+						break;
+					}
+					else
+					{
+						T t;
+						StringEx::Convert(value, &t);
+						s->insert(t);
+					}
+				}
 			}
-			return std::string();
 		}
 
 	private:
 
 		/**
-		* @brief: 递归序列化一个字段
+		* @brief: 序列化数字和布尔类
 		* @param: json 用于存放序列化结果的字符串
-		* @param: t 当前递归到的序列化的第一项
-		* @param: ...u 序列化的其他项
-		*/
-		template<typename T, typename ...U>
-		static void SerializeItem(std::string* json, const std::tuple<std::string, T>& t, const std::tuple<std::string, U> ...u)
-		{
-			const std::string& key = std::get<0>(t);
-			const T& value = std::get<1>(t);
-			SerializeKey(json,key);
-			SerializeValue(json, value);
-			SerializeItem(json, u...);
-		}
-
-		/**
-		* @brief: 递归序列化一个字段
-		* @param: json 用于存放序列化结果的字符串
-		* @param: t 当前递归到的序列化
+		* @param: value 字段的值
 		*/
 		template<typename T>
-		static void SerializeItem(std::string* json, const std::tuple<std::string, T>& t)
+		static void SerializeValue(std::string* json,const T& value)
 		{
-			const std::string& key = std::get<0>(t);
-			const T& value = std::get<1>(t);
-			SerializeKey(json,key);
-			SerializeValue(json,value);
+			json->append(StringEx::ToString(value));
 		}
 
 		/**
-		* @brief: 序列化字段的键
+		* @brief: 序列化字符串
 		* @param: json 用于存放序列化结果的字符串
-		* @param: key 键
-		*/
-		static void SerializeKey(std::string* json, const std::string& key)
-		{
-			json->append(StringEx::Combine("\"",key, "\":"));
-		}
-
-		/**
-		* @brief: 序列化字段的值
-		* @param: json 用于存放序列化结果的字符串
-		* @param: value 值
-		*/
-		template<typename T>
-		static void SerializeValue(std::string* json, const T& value)
-		{
-			json->append(StringEx::Combine(value,","));
-		}
-
-		/**
-		* @brief: 序列化字段的字符串值
-		* @param: json 用于存放序列化结果的字符串
-		* @param: value 字符串值
+		* @param: value 字段的值
 		*/
 		static void SerializeValue(std::string* json, const std::string& value)
 		{
-			if (value.empty())
-			{
-				json->append(StringEx::Combine("\"" , value , "\","));
-
-			}
-			else
-			{
-				if ((value[0] == '{'&&value[value.size() - 1] == '}') ||
-					(value[0] == '['&&value[value.size() - 1] == ']'))
-				{
-
-					json->append(StringEx::Combine(value ,","));
-				}
-				else
-				{
-					json->append(StringEx::Combine("\"", value, "\","));
-				}
-			}
-		
+			json->append(StringEx::Combine("\"", value, "\""));
 		}
 
 		/**
-		* @brief: 序列化字段的列表值
+		* @brief: 序列化列表
 		* @param: json 用于存放序列化结果的字符串
-		* @param: value 列表值
+		* @param: values 字段的值列表
 		*/
 		template<typename T>
 		static void SerializeValue(std::string* json, const std::vector<T>& values)
 		{
 			json->append("[");
-			for_each(values.begin(), values.end(), [&json](const T& t) {
+			for_each(values.begin(), values.end(), [&json](const T& value) {
 
-				SerializeValue(json, t);
-				json->append(",");
-			});
+				SerializeValue(json, value);
+				});
 			if (!values.empty())
 			{
 				json->erase(json->end() - 1);
 			}
-			json->append("],");
+			json->append("]");
 		}
 
 		/**
-		* @brief: 序列化字段的集合值
+		* @brief: 序列化集合
 		* @param: json 用于存放序列化结果的字符串
-		* @param: value 集合值
+		* @param: values 字段的值集合
 		*/
 		template<typename T>
 		static void SerializeValue(std::string* json, const std::set<T>& values)
 		{
 			json->append("[");
-			for_each(values.begin(), values.end(), [&json](const T& t) {
+			for_each(values.begin(), values.end(), [&json](const T& value) {
 
-				SerializeValue(json, t);
-				json->append(",");
-			});
+				SerializeValue(json, value);
+				});
 			if (!values.empty())
 			{
 				json->erase(json->end() - 1);
 			}
-			json->append("],");
+			json->append("]");
 		}
 
 		/**
-		* @brief: 反序列化字段的值。
+		* @brief: 反序列化字段的值为指定类型。
 		* @param: json json字符串
-		* @param: start 数字的开始位置，例如123的开始位置为1的位置
-		* @param: t 值的指针
-		* @return: 数字结束的位置,结束符号,]}的位置
+		* @param: t 字段值的指针
+		* @param: offset 从开头略过的字符数
+		* @return: 解析成功返回解析的总字符数，否则返回0
 		*/
 		template<typename T>
-		static size_t DeserializeValue(const std::string& json,size_t start, T* t)
+		static size_t DeserializeValue(const std::string& json, T* t, size_t offset = 0)
 		{
-			const std::string Tail = ",}]";
-			size_t end = json.find_first_of(Tail, start);
-			if (end != std::string::npos)
+			size_t tagIndex = json.find_first_not_of(" ,\t", offset);
+			std::string value;
+			if (tagIndex != std::string::npos)
 			{
-				StringEx::Convert<T>(json.substr(start, end - start), t);
+				char tag = json[tagIndex];
+				if (tag == '"')
+				{
+					value = DeserializeString(json, tagIndex);
+				}
+				else if (tag == '{')
+				{
+					value = DeserializeByTag(json, tagIndex, '{', '}');
+				}
+				else if (tag == '[')
+				{
+					value = DeserializeByTag(json, tagIndex, '[', ']');
+				}
+				else
+				{
+					value = DeserializeInteger(json, tagIndex);
+				}
 			}
-			return end;
+			if (value.empty())
+			{
+				return 0;
+			}
+			else
+			{
+				StringEx::Convert(value, t);
+				return tagIndex - offset+value.size();
+			}
 		}
 
 		/**
-		* @brief: 反序列化字段的值。
+		* @brief: 根据标记截取，适合类和数组。
 		* @param: json json字符串
-		* @param: start 字符串起始位置，开始"的位置
-		* @param: t 值的指针
-		* @return: 字符串结束的位置，结束"的位置+1
+		* @param: offset 从开头略过的字符数
+		* @param: head 开始标记
+		* @param: tail 结束标记
+		* @return: 字段的值，如果搜索失败返回空字符串
 		*/
-		static size_t DeserializeValue(const std::string& json, size_t start, std::string* t)
-		{	
-			start = json.find('"', start);
-			size_t end = start;
-			std::string temp;
-			while(true)
+		static std::string DeserializeByTag(const std::string& json, size_t offset, char head,char tail)
+		{
+			int headCount = 0;
+			int tailCount = 0;
+			std::string findHead;
+			findHead.push_back(head);
+			offset = json.find(findHead.c_str(), offset);
+			if (offset != std::string::npos)
 			{
-				end = json.find('"', end + 1);
-				if (end == std::string::npos)
+				for (std::string::const_iterator it = json.begin() + offset; it < json.end(); ++it)
+				{
+					if (*it == head)
+					{
+						headCount += 1;
+					}
+					else if (*it == tail)
+					{
+						tailCount += 1;
+						if (headCount == tailCount)
+						{
+							return json.substr(offset, it - json.begin() - offset + 1);
+						}
+					}
+				}
+			}
+
+			return std::string();
+		}
+
+		/**
+		* @brief: 截取字符串
+		* @param: json json字符串
+		* @param: offset 从开头略过的字符数
+		* @return: 字段的值，如果搜索失败返回空字符串
+		*/
+		static std::string DeserializeString(const std::string& json, size_t offset)
+		{
+			offset = json.find('"', offset);
+			size_t endIndex = offset;
+			std::string temp;
+			while (true)
+			{
+				endIndex = json.find('"', endIndex + 1);
+				if (endIndex == std::string::npos)
 				{
 					break;
 				}
 				else
 				{
-					if (json[end - 1] == '\\')
+					if (json[endIndex - 1] == '\\')
 					{
-						temp.append(json.substr(start + 1, end - start - 2));
-						start = end - 1;
+						temp.append(json.substr(offset + 1, endIndex - offset - 2));
+						offset = endIndex - 1;
 					}
 					else
 					{
-		
-						temp.append(json.substr(start + 1, end - start - 1));
-						t->assign(temp);
-						end += 1;
+
+						temp.append(json.substr(offset + 1, endIndex - offset - 1));
+						endIndex += 1;
 						break;
 					}
 				}
 			}
-			return end;
+			return temp;
 		}
 
 		/**
-		* @brief: 反序列化列表字段的值。
+		* @brief: 截取数字
 		* @param: json json字符串
-		* @param: start 值的起始位置
-		* @param: t 列表值的指针
+		* @param: offset 从开头略过的字符数
+		* @return: 字段的值，如果搜索失败返回空字符串
 		*/
-		template<typename T>
-		static void DeserializeValue(const std::string& json,size_t start, std::vector<T>* vt)
-		{	
-			start = json.find("[",start);
-			size_t end = json.find("]",start+1);
-			size_t index = start+1;
-			while (index != std::string::npos&&index<end)
-			{
-				T t;
-				index = DeserializeValue(json, index, &t);
-				if (index != std::string::npos)
-				{
-					vt->push_back(t);
-				}
-				index = index+1;
-			}
-		}
-
-		/**
-		* @brief: 搜索集合字段的值。
-		* @param: json json字符串
-		* @param: start 值的起始位置
-		* @param: t 集合值的指针
-		*/
-		template<typename T>
-		static void DeserializeValue(const std::string& json,size_t start, std::set<T>* st)
+		static std::string DeserializeInteger(const std::string& json, size_t offset)
 		{
-			start = json.find("[", start);
-			size_t end = json.find("]", start + 1);
-			size_t index = start + 1;
-			while (index != std::string::npos&&index < end)
+			const std::string Tail = ",}]";
+			size_t endIndex = json.find_first_of(Tail, offset);
+			if (endIndex == std::string::npos)
 			{
-				T t;
-				index = DeserializeValue(json, index, &t);
-				if (index != std::string::npos)
-				{
-					st->insert(t);
-				}
-				index = index + 1;
+				return std::string();
 			}
-		}
-
-		/**
-		* @brief: 获取指定开始和结束序列的中的一个类元素。
-		* @param: json json字符串
-		* @param: startIndex 开始序号
-		* @param: startIndex 结束序号
-		* @return: 搜索成功返回值类的json字符串，否则返回空字符串。
-		*/
-		static std::string GetClassValue(const std::string& json,size_t startIndex, size_t endIndex)
-		{
-			if (startIndex < endIndex)
+			else
 			{
-				const char Head = '{';
-				const char Tail = '}';
-				int headCount = 0;
-				int tailCount = 0;
-				std::string findHead;
-				findHead.push_back(Head);
-				startIndex = json.find_first_of(findHead.c_str(), startIndex);
-				if (startIndex != std::string::npos)
-				{
-					for (std::string::const_iterator it = json.begin() + startIndex; it < json.begin() + endIndex; ++it)
-					{
-						if (*it == Head)
-						{
-							headCount += 1;
-						}
-						else if (*it == Tail)
-						{
-							tailCount += 1;
-							if (headCount == tailCount)
-							{
-								endIndex = it - json.begin();
-								return json.substr(startIndex, endIndex - startIndex + 1);
-							}
-						}
-					}
-				}
+				return json.substr(offset, endIndex - offset);
 			}
-			
-			return std::string();
-		}
-
-		/**
-		* @brief: 搜索指定键的值。
-		* @param: json json字符串
-		* @param: key 键
-		* @return: 搜索成功返回值的开始序号，否则返回-1
-		*/
-		static size_t FindValue(const std::string& json, const std::string& key)
-		{
-			std::string pattern = "\"" + key + "\":";
-			size_t keyIndex = json.find(pattern);
-			return keyIndex==std::string::npos?std::string::npos:keyIndex + pattern.size();
 		}
 	};
 }

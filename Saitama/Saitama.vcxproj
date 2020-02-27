@@ -106,7 +106,7 @@
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_WINSOCK_DEPRECATED_NO_WARNINGS;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <DisableSpecificWarnings>4819</DisableSpecificWarnings>
-      <AdditionalIncludeDirectories>./Text;./Convert;./Mqtt;./Logger;./Core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./Traffic;./Text;./Convert;./Mqtt;./Logger;./Core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -157,8 +157,9 @@
     <ClCompile Include="Core\Command.cpp" />
     <ClCompile Include="Core\DateTime.cpp" />
     <ClCompile Include="Core\FileConfig.cpp" />
+    <ClCompile Include="DataChannel.cpp" />
     <ClCompile Include="Mqtt\MqttChannel.cpp" />
-    <ClCompile Include="Traffic.cpp" />
+    <ClCompile Include="Traffic\Lane.cpp" />
     <ClCompile Include="Text\Path.cpp" />
     <ClCompile Include="Text\Security.cpp" />
     <ClCompile Include="Convert\StringFormatter.cpp" />
@@ -169,6 +170,7 @@
     <ClCompile Include="Logger\LogReader.cpp" />
     <ClCompile Include="Saitama.cpp" />
     <ClCompile Include="Text\StringEx.cpp" />
+    <ClCompile Include="Traffic\VideoChannel.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Core\AsyncQueue.h" />
@@ -178,9 +180,11 @@
     <ClInclude Include="Core\FileConfig.h" />
     <ClInclude Include="Convert\JsonFormatter.h" />
     <ClInclude Include="Core\Observable.h" />
+    <ClInclude Include="DataChannel.h" />
+    <ClInclude Include="Traffic\Detect.h" />
     <ClInclude Include="Mqtt\MqttChannel.h" />
-    <ClInclude Include="Core\Shape.h" />
-    <ClInclude Include="Traffic.h" />
+    <ClInclude Include="Traffic\Shape.h" />
+    <ClInclude Include="Traffic\Lane.h" />
     <ClInclude Include="Text\Path.h" />
     <ClInclude Include="Text\Security.h" />
     <ClInclude Include="Convert\StringFormatter.h" />
@@ -194,6 +198,7 @@
     <ClInclude Include="Mqtt\mosquitto.h" />
     <ClInclude Include="Mqtt\mosquittopp.h" />
     <ClInclude Include="Mqtt\mosquitto_plugin.h" />
+    <ClInclude Include="Traffic\VideoChannel.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
