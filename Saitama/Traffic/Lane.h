@@ -30,7 +30,7 @@ namespace Saitama
 		* @param: timeStamp 时间戳
 		* @param: region 检测元素区域
 		*/
-		DetectItem(const std::string& id, int timeStamp, int type, const Rectangle& region)
+		DetectItem(const std::string& id, long long timeStamp, int type, const Rectangle& region)
 			:Id(id), Type(type), TimeStamp(timeStamp), Region(region)
 		{
 

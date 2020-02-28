@@ -4,7 +4,7 @@ using namespace std;
 using namespace Saitama;
 
 Lane::Lane(const string& id,int index,Polygon region)
-	:_id(id),_index(index),_region(region),Status(false), _persons(0),_bikes(0), _motorcycles(0), _cars(0),_tricycles(0), _buss(0),_vans(0),_trucks(0),  _totalDistance(0.0), _totalTime(0.0), _lastInRegion(0), _vehicles(0), _totalSpan(0.0)
+	:_id(id),_index(index),_region(region),Status(false), _persons(0),_bikes(0), _motorcycles(0), _cars(0),_tricycles(0), _buss(0),_vans(0),_trucks(0),  _totalDistance(0.0), _totalTime(0), _lastInRegion(0), _vehicles(0), _totalSpan(0)
 {
 
 }
@@ -155,7 +155,7 @@ LaneItem Lane::Collect()
 	_buss = 0;
 
 	_totalDistance = 0.0;
-	_totalTime = 0.0;
+	_totalTime = 0;
 
 	_lastInRegion = 0;
 	_vehicles = 0;

@@ -122,6 +122,19 @@ namespace Saitama
 		* @param: ...u 日志的内容
 		*/
 		template<typename T, typename ...U>
+		static void Target(Logger* logger, LogLevel logLevel, T t, U ...u)
+		{
+			_instance.Log(logger, logLevel, LogEvent::None, t, u...);
+		}
+
+		/**
+		* @brief: 自定义日志
+		* @param: logLevel 日志的级别
+		* @param: logEvent 日志事件
+		* @param: t 日志的内容
+		* @param: ...u 日志的内容
+		*/
+		template<typename T, typename ...U>
 		static void Target(Logger* logger,LogLevel logLevel, LogEvent logEvent, T t, U ...u)
 		{
 			_instance.Log(logger, logLevel, logEvent, t, u...);

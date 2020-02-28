@@ -19,6 +19,9 @@
     <Filter Include="Traffic">
       <UniqueIdentifier>{ff9ffd51-d482-462f-a7c2-6ad645aabff1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Net">
+      <UniqueIdentifier>{5eda3a01-4cf6-41de-87bd-f0e5795b7b90}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Saitama.cpp" />
@@ -36,9 +39,6 @@
     </ClCompile>
     <ClCompile Include="Logger\LogPool.cpp">
       <Filter>Logger</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\AsyncQueue.cpp">
-      <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="Core\Command.cpp">
       <Filter>Core</Filter>
@@ -70,10 +70,38 @@
     <ClCompile Include="Traffic\Lane.cpp">
       <Filter>Traffic</Filter>
     </ClCompile>
-    <ClCompile Include="DataChannel.cpp">
+    <ClCompile Include="Traffic\Channel.cpp">
       <Filter>Traffic</Filter>
     </ClCompile>
-    <ClCompile Include="Traffic\Channel.cpp">
+    <ClCompile Include="Net\EndPoint.cpp">
+      <Filter>Net</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\EndPointChannel.cpp">
+      <Filter>Net</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\HttpHandler.cpp">
+      <Filter>Net</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\NoticeHandler.cpp">
+      <Filter>Net</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\Socket.cpp">
+      <Filter>Net</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\SocketChannel.cpp">
+      <Filter>Net</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\SocketHandler.cpp">
+      <Filter>Net</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\WebSocket.cpp">
+      <Filter>Net</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\WebSocketHandler.cpp">
+      <Filter>Net</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\AsyncHandler.cpp" />
+    <ClCompile Include="Traffic\DataChannel.cpp">
       <Filter>Traffic</Filter>
     </ClCompile>
   </ItemGroup>
@@ -95,9 +123,6 @@
     </ClInclude>
     <ClInclude Include="Logger\LogPool.h">
       <Filter>Logger</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\AsyncQueue.h">
-      <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Core\Command.h">
       <Filter>Core</Filter>
@@ -144,13 +169,41 @@
     <ClInclude Include="Traffic\Lane.h">
       <Filter>Traffic</Filter>
     </ClInclude>
-    <ClInclude Include="DataChannel.h">
+    <ClInclude Include="Traffic\Channel.h">
       <Filter>Traffic</Filter>
     </ClInclude>
     <ClInclude Include="Convert\StringFormatter.h">
-      <Filter>Core</Filter>
+      <Filter>Convert</Filter>
     </ClInclude>
-    <ClInclude Include="Traffic\Channel.h">
+    <ClInclude Include="Net\WebSocketHandler.h">
+      <Filter>Net</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\EndPoint.h">
+      <Filter>Net</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\EndPointChannel.h">
+      <Filter>Net</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\HttpHandler.h">
+      <Filter>Net</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\NoticeHandler.h">
+      <Filter>Net</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\Socket.h">
+      <Filter>Net</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\SocketChannel.h">
+      <Filter>Net</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\SocketHandler.h">
+      <Filter>Net</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\WebSocket.h">
+      <Filter>Net</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\AsyncHandler.h" />
+    <ClInclude Include="Traffic\DataChannel.h">
       <Filter>Traffic</Filter>
     </ClInclude>
   </ItemGroup>

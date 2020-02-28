@@ -106,12 +106,12 @@
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_WINSOCK_DEPRECATED_NO_WARNINGS;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <DisableSpecificWarnings>4819</DisableSpecificWarnings>
-      <AdditionalIncludeDirectories>./Traffic;./Text;./Convert;./Mqtt;./Logger;./Core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./Net;./Traffic;./Text;./Convert;./Mqtt;./Logger;./Core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>mosquitto.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Ws2_32.lib;mosquitto.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>./Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
@@ -152,13 +152,22 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Core\AsyncQueue.cpp" />
     <ClCompile Include="Convert\ByteFormatter.cpp" />
     <ClCompile Include="Core\Command.cpp" />
     <ClCompile Include="Core\DateTime.cpp" />
     <ClCompile Include="Core\FileConfig.cpp" />
-    <ClCompile Include="DataChannel.cpp" />
+    <ClCompile Include="Traffic\DataChannel.cpp" />
     <ClCompile Include="Mqtt\MqttChannel.cpp" />
+    <ClCompile Include="Net\AsyncHandler.cpp" />
+    <ClCompile Include="Net\EndPoint.cpp" />
+    <ClCompile Include="Net\EndPointChannel.cpp" />
+    <ClCompile Include="Net\HttpHandler.cpp" />
+    <ClCompile Include="Net\NoticeHandler.cpp" />
+    <ClCompile Include="Net\Socket.cpp" />
+    <ClCompile Include="Net\SocketChannel.cpp" />
+    <ClCompile Include="Net\SocketHandler.cpp" />
+    <ClCompile Include="Net\WebSocket.cpp" />
+    <ClCompile Include="Net\WebSocketHandler.cpp" />
     <ClCompile Include="Traffic\Lane.cpp" />
     <ClCompile Include="Text\Path.cpp" />
     <ClCompile Include="Text\Security.cpp" />
@@ -173,15 +182,24 @@
     <ClCompile Include="Traffic\Channel.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Core\AsyncQueue.h" />
     <ClInclude Include="Convert\ByteFormatter.h" />
     <ClInclude Include="Core\Command.h" />
     <ClInclude Include="Core\DateTime.h" />
     <ClInclude Include="Core\FileConfig.h" />
     <ClInclude Include="Convert\JsonFormatter.h" />
     <ClInclude Include="Core\Observable.h" />
-    <ClInclude Include="DataChannel.h" />
+    <ClInclude Include="Traffic\DataChannel.h" />
     <ClInclude Include="Mqtt\MqttChannel.h" />
+    <ClInclude Include="Net\AsyncHandler.h" />
+    <ClInclude Include="Net\EndPoint.h" />
+    <ClInclude Include="Net\EndPointChannel.h" />
+    <ClInclude Include="Net\HttpHandler.h" />
+    <ClInclude Include="Net\NoticeHandler.h" />
+    <ClInclude Include="Net\Socket.h" />
+    <ClInclude Include="Net\SocketChannel.h" />
+    <ClInclude Include="Net\SocketHandler.h" />
+    <ClInclude Include="Net\WebSocket.h" />
+    <ClInclude Include="Net\WebSocketHandler.h" />
     <ClInclude Include="Traffic\Shape.h" />
     <ClInclude Include="Traffic\Lane.h" />
     <ClInclude Include="Text\Path.h" />

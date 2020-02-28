@@ -36,11 +36,11 @@ bool MqttChannel::Send(const string& topic, const string& message, bool lock)
         if (lock)
         {
             lock_guard<mutex> lck(_mutex);
-            return mosquitto_publish(_mosq, NULL, topic.c_str(), message.size(), message.c_str(), 2, 0) == 0;
+            return mosquitto_publish(_mosq, NULL, topic.c_str(), static_cast<int>(message.size()), message.c_str(), 2, 0) == 0;
         }
         else
         {
-            return mosquitto_publish(_mosq, NULL, topic.c_str(), message.size(), message.c_str(), 2, 0) == 0;
+            return mosquitto_publish(_mosq, NULL, topic.c_str(), static_cast<int>(message.size()), message.c_str(), 2, 0) == 0;
         }
     }
     else
