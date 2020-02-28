@@ -55,7 +55,7 @@ void DataChannel::StartCore()
         if (currentMinute != _lastMinute)
         {
             _lastMinute = currentMinute;
-            CollectFlow();
+            CollectFlow(now);
         }
 
         //初始化通道集合
@@ -106,6 +106,7 @@ void DataChannel::HandleDetect(const string& json)
         vector<DetectItem> vehicles = GetDetectItems(json, "Vehicles", timeStamp);
         vector<DetectItem> bikes = GetDetectItems(json, "Bikes", timeStamp);
         vector<DetectItem> pedestrains = GetDetectItems(json, "Pedestrains", timeStamp);
+
         vector<IOItem> items = _channels[channelIndex]->Detect(vehicles, bikes, pedestrains);
 
         for (vector<IOItem>::iterator it = items.begin(); it != items.end(); ++it)
@@ -175,9 +176,8 @@ void DataChannel::HandleChannel(const string& json)
     }
 }
 
-void DataChannel::CollectFlow()
+void DataChannel::CollectFlow(const DateTime& now)
 {
-    DateTime now = DateTime::Now();
     long long timeStamp = DateTime(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), 0).Milliseconds();
     for (vector<Channel*>::iterator it = _channels.begin(); it != _channels.end(); ++it)
     {
