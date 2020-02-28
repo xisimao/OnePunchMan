@@ -46,24 +46,10 @@ int main()
         
      }*/
 
-    vector<int> is;
-    is.push_back(1);
-    is.push_back(2);
-    is.push_back(3);
-
-    set<int> iss;
-    iss.insert(1);
-    iss.insert(2);
-    iss.insert(3);
-    string json;
-    string aa("aaa");
-    JsonFormatter::Serialize(&json, "a", 123);
-    JsonFormatter::Serialize(&json, "b", aa);
-
-    //DataChannel channel("192.168.201.139", 1884);
-    //channel.Start();
-    //system("pause");
-    //channel.Stop();
+    DataChannel channel("192.168.201.139", 1884);
+    channel.Start();
+    system("pause");
+    channel.Stop();
     return 0;
 }
 

@@ -3,25 +3,26 @@
 using namespace std;
 using namespace Saitama;
 
-Lane::Lane(const string& id,Polygon region)
-	:_id(id),_region(region), _persons(0),_bikes(0), _motorcycles(0), _cars(0),_tricycles(0), _buss(0),_vans(0),_trucks(0),  _totalDistance(0.0), _totalTime(0.0), _lastInRegion(0), _vehicles(0), _totalSpan(0.0)
+Lane::Lane(const string& id,int index,Polygon region)
+	:_id(id),_index(index),_region(region),Status(false), _persons(0),_bikes(0), _motorcycles(0), _cars(0),_tricycles(0), _buss(0),_vans(0),_trucks(0),  _totalDistance(0.0), _totalTime(0.0), _lastInRegion(0), _vehicles(0), _totalSpan(0.0)
 {
 
 }
 
-const string& Lane::Id() const
+string Lane::Id()
 {
 	return _id;
 }
 
-void Lane::PushVehicle(const Rectangle& detectRegion, long long timeStamp, const string& data)
+int Lane::Index()
 {
-	if (_region.Contains(detectRegion.HitPoint()))
-	{
-		string id;
-		JsonFormatter::Deserialize(data, "GUID", &id);
-		DetectItem item(id, timeStamp, detectRegion);
+	return _index;
+}
 
+bool Lane::DetectVehicle(const DetectItem& item)
+{
+	if (_region.Contains(item.Region.HitPoint()))
+	{
 		std::lock_guard<std::mutex> lck(_mutex);
 		map<string, DetectItem>::iterator mit = _items.find(item.Id);
 
@@ -30,25 +31,23 @@ void Lane::PushVehicle(const Rectangle& detectRegion, long long timeStamp, const
 		//车头时距=所有进入区域的时间差的平均值
 		if (mit == _items.end())
 		{
-			int type = 0;
-			JsonFormatter::Deserialize(data,"Type", &type);
-			if (type == (int)DetectType::Car)
+			if (item.Type == (int)DetectType::Car)
 			{
 				_cars += 1;
 			}
-			else if (type == (int)DetectType::Tricycle)
+			else if (item.Type == (int)DetectType::Tricycle)
 			{
 				_tricycles += 1;
 			}
-			else if (type == (int)DetectType::Bus)
+			else if (item.Type == (int)DetectType::Bus)
 			{
 				_buss += 1;
 			}
-			else if (type == (int)DetectType::Van)
+			else if (item.Type == (int)DetectType::Van)
 			{
 				_vans += 1;
 			}
-			else if (type == (int)DetectType::Truck)
+			else if (item.Type == (int)DetectType::Truck)
 			{
 				_trucks += 1;
 			}
@@ -56,9 +55,9 @@ void Lane::PushVehicle(const Rectangle& detectRegion, long long timeStamp, const
 
 			if (_lastInRegion != 0)
 			{
-				_totalSpan += timeStamp - _lastInRegion;
+				_totalSpan += item.TimeStamp - _lastInRegion;
 			}
-			_lastInRegion = timeStamp;
+			_lastInRegion = item.TimeStamp;
 
 		}
 		//如果是已经记录的车则计算平均速度和时间占有率
@@ -68,49 +67,48 @@ void Lane::PushVehicle(const Rectangle& detectRegion, long long timeStamp, const
 		//时间占有率=总时间/一分钟
 		else
 		{
-			//LogPool::Debug(item.Region.Top().Distance(it->second.Region.Top()) * per, "m ", (static_cast<double>(item.TimeStamp) - static_cast<double>(it->second.TimeStamp)) / 1000.0, "sec ",distance/ time,"km/h");
 			_totalDistance += item.Region.HitPoint().Distance(mit->second.Region.HitPoint());
 			_totalTime += item.TimeStamp - mit->second.TimeStamp;
 		}
 		_items[item.Id] = item;
+		return true;
+	}
+	else
+	{
+		return false;
 	}
 }
 
-void Lane::PushBike(const Rectangle& detectRegion, long long timeStamp, const string& data)
+bool Lane::DetectBike(const DetectItem& item)
 {
-	if (_region.Contains(detectRegion.HitPoint()))
+	if (_region.Contains(item.Region.HitPoint()))
 	{
-		string id;
-		JsonFormatter::Deserialize(data,"GUID", &id);
-		DetectItem item(id, timeStamp, detectRegion);
-
 		std::lock_guard<std::mutex> lck(_mutex);
 		map<string, DetectItem>::iterator mit = _items.find(item.Id);
 		if (mit == _items.end())
 		{
-			int type = 0;
-			JsonFormatter::Deserialize(data, "Type", &type);
-			if (type == (int)DetectType::Bike)
+			if (item.Type == (int)DetectType::Bike)
 			{
 				_bikes += 1;
 			}
-			else if (type == (int)DetectType::Motobike)
+			else if (item.Type == (int)DetectType::Motobike)
 			{
 				_motorcycles += 1;
 			}
 		}
 		_items[item.Id] = item;
+		return true;
+	}
+	else
+	{
+		return false;
 	}
 }
 
-void Lane::PushPedestrain(const Rectangle& detectRegion, long long timeStamp, const string& data)
+bool Lane::DetectPedestrain(const DetectItem& item)
 {
-	if (_region.Contains(detectRegion.HitPoint()))
+	if (_region.Contains(item.Region.HitPoint()))
 	{
-		string id;
-		JsonFormatter::Deserialize(data, "GUID", &id);
-		DetectItem item(id, timeStamp, detectRegion);
-
 		std::lock_guard<std::mutex> lck(_mutex);
 		map<string, DetectItem>::iterator mit = _items.find(item.Id);
 		if (mit == _items.end())
@@ -118,6 +116,11 @@ void Lane::PushPedestrain(const Rectangle& detectRegion, long long timeStamp, co
 			_persons += 1;
 		}
 		_items[item.Id] = item;
+		return true;
+	}
+	else
+	{
+		return false;
 	}
 }
 
@@ -125,6 +128,9 @@ LaneItem Lane::Collect()
 {
 	std::lock_guard<std::mutex> lck(_mutex);
 	LaneItem item;
+	item.Id = _id;
+	item.Index = _index;
+
 	item.Persons = _persons;
 	item.Bikes = _bikes;
 	item.Motorcycles = _motorcycles;
@@ -136,10 +142,8 @@ LaneItem Lane::Collect()
 
 	const double per = 0.1;
 	item.Speed = (_totalDistance * per / 1000.0) / (_totalTime / 3600000.0);
-	item.HeadDistance = _totalSpan / (static_cast<long long>(_vehicles) - 1) / 1000.0;
+	item.HeadDistance = _vehicles>1?_totalSpan / (static_cast<long long>(_vehicles) - 1) / 1000.0:0;
 	item.TimeOccupancy = _totalTime / 60000.0 * 100;
-
-	LogPool::Information("cars:", _vehicles, "bikes:", _bikes + _motorcycles, "persons:", _persons, item.Speed, "km/h ", item.HeadDistance, "sec ", item.TimeOccupancy, "%");
 
 	_persons = 0;
 	_bikes = 0;

@@ -81,7 +81,7 @@ namespace Saitama
 			Stopped = 2
 		};
 
-		//轮询中睡眠时间
+		//轮询中睡眠时间(毫秒)
 		static const int PollTime;
 
 		/**

@@ -4,16 +4,70 @@
 #include <vector>
 
 #include "Shape.h"
-#include "Detect.h"
 #include "LogPool.h"
 #include "JsonFormatter.h"
+#include "Observable.h"
 
 namespace Saitama
 {
+	//检测项
+	class DetectItem
+	{
+	public:
+
+		/**
+		* @brief: 构造函数
+		*/
+		DetectItem()
+			:DetectItem(std::string(), 0, 0, Rectangle())
+		{
+
+		}
+
+		/**
+		* @brief: 构造函数
+		* @param: id 检测元素编号
+		* @param: timeStamp 时间戳
+		* @param: region 检测元素区域
+		*/
+		DetectItem(const std::string& id, int timeStamp, int type, const Rectangle& region)
+			:Id(id), Type(type), TimeStamp(timeStamp), Region(region)
+		{
+
+		}
+
+		//检测元素编号
+		std::string Id;
+		//检测元素类型
+		int Type;
+		//时间戳
+		long long TimeStamp;
+		//检测元素区域
+		Rectangle Region;
+	};
+
+	//检测元素类型
+	enum class DetectType
+	{
+		Pedestrain = 1,
+		Bike = 2,
+		Motobike = 3,
+		Car = 4,
+		Tricycle = 5,
+		Bus = 6,
+		Van = 7,
+		Truck = 8
+	};
+
 	//车道计算数据项
 	class LaneItem
 	{
 	public:
+
+		//车道编号
+		std::string Id;
+		//车道序号
+		int Index;
 
 		//行人流量
 		int Persons;
@@ -48,39 +102,43 @@ namespace Saitama
 		/**
 		* @brief: 构造函数
 		* @param: id 车道编号
+		* @param: index 车道序号
 		* @param: region 车道区域
 		*/
-		Lane(const std::string& id,Polygon region);
-
+		Lane(const std::string& id,int index,Polygon region);
+	
 		/**
 		* @brief: 获取车道编号
 		* @return: 车道编号
 		*/
-		const std::string& Id() const;
+		std::string Id();
 
 		/**
-		* @brief: 推送机动车检测数据
-		* @param: detectRegion 检测区域
-		* @param: timeStamp 时间戳
-		* @param: data 车道数据
+		* @brief: 获取车道序号
+		* @return: 车道序号
 		*/
-		void PushVehicle(const Rectangle& detectRegion, long long timeStamp, const std::string& data);
+		int Index();
 
 		/**
-		* @brief: 推送非机动车检测数据
-		* @param: detectRegion 检测区域
-		* @param: timeStamp 时间戳
-		* @param: data 车道数据
+		* @brief: 检测机动车
+		* @param: item 检测项
+		* @return: 如果检测项在车道内返回true，否则返回false
 		*/
-		void PushBike(const Rectangle& detectRegion, long long timeStamp, const std::string& data);
+		bool DetectVehicle(const DetectItem& item);
 
 		/**
-		* @brief: 推送行人检测数据
-		* @param: detectRegion 检测区域
-		* @param: timeStamp 时间戳
-		* @param: data 车道数据
+		* @brief: 检测非机动车
+		* @param: item 检测项
+		* @return: 如果检测项在车道内返回true，否则返回false
 		*/
-		void PushPedestrain(const Rectangle& detectRegion,long long timeStamp,const std::string& data);
+		bool DetectBike(const DetectItem& item);
+
+		/**
+		* @brief: 检测行人
+		* @param: item 检测项
+		* @return: 如果检测项在车道内返回true，否则返回false
+		*/
+		bool DetectPedestrain(const DetectItem& item);
 
 		/**
 		* @brief: 收集车道计算数据
@@ -88,16 +146,20 @@ namespace Saitama
 		*/
 		LaneItem Collect();
 
-	private:
+		//车道IO状态
+		bool Status;
 
-		//车道编号
-		std::string _id;
+	private:
 
 		//同步锁
 		std::mutex _mutex;
 		//当前检测结果集合
 		std::map<std::string, DetectItem> _items;
 
+		//车道编号
+		std::string _id;
+		//车道序号
+		int _index;
 		//当前检测区域
 		Polygon _region;
 

@@ -73,9 +73,10 @@ namespace Saitama
          * @brief: mqtt发送消息
          * @param: topic 主题
          * @param: message 发送的消息
+         * @param: lock 是否加同步锁
          * @return: 返回true表示发送成功
          */
-        bool Send(const std::string& topic,const std::string& message);
+        bool Send(const std::string& topic,const std::string& message,bool lock =true);
 
     protected:
 
@@ -87,7 +88,11 @@ namespace Saitama
         static const int KeepAlive;
         //连接mqtt服务端的时间间隔(毫秒)
         static const int ConnectSpan;
+        //线程休眠时间(毫秒)
+        static const int PollTime;
 
+        //同步锁
+        std::mutex _mutex;
         //mosq实例
         struct mosquitto* _mosq;
 
@@ -98,7 +103,8 @@ namespace Saitama
         //订阅的主题集合
         std::vector<std::string> _topics;
 
-
+        //连接状态
+        int _status = -1;
     };
 }
 

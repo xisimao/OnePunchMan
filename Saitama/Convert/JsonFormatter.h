@@ -36,6 +36,61 @@ namespace Saitama
 		}
 
 		/**
+		* @brief: 序列化Json
+		* @param: json 用于存放序列化结果的字符串
+		* @param: key 字段的键
+		* @param: value 字段的值
+		*/
+		static void SerializeClass(std::string* json, const std::string& key, const std::string& value)
+		{
+			if (json->empty())
+			{
+				json->append("{");
+			}
+			else
+			{
+				json->erase(json->end() - 1, json->end());
+				json->append(",");
+			}
+			json->append(StringEx::Combine("\"", key, "\":"));
+			json->append(value);
+			json->append("}");
+		}
+
+
+		/**
+		* @brief: 序列化Json
+		* @param: json 用于存放序列化结果的字符串
+		* @param: key 字段的键
+		* @param: value 字段的值
+		*/
+		static void SerializeArray(std::string* json, const std::string& key, const std::vector<std::string>& values)
+		{
+			if (json->empty())
+			{
+				json->append("{");
+			}
+			else
+			{
+				json->erase(json->end() - 1, json->end());
+				json->append(",");
+			}
+			json->append(StringEx::Combine("\"", key, "\":"));
+			json->append("[");
+			for (std::vector<std::string>::const_iterator it = values.begin(); it != values.end(); ++it)
+			{
+				json->append(*it);
+				json->append(",");
+			}
+			if (!values.empty())
+			{
+				json->erase(json->end() - 1, json->end());
+			}
+			json->append("]");
+			json->append("}");
+		}
+
+		/**
 		* @brief: 反序列化字段。
 		* @param: json json字符串
 		* @param: key 字段键
@@ -127,6 +182,16 @@ namespace Saitama
 		static void SerializeValue(std::string* json,const T& value)
 		{
 			json->append(StringEx::ToString(value));
+		}
+
+		/**
+		* @brief: 序列化字符串
+		* @param: json 用于存放序列化结果的字符串
+		* @param: value 字段的值
+		*/
+		static void SerializeValue(std::string* json, const char* value)
+		{
+			json->append(StringEx::Combine("\"", value, "\""));
 		}
 
 		/**

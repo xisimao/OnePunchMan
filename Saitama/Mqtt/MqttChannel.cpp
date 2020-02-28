@@ -5,9 +5,10 @@ using namespace Saitama;
 
 const int MqttChannel::KeepAlive = 60;
 const int MqttChannel::ConnectSpan = 5000;
+const int MqttChannel::PollTime = 100;
 
 MqttChannel::MqttChannel(const string& ip, int port, std::vector<std::string> topics)
-    :ThreadObject("mqtt"), _mosq(NULL), _ip(ip), _port(port), _topics(topics)
+    :ThreadObject("mqtt"), _mosq(NULL), _ip(ip), _port(port), _topics(topics), _status(-1)
 {
 
 }
@@ -28,13 +29,25 @@ void MqttChannel::ReceivedEventHandler(struct mosquitto* mosq, void* userdata, c
     static_cast<MqttChannel*>(userdata)->MqttReceived.Notice(&args);
 }
 
-bool MqttChannel::Send(const string& topic, const string& message)
+bool MqttChannel::Send(const string& topic, const string& message, bool lock)
 {
-    if (_mosq == NULL)
+    if (_status==0)
+    {
+        if (lock)
+        {
+            lock_guard<mutex> lck(_mutex);
+            return mosquitto_publish(_mosq, NULL, topic.c_str(), message.size(), message.c_str(), 2, 0) == 0;
+        }
+        else
+        {
+            return mosquitto_publish(_mosq, NULL, topic.c_str(), message.size(), message.c_str(), 2, 0) == 0;
+        }
+    }
+    else
     {
         return false;
     }
-    return mosquitto_publish(_mosq, NULL, topic.c_str(), message.size(), message.c_str(), 2, 0)==0;
+    return true;
 }
 
 void MqttChannel::StartCore()
@@ -50,6 +63,7 @@ void MqttChannel::StartCore()
     else
     {
         LogPool::Information(LogEvent::Mqtt, "mqtt init failed");
+        mosquitto_destroy(_mosq);
         mosquitto_lib_cleanup();
         return;
     }
@@ -57,26 +71,31 @@ void MqttChannel::StartCore()
     mosquitto_connect_callback_set(_mosq, ConnectedEventHandler);
     mosquitto_message_callback_set(_mosq, ReceivedEventHandler);
 
-    int connectResult = -1;
     while (!Cancelled())
     {
-        if (connectResult == 0)
+        unique_lock<mutex> lck(_mutex);
+        if (_status == 0)
         {
-            int i = mosquitto_loop(_mosq, -1, 1);
+            int i = mosquitto_loop(_mosq, 0, 1);
             if (i == 4)
             {
-                if (connectResult == 0)
+                if (_status == 0)
                 {
-                    connectResult = -1;
+                    _status = -1;
                     LogPool::Information(LogEvent::Mqtt, "mqtt disconnect");
                 }
             }
         }
         else
         {
-            connectResult = mosquitto_connect(_mosq, _ip.c_str(), _port, KeepAlive);
+            _status = mosquitto_connect(_mosq, _ip.c_str(), _port, KeepAlive);
         }
-        if (connectResult != 0)
+        lck.unlock();
+        if (_status == 0)
+        {
+            this_thread::sleep_for(chrono::milliseconds(PollTime));
+        }
+        else
         {
             this_thread::sleep_for(chrono::milliseconds(ConnectSpan));
         }

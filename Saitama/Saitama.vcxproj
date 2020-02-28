@@ -170,7 +170,7 @@
     <ClCompile Include="Logger\LogReader.cpp" />
     <ClCompile Include="Saitama.cpp" />
     <ClCompile Include="Text\StringEx.cpp" />
-    <ClCompile Include="Traffic\VideoChannel.cpp" />
+    <ClCompile Include="Traffic\Channel.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Core\AsyncQueue.h" />
@@ -181,7 +181,6 @@
     <ClInclude Include="Convert\JsonFormatter.h" />
     <ClInclude Include="Core\Observable.h" />
     <ClInclude Include="DataChannel.h" />
-    <ClInclude Include="Traffic\Detect.h" />
     <ClInclude Include="Mqtt\MqttChannel.h" />
     <ClInclude Include="Traffic\Shape.h" />
     <ClInclude Include="Traffic\Lane.h" />
@@ -198,7 +197,7 @@
     <ClInclude Include="Mqtt\mosquitto.h" />
     <ClInclude Include="Mqtt\mosquittopp.h" />
     <ClInclude Include="Mqtt\mosquitto_plugin.h" />
-    <ClInclude Include="Traffic\VideoChannel.h" />
+    <ClInclude Include="Traffic\Channel.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

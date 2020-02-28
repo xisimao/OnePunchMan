@@ -67,13 +67,13 @@
     <ClCompile Include="Mqtt\MqttChannel.cpp">
       <Filter>Mqtt</Filter>
     </ClCompile>
-    <ClCompile Include="Traffic\VideoChannel.cpp">
-      <Filter>Traffic</Filter>
-    </ClCompile>
     <ClCompile Include="Traffic\Lane.cpp">
       <Filter>Traffic</Filter>
     </ClCompile>
     <ClCompile Include="DataChannel.cpp">
+      <Filter>Traffic</Filter>
+    </ClCompile>
+    <ClCompile Include="Traffic\Channel.cpp">
       <Filter>Traffic</Filter>
     </ClCompile>
   </ItemGroup>
@@ -126,9 +126,6 @@
     <ClInclude Include="Convert\JsonFormatter.h">
       <Filter>Convert</Filter>
     </ClInclude>
-    <ClInclude Include="Convert\StringFormatter.h">
-      <Filter>Convert</Filter>
-    </ClInclude>
     <ClInclude Include="Text\StringEx.h">
       <Filter>Text</Filter>
     </ClInclude>
@@ -144,16 +141,16 @@
     <ClInclude Include="Traffic\Shape.h">
       <Filter>Traffic</Filter>
     </ClInclude>
-    <ClInclude Include="Traffic\VideoChannel.h">
-      <Filter>Traffic</Filter>
-    </ClInclude>
     <ClInclude Include="Traffic\Lane.h">
       <Filter>Traffic</Filter>
     </ClInclude>
-    <ClInclude Include="Traffic\Detect.h">
+    <ClInclude Include="DataChannel.h">
       <Filter>Traffic</Filter>
     </ClInclude>
-    <ClInclude Include="DataChannel.h">
+    <ClInclude Include="Convert\StringFormatter.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Traffic\Channel.h">
       <Filter>Traffic</Filter>
     </ClInclude>
   </ItemGroup>
