@@ -6,7 +6,7 @@ using namespace Saitama;
 const int EndPointChannel::ConnectionSpan = 3;
 
 EndPointChannel::EndPointChannel()
-	:ThreadObject("endpointpoll")
+	:ThreadObject("connection")
 {
 }
 

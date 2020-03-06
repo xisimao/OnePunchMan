@@ -39,14 +39,23 @@ namespace Saitama
 		}
 
 		/**
+		* @brief: 是否为空值
+		* @return: 返回ture表示空值
+		*/
+		bool Empty()
+		{
+			return _x == 0 && _y == 0;
+		}
+
+		/**
 		* @brief: 计算改点到点的距离
 		* @param: p 另外一个点
 		* @return: 两点的距离
 		*/
-		double Distance(const Point& p) const
+		double Distance(const Point& point) const
 		{
-			int x = _x - p._x;
-			int y = _y - p._y;
+			int x = _x - point._x;
+			int y = _y - point._y;
 			return sqrt(static_cast<double>(x)* static_cast<double>(x) + static_cast<double>(y)* static_cast<double>(y));
 		}
 
@@ -58,6 +67,68 @@ namespace Saitama
 		int _y;
 	};
 
+	class Line
+	{
+	public:
+		Line()
+			:Line(Point(),Point())
+		{
+
+		}
+
+		Line(const Point& point1, const Point& point2)
+			:_point1(point1),_point2(point2)
+		{
+
+		}
+
+		const Point& Point1() const
+		{
+			return _point1;
+		}
+
+		const Point& Point2() const
+		{
+			return _point1;
+		}
+
+		Point Intersect(const Line& line)
+		{
+			int s02_x, s02_y, s10_x, s10_y, s32_x, s32_y, s_numer, t_numer, denom, t;
+			s10_x = _point2.X() - _point1.X();
+			s10_y = _point2.Y() - _point1.Y();
+			s32_x = line._point2.X() - line._point1.X();
+			s32_y = line._point2.Y() - line._point1.Y();
+
+			denom = s10_x * s32_y - s32_x * s10_y;
+			if (denom == 0)
+				return Point(); // Collinear
+			bool denomPositive = denom > 0;
+
+			s02_x = _point1.X() - line._point1.X();
+			s02_y = _point1.Y() - line._point1.Y();
+			s_numer = s10_x * s02_y - s10_y * s02_x;
+			if ((s_numer < 0) == denomPositive)
+				return Point(); // No collision
+
+			t_numer = s32_x * s02_y - s32_y * s02_x;
+			if ((t_numer < 0) == denomPositive)
+				return Point(); // No collision
+
+			if (((s_numer > denom) == denomPositive) || ((t_numer > denom) == denomPositive))
+				return Point(); // No collision
+			// Collision detected
+			t = t_numer / denom;
+
+			return Point(_point1.X() + (t * s10_x), _point1.Y() + (t * s10_y));
+		}
+
+	private:
+
+		Point _point1;
+		Point _point2;
+	};
+
 	//矩形
 	class Rectangle
 	{
@@ -67,20 +138,19 @@ namespace Saitama
 		* @brief: 构造函数
 		*/
 		Rectangle()
-			:Rectangle(0, 0, 0, 0)
+			:Rectangle(Point(), 0, 0)
 		{
 
 		}
 
 		/**
 		* @brief: 构造函数
-		* @param: x 矩形左上角的x值
-		* @param: y 矩形左上角的y值
+		* @param: top 矩形左上角的点
 		* @param: width 矩形的宽度
 		* @param: height 矩形的高度
 		*/
-		Rectangle(int x, int y, int width, int height)
-			:_top(x, y), _width(width), _height(height), _hitPoint(x+width/2,y)
+		Rectangle(const Point& top, int width, int height)
+			:_top(top), _width(width), _height(height), _hitPoint(top.X()+width/2,top.Y())
 		{
 
 		}

@@ -1,0 +1,22 @@
+﻿  正在验证源
+  正在将源远程复制到“192.168.1.7”
+  正在验证体系结构
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Application Type\Linux\1.0\Linux.targets(183,5): warning : 部署中使用的远程系统具有不兼容的平台体系结构(“ARM64”、“x64”)。
+  正在验证体系结构
+  正在启动远程生成
+  正在编译源:
+  main.cpp
+D:\code\OnePunchMan\Genos\main.cpp(70,17): warning : unused variable 'channelIndex' [-Wunused-variable]
+D:\code\OnePunchMan\Genos\main.cpp(70,17): warning :              int channelIndex = sqlite3_column_int(stmt, 2);
+D:\code\OnePunchMan\Genos\main.cpp(70,17): warning :                  ^~~~~~~~~~~~
+D:\code\OnePunchMan\Genos\main.cpp(71,17): warning : unused variable 'channelType' [-Wunused-variable]
+D:\code\OnePunchMan\Genos\main.cpp(71,17): warning :              int channelType = sqlite3_column_int(stmt, 3);
+D:\code\OnePunchMan\Genos\main.cpp(71,17): warning :                  ^~~~~~~~~~~
+D:\code\OnePunchMan\Genos\main.cpp(76,17): warning : unused variable 'rtspProtocol' [-Wunused-variable]
+D:\code\OnePunchMan\Genos\main.cpp(76,17): warning :              int rtspProtocol = sqlite3_column_int(stmt, 6);
+D:\code\OnePunchMan\Genos\main.cpp(76,17): warning :                  ^~~~~~~~~~~~
+D:\code\OnePunchMan\Genos\main.cpp(77,18): warning : unused variable 'isLoop' [-Wunused-variable]
+D:\code\OnePunchMan\Genos\main.cpp(77,18): warning :              bool isLoop = sqlite3_column_int(stmt, 7);
+D:\code\OnePunchMan\Genos\main.cpp(77,18): warning :                   ^~~~~~
+  正在链接对象
+  Genos.vcxproj -> D:\code\OnePunchMan\Genos\bin\ARM64\Debug\Genos.out

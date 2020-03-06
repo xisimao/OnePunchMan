@@ -4,6 +4,7 @@
 #include <ostream>
 #include <mutex>
 
+#include "LogEvent.h"
 #include "DateTime.h"
 
 namespace Saitama
@@ -24,14 +25,6 @@ namespace Saitama
 		Information = 2,
 		Warning = 3,
 		Error = 4
-	};
-
-	//日志事件
-	enum class LogEvent :int
-	{
-		None=0,
-		Thread=1,
-		Mqtt=2
 	};
 
 	//日志项

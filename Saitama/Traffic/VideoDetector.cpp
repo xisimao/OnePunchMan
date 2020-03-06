@@ -1,23 +1,23 @@
-#include "Channel.h"
+#include "VideoDetector.h"
 
 using namespace std;
 using namespace Saitama;
 
-Channel::Channel()
+VideoDetector::VideoDetector()
 	:Id(),Index()
 {
 
 }
 
-Channel::~Channel()
+VideoDetector::~VideoDetector()
 {
 	ClearLanes();
 }
 
-void Channel::ClearLanes()
+void VideoDetector::ClearLanes()
 {
 	lock_guard<mutex> lck(_laneMutex);
-	for (vector<Lane*>::iterator it = _lanes.begin(); it != _lanes.end(); ++it)
+	for (vector<LaneDetector*>::iterator it = _lanes.begin(); it != _lanes.end(); ++it)
 	{
 		delete (*it);
 	}
@@ -25,18 +25,18 @@ void Channel::ClearLanes()
 }
 
 
-void Channel::UpdateLanes(const vector<Lane*>& lanes)
+void VideoDetector::UpdateLanes(const vector<LaneDetector*>& lanes)
 {
 	ClearLanes();
 	lock_guard<mutex> lck(_laneMutex);
 	_lanes.assign(lanes.begin(), lanes.end());
 }
 
-vector<IOItem> Channel::Detect(const std::vector<DetectItem>& vehicles, const std::vector<DetectItem>& bikes, std::vector<DetectItem>& pedestrains)
+vector<IOItem> VideoDetector::Detect(const std::vector<DetectItem>& vehicles, const std::vector<DetectItem>& bikes, std::vector<DetectItem>& pedestrains)
 {
 	vector<IOItem> items;
 	lock_guard<mutex> laneLock(_laneMutex);
-	for (vector<Lane*>::iterator lit = _lanes.begin(); lit != _lanes.end(); ++lit)
+	for (vector<LaneDetector*>::iterator lit = _lanes.begin(); lit != _lanes.end(); ++lit)
 	{
 		bool status = false;
 		for (vector<DetectItem>::const_iterator dit = vehicles.begin(); dit != vehicles.end(); ++dit)
@@ -72,11 +72,11 @@ vector<IOItem> Channel::Detect(const std::vector<DetectItem>& vehicles, const st
 	return items;
 }
 
-vector<LaneItem> Channel::Collect()
+vector<LaneItem> VideoDetector::Collect()
 {
 	vector<LaneItem> lanes;
 	lock_guard<mutex> lck(_laneMutex);
-	for (vector<Lane*>::iterator it = _lanes.begin(); it != _lanes.end(); ++it)
+	for (vector<LaneDetector*>::iterator it = _lanes.begin(); it != _lanes.end(); ++it)
 	{
 		lanes.push_back((*it)->Collect());
 	}

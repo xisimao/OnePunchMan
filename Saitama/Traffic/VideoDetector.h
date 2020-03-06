@@ -2,7 +2,7 @@
 #include <queue>
 #include <vector>
 
-#include "Lane.h"
+#include "LaneDetector.h"
 #include "Thread.h"
 
 namespace Saitama
@@ -46,26 +46,26 @@ namespace Saitama
 		int Status;
 	};
 
-	//视频通道计算线程
-	class Channel
+	//视频数据计算
+	class VideoDetector
 	{
 	public:
 
 		/**
 		* @brief: 构造函数
 		*/
-		Channel();
+		VideoDetector();
 
 		/**
 		* @brief: 析构函数
 		*/
-		~Channel();
+		~VideoDetector();
 
 		/**
 		* @brief: 更新车道集合
 		* @param: lanes 车道集合
 		*/
-		void UpdateLanes(const std::vector<Lane*>& lanes);
+		void UpdateLanes(const std::vector<LaneDetector*>& lanes);
 
 		/**
 		* @brief: 检测数据
@@ -104,7 +104,7 @@ namespace Saitama
 		//同步锁
 		std::mutex _laneMutex;
 		//车道集合
-		std::vector<Lane*> _lanes;
+		std::vector<LaneDetector*> _lanes;
 	};
 }
 

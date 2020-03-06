@@ -3,7 +3,9 @@
 using namespace std;
 using namespace Saitama;
 
-unsigned int ByteFormatter::Serialize(char* buffer, unsigned int capacity, bool value)
+
+template<>
+unsigned int ByteFormatter::Serialize(char* buffer, unsigned int capacity, const bool& value)
 {
 	if (capacity < sizeof(bool))
 	{
@@ -13,20 +15,23 @@ unsigned int ByteFormatter::Serialize(char* buffer, unsigned int capacity, bool 
 	return sizeof(bool);
 }
 
-unsigned int ByteFormatter::Serialize(char* buffer, unsigned int capacity, float value)
+template<>
+unsigned int ByteFormatter::Serialize(char* buffer, unsigned int capacity, const float& value)
 {
 	Float_Convert fc;
 	fc.F = value;
 	return Serialize(buffer, capacity, fc.I);
 }
 
-unsigned int ByteFormatter::Serialize(char* buffer, unsigned int capacity, double value)
+template<>
+unsigned int ByteFormatter::Serialize(char* buffer, unsigned int capacity, const double& value)
 {
 	Double_Convert dc;
 	dc.D = value;
 	return Serialize(buffer, capacity, dc.L);
 }
 
+template<>
 unsigned int ByteFormatter::Serialize(char* buffer, unsigned int capacity, const std::string& value)
 {
 	if (capacity < value.length()+1)
@@ -38,6 +43,7 @@ unsigned int ByteFormatter::Serialize(char* buffer, unsigned int capacity, const
 	return static_cast<unsigned int>(value.length() + 1);
 }
 
+template<>
 unsigned int ByteFormatter::Deserialize(const char* buffer, unsigned int size, bool* value)
 {
 	if (size < sizeof(bool))
@@ -48,6 +54,7 @@ unsigned int ByteFormatter::Deserialize(const char* buffer, unsigned int size, b
 	return sizeof(bool);
 }
 
+template<>
 unsigned int ByteFormatter::Deserialize(const char* buffer, unsigned int size, float* value)
 {
 	Float_Convert fc;
@@ -56,6 +63,7 @@ unsigned int ByteFormatter::Deserialize(const char* buffer, unsigned int size, f
 	return result;
 }
 
+template<>
 unsigned int ByteFormatter::Deserialize(const char* buffer, unsigned int size, double* value)
 {
 
@@ -65,6 +73,7 @@ unsigned int ByteFormatter::Deserialize(const char* buffer, unsigned int size, d
 	return result;
 }
 
+template<>
 unsigned int ByteFormatter::Deserialize(const char* buffer, unsigned int size, std::string* value)
 {
 	if (size < value->length())

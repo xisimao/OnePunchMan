@@ -3,18 +3,44 @@
 using namespace std;
 using namespace Saitama;
 
+const string HttpFunction::Get="GET";
+const string HttpFunction::Post = "POST";
+const string HttpFunction::Delete = "DELETE";
+const string HttpFunction::Options = "OPTIONS";
+
 SocketHandler* HttpHandler::CloneCore()
 {
 	HttpHandler* handler= new HttpHandler();
-	handler->Requested.Copy(&this->Requested);
+	handler->HttpReceived.Copy(&this->HttpReceived);
 	return handler;
+}
+
+std::string HttpHandler::BuildResponse(HttpCode code, const string& origin, const string& responseJson)
+{
+	stringstream ss;
+	ss << "HTTP/1.1 " << static_cast<int>(code) << "\r\n"
+		<< "Vary: Origin\r\n"
+		<< "Vary: Access-Control-Request-Method\r\n"
+		<< "Vary: Access-Control-Request-Headers\r\n"
+		<< "Access-Control-Allow-Origin: " << origin << "\r\n"
+		<< "Access-Control-Allow-Methods: GET,POST,DELETE,PUT\r\n"
+		<< "Access-Control-Allow-Headers: content-type\r\n"
+		<< "Access-Control-Allow-Credentials: true\r\n"
+		<< "Access-Control-Max-Age: 3600\r\n"
+		<< "Allow: GET, HEAD, POST, PUT, DELETE, OPTIONS, PATCH\r\n"
+		<< "Content-Type: application/json;charset=UTF-8\r\n"
+		<< "Content-Length: 0\r\n"
+		<< "Date: " << DateTime::UtcNow().ToString("%a, %d %b %Y %H:%M:%S GMT") << "\r\n"
+		<< "\r\n"
+		<< responseJson;
+	return ss.str();
 }
 
 SocketHandler::ProtocolPacket HttpHandler::HandleCore(int socket, unsigned int ip, unsigned short port, string::const_iterator begin, string::const_iterator end)
 {
 	string httpProtocol(begin, end);
 	vector<string> lines = StringEx::Split(httpProtocol, "\r\n",false);
-	HttpEventArgs e;
+	HttpReceivedEventArgs e;
 	e.Socket = socket;
 	if (lines.empty())
 	{
@@ -23,9 +49,12 @@ SocketHandler::ProtocolPacket HttpHandler::HandleCore(int socket, unsigned int i
 	}
 	else
 	{
-		vector<string> columns = StringEx::Split(lines[0], " ", true);
-	 
-		string func = StringEx::ToUpper(columns[0]);
+		//第一行
+		vector<string> datas = StringEx::Split(lines[0], " ", true);
+		string func = StringEx::ToUpper(datas[0]);
+		e.Function = func;
+		e.Url = datas[1];
+
 		//跨域
 		string origin;
 		for (unsigned int i = 1; i < lines.size(); ++i)
@@ -38,51 +67,21 @@ SocketHandler::ProtocolPacket HttpHandler::HandleCore(int socket, unsigned int i
 			}
 		}
 
-		e.Url = columns[1];
 		size_t start = lines[0].size() + 2;
-
-		if (func.compare("OPTIONS") == 0)
+		if (func.compare(HttpFunction::Options) == 0)
 		{
-			//找到空行，确定总长度
-			bool hasEmpty = false;
-			for (unsigned int i=1; i < lines.size(); ++i)
-			{
-				start += lines[i].size() + 2;
-				if (lines[i].empty())
-				{
-					hasEmpty = true;
-					break;
-				}
-			}
-			if (hasEmpty)
-			{
-				e.Code = HttpCode::OK;
-				stringstream ss;
-				ss << "HTTP/1.1 " << static_cast<int>(e.Code) << "\r\n"
-					<< "Vary: Origin\r\n"
-					<< "Vary: Access-Control-Request-Method\r\n"
-					<< "Vary: Access-Control-Request-Headers\r\n"
-					<< "Access-Control-Allow-Origin: " << origin << "\r\n"
-					<< "Access-Control-Allow-Methods: GET,POST,DELETE,PUT\r\n"
-					<< "Access-Control-Allow-Headers: content-type\r\n"
-					<< "Access-Control-Allow-Credentials: true\r\n"
-					<< "Access-Control-Max-Age: 3600\r\n"
-					<< "Allow: GET, HEAD, POST, PUT, DELETE, OPTIONS, PATCH\r\n"
-					<< "Content-Type: application/json;charset=UTF-8\r\n"
-					<< "Content-Length: 0\r\n"
-					<< "Date: " << DateTime::UtcNow().ToString("%a, %d %b %Y %H:%M:%S GMT") << "\r\n"
-					<< "\r\n"
-					<< e.Response;
-				SendTcp(socket, ss.str(), NULL);
-				return ProtocolPacket(AnalysisResult::Request, 0, static_cast<unsigned int>(start), 0, 0);
-			}
-			else
-			{
-				LogPool::Warning("options not found empty", httpProtocol);
-				return ProtocolPacket(AnalysisResult::Half, 0, static_cast<unsigned int>(httpProtocol.size()), 0, 0);
-			}
+			string response = BuildResponse(HttpCode::OK, origin, e.ResponseJson);
+			SendTcp(socket, response, NULL);
+			return ProtocolPacket(AnalysisResult::Request, 0, static_cast<unsigned int>(start), 0, 0);
 		}
-		else if (func.compare("POST") == 0)
+		else if (func.compare(HttpFunction::Get) == 0|| func.compare(HttpFunction::Delete) == 0)
+		{
+			HttpReceived.Notice(&e);
+			string response = BuildResponse(HttpCode::OK, origin, e.ResponseJson);
+			SendTcp(socket, response, NULL);
+			return ProtocolPacket(AnalysisResult::Request, 0, static_cast<unsigned int>(httpProtocol.size()), 0, 0);
+		}
+		else if (func.compare(HttpFunction::Post) == 0)
 		{
 			//分析body位置
 			unsigned int length = 0;
@@ -124,26 +123,10 @@ SocketHandler::ProtocolPacket HttpHandler::HandleCore(int socket, unsigned int i
 					}
 					else
 					{
-						e.Request = httpProtocol.substr(start, length);
-						//需要从外边获取code和response
-						Requested.Notice(&e);
-						stringstream ss;
-						ss << "HTTP/1.1 " << static_cast<int>(e.Code) << "\r\n"
-							<< "Vary: Origin\r\n"
-							<< "Vary: Access-Control-Request-Method\r\n"
-							<< "Vary: Access-Control-Request-Headers\r\n"
-							<< "Access-Control-Allow-Origin: " << origin << "\r\n"
-							<< "Access-Control-Allow-Methods: GET,POST,DELETE,PUT\r\n"
-							<< "Access-Control-Allow-Headers: content-type\r\n"
-							<< "Access-Control-Allow-Credentials: true\r\n"
-							<< "Access-Control-Max-Age: 3600\r\n"
-							<< "Allow: GET, HEAD, POST, PUT, DELETE, OPTIONS, PATCH\r\n"
-							<< "Content-Type: application/json;charset=UTF-8\r\n"
-							<< "Content-Length: " << e.Response.size() << "\r\n"
-							<< "Date: " << DateTime::UtcNow().ToString("%a, %d %b %Y %H:%M:%S GMT") << "\r\n"
-							<< "\r\n"
-							<< e.Response;
-						SendTcp(socket, ss.str(), NULL);
+						e.RequestJson = httpProtocol.substr(start, length);
+						HttpReceived.Notice(&e);
+						string response = BuildResponse(HttpCode::OK, origin, e.ResponseJson);
+						SendTcp(socket, response, NULL);
 						return ProtocolPacket(AnalysisResult::Request, 0, static_cast<unsigned int>(start + length), 0, 0);
 					}
 				}

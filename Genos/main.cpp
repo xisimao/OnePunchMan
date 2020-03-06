@@ -1,20 +1,14 @@
-#include <cstdio>
-
-int main()
-{
-    printf("hello from Genos!\n");
-    return 0;
-}
-
-
-
 //#include <stdio.h>
 //#include <stdlib.h>
-//#include <mosquitto.h>
 //#include <string.h>
+////#include "mosquitto.h"
+////#include "Sqlite.h"
+//
+//using namespace std;
+//using namespace Saitama;
 //
 //#define HOST "localhost"
-//#define PORT  1883
+//#define PORT  1884
 //#define KEEP_ALIVE 60
 //
 //bool session = true;
@@ -60,6 +54,34 @@ int main()
 //
 //int main()
 //{
+//
+//    string sql("Select * FROM Flow_Channel");
+//    string error;
+//    Sqlite sqlite;
+//    sqlite3_stmt* stmt = sqlite.ExecuteRows(sql, &error);
+//    if (stmt != NULL)
+//    {
+//        while (sqlite3_step(stmt) == SQLITE_ROW) {
+//
+//            string channelId = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0)) == NULL ?
+//                "" : string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0)));
+//            string channelName = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1)) == NULL ?
+//                "" : string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1)));
+//            int channelIndex = sqlite3_column_int(stmt, 2);
+//            int channelType = sqlite3_column_int(stmt, 3);
+//            string rtspUser = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4)) == NULL ?
+//                "" : string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4)));
+//            string rtspPwd = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 5)) == NULL ?
+//                "" : string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 5)));
+//            int rtspProtocol = sqlite3_column_int(stmt, 6);
+//            bool isLoop = sqlite3_column_int(stmt, 7);
+//            cout << channelId << endl;
+//            cout << channelName << endl;
+//        }
+//        sqlite3_finalize(stmt);
+//    }
+//
+//
 //    struct mosquitto* mosq = NULL;
 //    //libmosquitto ¿â³õÊ¼»¯
 //    mosquitto_lib_init();

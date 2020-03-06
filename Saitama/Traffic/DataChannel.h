@@ -1,15 +1,18 @@
 #pragma once
-
 #include "Thread.h"
 #include "Observable.h"
 #include "JsonFormatter.h"
 #include "MqttChannel.h"
-#include "Channel.h"
+#include "VideoDetector.h"
+#include "FlowChannelData.h"
+#include "HttpHandler.h"
 
 namespace Saitama
 {
     //数据分发和收集线程
-    class DataChannel :public ThreadObject, public IObserver<MqttReceivedEventArgs>
+    class DataChannel :public ThreadObject
+        , public IObserver<MqttReceivedEventArgs>
+        , public IObserver<HttpReceivedEventArgs>
     {
     public:
 
@@ -25,6 +28,12 @@ namespace Saitama
         * @param: e mqtt消息接收事件参数
         */
         void Update(MqttReceivedEventArgs* e);
+
+        /**
+        * @brief: http消息接收事件函数
+        * @param: e http消息接收事件参数
+        */
+        void Update(HttpReceivedEventArgs* e);
 
     protected:
 
@@ -47,23 +56,35 @@ namespace Saitama
         void HandleDetect(const std::string& json);
 
         /**
-        * @brief: 处理通道数据
-        * @param: json json数据
-        */
-        void HandleChannel(const std::string& json);
-
-        /**
         * @brief: 收集流量数据
         * @param: now 当前时间
         */
         void CollectFlow(const DateTime& now);
 
+        /**
+        * @brief: 获取url是否是指定的前缀
+        * @param: url url
+        * @param: key 前缀
+        * @return: 返回true表示url有指定前缀
+        */
+        bool UrlStartWith(const std::string& url, const std::string& key);
+
+        /**
+        * @brief: 获取url中的编号
+        * @param: url url
+        * @param: key 前缀
+        * @return: 获取成功返回编号否则返回空字符串
+        */
+        std::string GetId(const std::string& url, const std::string& key);
+
+        /**
+        * @brief: 更新通道信息
+        * @param: channel 通道信息
+        */
+        void UpdateChannel(const FlowChannel& channel);
+
         //检测数据 sdk->程序
         static const std::string DetectTopic;
-        //通道 web->程序
-        static const std::string ChannelTopic;
-        //请求通道 程序->web
-        static const std::string ChannelRequestTopic;
         //流量 程序->web
         static const std::string TrafficTopic;
         //IO状态 程序->web
@@ -78,7 +99,7 @@ namespace Saitama
         int _port;
 
         //视频通道线程集合
-        std::vector<Channel*> _channels;
+        std::vector<VideoDetector*> _channels;
 
         //上一次收集数据的分钟
         int _lastMinute;

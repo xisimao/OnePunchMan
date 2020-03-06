@@ -95,7 +95,7 @@ namespace Saitama
 	};
 
 	//车道数据计算
-	class Lane
+	class LaneDetector
 	{
 	public:
 
@@ -105,7 +105,7 @@ namespace Saitama
 		* @param: index 车道序号
 		* @param: region 车道区域
 		*/
-		Lane(const std::string& id,int index,Polygon region);
+		LaneDetector(const std::string& id,int index,Polygon region);
 	
 		/**
 		* @brief: 获取车道编号

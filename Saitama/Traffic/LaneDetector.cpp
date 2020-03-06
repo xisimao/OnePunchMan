@@ -1,25 +1,25 @@
-#include "Lane.h"
+#include "LaneDetector.h"
 
 using namespace std;
 using namespace Saitama;
 
-Lane::Lane(const string& id,int index,Polygon region)
+LaneDetector::LaneDetector(const string& id,int index,Polygon region)
 	:_id(id),_index(index),_region(region),Status(false), _persons(0),_bikes(0), _motorcycles(0), _cars(0),_tricycles(0), _buss(0),_vans(0),_trucks(0),  _totalDistance(0.0), _totalTime(0), _lastInRegion(0), _vehicles(0), _totalSpan(0)
 {
 
 }
 
-string Lane::Id()
+string LaneDetector::Id()
 {
 	return _id;
 }
 
-int Lane::Index()
+int LaneDetector::Index()
 {
 	return _index;
 }
 
-bool Lane::DetectVehicle(const DetectItem& item)
+bool LaneDetector::DetectVehicle(const DetectItem& item)
 {
 	if (_region.Contains(item.Region.HitPoint()))
 	{
@@ -79,7 +79,7 @@ bool Lane::DetectVehicle(const DetectItem& item)
 	}
 }
 
-bool Lane::DetectBike(const DetectItem& item)
+bool LaneDetector::DetectBike(const DetectItem& item)
 {
 	if (_region.Contains(item.Region.HitPoint()))
 	{
@@ -105,7 +105,7 @@ bool Lane::DetectBike(const DetectItem& item)
 	}
 }
 
-bool Lane::DetectPedestrain(const DetectItem& item)
+bool LaneDetector::DetectPedestrain(const DetectItem& item)
 {
 	if (_region.Contains(item.Region.HitPoint()))
 	{
@@ -124,7 +124,7 @@ bool Lane::DetectPedestrain(const DetectItem& item)
 	}
 }
 
-LaneItem Lane::Collect()
+LaneItem LaneDetector::Collect()
 {
 	std::lock_guard<std::mutex> lck(_mutex);
 	LaneItem item;

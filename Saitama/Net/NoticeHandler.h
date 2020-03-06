@@ -1,5 +1,4 @@
 ﻿#pragma once
-
 #include <string.h> //linux memcpy
 
 #include "AsyncHandler.h"

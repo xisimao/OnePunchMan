@@ -74,7 +74,7 @@ namespace Saitama
 		static std::vector<std::string> Split(const std::string& value, const std::string& separator, bool filterEmpty = false);
 
 		/**
-		* @brief: 将字符串变为数字或布尔类型
+		* @brief: 将字符串变为数字类型
 		* @param: value 字符串
 		* @param: t 数字或布尔类型指针
 		* @return: 转换成功返回true
@@ -89,11 +89,47 @@ namespace Saitama
 		}
 
 		/**
+		* @brief: 将字符串变为布尔类型
+		* @param: value 字符串
+		* @param: t 数字或布尔类型指针
+		* @return: 转换成功返回true
+		*/
+		template<>
+		static bool Convert(const std::string& value, bool* t)
+		{
+			int i = 0;
+			std::stringstream ss;
+			ss << value;
+			ss >> i;
+			if (ss.fail())
+			{
+				if (ToUpper(value).compare("TRUE")==0)
+				{
+					*t = true;
+				}
+				else if (ToUpper(value).compare("FALSE")==0)
+				{
+					*t = false;
+				}
+				else
+				{
+					return false;
+				}
+			}
+			else
+			{
+				*t = i == 0 ? false : true;
+			}
+			return true;
+		}
+
+		/**
 		* @brief: 将字符串变为字符串,该方法是为了泛型做补充
 		* @param: value 字符串
 		* @param: t 字符串指针
 		* @return: 固定返回true
 		*/
+		template<>
 		static bool Convert(const std::string& value, std::string* t)
 		{
 			t->assign(value);
