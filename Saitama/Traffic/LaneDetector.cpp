@@ -19,9 +19,50 @@ int LaneDetector::Index()
 	return _index;
 }
 
+LaneItem LaneDetector::Collect()
+{
+	std::lock_guard<std::mutex> lck(_mutex);
+	LaneItem item;
+	item.Id = _id;
+	item.Index = _index;
+
+	item.Persons = _persons;
+	item.Bikes = _bikes;
+	item.Motorcycles = _motorcycles;
+	item.Tricycles = _tricycles;
+	item.Trucks = _trucks;
+	item.Vans = _vans;
+	item.Cars = _cars;
+	item.Buss = _buss;
+
+	const double per = 0.1;
+	item.Speed = (_totalDistance * per / 1000.0) / (_totalTime / 3600000.0);
+	item.HeadDistance = _vehicles > 1 ? _totalSpan / (static_cast<long long>(_vehicles) - 1) / 1000.0 : 0;
+	item.TimeOccupancy = _totalTime / 60000.0 * 100;
+
+	_persons = 0;
+	_bikes = 0;
+	_motorcycles = 0;
+	_tricycles = 0;
+	_trucks = 0;
+	_vans = 0;
+	_cars = 0;
+	_buss = 0;
+
+	_totalDistance = 0.0;
+	_totalTime = 0;
+
+	_lastInRegion = 0;
+	_vehicles = 0;
+	_totalSpan = 0;
+
+	_items.clear();
+	return item;
+}
+
 bool LaneDetector::DetectVehicle(const DetectItem& item)
 {
-	if (_region.Contains(item.Region.HitPoint()))
+	if (Contains(item))
 	{
 		std::lock_guard<std::mutex> lck(_mutex);
 		map<string, DetectItem>::iterator mit = _items.find(item.Id);
@@ -81,7 +122,7 @@ bool LaneDetector::DetectVehicle(const DetectItem& item)
 
 bool LaneDetector::DetectBike(const DetectItem& item)
 {
-	if (_region.Contains(item.Region.HitPoint()))
+	if (Contains(item))
 	{
 		std::lock_guard<std::mutex> lck(_mutex);
 		map<string, DetectItem>::iterator mit = _items.find(item.Id);
@@ -107,7 +148,7 @@ bool LaneDetector::DetectBike(const DetectItem& item)
 
 bool LaneDetector::DetectPedestrain(const DetectItem& item)
 {
-	if (_region.Contains(item.Region.HitPoint()))
+	if (Contains(item))
 	{
 		std::lock_guard<std::mutex> lck(_mutex);
 		map<string, DetectItem>::iterator mit = _items.find(item.Id);
@@ -124,46 +165,7 @@ bool LaneDetector::DetectPedestrain(const DetectItem& item)
 	}
 }
 
-LaneItem LaneDetector::Collect()
+bool LaneDetector::Contains(const DetectItem& item)
 {
-	std::lock_guard<std::mutex> lck(_mutex);
-	LaneItem item;
-	item.Id = _id;
-	item.Index = _index;
-
-	item.Persons = _persons;
-	item.Bikes = _bikes;
-	item.Motorcycles = _motorcycles;
-	item.Tricycles = _tricycles;
-	item.Trucks = _trucks;
-	item.Vans = _vans;
-	item.Cars = _cars;
-	item.Buss = _buss;
-
-	const double per = 0.1;
-	item.Speed = (_totalDistance * per / 1000.0) / (_totalTime / 3600000.0);
-	item.HeadDistance = _vehicles>1?_totalSpan / (static_cast<long long>(_vehicles) - 1) / 1000.0:0;
-	item.TimeOccupancy = _totalTime / 60000.0 * 100;
-
-	_persons = 0;
-	_bikes = 0;
-	_motorcycles = 0;
-	_tricycles = 0;
-	_trucks = 0;
-	_vans = 0;
-	_cars = 0;
-	_buss = 0;
-
-	_totalDistance = 0.0;
-	_totalTime = 0;
-
-	_lastInRegion = 0;
-	_vehicles = 0;
-	_totalSpan = 0;
-
-	_items.clear();
-	return item;
+	return _region.Contains(item.Region.HitPoint());
 }
-
-
-

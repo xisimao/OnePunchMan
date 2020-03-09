@@ -19,19 +19,30 @@ namespace Saitama
 		* @brief: 构造函数
 		*/
 		DetectItem()
-			:DetectItem(std::string(), 0, 0, Rectangle())
+			:DetectItem(Rectangle(),std::string(), 0, 0)
 		{
 
 		}
 
 		/**
 		* @brief: 构造函数
-		* @param: id 检测元素编号
-		* @param: timeStamp 时间戳
 		* @param: region 检测元素区域
 		*/
-		DetectItem(const std::string& id, long long timeStamp, int type, const Rectangle& region)
-			:Id(id), Type(type), TimeStamp(timeStamp), Region(region)
+		DetectItem(const Rectangle& region)
+			:DetectItem(region,std::string(),0,0)
+		{
+
+		}
+
+		/**
+		* @brief: 构造函数
+		* @param: region 检测元素区域
+		* @param: id 检测元素编号
+		* @param: timeStamp 时间戳
+		* @param: type 检测元素类型
+		*/
+		DetectItem(const Rectangle& region,const std::string& id, long long timeStamp, int type)
+			:Region(region), Id(id), TimeStamp(timeStamp), Type(type)
 		{
 
 		}
@@ -94,6 +105,53 @@ namespace Saitama
 		double TimeOccupancy;
 	};
 
+	class VideoStruct
+	{
+	public:
+		std::string ChannelId;
+		std::string LaneId;
+		std::string Image;
+		std::string Feature;
+		int VideoStructType;
+	};
+
+	class VideoVehicle :public VideoStruct
+	{
+	public:
+
+		VideoVehicle()
+		{
+			VideoStructType = 1;
+		}
+		int CarType;
+		int CarColor;
+		std::string CarBrand;
+		int PlateType;
+		std::string PlateNumber;
+	};
+
+	class VideoBike :public VideoStruct
+	{
+	public:
+		VideoBike()
+		{
+			VideoStructType = 2;
+		}
+		int BikeType;
+	};
+
+	class VideoPedestrain :public VideoStruct
+	{
+	public:
+		VideoPedestrain()
+		{
+			VideoStructType = 3;
+		}
+		int Sex;
+		int Age;
+		int UpperColor;
+	};
+
 	//车道数据计算
 	class LaneDetector
 	{
@@ -139,6 +197,13 @@ namespace Saitama
 		* @return: 如果检测项在车道内返回true，否则返回false
 		*/
 		bool DetectPedestrain(const DetectItem& item);
+
+		/**
+		* @brief: 检测数据是否在车道范围内
+		* @param: item 检测项
+		* @return: 在车道内返回true
+		*/
+		bool Contains(const DetectItem& item);
 
 		/**
 		* @brief: 收集车道计算数据

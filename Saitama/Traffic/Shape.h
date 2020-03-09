@@ -150,7 +150,7 @@ namespace Saitama
 		* @param: height 矩形的高度
 		*/
 		Rectangle(const Point& top, int width, int height)
-			:_top(top), _width(width), _height(height), _hitPoint(top.X()+width/2,top.Y())
+			:_top(top), _width(width), _height(height), _hitPoint(top.X()+width/2,top.Y()+height)
 		{
 
 		}

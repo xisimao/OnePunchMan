@@ -32,6 +32,17 @@ void VideoDetector::UpdateLanes(const vector<LaneDetector*>& lanes)
 	_lanes.assign(lanes.begin(), lanes.end());
 }
 
+vector<LaneItem> VideoDetector::Collect()
+{
+	vector<LaneItem> lanes;
+	lock_guard<mutex> lck(_laneMutex);
+	for (vector<LaneDetector*>::iterator it = _lanes.begin(); it != _lanes.end(); ++it)
+	{
+		lanes.push_back((*it)->Collect());
+	}
+	return lanes;
+}
+
 vector<IOItem> VideoDetector::Detect(const std::vector<DetectItem>& vehicles, const std::vector<DetectItem>& bikes, std::vector<DetectItem>& pedestrains)
 {
 	vector<IOItem> items;
@@ -72,15 +83,17 @@ vector<IOItem> VideoDetector::Detect(const std::vector<DetectItem>& vehicles, co
 	return items;
 }
 
-vector<LaneItem> VideoDetector::Collect()
+string VideoDetector::Contains(const DetectItem& item)
 {
-	vector<LaneItem> lanes;
-	lock_guard<mutex> lck(_laneMutex);
-	for (vector<LaneDetector*>::iterator it = _lanes.begin(); it != _lanes.end(); ++it)
+	lock_guard<mutex> laneLock(_laneMutex);
+	for (vector<LaneDetector*>::iterator lit = _lanes.begin(); lit != _lanes.end(); ++lit)
 	{
-		lanes.push_back((*it)->Collect());
+		if ((*lit)->Contains(item))
+		{
+			return (*lit)->Id();
+		}
 	}
-	return lanes;
+	return string();
 }
 
 

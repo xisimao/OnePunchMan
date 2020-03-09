@@ -77,6 +77,13 @@ namespace Saitama
 		std::vector<IOItem> Detect(const std::vector<DetectItem>& vehicles,const std::vector<DetectItem>& bikes,std::vector<DetectItem>& pedestrains);
 
 		/**
+		* @brief: 检测数据是否在车道范围内
+		* @param: item 检测项
+		* @return: 在车道内返回车道编号，否则返回空字符串
+		*/
+		std::string Contains(const DetectItem& item);
+
+		/**
 		* @brief: 收集视频通道计算数据
 		* @return: 视频通道计算数据
 		*/

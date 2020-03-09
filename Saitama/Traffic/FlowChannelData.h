@@ -26,6 +26,7 @@ namespace Saitama
 		std::string StopLine;
 		std::string LaneLine1;
 		std::string LaneLine2;
+		std::string Region;
 	};
 
 	//流量视频通道

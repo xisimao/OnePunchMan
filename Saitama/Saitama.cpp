@@ -72,34 +72,19 @@ int main()
 //FlowChannel channel = data.Get("cid");
 //data.Delete("cid");
 
-   /* DateTime logDate(2020, 2, 23);
-    std::tuple<std::vector<LogItem>, int> v = LogReader::ReadLogs(LogPool::Directory(), "System", logDate, 0, 0, 1, 1, false);
-    for (std::vector<LogItem>::iterator it = std::get<0>(v).begin(); it != std::get<0>(v).end(); ++it)
-    {
-        int channelIndex = -1;
-        JsonFormatter::Deserialize(it->Content, "ChannelIndex", &channelIndex);
-        vector<string> lanes;
-        JsonFormatter::Deserialize(it->Content, "CrossingFlows", &lanes);
-        vector<Polygon> polygons;
-        for (vector<string>::iterator it = lanes.begin(); it != lanes.end(); ++it)
-        {
-            vector<string> pointPairs;
-            JsonFormatter::Deserialize(*it, "region", &pointPairs);
-            vector<Point> points;
+    //DateTime logDate(2020, 3, 9);
+    //std::tuple<std::vector<LogItem>, int> v = LogReader::ReadLogs(LogPool::Directory(), "System", logDate, 0, 0, 1, 1, false);
+    //for (std::vector<LogItem>::iterator it = std::get<0>(v).begin(); it != std::get<0>(v).end(); ++it)
+    //{
+    //    string json = it->Content;
+    //    vector<string> imageJsons = JsonFormatter::DeserializeJsons(json, "ImageResults");
+    //    vector<string> vehicleJsons = JsonFormatter::DeserializeJsons(imageJsons[0], "Vehicles");
 
-            for (vector<string>::iterator pit = pointPairs.begin();pit != pointPairs.end(); ++pit)
-            {
-                vector<int> values;
-                JsonFormatter::DeserializeValue(*pit, &values);
-                if (values.size() == 2)
-                {
-                    points.push_back(Point(values[0], values[1]));
-                }
-            }
-            polygons.push_back(Polygon(points));
-        }
-        
-     }*/
+    //    string detectJson = JsonFormatter::DeserializeJson(vehicleJsons[0], "Detect");
+    //    string bodyJson = JsonFormatter::DeserializeJson(detectJson, "Body");
+    //    vector<string> rect;
+    //    JsonFormatter::Deserialize(bodyJson, "Rect", &rect);
+    // }
 
    
 
