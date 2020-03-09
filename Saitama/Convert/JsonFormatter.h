@@ -19,7 +19,7 @@ namespace Saitama
 		* @param: value 字段的值
 		*/
 		template<typename T>
-		static void Serialize(std::string* json, const std::string& key,const T& value)
+		static void Serialize(std::string* json, const std::string& key,T value)
 		{
 			if (json->empty())
 			{
@@ -31,7 +31,7 @@ namespace Saitama
 				json->append(",");
 			}
 			json->append(StringEx::Combine("\"", key, "\":"));
-			SerializeValue(json, value);
+			ConvertToJson(json, value);
 			json->append("}");
 		}
 
@@ -95,7 +95,7 @@ namespace Saitama
 			}
 			else
 			{
-				return DeserializeValue(json, t, index + pattern.size());
+				return ConvertToValue(json, t, index + pattern.size());
 			}
 		}
 
@@ -169,17 +169,24 @@ namespace Saitama
 		* @return: 解析成功返回解析的总字符数，否则返回0
 		*/
 		template<typename T>
-		static bool DeserializeValue(const std::string& json, T* t, size_t offset)
+		static size_t ConvertToValue(const std::string& json, T* t, size_t offset)
 		{
 			const std::string Tail = ",}]";
 			size_t endIndex = json.find_first_of(Tail, offset);
 			if (endIndex == std::string::npos)
 			{
-				return false;
+				return 0;
 			}
 			else
 			{
-				return StringEx::Convert(json.substr(offset, endIndex - offset), t);
+				if (StringEx::Convert(json.substr(offset, endIndex - offset), t))
+				{
+					return endIndex - offset;
+				}
+				else
+				{
+					return 0;
+				}
 			}
 		}
 
@@ -191,27 +198,57 @@ namespace Saitama
 		* @return: 解析成功返回解析的总字符数，否则返回0
 		*/
 		template<>
-		static bool DeserializeValue(const std::string& json, std::string* t, size_t offset)
+		static size_t ConvertToValue(const std::string& json, std::string* t, size_t offset)
 		{
 			size_t startIndex = json.find('"', offset);
 			if (startIndex == std::string::npos)
 			{
-				return false;
+				return 0;
 			}
 			else
 			{
-				const std::string Tail = ",}]";
+				size_t endIndex = startIndex;
+				while (true)
+				{
+					endIndex = json.find('"', endIndex + 1);
+					if (endIndex == std::string::npos)
+					{
+						return 0;
+					}
+					else
+					{
+						if (json[endIndex - 1] == '\\')
+						{
+							startIndex = endIndex - 1;
+						}
+						else
+						{
+							break;
+						}
+					}
+				}
+				t->assign(json.substr(startIndex+1,endIndex-startIndex-1));
+				return endIndex - startIndex+1;
+				/*const std::string Tail = ",}]";
 				size_t endIndex = json.find_first_of(Tail, offset);
 				if (endIndex == std::string::npos)
 				{
-					return false;
+					return 0;
 				}
 				else
 				{
-					endIndex = json.substr(startIndex, endIndex - startIndex).find_last_of('"');
-					*t = json.substr(startIndex + 1, endIndex - 1);
-					return true;
-				}
+					endIndex = json.find_last_of('"', endIndex);
+					if (endIndex == std::string::npos||endIndex<=startIndex)
+					{
+						return 0;
+					}
+					else
+					{
+						size_t valueSize = endIndex - startIndex - 1;
+						*t = json.substr(startIndex + 1, valueSize);
+						return valueSize + 2;
+					}
+				}*/
 			}
 		}
 
@@ -223,74 +260,75 @@ namespace Saitama
 		* @return: 解析成功返回解析的总字符数，否则返回0
 		*/
 		template<typename T>
-		static bool DeserializeValue(const std::string& json, std::vector<T>* v, size_t offset)
+		static size_t ConvertToValue(const std::string& json, std::vector<T>* v, size_t offset)
 		{
-			size_t startIndex = json.find('[', offset);
-			if (startIndex == std::string::npos)
+			std::string arrayValue = DeserializeByTag(json, offset, '[', ']');
+			if (arrayValue.empty())
 			{
-				return false;
+				return 0;
 			}
 			else
 			{
+				size_t startIndex = 0;
 				while (true)
 				{
-					std::string value;
-					startIndex += DeserializeValue(json, &value, startIndex);
-					if (value.empty())
+					startIndex += 1;
+					T t;
+					size_t result = ConvertToValue(arrayValue, &t, startIndex);
+					if (result == 0)
 					{
 						break;
 					}
 					else
 					{
-						T t;
-						StringEx::Convert(value, &t);
+						startIndex += result;
 						v->push_back(t);
 					}
 				}
-				return true;
+				return arrayValue.size();
 			}
 		}
 
 	private:
 
 		/**
-		* @brief: 序列化数字和布尔类
+		* @brief: 将数字和布尔类转换为json
 		* @param: json 用于存放序列化结果的字符串
 		* @param: value 字段的值
 		*/
 		template<typename T>
-		static void SerializeValue(std::string* json,const T& value)
+		static void ConvertToJson(std::string* json,T value)
 		{
 			json->append(StringEx::ToString(value));
 		}
 
 		/**
-		* @brief: 序列化字符串
+		* @brief: 将字符串转换为json
 		* @param: json 用于存放序列化结果的字符串
 		* @param: value 字段的值
 		*/
-		static void SerializeValue(std::string* json, const char* value)
+		static void ConvertToJson(std::string* json, const char* value)
 		{
 			json->append(StringEx::Combine("\"", value, "\""));
 		}
 
 		/**
-		* @brief: 序列化字符串
+		* @brief: 将字符串转换为json
 		* @param: json 用于存放序列化结果的字符串
 		* @param: value 字段的值
 		*/
-		static void SerializeValue(std::string* json, const std::string& value)
+		static void ConvertToJson(std::string* json, const std::string& value)
 		{
 			json->append(StringEx::Combine("\"", value, "\""));
 		}
 
 		/**
-		* @brief: 序列化列表
+		* @brief: 将集合转换为json
 		* @param: json 用于存放序列化结果的字符串
 		* @param: values 字段的值列表
 		*/
 		template<typename T>
-		static void SerializeValue(std::string* json, const std::vector<T>& values)
+		static void Convert(std::string* json, const std::vector<T>& values)
 		{
 			json->append("[");
 			for_each(values.begin(), values.end(), [&json](const T& value) {
@@ -305,27 +343,7 @@ namespace Saitama
 		}
 
 		/**
-		* @brief: 序列化集合
-		* @param: json 用于存放序列化结果的字符串
-		* @param: values 字段的值集合
-		*/
-		template<typename T>
-		static void SerializeValue(std::string* json, const std::set<T>& values)
-		{
-			json->append("[");
-			for_each(values.begin(), values.end(), [&json](const T& value) {
-
-				SerializeValue(json, value);
-				});
-			if (!values.empty())
-			{
-				json->erase(json->end() - 1);
-			}
-			json->append("]");
-		}
-
-		/**
-		* @brief: 根据标记截取，适合类和数组。
+		* @brief: 根据标记反序列化，支持类和数组。
 		* @param: json json字符串
 		* @param: offset 从开头略过的字符数
 		* @param: head 开始标记
@@ -360,8 +378,6 @@ namespace Saitama
 				}
 				return std::string();
 			}
-
-		
 		}
 
 	};
