@@ -391,7 +391,7 @@ void DataChannel::CollectFlow(const DateTime& now)
             string lanesJson;
             for (vector<LaneItem>::iterator lit = lanes.begin(); lit != lanes.end(); ++lit)
             {
-                LogPool::Debug("channel:", (*it)->Index, "lane:", lit->Index, "cars:", lit->Cars + lit->Tricycles + lit->Buss + lit->Vans + lit->Trucks, "bikes:", lit->Bikes + lit->Motorcycles, "persons:", lit->Persons, lit->Speed, "km/h ", lit->HeadDistance, "sec ", lit->TimeOccupancy, "%");
+                LogPool::Debug("channel:", (*it)->Index, "lane:", lit->Index, "vehicles:", lit->Cars + lit->Tricycles + lit->Buss + lit->Vans + lit->Trucks, "bikes:", lit->Bikes + lit->Motorcycles, "persons:", lit->Persons, lit->Speed, "km/h ", lit->HeadDistance, "sec ", lit->TimeOccupancy, "%");
 
                 string laneJson;
 
@@ -407,9 +407,9 @@ void DataChannel::CollectFlow(const DateTime& now)
                 JsonFormatter::Serialize(&laneJson, "vans", lit->Vans);
                 JsonFormatter::Serialize(&laneJson, "trucks", lit->Trucks);
 
-                JsonFormatter::Serialize(&laneJson, "averageSpeed", lit->Speed);
+                JsonFormatter::Serialize(&laneJson, "averageSpeed", static_cast<int>(lit->Speed));
                 JsonFormatter::Serialize(&laneJson, "headDistance", lit->HeadDistance);
-                JsonFormatter::Serialize(&laneJson, "timeOccupancy", lit->TimeOccupancy);
+                JsonFormatter::Serialize(&laneJson, "timeOccupancy", static_cast<int>(lit->TimeOccupancy));
                 JsonFormatter::SerializeItem(&lanesJson, laneJson);
             }
             JsonFormatter::SerializeJson(&channelJson, "crossingData", lanesJson);
