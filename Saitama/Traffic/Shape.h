@@ -208,6 +208,11 @@ namespace Saitama
 		*/
 		bool Contains(const Point& point)
 		{
+			return true;
+			if (_points.empty())
+			{
+				return false;
+			}
 			int intersectCount= 0;
 			Point p1= _points[0];
 			for (int i = 1; i <= _points.size(); i++) {

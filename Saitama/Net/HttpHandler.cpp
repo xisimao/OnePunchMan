@@ -5,6 +5,7 @@ using namespace Saitama;
 
 const string HttpFunction::Get="GET";
 const string HttpFunction::Post = "POST";
+const string HttpFunction::Put = "PUT";
 const string HttpFunction::Delete = "DELETE";
 const string HttpFunction::Options = "OPTIONS";
 
@@ -29,7 +30,7 @@ std::string HttpHandler::BuildResponse(HttpCode code, const string& origin, cons
 		<< "Access-Control-Max-Age: 3600\r\n"
 		<< "Allow: GET, HEAD, POST, PUT, DELETE, OPTIONS, PATCH\r\n"
 		<< "Content-Type: application/json;charset=UTF-8\r\n"
-		<< "Content-Length: 0\r\n"
+		<< "Content-Length: "<<responseJson.size()<<"\r\n"
 		<< "Date: " << DateTime::UtcNow().ToString("%a, %d %b %Y %H:%M:%S GMT") << "\r\n"
 		<< "\r\n"
 		<< responseJson;
@@ -39,7 +40,7 @@ std::string HttpHandler::BuildResponse(HttpCode code, const string& origin, cons
 SocketHandler::ProtocolPacket HttpHandler::HandleCore(int socket, unsigned int ip, unsigned short port, string::const_iterator begin, string::const_iterator end)
 {
 	string httpProtocol(begin, end);
-	vector<string> lines = StringEx::Split(httpProtocol, "\r\n",false);
+	vector<string> lines = StringEx::Split(httpProtocol, "\r\n");
 	HttpReceivedEventArgs e;
 	e.Socket = socket;
 	if (lines.empty())
@@ -74,14 +75,16 @@ SocketHandler::ProtocolPacket HttpHandler::HandleCore(int socket, unsigned int i
 			SendTcp(socket, response, NULL);
 			return ProtocolPacket(AnalysisResult::Request, 0, static_cast<unsigned int>(start), 0, 0);
 		}
-		else if (func.compare(HttpFunction::Get) == 0|| func.compare(HttpFunction::Delete) == 0)
+		else if (func.compare(HttpFunction::Get) == 0
+			|| func.compare(HttpFunction::Delete) == 0)
 		{
 			HttpReceived.Notice(&e);
 			string response = BuildResponse(HttpCode::OK, origin, e.ResponseJson);
 			SendTcp(socket, response, NULL);
 			return ProtocolPacket(AnalysisResult::Request, 0, static_cast<unsigned int>(httpProtocol.size()), 0, 0);
 		}
-		else if (func.compare(HttpFunction::Post) == 0)
+		else if (func.compare(HttpFunction::Post) == 0
+			|| func.compare(HttpFunction::Put) == 0)
 		{
 			//分析body位置
 			unsigned int length = 0;
@@ -94,7 +97,7 @@ SocketHandler::ProtocolPacket HttpHandler::HandleCore(int socket, unsigned int i
 				vector<string> values = StringEx::Split(lines[i], ":", true);
 				if (values.size() > 1 && StringEx::ToUpper(values[0]).compare("CONTENT-LENGTH") == 0)
 				{
-					StringEx::Convert<unsigned int>(values[1], &length);
+					length=StringEx::Convert<unsigned int>(values[1]);
 					//已经处理过该行，需要对序号加1，否则下面的循环的第一个还是这行
 					++i;
 					hasLength = true;

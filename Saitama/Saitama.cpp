@@ -27,14 +27,14 @@ int main()
     DataChannel channel("192.168.201.139", 1884);
     HttpHandler handler;
     handler.HttpReceived.Subscribe(&channel);
-    maid.AddListenEndPoint(EndPoint(7777), &handler);
+    maid.AddListenEndPoint(EndPoint(7772), &handler);
     channel.Start();
     maid.Start();
 
     system("pause");
 
-    maid.Stop();
-    channel.Stop();
+    //maid.Stop();
+    //channel.Stop();
     //FlowChannelData data;
 
 //FlowChannel newChannel;

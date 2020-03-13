@@ -10,16 +10,10 @@ LogPool::LogPool()
 	//读取文件日志参数
 	FileConfig config;
 
-	//读取目录
-	if (!config.ReadConfig<string>("Logger.File.Directory", &_directory))
-	{
-		_directory = "Log";
-	}
+	//读取配置文件
+	_directory = config.Get("Logger.File.Directory", string("log"));
+	_holdDays = config.Get<unsigned int>("Logger.File.HoldDays");
 
-	if (!config.ReadConfig<unsigned int>("Logger.File.HoldDays", &_holdDays))
-	{
-		_holdDays = 0;
-	}
 	//添加文件日志
 	unsigned int index = 1;
 	string loggerTag = StringEx::Combine("Logger.", index);
@@ -35,7 +29,7 @@ LogPool::LogPool()
 		}
 		else if (type == LogType::File)
 		{
-			string name = ReadName(config, loggerTag + ".Name");
+			string name = config.Get<string>(loggerTag + ".Name");
 			if (!name.empty())
 			{
 				_loggers.insert(new FileLogger(minLevel, maxLevel, name, _directory,_holdDays));
@@ -79,8 +73,8 @@ void LogPool::RemoveLogger(Logger* logger)
 
 LogType LogPool::ReadType(const FileConfig& config, const string& key)
 {
-	string value;
-	if (config.ReadConfig<string>(key, &value))
+	string value = config.Get<string>(key);
+	if (!value.empty())
 	{
 		value = StringEx::ToUpper(value);
 		if (value.compare("CONSOLE") == 0)
@@ -95,17 +89,10 @@ LogType LogPool::ReadType(const FileConfig& config, const string& key)
 	return LogType::None;
 }
 
-string LogPool::ReadName(const FileConfig& config, const string& key)
-{
-	string value;
-	config.ReadConfig<string>(key, &value);
-	return value;
-}
-
 LogLevel LogPool::ReadLevel(const FileConfig& config, const string& key)
 {
-	string value;
-	if (config.ReadConfig<string>(key, &value))
+	string value = config.Get<string>(key);
+	if (!value.empty())
 	{
 		value = StringEx::ToUpper(value);
 		if (value.compare("DEBUG") == 0)

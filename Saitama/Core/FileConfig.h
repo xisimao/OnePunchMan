@@ -27,51 +27,51 @@ namespace Saitama
 		/**
 		* @brief: 读取配置文件
 		* @param: key 键
-		* @param: t 值
-		* @return: 读取成功返回true
+		* @return:读取成功返回读取结果，否则返回0或者空字符串
 		*/
 		template<typename T>
-		bool ReadConfig(const std::string& key, T* t) const
+		T Get(const std::string& key) const
 		{
-			if (_configs.find(key) == _configs.end())
+			std::string value;
+			if (_configs.find(key) != _configs.end())
 			{
-				return false;
+				value = _configs.at(key);
 			}
-			else
-			{
-				const std::string value = _configs.at(key);
-				return StringEx::Convert<T>(value, t);
-			}
+			return StringEx::Convert<T>(value);
 		}
 
 		/**
 		* @brief: 读取配置文件
 		* @param: key 键
-		* @param: v 值集合
+		* @param: t 读取失败时返回的默认值
+		* @return: 读取成功返回读取结果，否则返回默认值
 		*/
 		template<typename T>
-		bool ReadConfigs(const std::string& key, std::vector<T>* v) const
+		T Get(const std::string& key, T defaultValue) const
 		{
-			if (_configs.find(key) == _configs.end())
+			std::string value;
+			if (_configs.find(key) != _configs.end())
 			{
-				return false;
+				value = _configs.at(key);
 			}
-			else
-			{
-				const std::string value = _configs.at(key);
-				size_t start = 0;
-				size_t end = 0;
-				do
-				{
-					end = value.find(',', start);
-					T t;
-					StringEx::Convert<T>(value.substr(start, end - start), &t);
-					v->push_back(t);
-					start = end + 1;
+			return StringEx::Convert<T>(value, defaultValue);
+		}
 
-				} while (end != std::string::npos);
-				return true;
+
+		/**
+		* @brief: 读取配置文件
+		* @param: key 键
+		* @return: 读取成功返回读取结果，否则返回空集合
+		*/
+		template<typename T>
+		std::vector<T> GetArray(const std::string& key) const
+		{
+			std::string value;
+			if (_configs.find(key) != _configs.end())
+			{
+				value = _configs.at(key);
 			}
+			return StringEx::ConvertToArray<T>(value);
 		}
 
 	private:

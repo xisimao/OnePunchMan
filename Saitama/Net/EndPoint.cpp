@@ -70,7 +70,7 @@ EndPoint::EndPoint(const string& endPoint)
 			return;
 		}
 		unsigned short port = 0;
-		if (StringEx::Convert<unsigned short>(endPoint.substr(index + 1, endPoint.size() - index),&port))
+		if (StringEx::TryConvert(endPoint.substr(index + 1, endPoint.size() - index),&port))
 		{
 			_netPort = htons(port);
 			_hostPort = port;

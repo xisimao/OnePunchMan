@@ -1,14 +1,14 @@
 ﻿#pragma once
 #include <string>
 #include <vector>
-#include <set>
+#include <map>
 
 #include "StringEx.h"
 
 namespace Saitama
 {
 	//json序列化
-	class JsonFormatter
+	class JsonSerialization
 	{
 	public:
 
@@ -19,7 +19,7 @@ namespace Saitama
 		* @param: value 字段的值
 		*/
 		template<typename T>
-		static void Serialize(std::string* json, const std::string& key,T value)
+		static void Serialize(std::string* json, const std::string& key, T value)
 		{
 			if (json->empty())
 			{
@@ -53,8 +53,45 @@ namespace Saitama
 				json->append(",");
 			}
 			json->append(StringEx::Combine("\"", key, "\":"));
-			json->append(value);
+			if (value.empty())
+			{
+				json->append("{}");
+			}
+			else
+			{
+				json->append(value);
+			}
 			json->append("}");
+		}
+
+		/**
+		* @brief: 序列化Json字符串
+		* @param: json 用于存放序列化结果的字符串
+		* @param: key 字段的键
+		* @param: value 字段的值
+		*/
+		static void SerializeJsons(std::string* json, const std::string& key, const std::string& value)
+		{
+			if (json->empty())
+			{
+				json->append("{");
+			}
+			else
+			{
+				json->erase(json->end() - 1, json->end());
+				json->append(",");
+			}
+			json->append(StringEx::Combine("\"", key, "\":"));
+			if (value.empty())
+			{
+				json->append("[]");
+			}
+			else
+			{
+				json->append(value);
+			}
+			json->append("}");
+
 		}
 
 		/**
@@ -73,222 +110,12 @@ namespace Saitama
 			{
 				json->erase(json->end() - 1, json->end());
 				json->append(",");
-			}	
+			}
 			json->append(item);
 			json->append("]");
 		}
 
-		/**
-		* @brief: 反序列化字段。
-		* @param: json json字符串
-		* @param: key 字段键
-		* @param: t 字段值的指针
-		*/
-		template<typename T>
-		static bool Deserialize(const std::string& json, const std::string& key,T* t)
-		{
-			std::string pattern = "\"" + key + "\":";
-			size_t index = json.find(pattern);
-			if (index == std::string::npos)
-			{
-				return false;
-			}
-			else
-			{
-				return ConvertToValue(json, t, index + pattern.size());
-			}
-		}
-
-		/**
-		* @brief: 反序列化字段的值为列表。
-		* @param: json json字符串
-		* @param: v 字段值列表的指针
-		* @param: offset 从开头略过的字符数
-		*/
-		static std::string DeserializeJson(const std::string& json, const std::string& key)
-		{
-			std::string pattern = "\"" + key + "\":";
-			size_t index = json.find(pattern);
-			if (index == std::string::npos)
-			{
-				return std::string();
-			}	
-			else
-			{
-				return DeserializeByTag(json, index, '{', '}');
-			}
-		}
-
-		/**
-		* @brief: 反序列化字段的值为列表。
-		* @param: json json字符串
-		* @param: v 字段值列表的指针
-		* @param: offset 从开头略过的字符数
-		*/
-		static std::vector<std::string> DeserializeJsons(const std::string& json, const std::string& key)
-		{
-			std::string pattern = "\"" + key + "\":";
-			size_t index = json.find(pattern);
-			if (index == std::string::npos)
-			{
-				return std::vector<std::string>();
-			}
-			else
-			{
-				std::string arrayValue = DeserializeByTag(json, index, '[', ']');
-				if (arrayValue.empty())
-				{
-					return std::vector<std::string>();
-				}
-				else
-				{
-					std::vector<std::string> v;
-					size_t offset = 1;
-					while (true)
-					{
-						std::string itemValue = DeserializeByTag(arrayValue, offset, '{', '}');
-						if (itemValue.empty())
-						{
-							return v;
-						}
-						else
-						{
-							offset += itemValue.size();
-							v.push_back(itemValue);
-						}
-					}
-				}
-			}
-		}
-
-		/**
-		* @brief: 反序列化字段的值为指定类型。
-		* @param: json json字符串
-		* @param: t 字段值的指针
-		* @param: offset 从开头略过的字符数
-		* @return: 解析成功返回解析的总字符数，否则返回0
-		*/
-		template<typename T>
-		static size_t ConvertToValue(const std::string& json, T* t, size_t offset)
-		{
-			const std::string Tail = ",}]";
-			size_t endIndex = json.find_first_of(Tail, offset);
-			if (endIndex == std::string::npos)
-			{
-				return 0;
-			}
-			else
-			{
-				if (StringEx::Convert(json.substr(offset, endIndex - offset), t))
-				{
-					return endIndex - offset;
-				}
-				else
-				{
-					return 0;
-				}
-			}
-		}
-
-		/**
-		* @brief: 反序列化字段的值为指定类型。
-		* @param: json json字符串
-		* @param: t 字段值的指针
-		* @param: offset 从开头略过的字符数
-		* @return: 解析成功返回解析的总字符数，否则返回0
-		*/
-		template<>
-		static size_t ConvertToValue(const std::string& json, std::string* t, size_t offset)
-		{
-			size_t startIndex = json.find('"', offset);
-			if (startIndex == std::string::npos)
-			{
-				return 0;
-			}
-			else
-			{
-				size_t endIndex = startIndex;
-				while (true)
-				{
-					endIndex = json.find('"', endIndex + 1);
-					if (endIndex == std::string::npos)
-					{
-						return 0;
-					}
-					else
-					{
-						if (json[endIndex - 1] == '\\')
-						{
-							startIndex = endIndex - 1;
-						}
-						else
-						{
-							break;
-						}
-					}
-				}
-				t->assign(json.substr(startIndex+1,endIndex-startIndex-1));
-				return endIndex - startIndex+1;
-				/*const std::string Tail = ",}]";
-				size_t endIndex = json.find_first_of(Tail, offset);
-				if (endIndex == std::string::npos)
-				{
-					return 0;
-				}
-				else
-				{
-					endIndex = json.find_last_of('"', endIndex);
-					if (endIndex == std::string::npos||endIndex<=startIndex)
-					{
-						return 0;
-					}
-					else
-					{
-						size_t valueSize = endIndex - startIndex - 1;
-						*t = json.substr(startIndex + 1, valueSize);
-						return valueSize + 2;
-					}
-				}*/
-			}
-		}
-
-		/**
-		* @brief: 反序列化字段的值为指定类型。
-		* @param: json json字符串
-		* @param: t 字段值的指针
-		* @param: offset 从开头略过的字符数
-		* @return: 解析成功返回解析的总字符数，否则返回0
-		*/
-		template<typename T>
-		static size_t ConvertToValue(const std::string& json, std::vector<T>* v, size_t offset)
-		{
-			std::string arrayValue = DeserializeByTag(json, offset, '[', ']');
-			if (arrayValue.empty())
-			{
-				return 0;
-			}
-			else
-			{
-				size_t startIndex = 0;
-				while (true)
-				{
-					startIndex += 1;
-					T t;
-					size_t result = ConvertToValue(arrayValue, &t, startIndex);
-					if (result == 0)
-					{
-						break;
-					}
-					else
-					{
-						startIndex += result;
-						v->push_back(t);
-					}
-				}
-				return arrayValue.size();
-			}
-		}
-
+		
 	private:
 
 		/**
@@ -297,7 +124,7 @@ namespace Saitama
 		* @param: value 字段的值
 		*/
 		template<typename T>
-		static void ConvertToJson(std::string* json,T value)
+		static void ConvertToJson(std::string* json, T value)
 		{
 			json->append(StringEx::ToString(value));
 		}
@@ -328,7 +155,7 @@ namespace Saitama
 		* @param: values 字段的值列表
 		*/
 		template<typename T>
-		static void Convert(std::string* json, const std::vector<T>& values)
+		static void ConvertToJson(std::string* json, const std::vector<T>& values)
 		{
 			json->append("[");
 			for_each(values.begin(), values.end(), [&json](const T& value) {
@@ -341,45 +168,113 @@ namespace Saitama
 			}
 			json->append("]");
 		}
+	};
+
+	//json反序列化
+	class JsonDeserialization
+	{
+	public:
+
+		JsonDeserialization(const std::string& json);
 
 		/**
-		* @brief: 根据标记反序列化，支持类和数组。
+		* @brief: 读取json
+		* @param: key 键
+		* @return: 读取成功返回true
+		*/
+		template<typename T>
+		T Get(const std::string& key) const
+		{
+			std::string value;
+			if (_values.find(key) != _values.end())
+			{
+				value = _values.at(key);
+			}
+			return StringEx::Convert<T>(value);
+		}
+
+		/**
+		* @brief: 读取配置文件
+		* @param: key 键
+		* @param: t 值
+		* @return: 读取成功返回true
+		*/
+		template<typename T>
+		T Get(const std::string& key, T defaultValue) const
+		{
+			std::string value;
+			if (_values.find(key) != _values.end())
+			{
+				value = _values.at(key);
+			}
+			return StringEx::Convert<T>(value,defaultValue);
+		}
+		
+		/**
+		* @brief: 读取配置文件
+		* @param: key 键
+		* @param: v 值集合
+		*/
+		template<typename T>
+		std::vector<T> GetArray(const std::string& key) const
+		{
+			std::string value;
+			if (_values.find(key) != _values.end())
+			{
+				value = _values.at(key);
+				return StringEx::ConvertToArray<T>(value.substr(1, value.size() - 2));
+			}
+			else
+			{
+				return std::vector<T>();
+			}
+			
+		}
+
+	private:
+
+		/**
+		* @brief: 截取字符串。
+		* @param: json json字符串
+		* @param: offset 从开头略过的字符数
+		* @return: 第一个参数表示搜索的长度，第二个参数表示截取结果，成功返回字段的值，如果搜索失败返回空字符串
+		*/
+		std::tuple<size_t, std::string> CutString(const std::string& json, size_t offset);
+
+		/**
+		* @brief: 截取数字。
+		* @param: json json字符串
+		* @param: offset 从开头略过的字符数
+		* @return: 第一个参数表示搜索的长度，第二个参数表示截取结果，成功返回字段的值，如果搜索失败返回空字符串
+		*/
+		std::tuple<size_t, std::string> CutInteger(const std::string& json, size_t offset);
+
+		/**
+		* @brief: 根据开始和结束标记截取。
 		* @param: json json字符串
 		* @param: offset 从开头略过的字符数
 		* @param: head 开始标记
 		* @param: tail 结束标记
-		* @return: 字段的值，如果搜索失败返回空字符串
+		* @return: 第一个参数表示搜索的长度，第二个参数表示截取结果，成功返回字段的值，如果搜索失败返回空字符串
 		*/
-		static std::string DeserializeByTag(const std::string& json, size_t offset, char head,char tail)
-		{
-			size_t startIndex = json.find(head, offset);
-			if (startIndex == std::string::npos)
-			{
-				return std::string();
-			}
-			else
-			{
-				int headCount = 0;
-				int tailCount = 0;
-				for (std::string::const_iterator it = json.begin() + startIndex; it < json.end(); ++it)
-				{
-					if (*it == head)
-					{
-						headCount += 1;
-					}
-					else if (*it == tail)
-					{
-						tailCount += 1;
-						if (headCount == tailCount)
-						{
-							return json.substr(startIndex, it - json.begin() - startIndex + 1);
-						}
-					}
-				}
-				return std::string();
-			}
-		}
+		std::tuple<size_t, std::string> CutByTag(const std::string& json, size_t offset, char head, char tail);
 
+		/**
+		* @brief: 反序列化数组。
+		* @param: json json字符串
+		* @param: prefix key前缀
+		*/
+		void DeserializeArray(const std::string& json, const std::string& prefix = "");
+
+		/**
+		* @brief: 反序列化Json
+		* @param: json json字符串
+		* @param: prefix key前缀
+		*/
+		void Deserialize(const std::string& json, const std::string& prefix = "");
+
+		//反序列化的结果
+		std::map<std::string, std::string> _values;
 	};
 }
 

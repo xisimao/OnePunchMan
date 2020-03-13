@@ -68,45 +68,22 @@ void DataChannel::UpdateChannel(const FlowChannel& channel)
         vector<LaneDetector*> laneDetectors;
         for (vector<Lane>::const_iterator lit = channel.Lanes.begin(); lit != channel.Lanes.end(); ++lit)
         {
-            //vector<int> detectPoints;
-            //JsonFormatter::ConvertToValue(lit->DetectLine, &detectPoints, 0);
-            //vector<int> stopPoints;
-            //JsonFormatter::ConvertToValue(lit->StopLine, &stopPoints, 0);
-            //vector<int> laneLinePoints1;
-            //JsonFormatter::ConvertToValue(lit->LaneLine1, &laneLinePoints1, 0);
-            //vector<int> laneLinePoints2;
-            //JsonFormatter::ConvertToValue(lit->LaneLine2, &laneLinePoints2, 0);
-            //if (detectPoints.size() >= 4
-            //    && stopPoints.size() >= 4
-            //    && laneLinePoints1.size() >= 4
-            //    && laneLinePoints2.size() >= 4)
-            //{
-            //    Line detectLine(Point(detectPoints[0], detectPoints[1]), Point(detectPoints[2], detectPoints[3]));
-            //    Line stopLine(Point(stopPoints[0], stopPoints[1]), Point(stopPoints[2], stopPoints[3]));
-            //    Line laneLine1(Point(laneLinePoints1[0], laneLinePoints1[1]), Point(laneLinePoints1[2], laneLinePoints1[3]));
-            //    Line laneLine2(Point(laneLinePoints2[0], laneLinePoints2[1]), Point(laneLinePoints2[2], laneLinePoints2[3]));
-            //    vector<Point> polygonPoints;
-            //    polygonPoints.push_back(detectLine.Intersect(laneLine1));
-            //    polygonPoints.push_back(laneLine1.Intersect(stopLine));
-            //    polygonPoints.push_back(stopLine.Intersect(laneLine2));
-            //    polygonPoints.push_back(laneLine2.Intersect(detectLine));
-            //    laneDetectors.push_back(new LaneDetector(lit->LaneId, lit->LaneIndex, Polygon(polygonPoints)));
-            //}
-
-            vector<int> points;
-            JsonFormatter::ConvertToValue(lit->Region, &points, 0);
-            vector<Point> polygonPoints;
-            if (points.size() > 8)
+            vector<Point> points;
+            vector<string> pointValues = StringEx::Split(lit->Region, ",",true);
+            int x, y = 0;
+            for (int i = 0; i < pointValues.size(); ++i)
             {
-        
-                polygonPoints.push_back(Point(points[0], points[1]));
-                polygonPoints.push_back(Point(points[2], points[3]));
-                polygonPoints.push_back(Point(points[4], points[5]));
-                polygonPoints.push_back(Point(points[6], points[7]));
-                polygonPoints.push_back(Point(points[8], points[9]));
-                
+                if (i % 2 == 0)
+                {
+                    StringEx::TryConvert(pointValues[i].substr(1, pointValues[i].size() - 1), &x);
+                }
+                else
+                {
+                    StringEx::TryConvert(pointValues[i].substr(0, pointValues[i].size() - 1), &y);
+                    points.push_back(Point(x, y));
+                }
             }
-            laneDetectors.push_back(new LaneDetector(lit->LaneId, lit->LaneIndex, Polygon(polygonPoints)));
+            laneDetectors.push_back(new LaneDetector(lit->LaneId, lit->LaneIndex, Polygon(points)));
           
         }
         _channels[channel.ChannelIndex-1]->Id = channel.ChannelId;
@@ -127,48 +104,39 @@ void DataChannel::Update(MqttReceivedEventArgs* e)
 
 }
 
-vector<DetectItem> DataChannel::GetDetectItems(const string& json, const string& key, long long timeStamp)
+vector<DetectItem> DataChannel::DeserializeDetectItems(const JsonDeserialization& jd, const string& key, long long timeStamp)
 {
-    vector<string> values = JsonFormatter::DeserializeJsons(json, key);
     vector<DetectItem> items;
-    for (vector<string>::iterator it = values.begin(); it != values.end(); ++it)
+    int itemIndex = 0;
+    while (true)
     {
-        string id;
-        JsonFormatter::Deserialize(*it, "GUID", &id);
-        int type;
-        JsonFormatter::Deserialize(*it, "Type", &type);
-        string detect=JsonFormatter::DeserializeJson(*it, "Detect");
-        string body=JsonFormatter::DeserializeJson(detect, "Body");
-        vector<int> rect;
-        JsonFormatter::Deserialize(body, "Rect", &rect);
+        string id = jd.Get<string>(StringEx::Combine("ImageResults:0:",key, ":", itemIndex, ":GUID"));
+        if (id.empty())
+        {
+            break;
+        }
+        int type = jd.Get<int>(StringEx::Combine("ImageResults:0:", key, ":", itemIndex, ":Type"));
+        vector<int> rect = jd.GetArray<int>(StringEx::Combine("ImageResults:0:", key, ":", itemIndex, ":Detect:Body:Rect"));
         if (rect.size() >= 4)
         {
             items.push_back(DetectItem(Rectangle(Point(rect[0], rect[1]), rect[2], rect[3]), id, timeStamp, type));
         }
+        itemIndex += 1;
     }
+    
     return items;
-}
-
-DetectItem DataChannel::GetDetectItem(const string& json)
-{
-    DetectItem item;
-    string detectJson = JsonFormatter::DeserializeJson(json, "Detect");
-    string bodyJson = JsonFormatter::DeserializeJson(detectJson, "Body");
-    vector<int> rect;
-    JsonFormatter::Deserialize(bodyJson, "Rect", &rect);
-    return DetectItem(Rectangle(Point(rect[0], rect[1]), rect[2], rect[3]));
 }
 
 void DataChannel::HandleDetect(const string& json)
 {
-    int channelIndex = -1;
-    JsonFormatter::Deserialize(json, "VideoChannel", &channelIndex);
+    JsonDeserialization jd(json);
+    int channelIndex= jd.Get("ImageResults:0:VideoChannel", -1);
     if (channelIndex >= 0 && channelIndex < _channels.size())
     {
         long long timeStamp = DateTime::Now().Milliseconds();
-        vector<DetectItem> vehicles = GetDetectItems(json, "Vehicles", timeStamp);
-        vector<DetectItem> bikes = GetDetectItems(json, "Bikes", timeStamp);
-        vector<DetectItem> pedestrains = GetDetectItems(json, "Pedestrains", timeStamp);
+        vector<DetectItem> vehicles = DeserializeDetectItems(jd, "Vehicles", timeStamp);
+        vector<DetectItem> bikes = DeserializeDetectItems(jd, "Bikes", timeStamp);
+        vector<DetectItem> pedestrains = DeserializeDetectItems(jd, "Pedestrains", timeStamp);
 
 
         vector<IOItem> items = _channels[channelIndex]->Detect(vehicles, bikes, pedestrains);
@@ -177,23 +145,24 @@ void DataChannel::HandleDetect(const string& json)
         {
        
             string laneJson;
-            JsonFormatter::Serialize(&laneJson, "laneId", it->LaneId);
-            JsonFormatter::Serialize(&laneJson, "laneIndex", it->LaneIndex);
-            JsonFormatter::Serialize(&laneJson, "status", it->Status ? 1 : 0);
-            JsonFormatter::Serialize(&laneJson, "type", (int)DetectType::Car);
+            JsonSerialization::Serialize(&laneJson, "laneId", it->LaneId);
+            JsonSerialization::Serialize(&laneJson, "laneIndex", it->LaneIndex);
+            JsonSerialization::Serialize(&laneJson, "status", it->Status ? 1 : 0);
+            JsonSerialization::Serialize(&laneJson, "type", (int)DetectType::Car);
             string lanesJson;
-            JsonFormatter::SerializeItem(&lanesJson, laneJson);
+            JsonSerialization::SerializeItem(&lanesJson, laneJson);
 
             string channelJson;
-            JsonFormatter::Serialize(&channelJson, "channelId", it->ChannelIndex);
-            JsonFormatter::Serialize(&channelJson, "channelReadlId", it->ChannelId);
-           
+            JsonSerialization::Serialize(&channelJson, "channelId", it->ChannelIndex);
+            JsonSerialization::Serialize(&channelJson, "channelReadlId", it->ChannelId);
+            JsonSerialization::SerializeJsons(&channelJson, "laneStatus", lanesJson);
+
             string channelsJson;
-            JsonFormatter::SerializeItem(&channelsJson, channelJson);
+            JsonSerialization::SerializeItem(&channelsJson, channelJson);
 
             string ioJson;
-            JsonFormatter::Serialize(&ioJson, "timestamp", DateTime::Now().Milliseconds());
-            JsonFormatter::SerializeJson(&ioJson, "detail", channelsJson);
+            JsonSerialization::Serialize(&ioJson, "timestamp", DateTime::Now().Milliseconds());
+            JsonSerialization::SerializeJson(&ioJson, "detail", channelsJson);
             LogPool::Debug("channel:", it->ChannelIndex, "lane:", it->LaneIndex, "io:", it->Status);
             _mqtt->Send(IOTopic, ioJson, false);
         }
@@ -203,175 +172,123 @@ void DataChannel::HandleDetect(const string& json)
 void DataChannel::HandleRecognize(const string& json)
 {
     long long timeStamp = DateTime::Now().Milliseconds();
-    vector<string> imageJsons = JsonFormatter::DeserializeJsons(json, "ImageResults");
-    vector<string> detectJsons = JsonFormatter::DeserializeJsons(json, "l1_result");
-    vector<string> images;
-    JsonFormatter::Deserialize(json, "imgdata_result",&images);
+    JsonDeserialization jd(json);
+    vector<string> images = jd.GetArray<string>("imgdata_result");
 
-    for (int i=0;i<imageJsons.size();++i)
+    int imageIndex=0;
+    while (imageIndex<images.size())
     {
-        if (i < detectJsons.size())
+        int channelIndex = jd.Get(StringEx::Combine("l1_result:", imageIndex, ":VideoChannel"), -1);
+        if (channelIndex >= 0 && channelIndex < _channels.size())
         {
-            vector<string> vehicleJsons = JsonFormatter::DeserializeJsons(imageJsons[i], "Vehicles");
-            if (!vehicleJsons.empty())
+            int vehicleType = jd.Get<int>(StringEx::Combine("ImageResults:", imageIndex, ":Vehicles:0:Type"));
+            if (vehicleType != 0)
             {
-                int channelIndex = -1;
-                JsonFormatter::Deserialize(detectJsons[i], "VideoChannel", &channelIndex);
-                if (channelIndex >= 0 && channelIndex < _channels.size())
+                vector<int> vehicleRect = jd.GetArray<int>(StringEx::Combine("l1_result:", imageIndex, ":Detect:Body:Rect"));
+                if (vehicleRect.size() >= 4)
                 {
-                    DetectItem item = GetDetectItem(detectJsons[i]);
+                    DetectItem item(Rectangle(Point(vehicleRect[0], vehicleRect[1]), vehicleRect[2], vehicleRect[3]));
                     string laneId = _channels[channelIndex]->Contains(item);
                     if (!laneId.empty())
                     {
                         VideoVehicle vehicle;
-                        JsonFormatter::Deserialize(vehicleJsons[0], "Type", &vehicle.CarType);
-
-                        string recognizeJson = JsonFormatter::DeserializeJson(vehicleJsons[0], "Recognize");
-                        string featureJson = JsonFormatter::DeserializeJson(recognizeJson, "Feature");
-                        JsonFormatter::Deserialize(featureJson, "Feature",&vehicle.Feature);
-
-                        string colorJson = JsonFormatter::DeserializeJson(recognizeJson, "Color");
-                        vector<string> topListJson = JsonFormatter::DeserializeJsons(colorJson, "TopList");
-                        if (!topListJson.empty())
-                        {
-                            string color;
-                            JsonFormatter::Deserialize(topListJson[0], "Code", &color);
-                            StringEx::Convert(color,&vehicle.CarColor);
-                        }
-
-                        string typeJson = JsonFormatter::DeserializeJson(recognizeJson, "Type");
-                        topListJson = JsonFormatter::DeserializeJsons(colorJson, "TopList");
-                        if (!topListJson.empty())
-                        {
-                            string type;
-                            JsonFormatter::Deserialize(topListJson[0], "Code", &type);
-                            StringEx::Convert(type, &vehicle.CarType);
-                        }
-
-                        string brandJson = JsonFormatter::DeserializeJson(recognizeJson, "Brand");
-                        topListJson = JsonFormatter::DeserializeJsons(colorJson, "TopList");
-                        if (!topListJson.empty())
-                        {
-                            JsonFormatter::Deserialize(topListJson[0], "Name", &vehicle.CarBrand);
-                        }
-
-                        string plateJson = JsonFormatter::DeserializeJson(recognizeJson, "Plate");
-                        JsonFormatter::Deserialize(plateJson, "Type", &vehicle.PlateType);
-                        JsonFormatter::Deserialize(plateJson, "Licence", &vehicle.PlateNumber);
-
-                        if (i < imageJsons.size())
-                        {
-                            vehicle.Image = images[i];
-                        }
+                        vehicle.CarType = jd.Get<int>(StringEx::Combine("ImageResults:", imageIndex, ":Vehicles:0:Recognize:Type:TopList:0:Code"));
+                        vehicle.CarColor = jd.Get<int>(StringEx::Combine("ImageResults:", imageIndex, ":Vehicles:0:Recognize:Color:TopList:0:Code"));
+                        vehicle.CarBrand = jd.Get<string>(StringEx::Combine("ImageResults:", imageIndex, ":Vehicles:0:Recognize:Brand:TopList:0:Name"));
+                        vehicle.PlateType = jd.Get<int>(StringEx::Combine("ImageResults:", imageIndex, ":Vehicles:0:Recognize:Plate:Type"));
+                        vehicle.PlateNumber = jd.Get<string>(StringEx::Combine("ImageResults:", imageIndex, ":Vehicles:0:Recognize:Plate:Licence"));
+                        vehicle.Feature = jd.Get<string>(StringEx::Combine("ImageResults:", imageIndex, ":Vehicles:0:Recognize:Feature:Feature"));
+                        vehicle.Image = images[imageIndex];
 
                         string sendJson;
-                        JsonFormatter::Serialize(&sendJson, "ChannelId", _channels[channelIndex]->Id);
-                        JsonFormatter::Serialize(&sendJson, "LaneId", laneId);
-                        JsonFormatter::Serialize(&sendJson, "TimeStamp", timeStamp);
-                        JsonFormatter::Serialize(&sendJson, "Feature", vehicle.Feature);
-                        JsonFormatter::Serialize(&sendJson, "Image", vehicle.Image);
-                        JsonFormatter::Serialize(&sendJson, "VideoStructType", vehicle.VideoStructType);
-                        JsonFormatter::Serialize(&sendJson, "CarType", vehicle.CarType);
-                        JsonFormatter::Serialize(&sendJson, "CarColor", vehicle.CarColor);
-                        JsonFormatter::Serialize(&sendJson, "CarBrand", vehicle.CarBrand);
-                        JsonFormatter::Serialize(&sendJson, "PlateType", vehicle.PlateType);
-                        JsonFormatter::Serialize(&sendJson, "PlateNumber", vehicle.PlateNumber);
+                        JsonSerialization::Serialize(&sendJson, "ChannelId", _channels[channelIndex]->Id);
+                        JsonSerialization::Serialize(&sendJson, "LaneId", laneId);
+                        JsonSerialization::Serialize(&sendJson, "TimeStamp", timeStamp);
+                        JsonSerialization::Serialize(&sendJson, "VideoStructType", vehicle.VideoStructType);
+                        JsonSerialization::Serialize(&sendJson, "Feature", vehicle.Feature);
+                        JsonSerialization::Serialize(&sendJson, "Image", vehicle.Image);
+                        JsonSerialization::Serialize(&sendJson, "CarType", vehicle.CarType);
+                        JsonSerialization::Serialize(&sendJson, "CarColor", vehicle.CarColor);
+                        JsonSerialization::Serialize(&sendJson, "CarBrand", vehicle.CarBrand);
+                        JsonSerialization::Serialize(&sendJson, "PlateType", vehicle.PlateType);
+                        JsonSerialization::Serialize(&sendJson, "PlateNumber", vehicle.PlateNumber);
                         _mqtt->Send(VideoTopic, sendJson, false);
-                    }
+                    };
+                    imageIndex += 1;
+                    continue;
                 }
-                continue;
             }
-            vector<string> bikeJsons = JsonFormatter::DeserializeJsons(imageJsons[i], "Bikes");
-            if (!bikeJsons.empty())
+          
+            int bikeType= jd.Get<int>(StringEx::Combine("ImageResults:", imageIndex, ":Bikes:0:Type"));
+            if (bikeType != 0)
             {
-                int channelIndex = -1;
-                JsonFormatter::Deserialize(detectJsons[i], "VideoChannel", &channelIndex);
-                if (channelIndex >= 0 && channelIndex < _channels.size())
+                vector<int> bikeRect = jd.GetArray<int>(StringEx::Combine("l1_result:", imageIndex, ":Detect:Body:Rect"));
+                if (bikeRect.size() >= 4)
                 {
-                    DetectItem item = GetDetectItem(vehicleJsons[0]);
+                    DetectItem item(Rectangle(Point(bikeRect[0], bikeRect[1]), bikeRect[2], bikeRect[3]));
                     string laneId = _channels[channelIndex]->Contains(item);
                     if (!laneId.empty())
                     {
                         VideoBike bike;
-                        JsonFormatter::Deserialize(vehicleJsons[0], "Type", &bike.BikeType);
-
-                        string recognizeJson = JsonFormatter::DeserializeJson(vehicleJsons[0], "Recognize");
-                        string featureJson = JsonFormatter::DeserializeJson(recognizeJson, "Feature");
-                        bike.Feature = JsonFormatter::DeserializeJson(featureJson, "Feature");
-
-                        if (i < imageJsons.size())
-                        {
-                            bike.Image = images[i];
-                        }
+                        bike.BikeType = bikeType;
+                        bike.Feature = jd.Get<string>(StringEx::Combine("ImageResults:", imageIndex, ":Bikes:0:Recognize:Feature:Feature"));
+                        bike.Image = images[imageIndex];
 
                         string sendJson;
-                        JsonFormatter::Serialize(&sendJson, "ChannelId", _channels[channelIndex]->Id);
-                        JsonFormatter::Serialize(&sendJson, "LaneId", laneId);
-                        JsonFormatter::Serialize(&sendJson, "TimeStamp", timeStamp);
-                        JsonFormatter::Serialize(&sendJson, "Feature", bike.Feature);
-                        JsonFormatter::Serialize(&sendJson, "Image", bike.Image);
-                        JsonFormatter::Serialize(&sendJson, "VideoStructType", bike.VideoStructType);
-                        JsonFormatter::Serialize(&sendJson, "BikeType", bike.BikeType);
+                        JsonSerialization::Serialize(&sendJson, "ChannelId", _channels[channelIndex]->Id);
+                        JsonSerialization::Serialize(&sendJson, "LaneId", laneId);
+                        JsonSerialization::Serialize(&sendJson, "TimeStamp", timeStamp);
+                        JsonSerialization::Serialize(&sendJson, "VideoStructType", bike.VideoStructType);
+                        JsonSerialization::Serialize(&sendJson, "Feature", bike.Feature);
+                        JsonSerialization::Serialize(&sendJson, "Image", bike.Image);
+                        JsonSerialization::Serialize(&sendJson, "BikeType", bike.BikeType);
                         _mqtt->Send(VideoTopic, sendJson, false);
                     }
+                    imageIndex += 1;
+                    continue;
                 }
-                continue;
             }
-            vector<string> pedestrainJsons = JsonFormatter::DeserializeJsons(imageJsons[i], "Pedestrains");
-            if (!pedestrainJsons.empty())
+         
+            int pedestrainType = jd.Get<int>(StringEx::Combine("ImageResults:", imageIndex, ":Pedestrains:0:Type"));
+            if (pedestrainType != 0)
             {
-                int channelIndex = -1;
-                JsonFormatter::Deserialize(detectJsons[i], "VideoChannel", &channelIndex);
-                if (channelIndex >= 0 && channelIndex < _channels.size())
+                vector<int> pedestrainRect = jd.GetArray<int>(StringEx::Combine("l1_result:", imageIndex, ":Detect:Body:Rect"));
+                if (pedestrainRect.size() >= 4)
                 {
-                    DetectItem item = GetDetectItem(vehicleJsons[0]);
+                    DetectItem item(Rectangle(Point(pedestrainRect[0], pedestrainRect[1]), pedestrainRect[2], pedestrainRect[3]));
                     string laneId = _channels[channelIndex]->Contains(item);
                     if (!laneId.empty())
                     {
                         VideoPedestrain pedestrain;
-                        string recognizeJson = JsonFormatter::DeserializeJson(vehicleJsons[0], "Recognize");
-                        string featureJson = JsonFormatter::DeserializeJson(recognizeJson, "Feature");
-                        pedestrain.Feature = JsonFormatter::DeserializeJson(featureJson, "Feature");
-                        string sexJson = JsonFormatter::DeserializeJson(recognizeJson, "Sex");
-                        vector<string> topListJson = JsonFormatter::DeserializeJsons(sexJson, "TopList");
-                        if (!topListJson.empty())
-                        {
-                            JsonFormatter::Deserialize(topListJson[0], "Code", &pedestrain.Sex);
-                        }
-                        string ageJson = JsonFormatter::DeserializeJson(recognizeJson, "Age");
-                        topListJson = JsonFormatter::DeserializeJsons(sexJson, "TopList");
-                        if (!topListJson.empty())
-                        {
-                            JsonFormatter::Deserialize(topListJson[0], "Code", &pedestrain.Age);
-                        }
-                        string upperColorJson = JsonFormatter::DeserializeJson(recognizeJson, "UpperColor");
-                        topListJson = JsonFormatter::DeserializeJsons(upperColorJson, "TopList");
-                        if (!topListJson.empty())
-                        {
-                            JsonFormatter::Deserialize(topListJson[0], "Code", &pedestrain.UpperColor);
-                        }
-                        if (i < imageJsons.size())
-                        {
-                            pedestrain.Image = images[i];
-                        }
+                        pedestrain.Sex = jd.Get<int>(StringEx::Combine("ImageResults:", imageIndex, ":Pedestrains:0:Recognize:Sex:TopList:0:Code"));
+                        pedestrain.Age = jd.Get<int>(StringEx::Combine("ImageResults:", imageIndex, ":Pedestrains:0:Recognize:Age:TopList:0:Code"));
+                        pedestrain.UpperColor = jd.Get<int>(StringEx::Combine("ImageResults:", imageIndex, ":Pedestrains:0:Recognize:UpperColor:TopList:0:Code"));
+                        pedestrain.Feature = jd.Get<string>(StringEx::Combine("ImageResults:", imageIndex, ":Pedestrains:0:Recognize:Feature:Feature"));
+                        pedestrain.Image = images[imageIndex];
 
                         string sendJson;
-                        JsonFormatter::Serialize(&sendJson, "ChannelId", _channels[channelIndex]->Id);
-                        JsonFormatter::Serialize(&sendJson, "LaneId", laneId);
-                        JsonFormatter::Serialize(&sendJson, "TimeStamp", timeStamp);
-                        JsonFormatter::Serialize(&sendJson, "Feature", pedestrain.Feature);
-                        JsonFormatter::Serialize(&sendJson, "Image", pedestrain.Image);
-                        JsonFormatter::Serialize(&sendJson, "VideoStructType", pedestrain.VideoStructType);
-                        JsonFormatter::Serialize(&sendJson, "Sex", pedestrain.Sex);
-                        JsonFormatter::Serialize(&sendJson, "Age", pedestrain.Age);
-                        JsonFormatter::Serialize(&sendJson, "UpperColor", pedestrain.UpperColor);
+                        JsonSerialization::Serialize(&sendJson, "ChannelId", _channels[channelIndex]->Id);
+                        JsonSerialization::Serialize(&sendJson, "LaneId", laneId);
+                        JsonSerialization::Serialize(&sendJson, "TimeStamp", timeStamp);
+                        JsonSerialization::Serialize(&sendJson, "Feature", pedestrain.Feature);
+                        JsonSerialization::Serialize(&sendJson, "Image", pedestrain.Image);
+                        JsonSerialization::Serialize(&sendJson, "VideoStructType", pedestrain.VideoStructType);
+                        JsonSerialization::Serialize(&sendJson, "Sex", pedestrain.Sex);
+                        JsonSerialization::Serialize(&sendJson, "Age", pedestrain.Age);
+                        JsonSerialization::Serialize(&sendJson, "UpperColor", pedestrain.UpperColor);
                         _mqtt->Send(VideoTopic, sendJson, false);
                     }
+                    imageIndex += 1;
+                    continue;
                 }
-                continue;
             }
+            
+            break;
         }
-        
+        else
+        {
+            break;
+        }
     }
 }
 
@@ -384,9 +301,9 @@ void DataChannel::CollectFlow(const DateTime& now)
         if (!lanes.empty())
         {
             string channelJson;
-            JsonFormatter::Serialize(&channelJson, "channelId", (*it)->Index);
-            JsonFormatter::Serialize(&channelJson, "channelRealId", (*it)->Id);
-            JsonFormatter::Serialize(&channelJson, "timestamp", timeStamp);
+            JsonSerialization::Serialize(&channelJson, "channelId", (*it)->Index);
+            JsonSerialization::Serialize(&channelJson, "channelRealId", (*it)->Id);
+            JsonSerialization::Serialize(&channelJson, "timestamp", timeStamp);
 
             string lanesJson;
             for (vector<LaneItem>::iterator lit = lanes.begin(); lit != lanes.end(); ++lit)
@@ -395,24 +312,24 @@ void DataChannel::CollectFlow(const DateTime& now)
 
                 string laneJson;
 
-                JsonFormatter::Serialize(&laneJson, "crossingId", StringEx::ToString(lit->Index));
-                JsonFormatter::Serialize(&laneJson, "laneId", lit->Id);
+                JsonSerialization::Serialize(&laneJson, "crossingId", StringEx::ToString(lit->Index));
+                JsonSerialization::Serialize(&laneJson, "laneId", lit->Id);
 
-                JsonFormatter::Serialize(&laneJson, "persons", lit->Persons);
-                JsonFormatter::Serialize(&laneJson, "bikes", lit->Bikes);
-                JsonFormatter::Serialize(&laneJson, "motorcycles", lit->Motorcycles);
-                JsonFormatter::Serialize(&laneJson, "cars", lit->Cars);
-                JsonFormatter::Serialize(&laneJson, "tricycles", lit->Tricycles);
-                JsonFormatter::Serialize(&laneJson, "buss", lit->Buss);
-                JsonFormatter::Serialize(&laneJson, "vans", lit->Vans);
-                JsonFormatter::Serialize(&laneJson, "trucks", lit->Trucks);
+                JsonSerialization::Serialize(&laneJson, "persons", lit->Persons);
+                JsonSerialization::Serialize(&laneJson, "bikes", lit->Bikes);
+                JsonSerialization::Serialize(&laneJson, "motorcycles", lit->Motorcycles);
+                JsonSerialization::Serialize(&laneJson, "cars", lit->Cars);
+                JsonSerialization::Serialize(&laneJson, "tricycles", lit->Tricycles);
+                JsonSerialization::Serialize(&laneJson, "buss", lit->Buss);
+                JsonSerialization::Serialize(&laneJson, "vans", lit->Vans);
+                JsonSerialization::Serialize(&laneJson, "trucks", lit->Trucks);
 
-                JsonFormatter::Serialize(&laneJson, "averageSpeed", static_cast<int>(lit->Speed));
-                JsonFormatter::Serialize(&laneJson, "headDistance", lit->HeadDistance);
-                JsonFormatter::Serialize(&laneJson, "timeOccupancy", static_cast<int>(lit->TimeOccupancy));
-                JsonFormatter::SerializeItem(&lanesJson, laneJson);
+                JsonSerialization::Serialize(&laneJson, "averageSpeed", static_cast<int>(lit->Speed));
+                JsonSerialization::Serialize(&laneJson, "headDistance", lit->HeadDistance);
+                JsonSerialization::Serialize(&laneJson, "timeOccupancy", static_cast<int>(lit->TimeOccupancy));
+                JsonSerialization::SerializeItem(&lanesJson, laneJson);
             }
-            JsonFormatter::SerializeJson(&channelJson, "crossingData", lanesJson);
+            JsonSerialization::SerializeJsons(&channelJson, "crossingData", lanesJson);
 
             _mqtt->Send(FlowTopic, channelJson);
         }
@@ -421,89 +338,96 @@ void DataChannel::CollectFlow(const DateTime& now)
 
 void DataChannel::Update(HttpReceivedEventArgs* e)
 {
-    string channelUrl("/api/channels");
+    const string channelUrl("/api/channels");
     if (UrlStartWith(e->Url, channelUrl))
     {
         FlowChannelData data;
         if (e->Function.compare(HttpFunction::Get) == 0)
         {
-            e->Code = HttpCode::OK;
             vector<FlowChannel> channels = data.GetList();
             string channelsJson;
             for (vector<FlowChannel>::iterator cit = channels.begin(); cit != channels.end(); ++cit)
             {
                 string channelJson;
-                JsonFormatter::Serialize(&channelJson, "channelId", cit->ChannelId);
-                JsonFormatter::Serialize(&channelJson, "channelName", cit->ChannelName);
-                JsonFormatter::Serialize(&channelJson, "channelIndex", cit->ChannelIndex);
-                JsonFormatter::Serialize(&channelJson, "channelType", cit->ChannelType);
-                JsonFormatter::Serialize(&channelJson, "rtspUser", cit->RtspUser);
-                JsonFormatter::Serialize(&channelJson, "rtspPassword", cit->RtspPassword);
-                JsonFormatter::Serialize(&channelJson, "rtspProtocol", cit->RtspProtocol);
-                JsonFormatter::Serialize(&channelJson, "isLoop", cit->IsLoop);
+                JsonSerialization::Serialize(&channelJson, "channelId", cit->ChannelId);
+                JsonSerialization::Serialize(&channelJson, "channelName", cit->ChannelName);
+                JsonSerialization::Serialize(&channelJson, "channelIndex", cit->ChannelIndex);
+                JsonSerialization::Serialize(&channelJson, "channelType", cit->ChannelType);
+                JsonSerialization::Serialize(&channelJson, "rtspUser", cit->RtspUser);
+                JsonSerialization::Serialize(&channelJson, "rtspPassword", cit->RtspPassword);
+                JsonSerialization::Serialize(&channelJson, "rtspProtocol", cit->RtspProtocol);
+                JsonSerialization::Serialize(&channelJson, "isLoop", cit->IsLoop);
 
                 string lanesJson;
                 for (vector<Lane>::const_iterator lit = cit->Lanes.begin(); lit != cit->Lanes.end(); ++lit)
                 {
                     string laneJson;
-                    JsonFormatter::Serialize(&laneJson, "channelId", lit->ChannelId);
-                    JsonFormatter::Serialize(&laneJson, "laneId", lit->LaneId);
-                    JsonFormatter::Serialize(&laneJson, "laneName", lit->LaneName);
-                    JsonFormatter::Serialize(&laneJson, "laneIndex", lit->LaneIndex);
-                    JsonFormatter::Serialize(&laneJson, "laneType", lit->LaneType);
-                    JsonFormatter::Serialize(&laneJson, "direction", lit->Direction);
-                    JsonFormatter::Serialize(&laneJson, "flowDirection", lit->FlowDirection);
-                    JsonFormatter::Serialize(&laneJson, "length", lit->Length);
-                    JsonFormatter::Serialize(&laneJson, "iOIp", lit->IOIp);
-                    JsonFormatter::Serialize(&laneJson, "iOPort", lit->IOPort);
-                    JsonFormatter::Serialize(&laneJson, "iOIndex", lit->IOIndex);
-                    JsonFormatter::Serialize(&laneJson, "detectLine", lit->DetectLine);
-                    JsonFormatter::Serialize(&laneJson, "stopLine", lit->StopLine);
-                    JsonFormatter::Serialize(&laneJson, "laneLine1", lit->LaneLine1);
-                    JsonFormatter::Serialize(&laneJson, "laneLine2", lit->LaneLine2);
-                    JsonFormatter::Serialize(&laneJson, "region", lit->Region);
-                    JsonFormatter::SerializeItem(&lanesJson, laneJson);
+                    JsonSerialization::Serialize(&laneJson, "channelId", lit->ChannelId);
+                    JsonSerialization::Serialize(&laneJson, "laneId", lit->LaneId);
+                    JsonSerialization::Serialize(&laneJson, "laneName", lit->LaneName);
+                    JsonSerialization::Serialize(&laneJson, "laneIndex", lit->LaneIndex);
+                    JsonSerialization::Serialize(&laneJson, "laneType", lit->LaneType);
+                    JsonSerialization::Serialize(&laneJson, "direction", lit->Direction);
+                    JsonSerialization::Serialize(&laneJson, "flowDirection", lit->FlowDirection);
+                    JsonSerialization::Serialize(&laneJson, "length", lit->Length);
+                    JsonSerialization::Serialize(&laneJson, "iOIp", lit->IOIp);
+                    JsonSerialization::Serialize(&laneJson, "iOPort", lit->IOPort);
+                    JsonSerialization::Serialize(&laneJson, "iOIndex", lit->IOIndex);
+                    JsonSerialization::Serialize(&laneJson, "detectLine", lit->DetectLine);
+                    JsonSerialization::Serialize(&laneJson, "stopLine", lit->StopLine);
+                    JsonSerialization::Serialize(&laneJson, "laneLine1", lit->LaneLine1);
+                    JsonSerialization::Serialize(&laneJson, "laneLine2", lit->LaneLine2);
+                    JsonSerialization::Serialize(&laneJson, "region", lit->Region);
+                    JsonSerialization::SerializeItem(&lanesJson, laneJson);
                 }
-                JsonFormatter::SerializeJson(&channelJson, "lanes", lanesJson);
+                JsonSerialization::SerializeJsons(&channelJson, "lanes", lanesJson);
 
-                JsonFormatter::SerializeItem(&channelsJson, channelJson);
+                JsonSerialization::SerializeItem(&channelsJson, channelJson);
             }
-
+            e->Code = HttpCode::OK;
             e->ResponseJson = channelsJson;
         }
-        else if (e->Function.compare(HttpFunction::Post) == 0)
+        else if (e->Function.compare(HttpFunction::Post) == 0
+            || e->Function.compare(HttpFunction::Put) == 0)
         {
+            JsonDeserialization jd(e->RequestJson);
+            FlowChannelData data;
             FlowChannel channel;
-            JsonFormatter::Deserialize(e->RequestJson, "channelId", &channel.ChannelId);
-            JsonFormatter::Deserialize(e->RequestJson, "channelName", &channel.ChannelName);
-            JsonFormatter::Deserialize(e->RequestJson, "channelIndex", &channel.ChannelIndex);
-            JsonFormatter::Deserialize(e->RequestJson, "channelType", &channel.ChannelType);
-            JsonFormatter::Deserialize(e->RequestJson, "rtspUser", &channel.RtspUser);
-            JsonFormatter::Deserialize(e->RequestJson, "rtspPassword", &channel.RtspPassword);
-            JsonFormatter::Deserialize(e->RequestJson, "rtspProtocol", &channel.RtspProtocol);
-            JsonFormatter::Deserialize(e->RequestJson, "isLoop", &channel.IsLoop);
+            channel.ChannelId = jd.Get<string>(StringEx::Combine("channelId"));
+            channel.ChannelName = jd.Get<string>(StringEx::Combine("channelName"));
+            channel.ChannelIndex = jd.Get<int>(StringEx::Combine("channelIndex"));
+            channel.ChannelType = jd.Get<int>(StringEx::Combine("channelType"));
+            channel.RtspUser = jd.Get<string>(StringEx::Combine("rtspUser"));
+            channel.RtspPassword = jd.Get<string>(StringEx::Combine("rtspPassword"));
+            channel.RtspProtocol = jd.Get<int>(StringEx::Combine("rtspProtocol"));
+            channel.IsLoop = jd.Get<bool>(StringEx::Combine("isLoop"));
 
-            vector<string> laneJsons = JsonFormatter::DeserializeJsons(e->RequestJson, "lanes");
-            for (vector<string>::iterator it = laneJsons.begin(); it != laneJsons.end(); ++it)
+            int laneIndex = 0;
+            while (true)
             {
                 Lane lane;
+                lane.LaneId = jd.Get<string>(StringEx::Combine("lanes:", laneIndex, ":laneId"));
+                if (lane.LaneId.empty())
+                {
+                    break;
+                }
                 lane.ChannelId = channel.ChannelId;
-                JsonFormatter::Deserialize(*it, "laneId", &lane.LaneId);
-                JsonFormatter::Deserialize(*it, "laneName", &lane.LaneName);
-                JsonFormatter::Deserialize(*it, "laneIndex", &lane.LaneIndex);
-                JsonFormatter::Deserialize(*it, "laneType", &lane.LaneType);
-                JsonFormatter::Deserialize(*it, "direction", &lane.Direction);
-                JsonFormatter::Deserialize(*it, "flowDirection", &lane.FlowDirection);
-                JsonFormatter::Deserialize(*it, "length", &lane.Length);
-                JsonFormatter::Deserialize(*it, "iOIp", &lane.IOIp);
-                JsonFormatter::Deserialize(*it, "iOPort", &lane.IOPort);
-                JsonFormatter::Deserialize(*it, "iOIndex", &lane.IOIndex);
-                JsonFormatter::Deserialize(*it, "detectLine", &lane.DetectLine);
-                JsonFormatter::Deserialize(*it, "stopLine", &lane.StopLine);
-                JsonFormatter::Deserialize(*it, "laneLine1", &lane.LaneLine1);
-                JsonFormatter::Deserialize(*it, "laneLine2", &lane.LaneLine2);
-                JsonFormatter::Deserialize(*it, "region", &lane.Region);
+                lane.LaneName = jd.Get<string>(StringEx::Combine("lanes:", laneIndex, ":laneName"));
+                lane.LaneIndex = jd.Get<int>(StringEx::Combine("lanes:", laneIndex, ":laneIndex"));
+                lane.LaneType = jd.Get<int>(StringEx::Combine("lanes:", laneIndex, ":laneType"));
+                lane.Direction = jd.Get<int>(StringEx::Combine("lanes:", laneIndex, ":direction"));
+                lane.FlowDirection = jd.Get<int>(StringEx::Combine("lanes:", laneIndex, ":flowDirection"));
+                lane.Length = jd.Get<int>(StringEx::Combine("lanes:", laneIndex, ":length"));
+                lane.IOIp = jd.Get<string>(StringEx::Combine("lanes:", laneIndex, ":iOIp"));
+                lane.IOPort = jd.Get<int>(StringEx::Combine("lanes:", laneIndex, ":iOPort"));
+                lane.IOIndex = jd.Get<int>(StringEx::Combine("lanes:", laneIndex, ":iOIndex"));
+                lane.DetectLine = jd.Get<string>(StringEx::Combine("lanes:", laneIndex, ":detectLine"));
+                lane.StopLine = jd.Get<string>(StringEx::Combine("lanes:", laneIndex, ":stopLine"));
+                lane.LaneLine1 = jd.Get<string>(StringEx::Combine("lanes:", laneIndex, ":laneLine1"));
+                lane.LaneLine2 = jd.Get<string>(StringEx::Combine("lanes:", laneIndex, ":laneLine2"));
+                lane.Region = jd.Get<string>(StringEx::Combine("lanes:", laneIndex, ":region"));
                 channel.Lanes.push_back(lane);
+                laneIndex += 1;
             }
             if (data.Set(channel))
             {
@@ -531,6 +455,69 @@ void DataChannel::Update(HttpReceivedEventArgs* e)
             {
                 e->Code = HttpCode::InternalServerError;
             }
+        }
+    }
+    const string deviceUrl("/api/devices");
+    if (UrlStartWith(e->Url, deviceUrl))
+    {
+        FlowChannelData data;
+        if (e->Function.compare(HttpFunction::Post) == 0
+            || e->Function.compare(HttpFunction::Put) == 0)
+        {
+            JsonDeserialization jd(e->RequestJson);
+            FlowChannelData data;
+   
+            int channelIndex = 0;
+            while (true)
+            {
+                FlowChannel channel;
+                channel.ChannelId = jd.Get<string>(StringEx::Combine("channels:", channelIndex,":channelId"));
+                if (channel.ChannelId.empty())
+                {
+                    break;
+                }
+                channel.ChannelName = jd.Get<string>(StringEx::Combine("channels:", channelIndex, ":channelName"));
+                channel.ChannelIndex = jd.Get<int>(StringEx::Combine("channels:", channelIndex, ":channelIndex"));
+                channel.ChannelType = jd.Get<int>(StringEx::Combine("channels:", channelIndex, ":channelType"));
+                channel.RtspUser = jd.Get<string>(StringEx::Combine("channels:", channelIndex, ":rtspUser"));
+                channel.RtspPassword = jd.Get<string>(StringEx::Combine("channels:", channelIndex, ":rtspPassword"));
+                channel.RtspProtocol = jd.Get<int>(StringEx::Combine("channels:", channelIndex, ":rtspProtocol"));
+                channel.IsLoop = jd.Get<bool>(StringEx::Combine("channels:", channelIndex, ":isLoop"));
+
+                int laneIndex = 0;
+                while (true)
+                {
+                    Lane lane;
+                    lane.LaneId = jd.Get<string>(StringEx::Combine("channels:", channelIndex, ":lanes:",laneIndex,":laneId"));
+                    if (lane.LaneId.empty())
+                    {
+                        break;
+                    }
+                    lane.ChannelId = channel.ChannelId;
+                    lane.LaneName = jd.Get<string>(StringEx::Combine("channels:", channelIndex, ":lanes:",laneIndex,":laneName"));
+                    lane.LaneIndex = jd.Get<int>(StringEx::Combine("channels:", channelIndex, ":lanes:",laneIndex,":laneIndex"));
+                    lane.LaneType = jd.Get<int>(StringEx::Combine("channels:", channelIndex, ":lanes:",laneIndex,":laneType"));
+                    lane.Direction = jd.Get<int>(StringEx::Combine("channels:", channelIndex, ":lanes:",laneIndex,":direction"));
+                    lane.FlowDirection = jd.Get<int>(StringEx::Combine("channels:", channelIndex, ":lanes:",laneIndex,":flowDirection"));
+                    lane.Length = jd.Get<int>(StringEx::Combine("channels:", channelIndex, ":lanes:",laneIndex,":length"));
+                    lane.IOIp = jd.Get<string>(StringEx::Combine("channels:", channelIndex, ":lanes:",laneIndex,":iOIp"));
+                    lane.IOPort = jd.Get<int>(StringEx::Combine("channels:", channelIndex, ":lanes:",laneIndex,":iOPort"));
+                    lane.IOIndex = jd.Get<int>(StringEx::Combine("channels:", channelIndex, ":lanes:",laneIndex,":iOIndex"));
+                    lane.DetectLine = jd.Get<string>(StringEx::Combine("channels:", channelIndex, ":lanes:",laneIndex,":detectLine"));
+                    lane.StopLine = jd.Get<string>(StringEx::Combine("channels:", channelIndex, ":lanes:",laneIndex,":stopLine"));
+                    lane.LaneLine1 = jd.Get<string>(StringEx::Combine("channels:", channelIndex, ":lanes:",laneIndex,":laneLine1"));
+                    lane.LaneLine2 = jd.Get<string>(StringEx::Combine("channels:", channelIndex, ":lanes:",laneIndex,":laneLine2"));
+                    lane.Region = jd.Get<string>(StringEx::Combine("channels:", channelIndex, ":lanes:",laneIndex,":region"));
+                    channel.Lanes.push_back(lane);
+                    laneIndex += 1;
+                }
+                if (data.Set(channel))
+                {
+                    UpdateChannel(channel);
+                }
+                channelIndex += 1;
+            }
+            e->Code = HttpCode::OK;
         }
     }
 

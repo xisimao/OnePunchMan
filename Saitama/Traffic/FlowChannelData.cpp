@@ -110,7 +110,7 @@ bool FlowChannelData::Set(const FlowChannel& channel)
 				, "'", it->DetectLine, "',"
 				, "'", it->StopLine, "',"
 				, "'", it->LaneLine1, "',"
-				, "'", it->LaneLine2, "'"
+				, "'", it->LaneLine2, "',"
 				, "'", it->Region, "'"
 				, ")"));
 			_sqlite.ExecuteRowCount(laneSql);

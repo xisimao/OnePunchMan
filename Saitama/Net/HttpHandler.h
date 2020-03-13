@@ -18,6 +18,7 @@ namespace Saitama
 	public:
 		static const std::string Get;
 		static const std::string Post;
+		static const std::string Put;
 		static const std::string Delete;
 		static const std::string Options;
 	};

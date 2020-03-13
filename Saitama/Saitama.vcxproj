@@ -153,12 +153,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Convert\ByteFormatter.cpp" />
+    <ClCompile Include="Convert\JsonFormatter.cpp" />
     <ClCompile Include="Core\Command.cpp" />
     <ClCompile Include="Core\DateTime.cpp" />
     <ClCompile Include="Core\FileConfig.cpp" />
     <ClCompile Include="Net\SocketMaid.cpp" />
     <ClCompile Include="Sqlite\Sqlite.cpp" />
-    <ClCompile Include="Traffic\DataChannel.cpp" />
     <ClCompile Include="Mqtt\MqttChannel.cpp" />
     <ClCompile Include="Net\AsyncHandler.cpp" />
     <ClCompile Include="Net\EndPoint.cpp" />
@@ -170,6 +170,7 @@
     <ClCompile Include="Net\SocketHandler.cpp" />
     <ClCompile Include="Net\WebSocket.cpp" />
     <ClCompile Include="Net\WebSocketHandler.cpp" />
+    <ClCompile Include="Traffic\DataChannel.cpp" />
     <ClCompile Include="Traffic\LaneDetector.cpp" />
     <ClCompile Include="Text\Path.cpp" />
     <ClCompile Include="Text\Security.cpp" />
@@ -195,7 +196,6 @@
     <ClInclude Include="Net\SocketMaid.h" />
     <ClInclude Include="Sqlite\Sqlite.h" />
     <ClInclude Include="Sqlite\sqlite3.h" />
-    <ClInclude Include="Traffic\DataChannel.h" />
     <ClInclude Include="Mqtt\MqttChannel.h" />
     <ClInclude Include="Net\AsyncHandler.h" />
     <ClInclude Include="Net\EndPoint.h" />
@@ -207,6 +207,7 @@
     <ClInclude Include="Net\SocketHandler.h" />
     <ClInclude Include="Net\WebSocket.h" />
     <ClInclude Include="Net\WebSocketHandler.h" />
+    <ClInclude Include="Traffic\DataChannel.h" />
     <ClInclude Include="Traffic\Shape.h" />
     <ClInclude Include="Traffic\LaneDetector.h" />
     <ClInclude Include="Text\Path.h" />

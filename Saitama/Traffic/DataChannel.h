@@ -9,8 +9,6 @@
 
 namespace Saitama
 {
-
-
     //数据分发和收集线程
     class DataChannel :public ThreadObject
         , public IObserver<MqttReceivedEventArgs>
@@ -49,14 +47,7 @@ namespace Saitama
         * @param: key 检测项字段的键
         * @return: 检测项集合
         */
-        std::vector<DetectItem> GetDetectItems(const std::string& json, const std::string& key, long long timeStamp);
-        
-        /**
-        * @brief: 从json数据中获取检测项
-        * @param: json json数据
-        * @return: 检测项
-        */
-        DetectItem GetDetectItem(const std::string& json);
+        std::vector<DetectItem> DeserializeDetectItems(const JsonDeserialization& jd, const std::string& key, long long timeStamp);
 
         /**
         * @brief: 处理检测数据
