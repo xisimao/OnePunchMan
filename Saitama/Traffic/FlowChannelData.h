@@ -11,7 +11,7 @@ namespace Saitama
 	class Lane
 	{
 	public:
-		std::string ChannelId;
+		int ChannelIndex;
 		std::string LaneId;
 		std::string LaneName;
 		int LaneIndex;
@@ -33,10 +33,9 @@ namespace Saitama
 	class FlowChannel
 	{
 	public:
-
-		std::string ChannelId;
-		std::string ChannelName;
 		int ChannelIndex;
+		std::string ChannelName;
+		std::string ChannelUrl;
 		int ChannelType;
 		std::string RtspUser;
 		std::string RtspPassword;
@@ -53,15 +52,19 @@ namespace Saitama
 
 		std::vector<FlowChannel> GetList();
 
-		FlowChannel Get(const std::string& channelId);
+		FlowChannel Get(int channelIndex);
 
 		bool Set(const FlowChannel& channel);
 
-		int Delete(const std::string& channelId);
+		void SetList(const std::vector<FlowChannel>& channels);
+
+		int Delete(int channelIndex);
 
 	private:
 
 		FlowChannel GetChannel(const SqliteReader& sqlite);
+
+		bool Insert(const FlowChannel& channel);
 
 		SqliteWriter _sqlite;
 	};

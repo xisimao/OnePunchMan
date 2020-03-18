@@ -19,10 +19,10 @@ vector<FlowChannel> FlowChannelData::GetList()
 	return channels;
 }
 
-FlowChannel FlowChannelData::Get(const string& channelId)
+FlowChannel FlowChannelData::Get(int channelIndex)
 {
 	FlowChannel channel;
-	string sql(StringEx::Combine("Select * From Flow_Channel Where ChannelId='", channelId, "'"));
+	string sql(StringEx::Combine("Select * From Flow_Channel Where ChannelIndex=", channelIndex));
 	SqliteReader sqlite;
 	if (sqlite.BeginQuery(sql))
 	{
@@ -39,9 +39,9 @@ FlowChannel FlowChannelData::Get(const string& channelId)
 FlowChannel FlowChannelData::GetChannel(const SqliteReader& sqlite)
 {
 	FlowChannel channel;
-	channel.ChannelId = sqlite.GetString(0);
+	channel.ChannelIndex = sqlite.GetInteger(0);
 	channel.ChannelName = sqlite.GetString(1);
-	channel.ChannelIndex = sqlite.GetInteger(2);
+	channel.ChannelUrl = sqlite.GetString(2);
 	channel.ChannelType = sqlite.GetInteger(3);
 	channel.RtspUser = sqlite.GetString(4);
 	channel.RtspPassword = sqlite.GetString(5);
@@ -49,13 +49,13 @@ FlowChannel FlowChannelData::GetChannel(const SqliteReader& sqlite)
 	channel.IsLoop = sqlite.GetInteger(7);
 
 	SqliteReader laneSqlite;
-	string laneSql(StringEx::Combine("Select * From Flow_Lane Where ChannelId='", channel.ChannelId, "'"));
+	string laneSql(StringEx::Combine("Select * From Flow_Lane Where ChannelIndex=", channel.ChannelIndex));
 	if (laneSqlite.BeginQuery(laneSql))
 	{
 		while (laneSqlite.HasRow())
 		{
 			Lane lane;
-			lane.ChannelId = laneSqlite.GetString(0);
+			lane.ChannelIndex = laneSqlite.GetInteger(0);
 			lane.LaneId = laneSqlite.GetString(1);
 			lane.LaneName = laneSqlite.GetString(2);
 			lane.LaneIndex = laneSqlite.GetInteger(3);
@@ -78,13 +78,12 @@ FlowChannel FlowChannelData::GetChannel(const SqliteReader& sqlite)
 	return channel;
 }
 
-bool FlowChannelData::Set(const FlowChannel& channel)
+bool FlowChannelData::Insert(const FlowChannel& channel)
 {
-	Delete(channel.ChannelId);
-	string channelSql(StringEx::Combine("Insert Into Flow_Channel (ChannelId,ChannelName,ChannelIndex,ChannelType,RtspUser,RtspPassword,RtspProtocol,IsLoop) Values ("
-		, "'", channel.ChannelId, "',"
-		, "'", channel.ChannelName, "',"
+	string channelSql(StringEx::Combine("Insert Into Flow_Channel (ChannelIndex,ChannelName,ChannelUrl,ChannelType,RtspUser,RtspPassword,RtspProtocol,IsLoop) Values ("
 		, channel.ChannelIndex, ","
+		, "'", channel.ChannelName, "',"
+		, "'", channel.ChannelUrl, "',"
 		, channel.ChannelType, ","
 		, "'", channel.RtspUser, "',"
 		, "'", channel.RtspPassword, "',"
@@ -95,8 +94,8 @@ bool FlowChannelData::Set(const FlowChannel& channel)
 	{
 		for (vector<Lane>::const_iterator it = channel.Lanes.begin(); it != channel.Lanes.end(); ++it)
 		{
-			string laneSql(StringEx::Combine("Insert Into Flow_Lane (ChannelId,LaneId,LaneName,LaneIndex,LaneType,Direction,FlowDirection,Length,IOIp,IOPort,IOIndex,DetectLine,StopLine,LaneLine1,LaneLine2,Region) Values ("
-				, "'", it->ChannelId, "',"
+			string laneSql(StringEx::Combine("Insert Into Flow_Lane (ChannelIndex,LaneId,LaneName,LaneIndex,LaneType,Direction,FlowDirection,Length,IOIp,IOPort,IOIndex,DetectLine,StopLine,LaneLine1,LaneLine2,Region) Values ("
+				, it->ChannelIndex, ","
 				, "'", it->LaneId, "',"
 				, "'", it->LaneName, "',"
 				, it->LaneIndex, ","
@@ -121,19 +120,36 @@ bool FlowChannelData::Set(const FlowChannel& channel)
 	{
 		return false;
 	}
-
 }
 
-int FlowChannelData::Delete(const std::string& channelId)
+bool FlowChannelData::Set(const FlowChannel& channel)
 {
-	int result = _sqlite.ExecuteRowCount(StringEx::Combine("Delete From Flow_Channel Where ChannelId='", channelId, "'"));
+	Delete(channel.ChannelIndex);
+	return Insert(channel);
+}
+
+void FlowChannelData::SetList(const vector<FlowChannel>& channels)
+{
+	_sqlite.ExecuteRowCount(StringEx::Combine("Delete From Flow_Channel"));
+	_sqlite.ExecuteRowCount(StringEx::Combine("Delete From Flow_Lane"));
+
+	for (vector<FlowChannel>::const_iterator it = channels.begin(); it != channels.end(); ++it)
+	{
+		Insert(*it);
+	}
+}
+
+int FlowChannelData::Delete(int channelIndex)
+{
+	int result = _sqlite.ExecuteRowCount(StringEx::Combine("Delete From Flow_Channel Where ChannelIndex=", channelIndex));
 	if (result==-1)
 	{
 		return -1;
 	}
 	else
 	{
-		_sqlite.ExecuteRowCount(StringEx::Combine("Delete From Flow_Lane Where ChannelId='", channelId, "'"));
+		_sqlite.ExecuteRowCount(StringEx::Combine("Delete From Flow_Lane Where ChannelIndex=", channelIndex));
 		return result;
 	}
 }
+

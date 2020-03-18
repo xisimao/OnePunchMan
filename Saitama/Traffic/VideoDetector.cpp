@@ -4,7 +4,7 @@ using namespace std;
 using namespace Saitama;
 
 VideoDetector::VideoDetector()
-	:Id(),Index()
+	:Url(),Index()
 {
 
 }
@@ -76,7 +76,7 @@ vector<IOItem> VideoDetector::Detect(const std::vector<DetectItem>& vehicles, co
 
 		if ((*lit)->Status != status)
 		{
-			items.push_back(IOItem(Id, Index, (*lit)->Id(), (*lit)->Index(), status?1:0));
+			items.push_back(IOItem(Url, Index, (*lit)->Id(), (*lit)->Index(), status?1:0));
 			(*lit)->Status = status;
 		}
 	}

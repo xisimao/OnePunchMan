@@ -20,7 +20,6 @@ using namespace std;
 using namespace Saitama;
 
 
-
 int main()
 {
     SocketMaid maid(1);

@@ -76,14 +76,6 @@ namespace Saitama
         bool UrlStartWith(const std::string& url, const std::string& key);
 
         /**
-        * @brief: 获取url中的编号
-        * @param: url url
-        * @param: key 前缀
-        * @return: 获取成功返回编号否则返回空字符串
-        */
-        std::string GetId(const std::string& url, const std::string& key);
-
-        /**
         * @brief: 更新通道信息
         * @param: channel 通道信息
         */

@@ -89,8 +89,8 @@ namespace Saitama
 		*/
 		std::vector<LaneItem> Collect();
 
-		//通道编号
-		std::string Id;
+		//通道地址
+		std::string Url;
 
 		//通道序号
 		int Index;

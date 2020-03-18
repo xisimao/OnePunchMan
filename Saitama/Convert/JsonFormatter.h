@@ -222,7 +222,14 @@ namespace Saitama
 			if (_values.find(key) != _values.end())
 			{
 				value = _values.at(key);
-				return StringEx::ConvertToArray<T>(value.substr(1, value.size() - 2));
+				if (value.size() >= 2)
+				{
+					return StringEx::ConvertToArray<T>(value.substr(1, value.size() - 2));
+				}
+				else
+				{
+					return std::vector<T>();
+				}
 			}
 			else
 			{
