@@ -19,7 +19,7 @@ namespace Saitama
 		* @brief: 构造函数
 		*/
 		DetectItem()
-			:DetectItem(Rectangle(),std::string(), 0, 0)
+			:DetectItem(Rectangle(), 0)
 		{
 
 		}
@@ -29,7 +29,7 @@ namespace Saitama
 		* @param: region 检测元素区域
 		*/
 		DetectItem(const Rectangle& region)
-			:DetectItem(region,std::string(),0,0)
+			:DetectItem(region,0)
 		{
 
 		}
@@ -37,24 +37,19 @@ namespace Saitama
 		/**
 		* @brief: 构造函数
 		* @param: region 检测元素区域
-		* @param: id 检测元素编号
-		* @param: timeStamp 时间戳
 		* @param: type 检测元素类型
 		*/
-		DetectItem(const Rectangle& region,const std::string& id, long long timeStamp, int type)
-			:Region(region), Id(id), TimeStamp(timeStamp), Type(type)
+		DetectItem(const Rectangle& region,int type)
+			:HitPoint(region.Top.X + region.Width / 2, region.Top.Y + region.Height), Type(type)
 		{
 
 		}
 
-		//检测元素编号
-		std::string Id;
+		//检测点
+		Point HitPoint;
 		//检测元素类型
 		int Type;
-		//时间戳
-		long long TimeStamp;
-		//检测元素区域
-		Rectangle Region;
+		
 	};
 
 	//检测元素类型
@@ -68,6 +63,14 @@ namespace Saitama
 		Bus = 6,
 		Van = 7,
 		Truck = 8
+	};
+
+	//io状态
+	enum class IOStatus
+	{
+		In = 1,
+		Out = 0,
+		UnChanged=-1
 	};
 
 	//车道计算数据项
@@ -101,10 +104,13 @@ namespace Saitama
 		double Speed;
 		//车头时距(秒)
 		double HeadDistance;
+		//车头间距(米)=平均速度*车头时距
+		double HeadSpace;
 		//时间占有率(%)
 		double TimeOccupancy;
 	};
 
+	//视频结构化
 	class VideoStruct
 	{
 	public:
@@ -162,8 +168,9 @@ namespace Saitama
 		* @param: id 车道编号
 		* @param: index 车道序号
 		* @param: region 车道区域
+		* @param: meterPerPixel 每个像素代表的米数
 		*/
-		LaneDetector(const std::string& id,int index,Polygon region);
+		LaneDetector(const std::string& id,int index,Polygon region,double meterPerPixel);
 	
 		/**
 		* @brief: 获取车道编号
@@ -180,23 +187,9 @@ namespace Saitama
 		/**
 		* @brief: 检测机动车
 		* @param: item 检测项
-		* @return: 如果检测项在车道内返回true，否则返回false
+		* @return: 返回车道io状态
 		*/
-		bool DetectVehicle(const DetectItem& item);
-
-		/**
-		* @brief: 检测非机动车
-		* @param: item 检测项
-		* @return: 如果检测项在车道内返回true，否则返回false
-		*/
-		bool DetectBike(const DetectItem& item);
-
-		/**
-		* @brief: 检测行人
-		* @param: item 检测项
-		* @return: 如果检测项在车道内返回true，否则返回false
-		*/
-		bool DetectPedestrain(const DetectItem& item);
+		IOStatus Detect(const std::map<std::string, DetectItem>& items,long long timeStamp);
 
 		/**
 		* @brief: 检测数据是否在车道范围内
@@ -210,9 +203,6 @@ namespace Saitama
 		* @return: 车道计算数据
 		*/
 		LaneItem Collect();
-
-		//车道IO状态
-		bool Status;
 
 	private:
 
@@ -256,6 +246,21 @@ namespace Saitama
 		int _vehicles;
 		//车辆进入区域时间差的和(毫秒)
 		long long _totalSpan;
+
+		//io状态
+		IOStatus _iOStatus;
+		//上一帧的时间戳
+		long long _lastTimeStamp;
+
+		//每个像素代表的米数
+		double _meterPerPixel;
+
+		std::map<std::string, DetectItem> _items1;
+		std::map<std::string, DetectItem> _items2;
+
+		std::map<std::string, DetectItem>* _currentItems;
+		std::map<std::string, DetectItem>* _lastItems;
+
 	};
 
 }

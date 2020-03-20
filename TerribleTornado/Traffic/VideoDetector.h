@@ -69,12 +69,11 @@ namespace Saitama
 
 		/**
 		* @brief: 检测数据
-		* @param: vehicles 机动车检测数据集合
-		* @param: bikes 非机动车检测数据集合
-		* @param: pedestrains 行人检测数据集合
+		* @param: items 检测数据集合
+		* @param: timeStamp 时间戳
 		* @return: 改变的IO状态集合
 		*/
-		std::vector<IOItem> Detect(const std::vector<DetectItem>& vehicles,const std::vector<DetectItem>& bikes,std::vector<DetectItem>& pedestrains);
+		std::vector<IOItem> Detect(const std::map<std::string,DetectItem>& items,long long timeStamp);
 
 		/**
 		* @brief: 检测数据是否在车道范围内

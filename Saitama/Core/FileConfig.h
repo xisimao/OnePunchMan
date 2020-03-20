@@ -5,6 +5,7 @@
 #include <map>
 
 #include "StringEx.h"
+#include "JsonFormatter.h"
 
 namespace Saitama
 {
@@ -32,12 +33,7 @@ namespace Saitama
 		template<typename T>
 		T Get(const std::string& key) const
 		{
-			std::string value;
-			if (_configs.find(key) != _configs.end())
-			{
-				value = _configs.at(key);
-			}
-			return StringEx::Convert<T>(value);
+			return _jd.Get<T>(key);
 		}
 
 		/**
@@ -49,35 +45,13 @@ namespace Saitama
 		template<typename T>
 		T Get(const std::string& key, T defaultValue) const
 		{
-			std::string value;
-			if (_configs.find(key) != _configs.end())
-			{
-				value = _configs.at(key);
-			}
-			return StringEx::Convert<T>(value, defaultValue);
-		}
-
-
-		/**
-		* @brief: 读取配置文件
-		* @param: key 键
-		* @return: 读取成功返回读取结果，否则返回空集合
-		*/
-		template<typename T>
-		std::vector<T> GetArray(const std::string& key) const
-		{
-			std::string value;
-			if (_configs.find(key) != _configs.end())
-			{
-				value = _configs.at(key);
-			}
-			return StringEx::ConvertToArray<T>(value);
+			return _jd.Get<T>(key, defaultValue);
 		}
 
 	private:
 
 		//配置项
-		std::map<std::string, std::string> _configs;
+		JsonDeserialization _jd;
 	};
 
 }

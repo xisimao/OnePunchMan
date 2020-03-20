@@ -7,23 +7,14 @@
     <Filter Include="Logger">
       <UniqueIdentifier>{c5828014-1def-4259-8663-0d238db78a1e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Mqtt">
-      <UniqueIdentifier>{3445cfe4-0224-47ab-a3e5-26c7b64194df}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Convert">
       <UniqueIdentifier>{11c5238b-ff2e-46c4-a10c-083c07b82774}</UniqueIdentifier>
     </Filter>
     <Filter Include="Text">
       <UniqueIdentifier>{515fc182-9c11-4876-9764-6158a60a1b1a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Traffic">
-      <UniqueIdentifier>{ff9ffd51-d482-462f-a7c2-6ad645aabff1}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Net">
       <UniqueIdentifier>{5eda3a01-4cf6-41de-87bd-f0e5795b7b90}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Sqlite">
-      <UniqueIdentifier>{5209aee6-779b-43ab-82ad-4c741ac46d43}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -67,9 +58,6 @@
     <ClCompile Include="Text\Path.cpp">
       <Filter>Text</Filter>
     </ClCompile>
-    <ClCompile Include="Mqtt\MqttChannel.cpp">
-      <Filter>Mqtt</Filter>
-    </ClCompile>
     <ClCompile Include="Net\EndPoint.cpp">
       <Filter>Net</Filter>
     </ClCompile>
@@ -100,23 +88,8 @@
     <ClCompile Include="Net\AsyncHandler.cpp">
       <Filter>Net</Filter>
     </ClCompile>
-    <ClCompile Include="Sqlite\Sqlite.cpp">
-      <Filter>Sqlite</Filter>
-    </ClCompile>
-    <ClCompile Include="Traffic\FlowChannelData.cpp">
-      <Filter>Traffic</Filter>
-    </ClCompile>
     <ClCompile Include="Net\SocketMaid.cpp">
       <Filter>Net</Filter>
-    </ClCompile>
-    <ClCompile Include="Traffic\LaneDetector.cpp">
-      <Filter>Traffic</Filter>
-    </ClCompile>
-    <ClCompile Include="Traffic\VideoDetector.cpp">
-      <Filter>Traffic</Filter>
-    </ClCompile>
-    <ClCompile Include="Traffic\DataChannel.cpp">
-      <Filter>Traffic</Filter>
     </ClCompile>
     <ClCompile Include="Convert\JsonFormatter.cpp">
       <Filter>Convert</Filter>
@@ -150,9 +123,6 @@
     <ClInclude Include="Core\Thread.h">
       <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Mqtt\mosquitto.h">
-      <Filter>Mqtt</Filter>
-    </ClInclude>
     <ClInclude Include="Logger\LogReader.h">
       <Filter>Logger</Filter>
     </ClInclude>
@@ -170,12 +140,6 @@
     </ClInclude>
     <ClInclude Include="Text\Path.h">
       <Filter>Text</Filter>
-    </ClInclude>
-    <ClInclude Include="Mqtt\MqttChannel.h">
-      <Filter>Mqtt</Filter>
-    </ClInclude>
-    <ClInclude Include="Traffic\Shape.h">
-      <Filter>Traffic</Filter>
     </ClInclude>
     <ClInclude Include="Convert\StringFormatter.h">
       <Filter>Convert</Filter>
@@ -210,33 +174,14 @@
     <ClInclude Include="Net\AsyncHandler.h">
       <Filter>Net</Filter>
     </ClInclude>
-    <ClInclude Include="Sqlite\sqlite3.h">
-      <Filter>Sqlite</Filter>
-    </ClInclude>
-    <ClInclude Include="Sqlite\Sqlite.h">
-      <Filter>Sqlite</Filter>
-    </ClInclude>
     <ClInclude Include="Logger\LogEvent.h">
       <Filter>Logger</Filter>
-    </ClInclude>
-    <ClInclude Include="Traffic\FlowChannelData.h">
-      <Filter>Traffic</Filter>
     </ClInclude>
     <ClInclude Include="Net\SocketMaid.h">
       <Filter>Net</Filter>
     </ClInclude>
-    <ClInclude Include="Traffic\LaneDetector.h">
-      <Filter>Traffic</Filter>
+    <ClInclude Include="Core\Shape.h">
+      <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Traffic\VideoDetector.h">
-      <Filter>Traffic</Filter>
-    </ClInclude>
-    <ClInclude Include="Traffic\DataChannel.h">
-      <Filter>Traffic</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="app.config" />
-    <None Include="traffic.db" />
   </ItemGroup>
 </Project>

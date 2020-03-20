@@ -70,7 +70,6 @@ FlowChannel FlowChannelData::GetChannel(const SqliteReader& sqlite)
 			lane.StopLine = laneSqlite.GetString(12);
 			lane.LaneLine1 = laneSqlite.GetString(13);
 			lane.LaneLine2 = laneSqlite.GetString(14);
-			lane.Region = laneSqlite.GetString(15);
 			channel.Lanes.push_back(lane);
 		}
 		laneSqlite.EndQuery();
@@ -110,7 +109,6 @@ bool FlowChannelData::Insert(const FlowChannel& channel)
 				, "'", it->StopLine, "',"
 				, "'", it->LaneLine1, "',"
 				, "'", it->LaneLine2, "',"
-				, "'", it->Region, "'"
 				, ")"));
 			_sqlite.ExecuteRowCount(laneSql);
 		}

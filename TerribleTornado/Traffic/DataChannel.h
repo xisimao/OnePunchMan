@@ -47,7 +47,7 @@ namespace Saitama
         * @param: key 检测项字段的键
         * @return: 检测项集合
         */
-        std::vector<DetectItem> DeserializeDetectItems(const JsonDeserialization& jd, const std::string& key, long long timeStamp);
+        void DeserializeDetectItems(std::map<std::string,DetectItem>* items, const JsonDeserialization& jd, const std::string& key, long long timeStamp);
 
         /**
         * @brief: 处理检测数据

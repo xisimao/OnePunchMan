@@ -11,6 +11,7 @@ FileConfig::FileConfig()
 
 FileConfig::FileConfig(const string& filePath)
 {
+	string json;
 	ifstream file;
 	file.open(filePath);
 	if (file.good())
@@ -18,21 +19,11 @@ FileConfig::FileConfig(const string& filePath)
 		string line;
 		while (getline(file, line))
 		{
-			size_t i = line.find('=');
-			if (i != string::npos)
-			{
-				string key = line.substr(0, i);
-				key = StringEx::Trim(key);
-				if (!key.empty() && key[0] != '#')
-				{
-					string value = line.substr(i + 1, line.length() - i - 1);
-					value = StringEx::Trim(value);
-					_configs.insert(pair<string, string>(key, value));
-				}
-			}
+			json.append(line);
 		}
 	}
 	file.close();
+	_jd.Deserialize(json);
 }
 
 

@@ -20,9 +20,9 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
-    <ProjectGuid>{F58E849D-8B77-4BE8-905C-1BB2F829B0E3}</ProjectGuid>
+    <ProjectGuid>{F5C7EDBE-90EF-442B-94A9-34E74F2A5314}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>Saitama</RootNamespace>
+    <RootNamespace>TerribleTornado</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -40,7 +40,7 @@
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
@@ -70,10 +70,10 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -82,22 +82,6 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <ClCompile>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <WarningLevel>Level3</WarningLevel>
-      <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_WINSOCK_DEPRECATED_NO_WARNINGS;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ConformanceMode>true</ConformanceMode>
-      <DisableSpecificWarnings>4891</DisableSpecificWarnings>
-      <AdditionalIncludeDirectories>
-      </AdditionalIncludeDirectories>
-    </ClCompile>
-    <Link>
-      <SubSystem>Console</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-    </Link>
-  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
@@ -105,13 +89,28 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_WINSOCK_DEPRECATED_NO_WARNINGS;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>./Traffic;./Sqlite;./Mqtt;../Saitama/Text;../Saitama/Net;../Saitama/Logger;../Saitama/Core;../Saitama/Convert;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4819</DisableSpecificWarnings>
-      <AdditionalIncludeDirectories>./Net;./Text;./Convert;./Logger;./Core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>../x64/Debug;./lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>Saitama.lib;sqlite3.lib;mosquitto.lib;Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -151,63 +150,27 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Convert\ByteFormatter.cpp" />
-    <ClCompile Include="Convert\JsonFormatter.cpp" />
-    <ClCompile Include="Core\Command.cpp" />
-    <ClCompile Include="Core\DateTime.cpp" />
-    <ClCompile Include="Core\FileConfig.cpp" />
-    <ClCompile Include="Net\SocketMaid.cpp" />
-    <ClCompile Include="Net\AsyncHandler.cpp" />
-    <ClCompile Include="Net\EndPoint.cpp" />
-    <ClCompile Include="Net\EndPointChannel.cpp" />
-    <ClCompile Include="Net\HttpHandler.cpp" />
-    <ClCompile Include="Net\NoticeHandler.cpp" />
-    <ClCompile Include="Net\Socket.cpp" />
-    <ClCompile Include="Net\SocketChannel.cpp" />
-    <ClCompile Include="Net\SocketHandler.cpp" />
-    <ClCompile Include="Net\WebSocket.cpp" />
-    <ClCompile Include="Net\WebSocketHandler.cpp" />
-    <ClCompile Include="Text\Path.cpp" />
-    <ClCompile Include="Text\Security.cpp" />
-    <ClCompile Include="Convert\StringFormatter.cpp" />
-    <ClCompile Include="Core\Thread.cpp" />
-    <ClCompile Include="Logger\ConsoleLogger.cpp" />
-    <ClCompile Include="Logger\FileLogger.cpp" />
-    <ClCompile Include="Logger\LogPool.cpp" />
-    <ClCompile Include="Logger\LogReader.cpp" />
-    <ClCompile Include="Saitama.cpp" />
-    <ClCompile Include="Text\StringEx.cpp" />
+    <ClCompile Include="Mqtt\MqttChannel.cpp" />
+    <ClCompile Include="Sqlite\Sqlite.cpp" />
+    <ClCompile Include="TerribleTornado.cpp" />
+    <ClCompile Include="Traffic\DataChannel.cpp" />
+    <ClCompile Include="Traffic\FlowChannelData.cpp" />
+    <ClCompile Include="Traffic\LaneDetector.cpp" />
+    <ClCompile Include="Traffic\VideoDetector.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Convert\ByteFormatter.h" />
-    <ClInclude Include="Core\Command.h" />
-    <ClInclude Include="Core\DateTime.h" />
-    <ClInclude Include="Core\FileConfig.h" />
-    <ClInclude Include="Convert\JsonFormatter.h" />
-    <ClInclude Include="Core\Observable.h" />
-    <ClInclude Include="Logger\LogEvent.h" />
-    <ClInclude Include="Net\SocketMaid.h" />
-    <ClInclude Include="Net\AsyncHandler.h" />
-    <ClInclude Include="Net\EndPoint.h" />
-    <ClInclude Include="Net\EndPointChannel.h" />
-    <ClInclude Include="Net\HttpHandler.h" />
-    <ClInclude Include="Net\NoticeHandler.h" />
-    <ClInclude Include="Net\Socket.h" />
-    <ClInclude Include="Net\SocketChannel.h" />
-    <ClInclude Include="Net\SocketHandler.h" />
-    <ClInclude Include="Net\WebSocket.h" />
-    <ClInclude Include="Net\WebSocketHandler.h" />
-    <ClInclude Include="Core\Shape.h" />
-    <ClInclude Include="Text\Path.h" />
-    <ClInclude Include="Text\Security.h" />
-    <ClInclude Include="Convert\StringFormatter.h" />
-    <ClInclude Include="Text\StringEx.h" />
-    <ClInclude Include="Core\Thread.h" />
-    <ClInclude Include="Logger\ConsoleLogger.h" />
-    <ClInclude Include="Logger\FileLogger.h" />
-    <ClInclude Include="Logger\Logger.h" />
-    <ClInclude Include="Logger\LogPool.h" />
-    <ClInclude Include="Logger\LogReader.h" />
+    <ClInclude Include="Mqtt\mosquitto.h" />
+    <ClInclude Include="Mqtt\MqttChannel.h" />
+    <ClInclude Include="Sqlite\Sqlite.h" />
+    <ClInclude Include="Sqlite\sqlite3.h" />
+    <ClInclude Include="Traffic\DataChannel.h" />
+    <ClInclude Include="Traffic\FlowChannelData.h" />
+    <ClInclude Include="Traffic\LaneDetector.h" />
+    <ClInclude Include="Traffic\VideoDetector.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
+    <None Include="traffic.db" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

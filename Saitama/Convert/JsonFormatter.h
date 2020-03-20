@@ -175,6 +175,15 @@ namespace Saitama
 	{
 	public:
 
+		/**
+		* @brief: 构造函数
+		*/
+		JsonDeserialization();
+
+		/**
+		* @brief: 构造函数
+		* @param: json json字符串
+		*/
 		JsonDeserialization(const std::string& json);
 
 		/**
@@ -235,8 +244,14 @@ namespace Saitama
 			{
 				return std::vector<T>();
 			}
-			
 		}
+
+		/**
+		* @brief: 反序列化Json
+		* @param: json json字符串
+		* @param: prefix key前缀
+		*/
+		void Deserialize(const std::string& json, const std::string& prefix = "");
 
 	private:
 
@@ -273,12 +288,6 @@ namespace Saitama
 		*/
 		void DeserializeArray(const std::string& json, const std::string& prefix = "");
 
-		/**
-		* @brief: 反序列化Json
-		* @param: json json字符串
-		* @param: prefix key前缀
-		*/
-		void Deserialize(const std::string& json, const std::string& prefix = "");
 
 		//反序列化的结果
 		std::map<std::string, std::string> _values;

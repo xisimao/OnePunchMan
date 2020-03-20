@@ -43,44 +43,19 @@ vector<LaneItem> VideoDetector::Collect()
 	return lanes;
 }
 
-vector<IOItem> VideoDetector::Detect(const std::vector<DetectItem>& vehicles, const std::vector<DetectItem>& bikes, std::vector<DetectItem>& pedestrains)
+vector<IOItem> VideoDetector::Detect(const std::map<string, DetectItem>& items, long long timeStamp)
 {
-	vector<IOItem> items;
+	vector<IOItem> iOItems;
 	lock_guard<mutex> laneLock(_laneMutex);
 	for (vector<LaneDetector*>::iterator lit = _lanes.begin(); lit != _lanes.end(); ++lit)
 	{
-		bool status = false;
-		for (vector<DetectItem>::const_iterator dit = vehicles.begin(); dit != vehicles.end(); ++dit)
+		IOStatus iOStatus = (*lit)->Detect(items, timeStamp);
+		if (iOStatus != IOStatus::UnChanged)
 		{
-			if ((*lit)->DetectVehicle(*dit))
-			{
-				status = true;
-			}
-		}
-
-		for (vector<DetectItem>::const_iterator bit = bikes.begin(); bit != bikes.end(); ++bit)
-		{
-			if ((*lit)->DetectBike(*bit))
-			{
-				status = true;
-			}
-		}
-
-		for (vector<DetectItem>::const_iterator pit = pedestrains.begin(); pit != pedestrains.end(); ++pit)
-		{
-			if ((*lit)->DetectPedestrain(*pit))
-			{
-				status = true;
-			}
-		}
-
-		if ((*lit)->Status != status)
-		{
-			items.push_back(IOItem(Url, Index, (*lit)->Id(), (*lit)->Index(), status?1:0));
-			(*lit)->Status = status;
+			iOItems.push_back(IOItem(Url, Index, (*lit)->Id(), (*lit)->Index(), (int)iOStatus));
 		}
 	}
-	return items;
+	return iOItems;
 }
 
 string VideoDetector::Contains(const DetectItem& item)

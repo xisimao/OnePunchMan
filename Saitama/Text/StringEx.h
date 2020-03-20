@@ -169,10 +169,12 @@ namespace Saitama
 			if (ToUpper(value).compare("TRUE") == 0)
 			{
 				*t = true;
+				return true;
 			}
 			else if (ToUpper(value).compare("FALSE") == 0)
 			{
 				*t = false;
+				return true;
 			}
 			else
 			{

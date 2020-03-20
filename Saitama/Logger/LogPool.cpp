@@ -11,33 +11,34 @@ LogPool::LogPool()
 	FileConfig config;
 
 	//读取配置文件
-	_directory = config.Get("Logger.File.Directory", string("log"));
-	_holdDays = config.Get<unsigned int>("Logger.File.HoldDays");
+	_directory = config.Get("Logging:Directory", string("log"));
+	_holdDays = config.Get<unsigned int>("Logging:HoldDays");
 
 	//添加文件日志
-	unsigned int index = 1;
-	string loggerTag = StringEx::Combine("Logger.", index);
-
-	LogType type;
-	while ((type=ReadType(config, loggerTag +".Type"))!=LogType::None)
+	unsigned int index = 0;
+	while (true)
 	{
-		LogLevel minLevel = ReadLevel(config, loggerTag + ".MinLevel");
-		LogLevel maxLevel = ReadLevel(config, loggerTag + ".MaxLevel");
+		string loggerTag = StringEx::Combine("Logging:Logger:", index);
+		LogType type = ReadType(config, loggerTag + ":Type");
+		if (type == LogType::None)
+		{
+			break;
+		}
+		LogLevel minLevel = ReadLevel(config, loggerTag + ":MinLevel");
+		LogLevel maxLevel = ReadLevel(config, loggerTag + ":MaxLevel");
 		if (type == LogType::Console)
 		{
 			_loggers.insert(new ConsoleLogger(minLevel, maxLevel));
 		}
 		else if (type == LogType::File)
 		{
-			string name = config.Get<string>(loggerTag + ".Name");
+			string name = config.Get<string>(loggerTag + ":Name");
 			if (!name.empty())
 			{
-				_loggers.insert(new FileLogger(minLevel, maxLevel, name, _directory,_holdDays));
+				_loggers.insert(new FileLogger(minLevel, maxLevel, name, _directory, _holdDays));
 			}
 		}
-
-		++index;
-		loggerTag = StringEx::Combine("Logger.", index);
+		index += 1;
 	}
 }
 

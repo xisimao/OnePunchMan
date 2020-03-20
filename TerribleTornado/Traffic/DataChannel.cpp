@@ -77,35 +77,45 @@ void DataChannel::UpdateChannel(const FlowChannel& channel)
 {
     if (channel.ChannelIndex >= 1 && channel.ChannelIndex <= _channels.size())
     {
-        vector<LaneDetector*> laneDetectors;
+      /*  vector<LaneDetector*> laneDetectors;
         for (vector<Lane>::const_iterator lit = channel.Lanes.begin(); lit != channel.Lanes.end(); ++lit)
         {
-            vector<Point> points;
-            vector<string> pointValues = StringEx::Split(lit->Region, ",",true);
-            int x, y = 0;
-            for (int i = 0; i < pointValues.size(); ++i)
+        
+            if (lit->Region.size() > 2)
             {
-                if (i % 2 == 0)
+                vector<Point> points;
+                vector<string> pointValues = StringEx::Split(lit->Region.substr(1, lit->Region.size()-2), ",", true);
+                int x, y = 0;
+                for (int i = 0; i < pointValues.size(); ++i)
                 {
-                    StringEx::TryConvert(pointValues[i].substr(1, pointValues[i].size() - 1), &x);
+                    if (i % 2 == 0)
+                    {
+                        StringEx::TryConvert(pointValues[i].substr(1, pointValues[i].size() - 1), &x);
+                    }
+                    else
+                    {
+                        StringEx::TryConvert(pointValues[i].substr(0, pointValues[i].size() - 1), &y);
+                        points.push_back(Point(x, y));
+                    }
                 }
-                else
+
+                if (points.size() >= 4)
                 {
-                    StringEx::TryConvert(pointValues[i].substr(0, pointValues[i].size() - 1), &y);
-                    points.push_back(Point(x, y));
+                    Line line1(points[0], points[1]);
+                    Line line2(points[2], points[3]);
+                    double pixelLength = line1.Middle().Distance(line2.Middle());
+                    double meterPerPixel = pixelLength == 0 ? 0 : lit->Length / pixelLength;
+                    laneDetectors.push_back(new LaneDetector(lit->LaneId, lit->LaneIndex, Polygon(points), meterPerPixel));
                 }
-            }
-            laneDetectors.push_back(new LaneDetector(lit->LaneId, lit->LaneIndex, Polygon(points)));
-          
+            }          
         }
         _channels[channel.ChannelIndex-1]->Url = channel.ChannelUrl;
-        _channels[channel.ChannelIndex-1]->UpdateLanes(laneDetectors);
+        _channels[channel.ChannelIndex-1]->UpdateLanes(laneDetectors);*/
     }
 }
 
-vector<DetectItem> DataChannel::DeserializeDetectItems(const JsonDeserialization& jd, const string& key, long long timeStamp)
+void DataChannel::DeserializeDetectItems(map<string, DetectItem>* items,const JsonDeserialization& jd, const string& key, long long timeStamp)
 {
-    vector<DetectItem> items;
     int itemIndex = 0;
     while (true)
     {
@@ -118,12 +128,10 @@ vector<DetectItem> DataChannel::DeserializeDetectItems(const JsonDeserialization
         vector<int> rect = jd.GetArray<int>(StringEx::Combine("ImageResults:0:", key, ":", itemIndex, ":Detect:Body:Rect"));
         if (rect.size() >= 4)
         {
-            items.push_back(DetectItem(Rectangle(Point(rect[0], rect[1]), rect[2], rect[3]), id, timeStamp, type));
+            items->insert(pair<string,DetectItem>(id,DetectItem(Rectangle(Point(rect[0], rect[1]), rect[2], rect[3]), type)));
         }
         itemIndex += 1;
     }
-    
-    return items;
 }
 
 void DataChannel::HandleDetect(const string& json)
@@ -133,14 +141,14 @@ void DataChannel::HandleDetect(const string& json)
     if (channelIndex >= 0 && channelIndex < _channels.size())
     {
         long long timeStamp = DateTime::Now().Milliseconds();
-        vector<DetectItem> vehicles = DeserializeDetectItems(jd, "Vehicles", timeStamp);
-        vector<DetectItem> bikes = DeserializeDetectItems(jd, "Bikes", timeStamp);
-        vector<DetectItem> pedestrains = DeserializeDetectItems(jd, "Pedestrains", timeStamp);
+        map<string,DetectItem> detectItems;
+        DeserializeDetectItems(&detectItems,jd, "Vehicles", timeStamp);
+        DeserializeDetectItems(&detectItems, jd, "Bikes", timeStamp);
+        DeserializeDetectItems(&detectItems, jd, "Pedestrains", timeStamp);
 
+        vector<IOItem> iOItems = _channels[channelIndex]->Detect(detectItems,timeStamp);
 
-        vector<IOItem> items = _channels[channelIndex]->Detect(vehicles, bikes, pedestrains);
-
-        for (vector<IOItem>::iterator it = items.begin(); it != items.end(); ++it)
+        for (vector<IOItem>::iterator it = iOItems.begin(); it != iOItems.end(); ++it)
         {
        
             string laneJson;
@@ -325,6 +333,7 @@ void DataChannel::CollectFlow(const DateTime& now)
 
                 JsonSerialization::Serialize(&laneJson, "averageSpeed", static_cast<int>(lit->Speed));
                 JsonSerialization::Serialize(&laneJson, "headDistance", lit->HeadDistance);
+                JsonSerialization::Serialize(&laneJson, "headSpace", lit->HeadSpace);
                 JsonSerialization::Serialize(&laneJson, "timeOccupancy", static_cast<int>(lit->TimeOccupancy));
                 JsonSerialization::SerializeItem(&lanesJson, laneJson);
             }
@@ -376,7 +385,6 @@ void DataChannel::Update(HttpReceivedEventArgs* e)
                     JsonSerialization::Serialize(&laneJson, "stopLine", lit->StopLine);
                     JsonSerialization::Serialize(&laneJson, "laneLine1", lit->LaneLine1);
                     JsonSerialization::Serialize(&laneJson, "laneLine2", lit->LaneLine2);
-                    JsonSerialization::Serialize(&laneJson, "region", lit->Region);
                     JsonSerialization::SerializeItem(&lanesJson, laneJson);
                 }
                 JsonSerialization::SerializeJsons(&channelJson, "lanes", lanesJson);
@@ -430,7 +438,6 @@ void DataChannel::Update(HttpReceivedEventArgs* e)
                     lane.StopLine = jd.Get<string>(StringEx::Combine("channels:", channelIndex, ":lanes:", laneIndex, ":stopLine"));
                     lane.LaneLine1 = jd.Get<string>(StringEx::Combine("channels:", channelIndex, ":lanes:", laneIndex, ":laneLine1"));
                     lane.LaneLine2 = jd.Get<string>(StringEx::Combine("channels:", channelIndex, ":lanes:", laneIndex, ":laneLine2"));
-                    lane.Region = jd.Get<string>(StringEx::Combine("channels:", channelIndex, ":lanes:", laneIndex, ":region"));
                     channel.Lanes.push_back(lane);
                     laneIndex += 1;
                 }

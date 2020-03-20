@@ -3,6 +3,11 @@
 using namespace std;
 using namespace Saitama;
 
+JsonDeserialization::JsonDeserialization()
+{
+
+}
+
 JsonDeserialization::JsonDeserialization(const string& json)
 {
 	Deserialize(json);
