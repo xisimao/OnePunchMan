@@ -1,6 +1,0 @@
-﻿C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Application Type\Linux\1.0\Linux.targets(162,5): error : 找不到远程计算机或设备“1726233449;192.168.1.7 (username=, port=12000, authentication=PrivateKey)”的凭据。请选择其他远程计算机目标。
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Application Type\Linux\1.0\Linux.targets(162,5): error MSB4018: “ResolveRemoteDir”任务意外失败。
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Application Type\Linux\1.0\Linux.targets(162,5): error MSB4018: System.NullReferenceException: 未将对象引用设置到对象的实例。
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Application Type\Linux\1.0\Linux.targets(162,5): error MSB4018:    在 Microsoft.Build.Linux.Tasks.RemoteToolTask.Execute()
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Application Type\Linux\1.0\Linux.targets(162,5): error MSB4018:    在 Microsoft.Build.BackEnd.TaskExecutionHost.Microsoft.Build.BackEnd.ITaskExecutionHost.Execute()
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Application Type\Linux\1.0\Linux.targets(162,5): error MSB4018:    在 Microsoft.Build.BackEnd.TaskBuilder.<ExecuteInstantiatedTask>d__26.MoveNext()
