@@ -1,1 +1,0 @@
-g++ -o "/root/projects/Genos/bin/ARM64/Debug/Genos.out" -Wl,--no-undefined -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack /root/projects/Genos/obj/ARM64/Debug/main.o /root/projects/Genos/obj/ARM64/Debug/Sqlite.o -lmosquitto -lsqlite3

@@ -143,7 +143,7 @@ void TestTimeOccupancy()
     delete detector;
 }
 
-int main()
+int main1()
 {
     TestHeadDistance();
     TestSpeed();
@@ -153,17 +153,20 @@ int main()
     return 0;
 }
 
-int main1()
+int main()
 {
-    SocketMaid maid(1);
-    DataChannel channel("192.168.201.139", 1884);
+    SocketMaid maid(2);
+    DataChannel channel("192.168.201.19", 1884);
     HttpHandler handler;
     handler.HttpReceived.Subscribe(&channel);
     maid.AddListenEndPoint(EndPoint(7772), &handler);
     channel.Start();
     maid.Start();
 
-    system("pause");
+    while (true)
+    {
+        this_thread::sleep_for(chrono::seconds(1));
+    }
 
     maid.Stop();
     channel.Stop();

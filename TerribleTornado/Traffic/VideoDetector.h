@@ -2,6 +2,7 @@
 #include <queue>
 #include <vector>
 
+#include "FlowChannelData.h"
 #include "LaneDetector.h"
 #include "Thread.h"
 
@@ -65,7 +66,7 @@ namespace Saitama
 		* @brief: 更新车道集合
 		* @param: lanes 车道集合
 		*/
-		void UpdateLanes(const std::vector<LaneDetector*>& lanes);
+		void UpdateLanes(const std::vector<Lane>& lanes);
 
 		/**
 		* @brief: 检测数据

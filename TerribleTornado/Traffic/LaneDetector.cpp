@@ -128,10 +128,10 @@ LaneItem LaneDetector::Collect()
 	item.Cars = _cars;
 	item.Buss = _buss;
 
-	item.Speed = _totalTime==0?0:(_totalDistance * _meterPerPixel / 1000.0) / (_totalTime / 3600000.0);
-	item.HeadDistance = _vehicles > 1 ? _totalSpan / (static_cast<long long>(_vehicles) - 1) / 1000.0 : 0;
+	item.Speed = _totalTime==0?0:(_totalDistance * _meterPerPixel / 1000.0) / (static_cast<double>(_totalTime) / 3600000.0);
+	item.HeadDistance = _vehicles > 1 ? static_cast<double>(_totalSpan) / static_cast<double>(_vehicles- 1) / 1000.0 : 0;
 	item.HeadSpace = item.Speed * 1000 * item.HeadDistance / 3600.0;
-	item.TimeOccupancy = _totalTime / 60000.0 * 100;
+	item.TimeOccupancy = static_cast<double>(_totalTime) / 60000.0 * 100;
 
 	LogPool::Debug("lane:", _id, "vehicles:", item.Cars + item.Tricycles + item.Buss + item.Vans + item.Trucks, "bikes:", item.Bikes + item.Motorcycles, "persons:", item.Persons, item.Speed, "km/h ", item.HeadDistance, "sec ", item.TimeOccupancy, "%");
 

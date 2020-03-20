@@ -28,7 +28,7 @@ namespace Saitama
 		std::string LaneLine1;
 		std::string LaneLine2;
 
-		double GetMeterPerPixel()
+		double GetMeterPerPixel() const
 		{
 			Line detectLine = GetLine(DetectLine);
 			Line stopLine = GetLine(StopLine);
@@ -58,7 +58,7 @@ namespace Saitama
 			}
 		}
 
-		Polygon GetRegion()
+		Polygon GetRegion() const
 		{
 			Line detectLine = GetLine(DetectLine);
 			Line stopLine = GetLine(StopLine);
@@ -94,14 +94,14 @@ namespace Saitama
 		}
 
 	private:
-		Line GetLine(std::string line)
+		Line GetLine(std::string line) const
 		{
 			if (line.size() > 2)
 			{
 				std::vector<Point> points;
 				std::vector<std::string> coordinates = StringEx::Split(line.substr(1, line.size() - 2), ",", true);
 				int x, y = 0;
-				for (int i = 0; i < coordinates.size(); ++i)
+				for (unsigned int i = 0; i < coordinates.size(); ++i)
 				{
 					if (coordinates[i].size() > 2)
 					{

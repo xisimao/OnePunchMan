@@ -25,11 +25,14 @@ void VideoDetector::ClearLanes()
 }
 
 
-void VideoDetector::UpdateLanes(const vector<LaneDetector*>& lanes)
+void VideoDetector::UpdateLanes(const vector<Lane>& lanes)
 {
 	ClearLanes();
 	lock_guard<mutex> lck(_laneMutex);
-	_lanes.assign(lanes.begin(), lanes.end());
+	for (vector<Lane>::const_iterator lit = lanes.begin(); lit != lanes.end(); ++lit)
+	{
+		_lanes.push_back(new LaneDetector(lit->LaneId, lit->LaneIndex, lit->GetRegion(), lit->GetMeterPerPixel()));
+	}
 }
 
 vector<LaneItem> VideoDetector::Collect()

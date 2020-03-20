@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <algorithm>
+#include <math.h>
 
 namespace Saitama
 {
@@ -226,7 +227,7 @@ namespace Saitama
 			}
 			int intersectCount= 0;
 			Point p1= _points[0];
-			for (int i = 1; i <= _points.size(); i++) {
+			for (unsigned int i = 1; i <= _points.size(); i++) {
 				Point p2 = _points[i % _points.size()];
 				if ((point.X - p1.X) * (p2.Y - p1.Y) == (p2.X - p1.X) * (point.Y - p1.Y)
 					&& point.X >= std::min(p1.X, p2.X)

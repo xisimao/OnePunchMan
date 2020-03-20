@@ -78,7 +78,6 @@ namespace Saitama
 		* @param: value 布尔类型
 		* @return: 如果序列化成功返回字节流长度，如果失败返回0。
 		*/
-		template<>
 		static unsigned int Serialize(char* buffer, unsigned int capacity, const bool& value);
 
 		/**
@@ -109,7 +108,6 @@ namespace Saitama
 		* @param: value 单字节浮点类型
 		* @return: 如果序列化成功返回字节流长度，如果失败返回0。
 		*/
-		template<>
 		static unsigned int Serialize(char* buffer, unsigned int capacity, const float& value);
 
 		/**
@@ -119,7 +117,6 @@ namespace Saitama
 		* @param: value 双字节浮点类型
 		* @return: 如果序列化成功返回字节流长度，如果失败返回0。
 		*/
-		template<>
 		static unsigned int Serialize(char* buffer, unsigned int capacity, const double& value);
 
 		/**
@@ -129,7 +126,6 @@ namespace Saitama
 		* @param: value 字符串
 		* @return: 如果序列化成功返回字节流长度，如果失败返回0。
 		*/
-		template<>
 		static unsigned int Serialize(char* buffer, unsigned int capacity, const std::string& value);
 
 		/**
@@ -200,7 +196,6 @@ namespace Saitama
 		* @param: value 布尔类型指针。
 		* @return: 如果反序列化成功返回使用的字节流长度，如果失败返回0。
 		*/
-		template<>
 		static unsigned int Deserialize(const char* buffer, unsigned int size, bool* value);
 
 		/**
@@ -237,7 +232,6 @@ namespace Saitama
 		* @param: value 单字节浮点类型指针。
 		* @return: 如果反序列化成功返回使用的字节流长度，如果失败返回0。
 		*/
-		template<>
 		static unsigned int Deserialize(const char* buffer, unsigned int size, float* value);
 
 		/**
@@ -247,7 +241,6 @@ namespace Saitama
 		* @param: value 双字节浮点类型指针。
 		* @return: 如果反序列化成功返回使用的字节流长度，如果失败返回0。
 		*/
-		template<>
 		static unsigned int Deserialize(const char* buffer, unsigned int size, double* value);
 
 		/**
@@ -257,7 +250,6 @@ namespace Saitama
 		* @param: value 字符串浮点类型指针。
 		* @return: 如果反序列化成功返回使用的字节流长度，如果失败返回0。
 		*/
-		template<>
 		static unsigned int Deserialize(const char* buffer, unsigned int size, std::string* value);
 
 		/**

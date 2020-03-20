@@ -30,7 +30,6 @@ namespace Saitama
 		* @param: buffer 格式化程序在其中放置序列化数据的字符串。
 		* @param: value 布尔类型
 		*/
-		template<>
 		static void Serialize(std::string* buffer, const bool& value);
 
 		/**
@@ -52,7 +51,6 @@ namespace Saitama
 		* @param: buffer 格式化程序在其中放置序列化数据的字符串。
 		* @param: value 单字节浮点类型
 		*/
-		template<>
 		static void Serialize(std::string* buffer, const float& value);
 
 		/**
@@ -60,7 +58,6 @@ namespace Saitama
 		* @param: buffer 格式化程序在其中放置序列化数据的字符串。
 		* @param: value 双字节浮点类型
 		*/
-		template<>
 		static void Serialize(std::string* buffer, const double& value);
 
 		/**
@@ -68,7 +65,6 @@ namespace Saitama
 		* @param: buffer 格式化程序在其中放置序列化数据的字符串。
 		* @param: value 字符串
 		*/
-		template<>
 		static void Serialize(std::string* buffer, const std::string& value);
 
 		/**
@@ -139,7 +135,6 @@ namespace Saitama
 		* @param: value 布尔类型指针。
 		* @return: 如果反序列化成功返回使用的字节流长度，如果失败返回0。
 		*/
-		template<>
 		static unsigned int Deserialize(std::string::const_iterator begin, std::string::const_iterator end, bool* value);
 
 		/**
@@ -176,7 +171,6 @@ namespace Saitama
 		* @param: value 单字节浮点类型指针。
 		* @return: 如果反序列化成功返回使用的字节流长度，如果失败返回0。
 		*/
-		template<>
 		static unsigned int Deserialize(std::string::const_iterator begin, std::string::const_iterator end, float* value);
 
 		/**
@@ -186,7 +180,6 @@ namespace Saitama
 		* @param: value 双字节浮点类型指针。
 		* @return: 如果反序列化成功返回使用的字节流长度，如果失败返回0。
 		*/
-		template<>
 		static unsigned int Deserialize(std::string::const_iterator begin, std::string::const_iterator end, double* value);
 
 		/**
@@ -196,7 +189,6 @@ namespace Saitama
 		* @param: value 字符串浮点类型指针。
 		* @return: 如果反序列化成功返回使用的字节流长度，如果失败返回0。
 		*/
-		template<>
 		static unsigned int Deserialize(std::string::const_iterator begin, std::string::const_iterator end, std::string* value);
 
 		/**

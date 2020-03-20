@@ -135,6 +135,40 @@ vector<string> StringEx::Split(const string& value, const string& separator, boo
 	return result;
 }
 
+#ifndef _WIN32 
+template<>
+string StringEx::Convert<string>(const string& value)
+{
+	return Convert<string>(value, string());
+}
+
+template<>
+bool StringEx::TryConvert<bool>(const string& value, bool* t)
+{
+	if (ToUpper(value).compare("TRUE") == 0)
+	{
+		*t = true;
+		return true;
+	}
+	else if (ToUpper(value).compare("FALSE") == 0)
+	{
+		*t = false;
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+template<>
+bool StringEx::TryConvert<string>(const string& value, string* t)
+{
+	*t = value;
+	return true;
+}
+
+#endif
 string StringEx::Rounding(float value, int precision)
 {
 	stringstream ss;

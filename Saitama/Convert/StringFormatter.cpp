@@ -3,13 +3,11 @@
 using namespace std;
 using namespace Saitama;
 
-template<>
 void StringFormatter::Serialize(string* buffer, const bool& value)
 {
 	buffer->push_back(value);
 }
 
-template<>
 void StringFormatter::Serialize(string* buffer, const float& value)
 {
 	Float_Convert fc;
@@ -17,7 +15,6 @@ void StringFormatter::Serialize(string* buffer, const float& value)
 	Serialize(buffer, fc.I);
 }
 
-template<>
 void StringFormatter::Serialize(std::string* buffer, const double& value)
 {
 	Double_Convert dc;
@@ -25,14 +22,12 @@ void StringFormatter::Serialize(std::string* buffer, const double& value)
 	Serialize(buffer, dc.L);
 }
 
-template<>
 void StringFormatter::Serialize(std::string* buffer, const std::string& value)
 {
 	buffer->append(value);
 	buffer->push_back(0);
 }
 
-template<>
 unsigned int StringFormatter::Deserialize(std::string::const_iterator begin, std::string::const_iterator end, bool* value)
 {
 	if (static_cast<unsigned int>((end-begin)) < sizeof(bool))
@@ -43,7 +38,6 @@ unsigned int StringFormatter::Deserialize(std::string::const_iterator begin, std
 	return sizeof(bool);
 }
 
-template<>
 unsigned int StringFormatter::Deserialize(std::string::const_iterator begin, std::string::const_iterator end, float* value)
 {
 	Float_Convert fc;
@@ -52,7 +46,6 @@ unsigned int StringFormatter::Deserialize(std::string::const_iterator begin, std
 	return result;
 }
 
-template<>
 unsigned int StringFormatter::Deserialize(std::string::const_iterator begin, std::string::const_iterator end, double* value)
 {
 	Double_Convert dc;
@@ -61,7 +54,6 @@ unsigned int StringFormatter::Deserialize(std::string::const_iterator begin, std
 	return result;
 }
 
-template<>
 unsigned int StringFormatter::Deserialize(std::string::const_iterator begin, std::string::const_iterator end, std::string* value)
 {
 	if ((end - begin) < static_cast<int>(value->length()))

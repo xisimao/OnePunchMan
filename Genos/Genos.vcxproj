@@ -75,7 +75,65 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <ItemGroup>
+    <ClCompile Include="..\Saitama\Convert\JsonFormatter.cpp" />
+    <ClCompile Include="..\Saitama\Core\DateTime.cpp" />
+    <ClCompile Include="..\Saitama\Core\FileConfig.cpp" />
+    <ClCompile Include="..\Saitama\Core\Thread.cpp" />
+    <ClCompile Include="..\Saitama\Logger\ConsoleLogger.cpp" />
+    <ClCompile Include="..\Saitama\Logger\FileLogger.cpp" />
+    <ClCompile Include="..\Saitama\Logger\LogPool.cpp" />
+    <ClCompile Include="..\Saitama\Logger\LogReader.cpp" />
+    <ClCompile Include="..\Saitama\Net\AsyncHandler.cpp" />
+    <ClCompile Include="..\Saitama\Net\EndPoint.cpp" />
+    <ClCompile Include="..\Saitama\Net\EndPointChannel.cpp" />
+    <ClCompile Include="..\Saitama\Net\HttpHandler.cpp" />
+    <ClCompile Include="..\Saitama\Net\NoticeHandler.cpp" />
+    <ClCompile Include="..\Saitama\Net\Socket.cpp" />
+    <ClCompile Include="..\Saitama\Net\SocketChannel.cpp" />
+    <ClCompile Include="..\Saitama\Net\SocketHandler.cpp" />
+    <ClCompile Include="..\Saitama\Net\SocketMaid.cpp" />
+    <ClCompile Include="..\Saitama\Text\Path.cpp" />
+    <ClCompile Include="..\Saitama\Text\StringEx.cpp" />
+    <ClCompile Include="..\TerribleTornado\Mqtt\MqttChannel.cpp" />
+    <ClCompile Include="..\TerribleTornado\Sqlite\Sqlite.cpp" />
+    <ClCompile Include="..\TerribleTornado\Traffic\DataChannel.cpp" />
+    <ClCompile Include="..\TerribleTornado\Traffic\FlowChannelData.cpp" />
+    <ClCompile Include="..\TerribleTornado\Traffic\LaneDetector.cpp" />
+    <ClCompile Include="..\TerribleTornado\Traffic\VideoDetector.cpp" />
     <ClCompile Include="main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\Saitama\Convert\JsonFormatter.h" />
+    <ClInclude Include="..\Saitama\Core\DateTime.h" />
+    <ClInclude Include="..\Saitama\Core\FileConfig.h" />
+    <ClInclude Include="..\Saitama\Core\Observable.h" />
+    <ClInclude Include="..\Saitama\Core\Shape.h" />
+    <ClInclude Include="..\Saitama\Core\Thread.h" />
+    <ClInclude Include="..\Saitama\Logger\ConsoleLogger.h" />
+    <ClInclude Include="..\Saitama\Logger\FileLogger.h" />
+    <ClInclude Include="..\Saitama\Logger\LogEvent.h" />
+    <ClInclude Include="..\Saitama\Logger\Logger.h" />
+    <ClInclude Include="..\Saitama\Logger\LogPool.h" />
+    <ClInclude Include="..\Saitama\Logger\LogReader.h" />
+    <ClInclude Include="..\Saitama\Net\AsyncHandler.h" />
+    <ClInclude Include="..\Saitama\Net\EndPoint.h" />
+    <ClInclude Include="..\Saitama\Net\EndPointChannel.h" />
+    <ClInclude Include="..\Saitama\Net\HttpHandler.h" />
+    <ClInclude Include="..\Saitama\Net\NoticeHandler.h" />
+    <ClInclude Include="..\Saitama\Net\Socket.h" />
+    <ClInclude Include="..\Saitama\Net\SocketChannel.h" />
+    <ClInclude Include="..\Saitama\Net\SocketHandler.h" />
+    <ClInclude Include="..\Saitama\Net\SocketMaid.h" />
+    <ClInclude Include="..\Saitama\Text\Path.h" />
+    <ClInclude Include="..\Saitama\Text\StringEx.h" />
+    <ClInclude Include="..\TerribleTornado\Mqtt\mosquitto.h" />
+    <ClInclude Include="..\TerribleTornado\Mqtt\MqttChannel.h" />
+    <ClInclude Include="..\TerribleTornado\Sqlite\Sqlite.h" />
+    <ClInclude Include="..\TerribleTornado\Sqlite\sqlite3.h" />
+    <ClInclude Include="..\TerribleTornado\Traffic\DataChannel.h" />
+    <ClInclude Include="..\TerribleTornado\Traffic\FlowChannelData.h" />
+    <ClInclude Include="..\TerribleTornado\Traffic\LaneDetector.h" />
+    <ClInclude Include="..\TerribleTornado\Traffic\VideoDetector.h" />
   </ItemGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Link>
@@ -84,10 +142,10 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
     <Link>
-      <LibraryDependencies>mosquitto;sqlite3;%(LibraryDependencies)</LibraryDependencies>
+      <LibraryDependencies>mosquitto;sqlite3;pthread;%(LibraryDependencies)</LibraryDependencies>
     </Link>
     <ClCompile>
-      <AdditionalIncludeDirectories>./Genos;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../TerribleTornado/Traffic;../TerribleTornado/Sqlite;../TerribleTornado/Mqtt;../Saitama/Text;../Saitama/Net;../Saitama/Logger;../Saitama/Core;../Saitama/Convert;./Genos;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

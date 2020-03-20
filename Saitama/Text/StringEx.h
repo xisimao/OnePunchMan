@@ -112,17 +112,6 @@ namespace Saitama
 		}
 
 		/**
-		* @brief: 将字符串转换为字符串类型
-		* @param: value 字符串
-		* @return: 转换成功返回转换结果否则返回空字符串
-		*/
-		template<>
-		static std::string Convert(const std::string& value)
-		{
-			return Convert<std::string>(value, std::string());
-		}
-
-		/**
 		* @brief: 将字符串转换为数字或者布尔类型
 		* @param: value 字符串
 		* @param: defaultValue 转换失败返回的默认值
@@ -157,14 +146,15 @@ namespace Saitama
 			return !ss.fail();
 		}
 
-		/**
-		* @brief: 将字符串转换为布尔类型
-		* @param: value 字符串
-		* @param: t 数字或布尔类型指针
-		* @return: 转换成功返回true
-		*/
+#ifdef _WIN32
 		template<>
-		static bool TryConvert(const std::string& value, bool* t)
+		static std::string Convert<std::string>(const std::string& value)
+		{
+			return Convert<std::string>(value, std::string());
+		}
+
+		template<>
+		static bool TryConvert<bool>(const std::string& value, bool* t)
 		{
 			if (ToUpper(value).compare("TRUE") == 0)
 			{
@@ -182,18 +172,14 @@ namespace Saitama
 			}
 		}
 
-		/**
-		* @brief: 将字符串转换为字符串类型
-		* @param: value 字符串
-		* @param: t 字符串指针
-		* @return: 转换成功返回true
-		*/
 		template<>
-		static bool TryConvert(const std::string& value, std::string* t)
+		static bool TryConvert<std::string>(const std::string& value, std::string* t)
 		{
 			*t = value;
 			return true;
 		}
+
+#endif
 
 		/**
 		* @brief: 将数字转换为字符串
@@ -336,5 +322,8 @@ namespace Saitama
 			}
 		}
 	};
+
+
+
 }
 

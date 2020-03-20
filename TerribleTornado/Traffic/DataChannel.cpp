@@ -40,7 +40,11 @@ void DataChannel::StartCore()
     vector<FlowChannel> channels = data.GetList();
     for (vector<FlowChannel>::const_iterator it = channels.begin(); it != channels.end(); ++it)
     {
-        UpdateChannel(*it);
+        if (it->ChannelIndex >= 1 && static_cast<unsigned int>(it->ChannelIndex) <= _channels.size())
+        {
+            _channels[it->ChannelIndex - 1]->Url = it->ChannelUrl;
+            _channels[it->ChannelIndex - 1]->UpdateLanes(it->Lanes);
+        }
     }
 
     //³õÊ¼»¯mqtt
@@ -73,47 +77,6 @@ void DataChannel::StartCore()
     }
 }
 
-void DataChannel::UpdateChannel(const FlowChannel& channel)
-{
-    if (channel.ChannelIndex >= 1 && channel.ChannelIndex <= _channels.size())
-    {
-      /*  vector<LaneDetector*> laneDetectors;
-        for (vector<Lane>::const_iterator lit = channel.Lanes.begin(); lit != channel.Lanes.end(); ++lit)
-        {
-        
-            if (lit->Region.size() > 2)
-            {
-                vector<Point> points;
-                vector<string> pointValues = StringEx::Split(lit->Region.substr(1, lit->Region.size()-2), ",", true);
-                int x, y = 0;
-                for (int i = 0; i < pointValues.size(); ++i)
-                {
-                    if (i % 2 == 0)
-                    {
-                        StringEx::TryConvert(pointValues[i].substr(1, pointValues[i].size() - 1), &x);
-                    }
-                    else
-                    {
-                        StringEx::TryConvert(pointValues[i].substr(0, pointValues[i].size() - 1), &y);
-                        points.push_back(Point(x, y));
-                    }
-                }
-
-                if (points.size() >= 4)
-                {
-                    Line line1(points[0], points[1]);
-                    Line line2(points[2], points[3]);
-                    double pixelLength = line1.Middle().Distance(line2.Middle());
-                    double meterPerPixel = pixelLength == 0 ? 0 : lit->Length / pixelLength;
-                    laneDetectors.push_back(new LaneDetector(lit->LaneId, lit->LaneIndex, Polygon(points), meterPerPixel));
-                }
-            }          
-        }
-        _channels[channel.ChannelIndex-1]->Url = channel.ChannelUrl;
-        _channels[channel.ChannelIndex-1]->UpdateLanes(laneDetectors);*/
-    }
-}
-
 void DataChannel::DeserializeDetectItems(map<string, DetectItem>* items,const JsonDeserialization& jd, const string& key, long long timeStamp)
 {
     int itemIndex = 0;
@@ -138,11 +101,11 @@ void DataChannel::HandleDetect(const string& json)
 {
     JsonDeserialization jd(json);
     int channelIndex= jd.Get("ImageResults:0:VideoChannel", -1);
-    if (channelIndex >= 0 && channelIndex < _channels.size())
+    if (channelIndex >= 0 && static_cast<unsigned int>(channelIndex) < _channels.size())
     {
         long long timeStamp = DateTime::Now().Milliseconds();
         map<string,DetectItem> detectItems;
-        DeserializeDetectItems(&detectItems,jd, "Vehicles", timeStamp);
+        DeserializeDetectItems(&detectItems, jd, "Vehicles", timeStamp);
         DeserializeDetectItems(&detectItems, jd, "Bikes", timeStamp);
         DeserializeDetectItems(&detectItems, jd, "Pedestrains", timeStamp);
 
@@ -182,11 +145,11 @@ void DataChannel::HandleRecognize(const string& json)
     JsonDeserialization jd(json);
     vector<string> images = jd.GetArray<string>("imgdata_result");
 
-    int imageIndex=0;
+    unsigned int imageIndex=0;
     while (imageIndex<images.size())
     {
         int channelIndex = jd.Get(StringEx::Combine("l1_result:", imageIndex, ":VideoChannel"), -1);
-        if (channelIndex >= 0 && channelIndex < _channels.size())
+        if (channelIndex >= 0 && static_cast<unsigned int>(channelIndex) < _channels.size())
         {
             int vehicleType = jd.Get<int>(StringEx::Combine("ImageResults:", imageIndex, ":Vehicles:0:Type"));
             if (vehicleType != 0)
@@ -448,7 +411,11 @@ void DataChannel::Update(HttpReceivedEventArgs* e)
             data.SetList(channels);
             for (vector<FlowChannel>::iterator it = channels.begin(); it != channels.end(); ++it)
             {
-                UpdateChannel(*it);
+                if (it->ChannelIndex >= 1 && static_cast<unsigned int>(it->ChannelIndex)<= _channels.size())
+                {
+                    _channels[it->ChannelIndex - 1]->Url = it->ChannelUrl;
+                    _channels[it->ChannelIndex - 1]->UpdateLanes(it->Lanes);
+                }
             }
             e->Code = HttpCode::OK;
         }

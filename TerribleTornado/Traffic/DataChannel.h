@@ -75,12 +75,6 @@ namespace Saitama
         */
         bool UrlStartWith(const std::string& url, const std::string& key);
 
-        /**
-        * @brief: 更新通道信息
-        * @param: channel 通道信息
-        */
-        void UpdateChannel(const FlowChannel& channel);
-
         //检测数据 sdk->程序
         static const std::string DetectTopic;
         //识别数据 sdk->程序

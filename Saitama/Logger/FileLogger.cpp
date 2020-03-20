@@ -5,7 +5,7 @@ using namespace std;
 using namespace Saitama;
 
 FileLogger::FileLogger(LogLevel minLevel, LogLevel maxLevel, const string& name,const string& directory,int holdDays)
-	:Logger(minLevel,maxLevel),_name(name),_directory(directory),_holdDays(holdDays),_date(DateTime::Today())
+	:Logger(minLevel,maxLevel),_name(name), _date(DateTime::Today()),_directory(directory),_holdDays(holdDays)
 {
 	//创建日志目录
 	CreateDirectory(_directory);
