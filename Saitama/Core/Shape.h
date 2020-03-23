@@ -96,6 +96,7 @@ namespace Saitama
 			return Point1.Empty() && Point2.Empty();
 		}
 
+	
 		/**
 		* @brief: 计算和另外一条线的相交点
 		* @param: line 另外一条线
@@ -103,32 +104,25 @@ namespace Saitama
 		*/
 		Point Intersect(const Line& line)
 		{
-			int s02_x, s02_y, s10_x, s10_y, s32_x, s32_y;
-			s10_x = Point2.X - Point1.X;
-			s10_y = Point2.Y - Point1.Y;
-			s32_x = line.Point2.X - line.Point1.X;
-			s32_y = line.Point2.Y - line.Point1.Y;
+			int x1 = Point1.X, x2 = Point2.X, x3 = line.Point1.X, x4 = line.Point2.X;
+			int y1 = Point1.Y, y2 = Point2.Y, y3 = line.Point1.Y, y4 = line.Point2.Y;
 
-			double denom = static_cast<double>(s10_x * s32_y - s32_x * s10_y);
-			if (denom == 0)
-				return Point(); 
-			bool denomPositive = denom > 0;
+			float d = static_cast<float>((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4));
+			// If d is zero, there is no intersection
+			if (d == 0) return Point();
 
-			s02_x = Point1.X - line.Point1.X;
-			s02_y = Point1.Y - line.Point1.Y;
-			double s_numer = static_cast<double>(s10_x * s02_y) - static_cast<double>(s10_y * s02_x);
-			if ((s_numer < 0) == denomPositive)
-				return Point();
+			// Get the x and y
+			int pre = (x1 * y2 - y1 * x2), post = (x3 * y4 - y3 * x4);
+			int x = static_cast<int>(round(static_cast<float>(pre * (x3 - x4) - (x1 - x2) * post) / d));
+			int y = static_cast<int>(round(static_cast<float>(pre * (y3 - y4) - (y1 - y2) * post) / d));
 
-			double t_numer = static_cast<double>(s32_x * s02_y) - static_cast<double>(s32_y * s02_x);
-			if ((t_numer < 0) == denomPositive)
-				return Point(); 
+			// Check if the x and y coordinates are within both lines
+			if (x < std::min(x1, x2) || x > std::max(x1, x2) ||
+				x < std::min(x3, x4) || x > std::max(x3, x4)) return Point();
+			if (y < std::min(y1, y2) || y > std::max(y1, y2) ||
+				y < std::min(y3, y4) || y > std::max(y3, y4)) return Point();
 
-			if (((s_numer > denom) == denomPositive) || ((t_numer > denom) == denomPositive))
-				return Point(); 
-
-			double t = t_numer / denom;
-			return Point(Point1.X + static_cast<int>(t * s10_x), Point1.Y + static_cast<int>(t * s10_y));
+			return Point(x, y);
 		}
 
 		/**
