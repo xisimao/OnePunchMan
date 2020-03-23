@@ -3,7 +3,7 @@
 #include "Observable.h"
 #include "JsonFormatter.h"
 #include "MqttChannel.h"
-#include "VideoDetector.h"
+#include "LaneDetector.h"
 #include "FlowChannelData.h"
 #include "HttpHandler.h"
 
@@ -40,6 +40,10 @@ namespace Saitama
         void StartCore();
 
     private:
+
+
+        void UpdateChannel(const FlowChannel& channel);
+
 
         /**
         * @brief: 从json数据中获取检测项集合
@@ -94,8 +98,10 @@ namespace Saitama
         //mqtt服务端端口
         int _port;
 
+        //同步锁
+        std::mutex _channelMutex;
         //视频通道线程集合
-        std::vector<VideoDetector*> _channels;
+        std::vector<std::vector<LaneDetector*>> _channels;
 
         //上一次收集数据的分钟
         int _lastMinute;

@@ -32,19 +32,13 @@ void DataChannel::StartCore()
     //初始化通道
     for (int i = 0; i < 8; ++i)
     {
-        VideoDetector* channel = new VideoDetector();
-        channel->Index = i;
-        _channels.push_back(channel);
+        _channels.push_back(vector<LaneDetector*>());
     }
     FlowChannelData data;
     vector<FlowChannel> channels = data.GetList();
     for (vector<FlowChannel>::const_iterator it = channels.begin(); it != channels.end(); ++it)
     {
-        if (it->ChannelIndex >= 1 && static_cast<unsigned int>(it->ChannelIndex) <= _channels.size())
-        {
-            _channels[it->ChannelIndex - 1]->Url = it->ChannelUrl;
-            _channels[it->ChannelIndex - 1]->UpdateLanes(it->Lanes);
-        }
+        UpdateChannel(*it);
     }
 
     //初始化mqtt
@@ -71,9 +65,29 @@ void DataChannel::StartCore()
 
     _mqtt->Stop();
     delete _mqtt;
-    for (vector<VideoDetector*>::iterator it = _channels.begin(); it != _channels.end(); ++it)
+    for (vector<vector<LaneDetector*>>::iterator cit = _channels.begin(); cit != _channels.end(); ++cit)
     {
-        delete (*it);
+        for (vector<LaneDetector*>::iterator lit = cit->begin(); lit != cit->end(); ++lit)
+        {
+            delete (*lit);
+        }
+    }
+}
+
+void DataChannel::UpdateChannel(const FlowChannel& channel)
+{
+    if (channel.ChannelIndex >= 0 && static_cast<unsigned int>(channel.ChannelIndex) < _channels.size())
+    {
+        lock_guard<mutex> lck(_channelMutex);
+        for (vector<LaneDetector*>::iterator it = _channels[channel.ChannelIndex].begin(); it != _channels[channel.ChannelIndex].end(); ++it)
+        {
+            delete (*it);
+        }
+        _channels[channel.ChannelIndex].clear();
+        for (vector<Lane>::const_iterator lit = channel.Lanes.begin(); lit != channel.Lanes.end(); ++lit)
+        {
+            _channels[channel.ChannelIndex].push_back(new LaneDetector(StringEx::Combine(channel.ChannelUrl,"_", lit->LaneId),*lit));
+        }
     }
 }
 
@@ -100,8 +114,8 @@ void DataChannel::DeserializeDetectItems(map<string, DetectItem>* items,const Js
 void DataChannel::HandleDetect(const string& json)
 {
     JsonDeserialization jd(json);
-    int channelIndex= jd.Get("ImageResults:0:VideoChannel", -1);
-    if (channelIndex >= 0 && static_cast<unsigned int>(channelIndex) < _channels.size())
+    unsigned int channelIndex= jd.Get("ImageResults:0:VideoChannel", _channels.size());
+    if (channelIndex >= 0 && channelIndex < _channels.size())
     {
         long long timeStamp = DateTime::Now().Milliseconds();
         map<string,DetectItem> detectItems;
@@ -109,22 +123,24 @@ void DataChannel::HandleDetect(const string& json)
         DeserializeDetectItems(&detectItems, jd, "Bikes", timeStamp);
         DeserializeDetectItems(&detectItems, jd, "Pedestrains", timeStamp);
 
-        vector<IOItem> iOItems = _channels[channelIndex]->Detect(detectItems,timeStamp);
-
-        for (vector<IOItem>::iterator it = iOItems.begin(); it != iOItems.end(); ++it)
+        string lanesJson;
+        for (unsigned int laneIndex=0;laneIndex< _channels[channelIndex].size();++laneIndex)
         {
-       
-            string laneJson;
-            JsonSerialization::Serialize(&laneJson, "laneId", it->LaneId);
-            JsonSerialization::Serialize(&laneJson, "laneIndex", it->LaneIndex);
-            JsonSerialization::Serialize(&laneJson, "status", it->Status ? 1 : 0);
-            JsonSerialization::Serialize(&laneJson, "type", (int)DetectType::Car);
-            string lanesJson;
-            JsonSerialization::SerializeItem(&lanesJson, laneJson);
+            IOStatus status = _channels[channelIndex][laneIndex]->Detect(detectItems, timeStamp);
+            if (status != IOStatus::UnChanged)
+            {
+                string laneJson;
+                JsonSerialization::Serialize(&laneJson, "laneIndex", laneIndex);
+                JsonSerialization::Serialize(&laneJson, "status", (int)status);
+                JsonSerialization::Serialize(&laneJson, "type", (int)DetectType::Car);
+                JsonSerialization::SerializeItem(&lanesJson, laneJson);
+            }
+        }
 
+        if (!lanesJson.empty())
+        {
             string channelJson;
-            JsonSerialization::Serialize(&channelJson, "channelId", it->ChannelIndex);
-            JsonSerialization::Serialize(&channelJson, "channelReadlId", it->ChannelId);
+            JsonSerialization::Serialize(&channelJson, "channelId", channelIndex);
             JsonSerialization::SerializeJsons(&channelJson, "laneStatus", lanesJson);
 
             string channelsJson;
@@ -133,7 +149,7 @@ void DataChannel::HandleDetect(const string& json)
             string ioJson;
             JsonSerialization::Serialize(&ioJson, "timestamp", DateTime::Now().Milliseconds());
             JsonSerialization::SerializeJson(&ioJson, "detail", channelsJson);
-            //LogPool::Debug("channel:", it->ChannelIndex, "lane:", it->LaneIndex, "io:", it->Status);
+         
             _mqtt->Send(IOTopic, ioJson, false);
         }
     }
@@ -148,8 +164,8 @@ void DataChannel::HandleRecognize(const string& json)
     unsigned int imageIndex=0;
     while (imageIndex<images.size())
     {
-        int channelIndex = jd.Get(StringEx::Combine("l1_result:", imageIndex, ":VideoChannel"), -1);
-        if (channelIndex >= 0 && static_cast<unsigned int>(channelIndex) < _channels.size())
+        unsigned int channelIndex = jd.Get(StringEx::Combine("l1_result:", imageIndex, ":VideoChannel"), _channels.size());
+        if (channelIndex >= 0 && channelIndex < _channels.size())
         {
             int vehicleType = jd.Get<int>(StringEx::Combine("ImageResults:", imageIndex, ":Vehicles:0:Type"));
             if (vehicleType != 0)
@@ -158,32 +174,37 @@ void DataChannel::HandleRecognize(const string& json)
                 if (vehicleRect.size() >= 4)
                 {
                     DetectItem item(Rectangle(Point(vehicleRect[0], vehicleRect[1]), vehicleRect[2], vehicleRect[3]));
-                    string laneId = _channels[channelIndex]->Contains(item);
-                    if (!laneId.empty())
-                    {
-                        VideoVehicle vehicle;
-                        vehicle.CarType = jd.Get<int>(StringEx::Combine("ImageResults:", imageIndex, ":Vehicles:0:Recognize:Type:TopList:0:Code"));
-                        vehicle.CarColor = jd.Get<int>(StringEx::Combine("ImageResults:", imageIndex, ":Vehicles:0:Recognize:Color:TopList:0:Code"));
-                        vehicle.CarBrand = jd.Get<string>(StringEx::Combine("ImageResults:", imageIndex, ":Vehicles:0:Recognize:Brand:TopList:0:Name"));
-                        vehicle.PlateType = jd.Get<int>(StringEx::Combine("ImageResults:", imageIndex, ":Vehicles:0:Recognize:Plate:Type"));
-                        vehicle.PlateNumber = jd.Get<string>(StringEx::Combine("ImageResults:", imageIndex, ":Vehicles:0:Recognize:Plate:Licence"));
-                        vehicle.Feature = jd.Get<string>(StringEx::Combine("ImageResults:", imageIndex, ":Vehicles:0:Recognize:Feature:Feature"));
-                        vehicle.Image = images[imageIndex];
 
-                        string sendJson;
-                        JsonSerialization::Serialize(&sendJson, "ChannelId", _channels[channelIndex]->Url);
-                        JsonSerialization::Serialize(&sendJson, "LaneId", laneId);
-                        JsonSerialization::Serialize(&sendJson, "TimeStamp", timeStamp);
-                        JsonSerialization::Serialize(&sendJson, "VideoStructType", vehicle.VideoStructType);
-                        JsonSerialization::Serialize(&sendJson, "Feature", vehicle.Feature);
-                        JsonSerialization::Serialize(&sendJson, "Image", vehicle.Image);
-                        JsonSerialization::Serialize(&sendJson, "CarType", vehicle.CarType);
-                        JsonSerialization::Serialize(&sendJson, "CarColor", vehicle.CarColor);
-                        JsonSerialization::Serialize(&sendJson, "CarBrand", vehicle.CarBrand);
-                        JsonSerialization::Serialize(&sendJson, "PlateType", vehicle.PlateType);
-                        JsonSerialization::Serialize(&sendJson, "PlateNumber", vehicle.PlateNumber);
-                        _mqtt->Send(VideoTopic, sendJson, false);
-                    };
+                    for (vector<LaneDetector*>::iterator it = _channels[channelIndex].begin(); it != _channels[channelIndex].end(); ++it)
+                    {
+                        if ((*it)->Contains(item))
+                        {
+                            VideoVehicle vehicle;
+                            vehicle.CarType = jd.Get<int>(StringEx::Combine("ImageResults:", imageIndex, ":Vehicles:0:Recognize:Type:TopList:0:Code"));
+                            vehicle.CarColor = jd.Get<int>(StringEx::Combine("ImageResults:", imageIndex, ":Vehicles:0:Recognize:Color:TopList:0:Code"));
+                            vehicle.CarBrand = jd.Get<string>(StringEx::Combine("ImageResults:", imageIndex, ":Vehicles:0:Recognize:Brand:TopList:0:Name"));
+                            vehicle.PlateType = jd.Get<int>(StringEx::Combine("ImageResults:", imageIndex, ":Vehicles:0:Recognize:Plate:Type"));
+                            vehicle.PlateNumber = jd.Get<string>(StringEx::Combine("ImageResults:", imageIndex, ":Vehicles:0:Recognize:Plate:Licence"));
+                            vehicle.Feature = jd.Get<string>(StringEx::Combine("ImageResults:", imageIndex, ":Vehicles:0:Recognize:Feature:Feature"));
+                            vehicle.Image = images[imageIndex];
+
+                            string sendJson;
+                            JsonSerialization::Serialize(&sendJson, "dataId", (*it)->DataId());
+                            JsonSerialization::Serialize(&sendJson, "timeStamp", timeStamp);
+                            JsonSerialization::Serialize(&sendJson, "videoStructType", vehicle.VideoStructType);
+                            JsonSerialization::Serialize(&sendJson, "feature", vehicle.Feature);
+                            JsonSerialization::Serialize(&sendJson, "image", vehicle.Image);
+                            JsonSerialization::Serialize(&sendJson, "carType", vehicle.CarType);
+                            JsonSerialization::Serialize(&sendJson, "carColor", vehicle.CarColor);
+                            JsonSerialization::Serialize(&sendJson, "carBrand", vehicle.CarBrand);
+                            JsonSerialization::Serialize(&sendJson, "plateType", vehicle.PlateType);
+                            JsonSerialization::Serialize(&sendJson, "plateNumber", vehicle.PlateNumber);
+                            LogPool::Debug("lane:", (*it)->DataId(), "vehicle:", vehicle.CarType);
+                            _mqtt->Send(VideoTopic, sendJson, false);
+                            break;
+                        }
+                    }
+
                     imageIndex += 1;
                     continue;
                 }
@@ -196,24 +217,27 @@ void DataChannel::HandleRecognize(const string& json)
                 if (bikeRect.size() >= 4)
                 {
                     DetectItem item(Rectangle(Point(bikeRect[0], bikeRect[1]), bikeRect[2], bikeRect[3]));
-                    string laneId = _channels[channelIndex]->Contains(item);
-                    if (!laneId.empty())
+                    for (vector<LaneDetector*>::iterator it = _channels[channelIndex].begin(); it != _channels[channelIndex].end(); ++it)
                     {
-                        VideoBike bike;
-                        bike.BikeType = bikeType;
-                        bike.Feature = jd.Get<string>(StringEx::Combine("ImageResults:", imageIndex, ":Bikes:0:Recognize:Feature:Feature"));
-                        bike.Image = images[imageIndex];
+                        if ((*it)->Contains(item))
+                        {
+                            VideoBike bike;
+                            bike.BikeType = bikeType;
+                            bike.Feature = jd.Get<string>(StringEx::Combine("ImageResults:", imageIndex, ":Bikes:0:Recognize:Feature:Feature"));
+                            bike.Image = images[imageIndex];
 
-                        string sendJson;
-                        JsonSerialization::Serialize(&sendJson, "ChannelId", _channels[channelIndex]->Url);
-                        JsonSerialization::Serialize(&sendJson, "LaneId", laneId);
-                        JsonSerialization::Serialize(&sendJson, "TimeStamp", timeStamp);
-                        JsonSerialization::Serialize(&sendJson, "VideoStructType", bike.VideoStructType);
-                        JsonSerialization::Serialize(&sendJson, "Feature", bike.Feature);
-                        JsonSerialization::Serialize(&sendJson, "Image", bike.Image);
-                        JsonSerialization::Serialize(&sendJson, "BikeType", bike.BikeType);
-                        _mqtt->Send(VideoTopic, sendJson, false);
+                            string sendJson;
+                            JsonSerialization::Serialize(&sendJson, "dataId", (*it)->DataId());
+                            JsonSerialization::Serialize(&sendJson, "timeStamp", timeStamp);
+                            JsonSerialization::Serialize(&sendJson, "videoStructType", bike.VideoStructType);
+                            JsonSerialization::Serialize(&sendJson, "feature", bike.Feature);
+                            JsonSerialization::Serialize(&sendJson, "image", bike.Image);
+                            JsonSerialization::Serialize(&sendJson, "bikeType", bike.BikeType);
+                            LogPool::Debug("lane:", (*it)->DataId(), "bike:", bike.BikeType);
+                            _mqtt->Send(VideoTopic, sendJson, false);
+                        }
                     }
+
                     imageIndex += 1;
                     continue;
                 }
@@ -226,33 +250,33 @@ void DataChannel::HandleRecognize(const string& json)
                 if (pedestrainRect.size() >= 4)
                 {
                     DetectItem item(Rectangle(Point(pedestrainRect[0], pedestrainRect[1]), pedestrainRect[2], pedestrainRect[3]));
-                    string laneId = _channels[channelIndex]->Contains(item);
-                    if (!laneId.empty())
+                    for (vector<LaneDetector*>::iterator it = _channels[channelIndex].begin(); it != _channels[channelIndex].end(); ++it)
                     {
-                        VideoPedestrain pedestrain;
-                        pedestrain.Sex = jd.Get<int>(StringEx::Combine("ImageResults:", imageIndex, ":Pedestrains:0:Recognize:Sex:TopList:0:Code"));
-                        pedestrain.Age = jd.Get<int>(StringEx::Combine("ImageResults:", imageIndex, ":Pedestrains:0:Recognize:Age:TopList:0:Code"));
-                        pedestrain.UpperColor = jd.Get<int>(StringEx::Combine("ImageResults:", imageIndex, ":Pedestrains:0:Recognize:UpperColor:TopList:0:Code"));
-                        pedestrain.Feature = jd.Get<string>(StringEx::Combine("ImageResults:", imageIndex, ":Pedestrains:0:Recognize:Feature:Feature"));
-                        pedestrain.Image = images[imageIndex];
-                        LogPool::Information("people", pedestrain.Sex, pedestrain.Age, pedestrain.UpperColor);
-                        string sendJson;
-                        JsonSerialization::Serialize(&sendJson, "ChannelId", _channels[channelIndex]->Url);
-                        JsonSerialization::Serialize(&sendJson, "LaneId", laneId);
-                        JsonSerialization::Serialize(&sendJson, "TimeStamp", timeStamp);
-                        JsonSerialization::Serialize(&sendJson, "Feature", pedestrain.Feature);
-                        JsonSerialization::Serialize(&sendJson, "Image", pedestrain.Image);
-                        JsonSerialization::Serialize(&sendJson, "VideoStructType", pedestrain.VideoStructType);
-                        JsonSerialization::Serialize(&sendJson, "Sex", pedestrain.Sex);
-                        JsonSerialization::Serialize(&sendJson, "Age", pedestrain.Age);
-                        JsonSerialization::Serialize(&sendJson, "UpperColor", pedestrain.UpperColor);
-                        _mqtt->Send(VideoTopic, sendJson, false);
+                        if ((*it)->Contains(item))
+                        {
+                            VideoPedestrain pedestrain;
+                            pedestrain.Sex = jd.Get<int>(StringEx::Combine("ImageResults:", imageIndex, ":Pedestrains:0:Recognize:Sex:TopList:0:Code"));
+                            pedestrain.Age = jd.Get<int>(StringEx::Combine("ImageResults:", imageIndex, ":Pedestrains:0:Recognize:Age:TopList:0:Code"));
+                            pedestrain.UpperColor = jd.Get<int>(StringEx::Combine("ImageResults:", imageIndex, ":Pedestrains:0:Recognize:UpperColor:TopList:0:Code"));
+                            pedestrain.Feature = jd.Get<string>(StringEx::Combine("ImageResults:", imageIndex, ":Pedestrains:0:Recognize:Feature:Feature"));
+                            pedestrain.Image = images[imageIndex];
+                            string sendJson;
+                            JsonSerialization::Serialize(&sendJson, "dataId", (*it)->DataId());
+                            JsonSerialization::Serialize(&sendJson, "timeStamp", timeStamp);
+                            JsonSerialization::Serialize(&sendJson, "feature", pedestrain.Feature);
+                            JsonSerialization::Serialize(&sendJson, "image", pedestrain.Image);
+                            JsonSerialization::Serialize(&sendJson, "videoStructType", pedestrain.VideoStructType);
+                            JsonSerialization::Serialize(&sendJson, "sex", pedestrain.Sex);
+                            JsonSerialization::Serialize(&sendJson, "age", pedestrain.Age);
+                            JsonSerialization::Serialize(&sendJson, "upperColor", pedestrain.UpperColor);
+                            LogPool::Debug("lane:", (*it)->DataId(), "pedestrain");
+                            _mqtt->Send(VideoTopic, sendJson, false);
+                        }
                     }
                     imageIndex += 1;
                     continue;
                 }
             }
-            
             break;
         }
         else
@@ -265,43 +289,41 @@ void DataChannel::HandleRecognize(const string& json)
 void DataChannel::CollectFlow(const DateTime& now)
 {
     long long timeStamp = DateTime(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), 0).Milliseconds();
-    for (vector<VideoDetector*>::iterator it = _channels.begin(); it != _channels.end(); ++it)
+    lock_guard<mutex> lck(_channelMutex);
+    for (unsigned int channelIndex=0;channelIndex<_channels.size();++channelIndex)
     {
-        vector<LaneItem> lanes = (*it)->Collect();
-        if (!lanes.empty())
+        string channelJson;
+        JsonSerialization::Serialize(&channelJson, "channelId", channelIndex);
+        JsonSerialization::Serialize(&channelJson, "timestamp", timeStamp);
+        string lanesJson;
+        for (unsigned int laneIndex = 0; laneIndex < _channels[channelIndex].size(); ++laneIndex)
         {
-            string channelJson;
-            JsonSerialization::Serialize(&channelJson, "channelId", (*it)->Index);
-            JsonSerialization::Serialize(&channelJson, "channelRealId", (*it)->Url);
-            JsonSerialization::Serialize(&channelJson, "timestamp", timeStamp);
+            LaneDetector* detector = _channels[channelIndex][laneIndex];
+            LaneItem item = detector->Collect();
 
-            string lanesJson;
-            for (vector<LaneItem>::iterator lit = lanes.begin(); lit != lanes.end(); ++lit)
-            {
-                LogPool::Debug("channel:", (*it)->Index, "lane:", lit->Index, "vehicles:", lit->Cars + lit->Tricycles + lit->Buss + lit->Vans + lit->Trucks, "bikes:", lit->Bikes + lit->Motorcycles, "persons:", lit->Persons, lit->Speed, "km/h ", lit->HeadDistance, "sec ", lit->TimeOccupancy, "%");
+            string laneJson;
 
-                string laneJson;
+            JsonSerialization::Serialize(&laneJson, "crossingId", StringEx::ToString(laneIndex+1));
 
-                JsonSerialization::Serialize(&laneJson, "crossingId", StringEx::ToString(lit->Index));
-                JsonSerialization::Serialize(&laneJson, "laneId", lit->Id);
+            JsonSerialization::Serialize(&laneJson, "dataId", detector->DataId());
+            JsonSerialization::Serialize(&laneJson, "persons", item.Persons);
+            JsonSerialization::Serialize(&laneJson, "bikes", item.Bikes);
+            JsonSerialization::Serialize(&laneJson, "motorcycles", item.Motorcycles);
+            JsonSerialization::Serialize(&laneJson, "cars", item.Cars);
+            JsonSerialization::Serialize(&laneJson, "tricycles", item.Tricycles);
+            JsonSerialization::Serialize(&laneJson, "buss", item.Buss);
+            JsonSerialization::Serialize(&laneJson, "vans", item.Vans);
+            JsonSerialization::Serialize(&laneJson, "trucks", item.Trucks);
 
-                JsonSerialization::Serialize(&laneJson, "persons", lit->Persons);
-                JsonSerialization::Serialize(&laneJson, "bikes", lit->Bikes);
-                JsonSerialization::Serialize(&laneJson, "motorcycles", lit->Motorcycles);
-                JsonSerialization::Serialize(&laneJson, "cars", lit->Cars);
-                JsonSerialization::Serialize(&laneJson, "tricycles", lit->Tricycles);
-                JsonSerialization::Serialize(&laneJson, "buss", lit->Buss);
-                JsonSerialization::Serialize(&laneJson, "vans", lit->Vans);
-                JsonSerialization::Serialize(&laneJson, "trucks", lit->Trucks);
-
-                JsonSerialization::Serialize(&laneJson, "averageSpeed", static_cast<int>(lit->Speed));
-                JsonSerialization::Serialize(&laneJson, "headDistance", lit->HeadDistance);
-                JsonSerialization::Serialize(&laneJson, "headSpace", lit->HeadSpace);
-                JsonSerialization::Serialize(&laneJson, "timeOccupancy", static_cast<int>(lit->TimeOccupancy));
-                JsonSerialization::SerializeItem(&lanesJson, laneJson);
-            }
+            JsonSerialization::Serialize(&laneJson, "averageSpeed", static_cast<int>(item.Speed));
+            JsonSerialization::Serialize(&laneJson, "headDistance", item.HeadDistance);
+            JsonSerialization::Serialize(&laneJson, "headSpace", item.HeadSpace);
+            JsonSerialization::Serialize(&laneJson, "timeOccupancy", static_cast<int>(item.TimeOccupancy));
+            JsonSerialization::SerializeItem(&lanesJson, laneJson);
+        }
+        if (!lanesJson.empty())
+        {
             JsonSerialization::SerializeJsons(&channelJson, "crossingData", lanesJson);
-
             _mqtt->Send(FlowTopic, channelJson);
         }
     }
@@ -411,11 +433,7 @@ void DataChannel::Update(HttpReceivedEventArgs* e)
             data.SetList(channels);
             for (vector<FlowChannel>::iterator it = channels.begin(); it != channels.end(); ++it)
             {
-                if (it->ChannelIndex >= 1 && static_cast<unsigned int>(it->ChannelIndex)<= _channels.size())
-                {
-                    _channels[it->ChannelIndex - 1]->Url = it->ChannelUrl;
-                    _channels[it->ChannelIndex - 1]->UpdateLanes(it->Lanes);
-                }
+                UpdateChannel(*it);
             }
             e->Code = HttpCode::OK;
         }

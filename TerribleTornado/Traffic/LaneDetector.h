@@ -7,6 +7,7 @@
 #include "LogPool.h"
 #include "JsonFormatter.h"
 #include "Observable.h"
+#include "FlowChannelData.h"
 
 namespace Saitama
 {
@@ -78,11 +79,6 @@ namespace Saitama
 	{
 	public:
 
-		//车道编号
-		std::string Id;
-		//车道序号
-		int Index;
-
 		//行人流量
 		int Persons;
 		//自行车流量
@@ -114,8 +110,6 @@ namespace Saitama
 	class VideoStruct
 	{
 	public:
-		std::string ChannelId;
-		std::string LaneId;
 		std::string Image;
 		std::string Feature;
 		int VideoStructType;
@@ -165,24 +159,16 @@ namespace Saitama
 
 		/**
 		* @brief: 构造函数
-		* @param: id 车道编号
-		* @param: index 车道序号
-		* @param: region 车道区域
-		* @param: meterPerPixel 每个像素代表的米数
+		* @param: dataId 数据编号
+		* @param: lane 车道
 		*/
-		LaneDetector(const std::string& id,int index,Polygon region,double meterPerPixel);
-	
-		/**
-		* @brief: 获取车道编号
-		* @return: 车道编号
-		*/
-		std::string Id();
+		LaneDetector(const std::string& dataId,const Lane& lane);
 
 		/**
-		* @brief: 获取车道序号
-		* @return: 车道序号
+		* @brief: 获取车道数据编号
+		* @return: 车道数据编号io状态
 		*/
-		int Index();
+		std::string DataId();
 
 		/**
 		* @brief: 检测机动车
@@ -206,17 +192,25 @@ namespace Saitama
 
 	private:
 
-		//同步锁
-		std::mutex _mutex;
-		//当前检测结果集合
-		std::map<std::string, DetectItem> _items;
+		/**
+		* @brief: 初始化车道
+		* @param: lane 车道
+		*/
+		void InitLane(const Lane& lane);
 
-		//车道编号
-		std::string _id;
-		//车道序号
-		int _index;
+		/**
+		* @brief: 解析线段字符串
+		* @param: lane 车道线字符串
+		* @return: 线段
+		*/
+		Line GetLine(const std::string& line);
+
+		//数据编号
+		std::string _dataId;
 		//当前检测区域
 		Polygon _region;
+		//每个像素代表的米数
+		double _meterPerPixel;
 
 		//行人流量
 		int _persons;
@@ -239,7 +233,6 @@ namespace Saitama
 		double _totalDistance;
 		//总时间(毫秒)
 		long long _totalTime;
-
 		//上一次有车进入区域的时间戳
 		long long _lastInRegion;
 		//机动车总数
@@ -249,15 +242,13 @@ namespace Saitama
 
 		//io状态
 		IOStatus _iOStatus;
+
 		//上一帧的时间戳
 		long long _lastTimeStamp;
-
-		//每个像素代表的米数
-		double _meterPerPixel;
-
+		//同步锁
+		std::mutex _mutex;
 		std::map<std::string, DetectItem> _items1;
 		std::map<std::string, DetectItem> _items2;
-
 		std::map<std::string, DetectItem>* _currentItems;
 		std::map<std::string, DetectItem>* _lastItems;
 

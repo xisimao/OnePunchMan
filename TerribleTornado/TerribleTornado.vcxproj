@@ -156,7 +156,6 @@
     <ClCompile Include="Traffic\DataChannel.cpp" />
     <ClCompile Include="Traffic\FlowChannelData.cpp" />
     <ClCompile Include="Traffic\LaneDetector.cpp" />
-    <ClCompile Include="Traffic\VideoDetector.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Mqtt\mosquitto.h" />
@@ -166,7 +165,6 @@
     <ClInclude Include="Traffic\DataChannel.h" />
     <ClInclude Include="Traffic\FlowChannelData.h" />
     <ClInclude Include="Traffic\LaneDetector.h" />
-    <ClInclude Include="Traffic\VideoDetector.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

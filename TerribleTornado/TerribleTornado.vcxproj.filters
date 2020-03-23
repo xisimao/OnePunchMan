@@ -21,9 +21,6 @@
     <ClCompile Include="Traffic\LaneDetector.cpp">
       <Filter>Traffic</Filter>
     </ClCompile>
-    <ClCompile Include="Traffic\VideoDetector.cpp">
-      <Filter>Traffic</Filter>
-    </ClCompile>
     <ClCompile Include="Sqlite\Sqlite.cpp">
       <Filter>Sqlite</Filter>
     </ClCompile>
@@ -40,9 +37,6 @@
       <Filter>Traffic</Filter>
     </ClInclude>
     <ClInclude Include="Traffic\LaneDetector.h">
-      <Filter>Traffic</Filter>
-    </ClInclude>
-    <ClInclude Include="Traffic\VideoDetector.h">
       <Filter>Traffic</Filter>
     </ClInclude>
     <ClInclude Include="Mqtt\MqttChannel.h">

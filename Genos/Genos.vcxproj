@@ -99,7 +99,6 @@
     <ClCompile Include="..\TerribleTornado\Traffic\DataChannel.cpp" />
     <ClCompile Include="..\TerribleTornado\Traffic\FlowChannelData.cpp" />
     <ClCompile Include="..\TerribleTornado\Traffic\LaneDetector.cpp" />
-    <ClCompile Include="..\TerribleTornado\Traffic\VideoDetector.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -133,7 +132,6 @@
     <ClInclude Include="..\TerribleTornado\Traffic\DataChannel.h" />
     <ClInclude Include="..\TerribleTornado\Traffic\FlowChannelData.h" />
     <ClInclude Include="..\TerribleTornado\Traffic\LaneDetector.h" />
-    <ClInclude Include="..\TerribleTornado\Traffic\VideoDetector.h" />
   </ItemGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Link>
