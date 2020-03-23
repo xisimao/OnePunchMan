@@ -187,6 +187,13 @@ namespace Saitama
 		JsonDeserialization(const std::string& json);
 
 		/**
+		* @brief: 反序列化Json
+		* @param: json json字符串
+		* @param: prefix key前缀
+		*/
+		void Deserialize(const std::string& json, const std::string& prefix = "");
+
+		/**
 		* @brief: 读取json
 		* @param: key 键
 		* @return: 读取成功返回true
@@ -233,7 +240,7 @@ namespace Saitama
 				value = _values.at(key);
 				if (value.size() >= 2)
 				{
-					return StringEx::ConvertToArray<T>(value.substr(1, value.size() - 2));
+					return ConvertToArray<T>(value.substr(1, value.size() - 2));
 				}
 				else
 				{
@@ -247,11 +254,31 @@ namespace Saitama
 		}
 
 		/**
-		* @brief: 反序列化Json
+		* @brief: 将json字符串转换为集合类型
 		* @param: json json字符串
-		* @param: prefix key前缀
+		* @return: 转换成功返回转换结果否则返回空集合
 		*/
-		void Deserialize(const std::string& json, const std::string& prefix = "");
+		template<typename T>
+		static std::vector<T> ConvertToArray(const std::string& json)
+		{
+			std::vector<T> v;
+			size_t startIndex = 0;
+			while (startIndex < json.size())
+			{
+				T t;
+				size_t result = FindItem(json, &t, startIndex);
+				if (result == 0)
+				{
+					break;
+				}
+				else
+				{
+					startIndex += result;
+					v.push_back(t);
+				}
+			}
+			return v;
+		}
 
 	private:
 
@@ -288,6 +315,87 @@ namespace Saitama
 		*/
 		void DeserializeArray(const std::string& json, const std::string& prefix = "");
 
+		/**
+		* @brief: 从字符串中截取数组或布尔数组中的一项。
+		* @param: json json字符串
+		* @param: t 字段值的指针
+		* @param: offset 从开头略过的字符数
+		* @return: 解析成功返回解析的总字符数，否则返回0
+		*/
+		template<typename T>
+		static size_t FindItem(const std::string& json, T* t, size_t offset)
+		{
+			size_t endIndex = json.find(',', offset);
+			size_t size;
+			size_t hasTail;
+			if (endIndex == std::string::npos)
+			{
+				size = json.size() - offset;
+				hasTail = false;
+			}
+			else
+			{
+				size = endIndex - offset;
+				hasTail = true;
+			}
+			if (StringEx::TryConvert(json.substr(offset, size), t))
+			{
+				return hasTail ? size + 1 : size;
+			}
+			else
+			{
+				return 0;
+			}
+		}
+
+		/**
+		* @brief: 从字符串中截取字符串数组中的一项。。
+		* @param: json json字符串
+		* @param: t 字段值的指针
+		* @param: offset 从开头略过的字符数
+		* @return: 解析成功返回解析的总字符数，否则返回0
+		*/
+		static size_t FindItem(const std::string& json, std::string* t, size_t offset)
+		{
+			size_t startIndex = json.find('"', offset);
+			if (startIndex == std::string::npos)
+			{
+				return 0;
+			}
+			else
+			{
+				size_t endIndex = startIndex;
+				while (true)
+				{
+					endIndex = json.find('"', endIndex + 1);
+					if (endIndex == std::string::npos)
+					{
+						return 0;
+					}
+					else
+					{
+						if (json[endIndex - 1] == '\\')
+						{
+							startIndex = endIndex - 1;
+						}
+						else
+						{
+							break;
+						}
+					}
+				}
+				t->assign(json.substr(startIndex + 1, endIndex - startIndex - 1));
+				endIndex = json.find(',', endIndex);
+				if (endIndex == std::string::npos)
+				{
+					return json.size() - startIndex;
+				}
+				else
+				{
+					return endIndex - startIndex + 1;
+				}
+			}
+		}
 
 		//反序列化的结果
 		std::map<std::string, std::string> _values;
