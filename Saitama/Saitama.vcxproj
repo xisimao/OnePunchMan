@@ -159,7 +159,7 @@
     <ClCompile Include="Net\SocketMaid.cpp" />
     <ClCompile Include="Net\AsyncHandler.cpp" />
     <ClCompile Include="Net\EndPoint.cpp" />
-    <ClCompile Include="Net\EndPointChannel.cpp" />
+    <ClCompile Include="Net\ConnectionChannel.cpp" />
     <ClCompile Include="Net\HttpHandler.cpp" />
     <ClCompile Include="Net\NoticeHandler.cpp" />
     <ClCompile Include="Net\Socket.cpp" />
@@ -189,7 +189,7 @@
     <ClInclude Include="Net\SocketMaid.h" />
     <ClInclude Include="Net\AsyncHandler.h" />
     <ClInclude Include="Net\EndPoint.h" />
-    <ClInclude Include="Net\EndPointChannel.h" />
+    <ClInclude Include="Net\ConnectionChannel.h" />
     <ClInclude Include="Net\HttpHandler.h" />
     <ClInclude Include="Net\NoticeHandler.h" />
     <ClInclude Include="Net\Socket.h" />

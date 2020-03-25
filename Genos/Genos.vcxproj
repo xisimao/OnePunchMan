@@ -84,8 +84,8 @@
     <ClCompile Include="..\Saitama\Logger\LogPool.cpp" />
     <ClCompile Include="..\Saitama\Logger\LogReader.cpp" />
     <ClCompile Include="..\Saitama\Net\AsyncHandler.cpp" />
+    <ClCompile Include="..\Saitama\Net\ConnectionChannel.cpp" />
     <ClCompile Include="..\Saitama\Net\EndPoint.cpp" />
-    <ClCompile Include="..\Saitama\Net\EndPointChannel.cpp" />
     <ClCompile Include="..\Saitama\Net\HttpHandler.cpp" />
     <ClCompile Include="..\Saitama\Net\NoticeHandler.cpp" />
     <ClCompile Include="..\Saitama\Net\Socket.cpp" />
@@ -115,8 +115,8 @@
     <ClInclude Include="..\Saitama\Logger\LogPool.h" />
     <ClInclude Include="..\Saitama\Logger\LogReader.h" />
     <ClInclude Include="..\Saitama\Net\AsyncHandler.h" />
+    <ClInclude Include="..\Saitama\Net\ConnectionChannel.h" />
     <ClInclude Include="..\Saitama\Net\EndPoint.h" />
-    <ClInclude Include="..\Saitama\Net\EndPointChannel.h" />
     <ClInclude Include="..\Saitama\Net\HttpHandler.h" />
     <ClInclude Include="..\Saitama\Net\NoticeHandler.h" />
     <ClInclude Include="..\Saitama\Net\Socket.h" />
@@ -135,8 +135,11 @@
   </ItemGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Link>
-      <LibraryDependencies>mosquitto;%(LibraryDependencies)</LibraryDependencies>
+      <LibraryDependencies>mosquitto;sqlite3;pthread;%(LibraryDependencies)</LibraryDependencies>
     </Link>
+    <ClCompile>
+      <AdditionalIncludeDirectories>../TerribleTornado/Traffic;../TerribleTornado/Sqlite;../TerribleTornado/Mqtt;../Saitama/Text;../Saitama/Net;../Saitama/Logger;../Saitama/Core;../Saitama/Convert;./Genos;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
     <Link>

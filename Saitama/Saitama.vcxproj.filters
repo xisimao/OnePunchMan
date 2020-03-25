@@ -61,9 +61,6 @@
     <ClCompile Include="Net\EndPoint.cpp">
       <Filter>Net</Filter>
     </ClCompile>
-    <ClCompile Include="Net\EndPointChannel.cpp">
-      <Filter>Net</Filter>
-    </ClCompile>
     <ClCompile Include="Net\HttpHandler.cpp">
       <Filter>Net</Filter>
     </ClCompile>
@@ -93,6 +90,9 @@
     </ClCompile>
     <ClCompile Include="Convert\JsonFormatter.cpp">
       <Filter>Convert</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\ConnectionChannel.cpp">
+      <Filter>Net</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -150,9 +150,6 @@
     <ClInclude Include="Net\EndPoint.h">
       <Filter>Net</Filter>
     </ClInclude>
-    <ClInclude Include="Net\EndPointChannel.h">
-      <Filter>Net</Filter>
-    </ClInclude>
     <ClInclude Include="Net\HttpHandler.h">
       <Filter>Net</Filter>
     </ClInclude>
@@ -182,6 +179,9 @@
     </ClInclude>
     <ClInclude Include="Core\Shape.h">
       <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\ConnectionChannel.h">
+      <Filter>Net</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
