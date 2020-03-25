@@ -59,6 +59,16 @@ namespace Saitama
         static void ConnectedEventHandler(struct mosquitto* mosq, void* userdata, int result);
 
         /**
+        * @brief: mqtt订阅回调函数
+        * @param: mosq mosq实例
+        * @param: userdata 自定义数据，此时表示this指针
+        * @param: mid 订阅消息的id
+        * @param: qos_count 订阅数量
+        * @param: granted_qos 每个订阅的qos
+        */
+        static void SubscribedEventHandler(struct mosquitto* mosq, void* userdata, int mid, int qos_count, const int* granted_qos);
+
+        /**
         * @brief: mqtt接收消息回调函数
         * @param: mosq mosq实例
         * @param: userdata 自定义数据，此时表示this指针

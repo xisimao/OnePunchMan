@@ -23,6 +23,11 @@ void MqttChannel::ConnectedEventHandler(struct mosquitto* mosq, void* userdata, 
     }
 }
 
+void MqttChannel::SubscribedEventHandler(struct mosquitto* mosq, void* userdata, int mid, int qos_count, const int* granted_qos)
+{
+    LogPool::Information(LogEvent::Mqtt, "mqtt subscribe success", mid, qos_count);
+}
+
 void MqttChannel::ReceivedEventHandler(struct mosquitto* mosq, void* userdata, const struct mosquitto_message* message)
 {
     MqttReceivedEventArgs args(message->topic,(const char*)message->payload);
@@ -69,6 +74,7 @@ void MqttChannel::StartCore()
     }
 
     mosquitto_connect_callback_set(_mosq, ConnectedEventHandler);
+    mosquitto_subscribe_callback_set(_mosq, SubscribedEventHandler);
     mosquitto_message_callback_set(_mosq, ReceivedEventHandler);
 
     while (!Cancelled())
