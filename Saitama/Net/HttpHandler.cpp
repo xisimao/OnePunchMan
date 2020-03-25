@@ -113,7 +113,7 @@ SocketHandler::ProtocolPacket HttpHandler::HandleCore(int socket, unsigned int i
 			if (length==-1)
 			{
 				LogPool::Warning(LogEvent::Socket, "not found CONTENT-LENGTH", httpProtocol);
-				return ProtocolPacket(AnalysisResult::Empty, 0, static_cast<unsigned int>(httpProtocol.size()), 0, 0);
+				return ProtocolPacket(AnalysisResult::Empty, 0, static_cast<unsigned int>(packetSize), 0, 0);
 			}
 			else
 			{
@@ -135,7 +135,7 @@ SocketHandler::ProtocolPacket HttpHandler::HandleCore(int socket, unsigned int i
 		else
 		{
 			LogPool::Warning(LogEvent::Socket, "http error fun", httpProtocol);
-			return ProtocolPacket(AnalysisResult::Empty, 0, static_cast<unsigned int>(httpProtocol.size()), 0,0);
+			return ProtocolPacket(AnalysisResult::Empty, 0, static_cast<unsigned int>(packetSize), 0,0);
 		}
 	}
 }
