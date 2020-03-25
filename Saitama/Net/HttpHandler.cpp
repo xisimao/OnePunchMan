@@ -20,18 +20,11 @@ std::string HttpHandler::BuildResponse(HttpCode code, const string& origin, cons
 {
 	stringstream ss;
 	ss << "HTTP/1.1 " << static_cast<int>(code) << "\r\n"
-		<< "Vary: Origin\r\n"
-		<< "Vary: Access-Control-Request-Method\r\n"
-		<< "Vary: Access-Control-Request-Headers\r\n"
-		<< "Access-Control-Allow-Origin: " << origin << "\r\n"
-		<< "Access-Control-Allow-Methods: GET,POST,DELETE,PUT\r\n"
-		<< "Access-Control-Allow-Headers: content-type\r\n"
-		<< "Access-Control-Allow-Credentials: true\r\n"
-		<< "Access-Control-Max-Age: 3600\r\n"
-		<< "Allow: GET, HEAD, POST, PUT, DELETE, OPTIONS, PATCH\r\n"
-		<< "Content-Type: application/json;charset=UTF-8\r\n"
-		<< "Content-Length: "<<responseJson.size()<<"\r\n"
 		<< "Date: " << DateTime::UtcNow().ToString("%a, %d %b %Y %H:%M:%S GMT") << "\r\n"
+		<< "Server: cat\r\n"
+		<< "Content-Type: application/json;charset=UTF-8\r\n"
+		<< "Content-Length: " << responseJson.size() << "\r\n"
+		<< "Access-Control-Allow-Origin: *\r\n"
 		<< "\r\n"
 		<< responseJson;
 	return ss.str();
@@ -71,9 +64,17 @@ SocketHandler::ProtocolPacket HttpHandler::HandleCore(int socket, unsigned int i
 		size_t start = lines[0].size() + 2;
 		if (func.compare(HttpFunction::Options) == 0)
 		{
-			string response = BuildResponse(HttpCode::OK, origin, e.ResponseJson);
-			SendTcp(socket, response, NULL);
-			return ProtocolPacket(AnalysisResult::Request, 0, static_cast<unsigned int>(start), 0, 0);
+			stringstream ss;
+			ss << "HTTP/1.1 204 No Content\r\n"
+				<< "Date: " << DateTime::UtcNow().ToString("%a, %d %b %Y %H:%M:%S GMT") << "\r\n"
+				<< "Server: cat\r\n"
+				<< "Access-Control-Allow-Headers: authorization,content-type\r\n"
+				<< "Access-Control-Allow-Methods: GET,POST,DELETE,PUT\r\n"
+				<< "Access-Control-Allow-Origin: *\r\n"
+				<< "\r\n"
+				<< "\r\n";
+			SendTcp(socket, ss.str(), NULL);
+			return ProtocolPacket(AnalysisResult::Request, 0, static_cast<unsigned int>(httpProtocol.size()), 0, 0);
 		}
 		else if (func.compare(HttpFunction::Get) == 0
 			|| func.compare(HttpFunction::Delete) == 0)
