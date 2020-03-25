@@ -16,7 +16,7 @@ SocketHandler* HttpHandler::CloneCore()
 	return handler;
 }
 
-std::string HttpHandler::BuildResponse(HttpCode code, const string& origin, const string& responseJson)
+std::string HttpHandler::BuildResponse(HttpCode code, const string& responseJson)
 {
 	stringstream ss;
 	ss << "HTTP/1.1 " << static_cast<int>(code) << "\r\n"
@@ -31,7 +31,7 @@ std::string HttpHandler::BuildResponse(HttpCode code, const string& origin, cons
 }
 
 SocketHandler::ProtocolPacket HttpHandler::HandleCore(int socket, unsigned int ip, unsigned short port, string::const_iterator begin, string::const_iterator end)
-{
+{ 
 	string httpProtocol(begin, end);
 	vector<string> lines = StringEx::Split(httpProtocol, "\r\n");
 	HttpReceivedEventArgs e;
@@ -43,25 +43,35 @@ SocketHandler::ProtocolPacket HttpHandler::HandleCore(int socket, unsigned int i
 	}
 	else
 	{
-		//第一行
+		//第一行解析请求类型和url
 		vector<string> datas = StringEx::Split(lines[0], " ", true);
+		if (datas.size() <2)
+		{
+			LogPool::Warning(LogEvent::Socket, "first line empty", httpProtocol);
+			return ProtocolPacket(AnalysisResult::Empty, 0, static_cast<unsigned int>(httpProtocol.size()), 0, 0);
+		}
 		string func = StringEx::ToUpper(datas[0]);
 		e.Function = func;
 		e.Url = datas[1];
 
-		//跨域
-		string origin;
-		for (unsigned int i = 1; i < lines.size(); ++i)
+		//用空行判断是否是全包
+		size_t packetSize = lines[0].size() + 2;
+		bool hasEmpty = false;
+		for (unsigned int i=1; i < lines.size(); ++i)
 		{
-			vector<string> columns = StringEx::Split(lines[i], ":", true);
-			if (columns.size() > 1 && StringEx::ToUpper(columns[0]).compare("ORIGIN") == 0)
+			packetSize += lines[i].size() + 2;
+			if (lines[i].empty())
 			{
-				origin = StringEx::Trim(lines[i].substr(7, lines[i].size() - 7));
+				hasEmpty = true;
 				break;
 			}
 		}
 
-		size_t start = lines[0].size() + 2;
+		if (!hasEmpty)
+		{
+			return ProtocolPacket(AnalysisResult::Half, 0, static_cast<unsigned int>(httpProtocol.size()), 0, 0);
+		}
+
 		if (func.compare(HttpFunction::Options) == 0)
 		{
 			stringstream ss;
@@ -74,76 +84,52 @@ SocketHandler::ProtocolPacket HttpHandler::HandleCore(int socket, unsigned int i
 				<< "\r\n"
 				<< "\r\n";
 			SendTcp(socket, ss.str(), NULL);
-			return ProtocolPacket(AnalysisResult::Request, 0, static_cast<unsigned int>(httpProtocol.size()), 0, 0);
+			return ProtocolPacket(AnalysisResult::Request, 0, static_cast<unsigned int>(packetSize), 0, 0);
 		}
 		else if (func.compare(HttpFunction::Get) == 0
 			|| func.compare(HttpFunction::Delete) == 0)
 		{
 			HttpReceived.Notice(&e);
-			string response = BuildResponse(HttpCode::OK, origin, e.ResponseJson);
+			string response = BuildResponse(HttpCode::OK, e.ResponseJson);
 			SendTcp(socket, response, NULL);
-			return ProtocolPacket(AnalysisResult::Request, 0, static_cast<unsigned int>(httpProtocol.size()), 0, 0);
+			return ProtocolPacket(AnalysisResult::Request, 0, static_cast<unsigned int>(packetSize), 0, 0);
 		}
 		else if (func.compare(HttpFunction::Post) == 0
 			|| func.compare(HttpFunction::Put) == 0)
 		{
-			//分析body位置
-			unsigned int length = 0;
-			unsigned int i = 1;
-			//找到长度
-			bool hasLength = false;
-			for (; i < lines.size(); ++i)
+			//获取body长度
+			int length = -1;
+			for (unsigned int i=1; i < lines.size(); ++i)
 			{
-				start += lines[i].size() + 2;
 				vector<string> values = StringEx::Split(lines[i], ":", true);
 				if (values.size() > 1 && StringEx::ToUpper(values[0]).compare("CONTENT-LENGTH") == 0)
 				{
-					length=StringEx::Convert<unsigned int>(values[1]);
-					//已经处理过该行，需要对序号加1，否则下面的循环的第一个还是这行
-					++i;
-					hasLength = true;
+					length=StringEx::Convert<int>(values[1]);
 					break;
 				}
 			}
-			if (hasLength)
+
+			//没有长度
+			if (length==-1)
 			{
-				bool hasEmpty = false;
-				//根据空行定位到开始位置
-				for (; i < lines.size(); ++i)
-				{
-					start += lines[i].size() + 2;
-					if (lines[i].empty())
-					{
-						hasEmpty = true;
-						break;
-					}
-				}
-				if (hasEmpty)
-				{
-					//半包
-					if (start + length > httpProtocol.size())
-					{
-						return ProtocolPacket(AnalysisResult::Half, 0, static_cast<unsigned int>(httpProtocol.size()), 0, 0);
-					}
-					else
-					{
-						e.RequestJson = httpProtocol.substr(start, length);
-						HttpReceived.Notice(&e);
-						string response = BuildResponse(HttpCode::OK, origin, e.ResponseJson);
-						SendTcp(socket, response, NULL);
-						return ProtocolPacket(AnalysisResult::Request, 0, static_cast<unsigned int>(start + length), 0, 0);
-					}
-				}
-				else
-				{
-					LogPool::Warning(LogEvent::Socket, "post not found empty", httpProtocol);
-					return ProtocolPacket(AnalysisResult::Half, 0, static_cast<unsigned int>(httpProtocol.size()), 0, 0);
-				}
+				LogPool::Warning(LogEvent::Socket, "not found CONTENT-LENGTH", httpProtocol);
+				return ProtocolPacket(AnalysisResult::Empty, 0, static_cast<unsigned int>(httpProtocol.size()), 0, 0);
 			}
 			else
 			{
-				LogPool::Warning(LogEvent::Socket, "post not found content-length", httpProtocol);
-				return ProtocolPacket(AnalysisResult::Half, 0, static_cast<unsigned int>(httpProtocol.size()), 0, 0);
+				//半包
+				if (packetSize + length > httpProtocol.size())
+				{
+					return ProtocolPacket(AnalysisResult::Half, 0, static_cast<unsigned int>(httpProtocol.size()), 0, 0);
+				}
+				else
+				{
+					e.RequestJson = httpProtocol.substr(packetSize, length);
+					HttpReceived.Notice(&e);
+					string response = BuildResponse(HttpCode::OK, e.ResponseJson);
+					SendTcp(socket, response, NULL);
+					return ProtocolPacket(AnalysisResult::Request, 0, static_cast<unsigned int>(packetSize + length), 0, 0);
+				}
 			}
 		}
 		else
