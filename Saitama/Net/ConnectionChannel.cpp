@@ -1,44 +1,44 @@
-﻿#include "EndPointChannel.h"
+﻿#include "ConnectionChannel.h"
 
 using namespace std;
 using namespace Saitama;
 
-const int EndPointChannel::ConnectionSpan = 3;
+const int ConnectionChannel::ConnectionSpan = 3;
 
-EndPointChannel::EndPointChannel()
-	:ThreadObject("connection")
+ConnectionChannel::ConnectionChannel()
+	:ThreadObject("socket_connection")
 {
 }
 
-void EndPointChannel::AddTcpEndPoint(const EndPoint& endPoint, SocketHandler* handler)
+void ConnectionChannel::AddTcpEndPoint(const EndPoint& endPoint, SocketHandler* handler)
 {
 	unique_lock<mutex> lck(_mutex);
 	_tempEndPoints.push_back(EndPointItem(-1,endPoint,SocketType::Connect, handler, SocketOperation::Add));
 	_condition.notify_all();
 }
 
-void EndPointChannel::AddUdpEndPoint(const EndPoint& endPoint,int socket)
+void ConnectionChannel::AddUdpEndPoint(const EndPoint& endPoint,int socket)
 {
 	unique_lock<mutex> lck(_mutex);
 	_tempEndPoints.push_back(EndPointItem(socket, endPoint, SocketType::Udp,NULL, SocketOperation::Add));
 	_condition.notify_all();
 }
 
-void EndPointChannel::RemoveEndPoint(const EndPoint& endPoint)
+void ConnectionChannel::RemoveEndPoint(const EndPoint& endPoint)
 {
 	unique_lock<mutex> lck(_mutex);
 	_tempEndPoints.push_back(EndPointItem(-1, endPoint,SocketType::None,NULL, SocketOperation::Remove));
 	_condition.notify_all();
 }
 
-void EndPointChannel::ReportTcpError(int socket)
+void ConnectionChannel::ReportTcpError(int socket)
 {
 	unique_lock<mutex> lck(_mutex);
 	_tempEndPoints.push_back(EndPointItem(socket, EndPoint(),SocketType::None,NULL, SocketOperation::Error));
 	_condition.notify_all();
 }
 
-int EndPointChannel::GetSocket(const EndPoint& endPoint)
+int ConnectionChannel::GetSocket(const EndPoint& endPoint)
 {
 	unique_lock<mutex> lck(_mutex);
 	if (_endPoints.find(endPoint) == _endPoints.end())
@@ -51,7 +51,7 @@ int EndPointChannel::GetSocket(const EndPoint& endPoint)
 	}
 }
 
-void EndPointChannel::MoveTempEndPoints()
+void ConnectionChannel::MoveTempEndPoints()
 {
 	if (_tempEndPoints.empty())
 	{
@@ -83,7 +83,7 @@ void EndPointChannel::MoveTempEndPoints()
 	_tempEndPoints.clear();
 }
 
-void EndPointChannel::StartCore()
+void ConnectionChannel::StartCore()
 {
 	while (!Cancelled())
 	{
@@ -117,7 +117,7 @@ void EndPointChannel::StartCore()
 	}
 }
 
-void EndPointChannel::StopCore()
+void ConnectionChannel::StopCore()
 {
 	_condition.notify_all();
 }

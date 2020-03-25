@@ -24,14 +24,14 @@ namespace Saitama
 	};
 
 	//连接轮询类
-	class EndPointChannel : public ThreadObject
+	class ConnectionChannel : public ThreadObject
 	{
 	public:
 
 		/**
 		* @brief: 构造函数
 		*/
-		EndPointChannel();
+		ConnectionChannel();
 
 		//连接到服务事件
 		Observable<ConnectedEventArgs> Connected;

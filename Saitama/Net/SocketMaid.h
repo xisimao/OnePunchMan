@@ -1,15 +1,13 @@
 ﻿#pragma once
 #include "Observable.h"
 #include "SocketChannel.h"
-#include "EndPointChannel.h"
+#include "ConnectionChannel.h"
 #include "NoticeHandler.h"
 
 namespace Saitama
 {
-
 	//协议通信
 	class SocketMaid :
-		public ThreadObject,
 		public IObserver<AcceptedEventArgs>,
 		public IObserver<ClosedEventArgs>,
 		public IObserver<ConnectedEventArgs>
@@ -237,6 +235,16 @@ namespace Saitama
 		*/
 		SocketResult SendUdp(const EndPoint& bindEndPoint, const EndPoint& remoteEndPoint, const std::string& buffer, long long timeStamp, unsigned int protocolId, std::string* responseBuffer);
 
+		/**
+		* @brief: 开启连接和接收线程
+		*/
+		void Start();
+
+		/**
+		* @brief: 关闭连接和接收线程
+		*/
+		void Stop();
+
 		//套接字事件函数
 		virtual void Update(AcceptedEventArgs* e);
 
@@ -247,13 +255,42 @@ namespace Saitama
 	protected:
 
 		/**
+		* @brief: 设置客户端套接字的标记
+		* @param: socket 客户端套接字
+		* @param: tag 客户端标记
+		*/
+		void SetTag(int socket, unsigned short tag);
+
+	private:
+
+		//套接字数据
+		class SocketItem
+		{
+		public:
+			//套接字所在通道
+			SocketChannel* Channel;
+			//套接字操作指针
+			SocketHandler* Handler;
+			//套接字操作
+			SocketOperation Operation;
+			//套接字数据
+			SocketData Data;
+		};
+
+		/**
+		* @brief: 轮询选择通道
+		* @return: 返回Null表示没有可用通道，否则返回通道指针
+		*/
+		SocketChannel* Select();
+
+		/**
 		* @brief: 添加Udp地址
 		* @param: endPoint Udp地址
 		* @param: socket Udp套接字
 		* @param: handler 套接字操作指针
 		* @param: channelIndex 通道编号，-1表示自动适配
 		*/
-		void AddUdpEndPoint(const EndPoint& endPoint,int socket, SocketHandler* handler, int channelIndex = -1);
+		void AddUdpEndPoint(const EndPoint& endPoint, int socket, SocketHandler* handler, int channelIndex = -1);
 
 		/**
 		* @brief: 发送字节流，实现异步通知功能
@@ -302,98 +339,18 @@ namespace Saitama
 		*/
 		SocketResult SendUdp(const EndPoint& bindEndPoint, const EndPoint& remoteEndPoint, const std::string& buffer, AsyncHandler* handler);
 
-		void StartCore();
-
-		/**
-		* @brief: 供子类实现，线程开始的操作
-		*/
-		virtual void InitCore()
-		{
-
-		}
-
-		/**
-		* @brief: 供子类实现，在线程中每个轮询执行的操作
-		*/	
-		virtual void PollCore()
-		{
-
-		}
-
-		/**
-		* @brief: 供子类实现，线程结束的操作
-		*/
-		virtual void ExitCore()
-		{
-
-		}
-
-		/**
-		* @brief: 设置客户端套接字的标记
-		* @param: socket 客户端套接字
-		* @param: tag 客户端标记
-		*/
-		void SetTag(int socket, unsigned short tag);
-
-		/**
-		* @brief: 设置套接字日志
-		* @param: socket 套接字
-		* @param: logName 日志名
-		*/
-		void SetLogger(int socket, const std::string& logName);
-
-		/**
-		* @brief: 选择通道
-		* @return: 返回Null表示没有可用通道，否则返回通道指针
-		*/
-		virtual SocketChannel* Select();
-
-		//套接字数据
-		class SocketItem
-		{
-		public:
-			//套接字所在通道
-			SocketChannel* Channel;
-			//套接字操作指针
-			SocketHandler* Handler;
-			//套接字操作
-			SocketOperation Operation;
-			//套接字数据
-			SocketData Data;
-		};
-
 		//套接字通道集合
 		std::vector<SocketChannel*> _channels;
-
-		//套接字数据字典
-		std::map<int, SocketItem> _sockets;
-
-		//套接字集合同步锁
-		std::mutex _socketMutex;
-
-		//线程集合
-		std::set<ThreadObject*> _threads;
-
-		//线程集合
-		std::mutex _threadMutex;
-
-		//线程轮询序号
-		unsigned int _pollIndex;
-
-	private:
-
-		/**
-		* @brief: 获取客户端标记的套接字
-		* @param: tag 客户端标记
-		* @return: 未找到返回0
-		*/
-		int GetSocket(unsigned short tag);
-
 		//当前选择的通道序号
 		unsigned int _channelIndex;
 
+		//套接字集合同步锁
+		std::mutex _socketMutex;
+		//套接字数据字典
+		std::map<int, SocketItem> _sockets;
+
 		//套接字连接
-		EndPointChannel _connection;
+		ConnectionChannel _connection;
 
 		//tpc客户端标记
 		std::map<unsigned short, int> _tags;

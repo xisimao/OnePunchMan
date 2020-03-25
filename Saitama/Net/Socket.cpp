@@ -14,7 +14,7 @@ bool Socket::StartUp()
 	}
 	else
 	{
-		LogPool::Error("WSAStartup", WSAErrorCode);
+		LogPool::Error(LogEvent::Socket, "WSAStartup", WSAErrorCode);
 		return false;
 	}
 #else
@@ -39,7 +39,7 @@ int Socket::UdpSocket()
 #endif
 	if (udpSocket == -1)
 	{
-		LogPool::Error("socket", WSAErrorCode);
+		LogPool::Error(LogEvent::Socket, "socket", WSAErrorCode);
 		return -1;
 	}
 	else
@@ -63,7 +63,7 @@ int Socket::MultiCast(const EndPoint& endPoint)
 	if (result == -1)
 	{
 		Close(udpSocket);
-		LogPool::Error("bind", WSAErrorCode, endPoint.ToString());
+		LogPool::Error(LogEvent::Socket, "bind", WSAErrorCode, endPoint.ToString());
 		return -1;
 	}
 	else
@@ -74,7 +74,7 @@ int Socket::MultiCast(const EndPoint& endPoint)
 		result = setsockopt(udpSocket, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char*)&mreq, sizeof(mreq));
 		if (result ==-1)
 		{
-			LogPool::Error( "setsocket", WSAErrorCode, endPoint.ToString());
+			LogPool::Error(LogEvent::Socket, "setsocket", WSAErrorCode, endPoint.ToString());
 			return -1;
 		}
 		return udpSocket;
@@ -97,7 +97,7 @@ int Socket::Bind(const EndPoint& endPoint)
 	if (result == -1)
 	{
 		Close(udpSocket);
-		LogPool::Error("bind", WSAErrorCode, endPoint.ToString());
+		LogPool::Error(LogEvent::Socket, "bind", WSAErrorCode, endPoint.ToString());
 		return -1;
 	}
 	else
@@ -116,7 +116,7 @@ int Socket::Listen(const EndPoint& endPoint)
 #endif
 	if (tcpSocket == -1)
 	{
-		LogPool::Error("socket",WSAErrorCode);
+		LogPool::Error(LogEvent::Socket, "socket",WSAErrorCode);
 		return -1;
 	}
 	sockaddr_in address;
@@ -127,7 +127,7 @@ int Socket::Listen(const EndPoint& endPoint)
 	int result = ::bind(tcpSocket, (const sockaddr*)&address, sizeof(address));
 	if (result == -1)
 	{
-		LogPool::Error("bind", WSAErrorCode, endPoint.ToString());
+		LogPool::Error(LogEvent::Socket, "bind", WSAErrorCode, endPoint.ToString());
 		Close(tcpSocket);
 		return -1;
 	}
@@ -136,7 +136,7 @@ int Socket::Listen(const EndPoint& endPoint)
 	if (result == -1)
 	{
 		Close(tcpSocket);
-		LogPool::Error("listen", WSAErrorCode, endPoint.ToString());
+		LogPool::Error(LogEvent::Socket, "listen", WSAErrorCode, endPoint.ToString());
 		return -1;
 	}
 	else
@@ -154,7 +154,7 @@ int Socket::ConnectTcp(const EndPoint& endPoint)
 #endif
 	if (tcpSocket == -1)
 	{
-		LogPool::Error("socket", WSAErrorCode);
+		LogPool::Error(LogEvent::Socket, "socket", WSAErrorCode);
 		return -1;
 	}
 	sockaddr_in address;

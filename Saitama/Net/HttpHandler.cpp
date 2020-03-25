@@ -38,7 +38,7 @@ SocketHandler::ProtocolPacket HttpHandler::HandleCore(int socket, unsigned int i
 	e.Socket = socket;
 	if (lines.empty())
 	{
-		LogPool::Warning("http empty", httpProtocol);
+		LogPool::Warning(LogEvent::Socket, "http empty", httpProtocol);
 		return ProtocolPacket(AnalysisResult::Empty, 0, static_cast<unsigned int>(httpProtocol.size()), 0,0);
 	}
 	else
@@ -136,19 +136,19 @@ SocketHandler::ProtocolPacket HttpHandler::HandleCore(int socket, unsigned int i
 				}
 				else
 				{
-					LogPool::Warning("post not found empty", httpProtocol);
+					LogPool::Warning(LogEvent::Socket, "post not found empty", httpProtocol);
 					return ProtocolPacket(AnalysisResult::Half, 0, static_cast<unsigned int>(httpProtocol.size()), 0, 0);
 				}
 			}
 			else
 			{
-				LogPool::Warning("post not found content-length", httpProtocol);
+				LogPool::Warning(LogEvent::Socket, "post not found content-length", httpProtocol);
 				return ProtocolPacket(AnalysisResult::Half, 0, static_cast<unsigned int>(httpProtocol.size()), 0, 0);
 			}
 		}
 		else
 		{
-			LogPool::Warning("http error fun", httpProtocol);
+			LogPool::Warning(LogEvent::Socket, "http error fun", httpProtocol);
 			return ProtocolPacket(AnalysisResult::Empty, 0, static_cast<unsigned int>(httpProtocol.size()), 0,0);
 		}
 	}

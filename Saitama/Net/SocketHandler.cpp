@@ -4,7 +4,7 @@ using namespace std;
 using namespace Saitama;
 
 SocketHandler::SocketHandler()
-	:_logger(NULL),_transmitSize(0),_receiveSize(0)
+	:_transmitSize(0),_receiveSize(0)
 {
 	
 }
@@ -13,14 +13,6 @@ SocketHandler* SocketHandler::Clone(int socket)
 {
 	SocketHandler* handler = CloneCore();
 	return handler;
-}
-
-void SocketHandler::SetLogger(int socket,const string& logName)
-{
-	if (_logger == NULL)
-	{
-		_logger = new FileLogger(LogLevel::Information, LogLevel::Information, logName, LogPool::Directory(), LogPool::HoldDays());
-	}
 }
 
 unsigned long long SocketHandler::TransmitSize()
@@ -41,7 +33,7 @@ SocketResult SocketHandler::SendTcp(int socket, const string& buffer, AsyncHandl
 		lock_guard<mutex> lck(_mutex);
 		_handlers.push_back(handler);
 	}
-	Log(socket, "-", buffer.size(), StringEx::ToHex(buffer.begin(),buffer.end()));
+	LogPool::Debug(LogEvent::Socket,socket, "-", buffer.size(), StringEx::ToHex(buffer.begin(),buffer.end()));
 	return Socket::SendTcp(socket, buffer.c_str(), static_cast<unsigned int>(buffer.size())) ? SocketResult::Success : SocketResult::SendFailed;
 }
 
@@ -53,7 +45,7 @@ SocketResult SocketHandler::SendUdp(int socket, const EndPoint& remoteEndPoint, 
 		lock_guard<mutex> lck(_mutex);
 		_handlers.push_back(handler);
 	}
-	Log(socket, remoteEndPoint.ToString(), "-", buffer.size(), StringEx::ToHex(buffer.begin(), buffer.end()));
+	LogPool::Debug(LogEvent::Socket, socket, remoteEndPoint.ToString(), "-", buffer.size(), StringEx::ToHex(buffer.begin(), buffer.end()));
 	return Socket::SendUdp(socket, remoteEndPoint, buffer.c_str(), static_cast<unsigned int>(buffer.size())) ? SocketResult::Success : SocketResult::SendFailed;;
 }
 
@@ -62,11 +54,11 @@ void SocketHandler::Handle(int socket, unsigned int ip, unsigned short port, con
 	_receiveSize += size;
 	if (ip == 0 && port == 0)
 	{
-		Log(socket,"+", size, StringEx::ToHex(buffer,size));
+		LogPool::Debug(LogEvent::Socket, socket,"+", size, StringEx::ToHex(buffer,size));
 	}
 	else
 	{
-		Log(socket, EndPoint(ip, port).ToString(), "+", size, StringEx::ToHex(buffer,size));
+		LogPool::Debug(LogEvent::Socket, socket, EndPoint(ip, port).ToString(), "+", size, StringEx::ToHex(buffer,size));
 	}
 	
 	_residueBuffer.append(buffer,size);

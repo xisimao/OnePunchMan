@@ -18,7 +18,7 @@ SocketChannel::SocketChannel()
 	_epollfd = epoll_create(MaxEvents);
 	if (_epollfd == -1)
 	{
-		LogPool::Error("epoll_create", WSAErrorCode);
+		LogPool::Error(LogEvent::Socket, "epoll_create", WSAErrorCode);
 	}
 #endif
 }
@@ -58,7 +58,7 @@ void SocketChannel::MoveTempSockets()
 			event.events = EPOLLIN;
 			if (epoll_ctl(_epollfd, EPOLL_CTL_ADD, data.Socket, &event) == -1)
 			{
-				LogPool::Error("epoll_ctl", WSAErrorCode);
+				LogPool::Error(LogEvent::Socket, "epoll_ctl", WSAErrorCode);
 				return;
 			}
 #endif 
@@ -121,7 +121,7 @@ void SocketChannel::StartCore()
 		int count = select(0, &fds, NULL, NULL, &timeout);
 		if (count == -1)
 		{
-			LogPool::Error("select", WSAErrorCode);
+			LogPool::Error(LogEvent::Socket, "select", WSAErrorCode);
 			this_thread::sleep_for(chrono::milliseconds(Timeout));
 			continue;
 		}
@@ -136,7 +136,7 @@ void SocketChannel::StartCore()
 		int count = epoll_wait(_epollfd, events, MaxEvents, Timeout);
 		if (count == -1)
 		{
-			LogPool::Error( "epoll_wait", WSAErrorCode);
+			LogPool::Error(LogEvent::Socket, "epoll_wait", WSAErrorCode);
 			continue;
 		}
 		for (int i = 0; i < count; ++i)
@@ -154,7 +154,7 @@ void SocketChannel::StartCore()
 					int tcpSocket = static_cast<int>(accept(socket, NULL, NULL));
 					if (tcpSocket == -1)
 					{
-						LogPool::Error("accept", WSAErrorCode, socket);
+						LogPool::Error(LogEvent::Socket, "accept", WSAErrorCode, socket);
 						break;
 					}
 					else
@@ -215,7 +215,7 @@ void SocketChannel::StartCore()
 					}
 					else if(udpn==-1)
 					{
-						LogPool::Error("recvfrom", WSAErrorCode,EndPoint(remoteAddress.sin_addr.s_addr, remoteAddress.sin_port).ToString());
+						LogPool::Error(LogEvent::Socket, "recvfrom", WSAErrorCode,EndPoint(remoteAddress.sin_addr.s_addr, remoteAddress.sin_port).ToString());
 					}
 					break;
 				}
@@ -230,7 +230,7 @@ void SocketChannel::StartCore()
 			}
 			else
 			{
-				LogPool::Error("epoll_wait", WSAErrorCode, socket);
+				LogPool::Error(LogEvent::Socket, "epoll_wait", WSAErrorCode, socket);
 				RemoveSocket(socket);
 			}
 		}

@@ -24,10 +24,6 @@ namespace Saitama
 		*/
 		virtual ~SocketHandler()
 		{
-			if (_logger != NULL)
-			{
-				delete _logger;
-			}
 		}
 
 		/**
@@ -70,32 +66,6 @@ namespace Saitama
 		* @return: 当前套接字接收的总流量
 		*/
 		unsigned long long ReceiveSize();
-
-		/**
-		* @brief: 设置日志
-		* @param: socket 套接字
-		* @param: logName 日志名称
-		*/
-		void SetLogger(int socket,const std::string& logName);
-
-		/**
-		* @brief: 记录日志
-		* @param: socket 套接字
-		* @param: t 日志的内容
-		* @param: ...u 日志的内容
-		*/
-		template<typename T, typename ...U>
-		void Log(int socket,T t, U ...u)
-		{
-			if (_logger == NULL)
-			{
-				LogPool::Information(t,u...);
-			}
-			else
-			{
-				LogPool::Target(_logger,LogLevel::Information, t, u...);
-			}
-		}
 
 		/**
 		* @brief: 创建一个全新的实例
@@ -159,9 +129,6 @@ namespace Saitama
 		virtual ProtocolPacket HandleCore(int socket,unsigned int ip, unsigned short port, std::string::const_iterator begin,std::string::const_iterator end) = 0;
 
 	private:
-
-		//日志指针
-		FileLogger* _logger;
 
 		//半包临时存放
 		std::string _residueBuffer;

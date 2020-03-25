@@ -37,7 +37,7 @@ EndPoint::EndPoint(const string& ip, unsigned short port)
 	}
 	else
 	{
-		LogPool::Error("inet_pton", WSAErrorCode, ip,port);
+		LogPool::Error(LogEvent::Socket, "inet_pton", WSAErrorCode, ip,port);
 		_netIp = 0;
 		_netPort = 0;
 		_hostPort = 0;
@@ -63,7 +63,7 @@ EndPoint::EndPoint(const string& endPoint)
 		}
 		else
 		{
-			LogPool::Error("inet_pton", WSAErrorCode, endPoint);
+			LogPool::Error(LogEvent::Socket, "inet_pton", WSAErrorCode, endPoint);
 			_netIp = 0;
 			_netPort = 0;
 			_hostPort = 0;
@@ -93,7 +93,7 @@ void EndPoint::InitAddress(unsigned int ip, unsigned short port)
 	char buff[INET_ADDRSTRLEN];
 	if (inet_ntop(AF_INET, &address.sin_addr, buff, sizeof(address)) == NULL)
 	{
-		LogPool::Error("inet_ntop", WSAErrorCode, ip,port);
+		LogPool::Error(LogEvent::Socket, "inet_ntop", WSAErrorCode, ip,port);
 		_hostIp = string();
 		_address = string();
 	}
