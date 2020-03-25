@@ -5,7 +5,9 @@ using namespace Saitama;
 
 LaneDetector::LaneDetector(const string& dataId,const Lane& lane)
 	:_persons(0),_bikes(0), _motorcycles(0), _cars(0),_tricycles(0), _buss(0),_vans(0),_trucks(0)
-	, _totalDistance(0.0), _totalTime(0), _lastInRegion(0), _vehicles(0), _totalSpan(0), _iOStatus(IOStatus::Out)
+	, _totalDistance(0.0), _totalTime(0)
+	, _totalInTime(0)
+	,_lastInRegion(0), _vehicles(0), _totalSpan(0), _iOStatus(IOStatus::Out)
 	,_lastTimeStamp(0),_currentItems(&_items1),_lastItems(&_items2)
 {
 	_dataId = dataId;
@@ -30,7 +32,7 @@ void LaneDetector::InitLane(const Lane& lane)
 	{
 		_region = Polygon();
 		_meterPerPixel = 0;
-		LogPool::Warning(LogEvent::Detect, "line empty");
+		LogPool::Warning(LogEvent::Detect,"line empty");
 		return;
 	}
 	else
@@ -46,7 +48,7 @@ void LaneDetector::InitLane(const Lane& lane)
 		{
 			_region = Polygon();
 			_meterPerPixel = 0;
-			LogPool::Warning(LogEvent::Detect, "intersect point empty");
+			LogPool::Warning(LogEvent::Detect,"intersect point empty");
 			return;
 		}
 		vector<Point> points;
@@ -152,11 +154,10 @@ IOStatus LaneDetector::Detect(const map<string, DetectItem>& items,long long tim
 				}
 				_lastInRegion = timeStamp;
 			}
-			//如果是已经记录的车则计算平均速度和时间占有率
+			//如果是已经记录的车则计算平均速度
 			//平均速度=总距离/总时间
 			//总距离=两次检测到的点的距离*每个像素代表的米数
 			//总时间=两次检测到的时间戳时长
-			//时间占有率=总时间/一分钟
 			else
 			{
 				_totalDistance += it->second.HitPoint.Distance(mit->second.HitPoint);
@@ -164,6 +165,13 @@ IOStatus LaneDetector::Detect(const map<string, DetectItem>& items,long long tim
 			}
 			_currentItems->insert(pair<string, DetectItem>(it->first, it->second));
 		}
+	}
+
+	//如果上一次有车，则认为到这次检测为止都有车
+	//时间占有率=总时间/一分钟
+	if (!_lastItems->empty())
+	{
+		_totalInTime += timeStamp - _lastTimeStamp;
 	}
 
 	map<string, DetectItem>* temp = _currentItems;
@@ -175,7 +183,7 @@ IOStatus LaneDetector::Detect(const map<string, DetectItem>& items,long long tim
 	if (status != _iOStatus)
 	{
 		_iOStatus = status;
-		LogPool::Debug("lane:", _dataId, "io:", (int)status);
+		LogPool::Debug(LogEvent::Detect, "lane:", _dataId, "io:", (int)status);
 		return status;
 	}
 	else
@@ -201,9 +209,9 @@ LaneItem LaneDetector::Collect(long long timeStamp)
 	item.Speed = _totalTime==0?0:(_totalDistance * _meterPerPixel / 1000.0) / (static_cast<double>(_totalTime) / 3600000.0);
 	item.HeadDistance = _vehicles > 1 ? static_cast<double>(_totalSpan) / static_cast<double>(_vehicles- 1) / 1000.0 : 0;
 	item.HeadSpace = item.Speed * 1000 * item.HeadDistance / 3600.0;
-	item.TimeOccupancy = static_cast<double>(_totalTime) / 60000.0 * 100;
+	item.TimeOccupancy = static_cast<double>(_totalInTime) / 60000.0 * 100;
 
-	LogPool::Debug("lane:", _dataId, "vehicles:", item.Cars + item.Tricycles + item.Buss + item.Vans + item.Trucks, "bikes:", item.Bikes + item.Motorcycles, "persons:", item.Persons, item.Speed, "km/h ", item.HeadDistance, "sec ", item.TimeOccupancy, "%");
+	LogPool::Debug(LogEvent::Detect, "lane:", _dataId, "vehicles:", item.Cars + item.Tricycles + item.Buss + item.Vans + item.Trucks, "bikes:", item.Bikes + item.Motorcycles, "persons:", item.Persons, item.Speed, "km/h ", item.HeadDistance, "sec ", item.TimeOccupancy, "%");
 
 	_persons = 0;
 	_bikes = 0;
@@ -216,6 +224,8 @@ LaneItem LaneDetector::Collect(long long timeStamp)
 
 	_totalDistance = 0.0;
 	_totalTime = 0;
+
+	_totalInTime = 0;
 
 	_lastInRegion = 0;
 	_vehicles = 0;

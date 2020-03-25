@@ -199,7 +199,7 @@ void DataChannel::HandleRecognize(const string& json)
                             JsonSerialization::Serialize(&sendJson, "carBrand", vehicle.CarBrand);
                             JsonSerialization::Serialize(&sendJson, "plateType", vehicle.PlateType);
                             JsonSerialization::Serialize(&sendJson, "plateNumber", vehicle.PlateNumber);
-                            LogPool::Debug("lane:", (*it)->DataId(), "vehicle:", vehicle.CarType);
+                            LogPool::Debug(LogEvent::Detect, "lane:", (*it)->DataId(), "vehicle:", vehicle.CarType);
                             _mqtt->Send(VideoTopic, sendJson, false);
                             break;
                         }
@@ -233,7 +233,7 @@ void DataChannel::HandleRecognize(const string& json)
                             JsonSerialization::Serialize(&sendJson, "feature", bike.Feature);
                             JsonSerialization::Serialize(&sendJson, "image", bike.Image);
                             JsonSerialization::Serialize(&sendJson, "bikeType", bike.BikeType);
-                            LogPool::Debug("lane:", (*it)->DataId(), "bike:", bike.BikeType);
+                            LogPool::Debug(LogEvent::Detect, "lane:", (*it)->DataId(), "bike:", bike.BikeType);
                             _mqtt->Send(VideoTopic, sendJson, false);
                         }
                     }
@@ -269,7 +269,7 @@ void DataChannel::HandleRecognize(const string& json)
                             JsonSerialization::Serialize(&sendJson, "sex", pedestrain.Sex);
                             JsonSerialization::Serialize(&sendJson, "age", pedestrain.Age);
                             JsonSerialization::Serialize(&sendJson, "upperColor", pedestrain.UpperColor);
-                            LogPool::Debug("lane:", (*it)->DataId(), "pedestrain");
+                            LogPool::Debug(LogEvent::Detect, "lane:", (*it)->DataId(), "pedestrain");
                             _mqtt->Send(VideoTopic, sendJson, false);
                         }
                     }
@@ -370,6 +370,7 @@ void DataChannel::Update(HttpReceivedEventArgs* e)
                     JsonSerialization::Serialize(&laneJson, "stopLine", lit->StopLine);
                     JsonSerialization::Serialize(&laneJson, "laneLine1", lit->LaneLine1);
                     JsonSerialization::Serialize(&laneJson, "laneLine2", lit->LaneLine2);
+                    JsonSerialization::Serialize(&laneJson, "region", lit->Region);
                     JsonSerialization::SerializeItem(&lanesJson, laneJson);
                 }
                 JsonSerialization::SerializeJsons(&channelJson, "lanes", lanesJson);
@@ -423,6 +424,7 @@ void DataChannel::Update(HttpReceivedEventArgs* e)
                     lane.StopLine = jd.Get<string>(StringEx::Combine("channels:", channelIndex, ":lanes:", laneIndex, ":stopLine"));
                     lane.LaneLine1 = jd.Get<string>(StringEx::Combine("channels:", channelIndex, ":lanes:", laneIndex, ":laneLine1"));
                     lane.LaneLine2 = jd.Get<string>(StringEx::Combine("channels:", channelIndex, ":lanes:", laneIndex, ":laneLine2"));
+                    lane.Region = jd.Get<string>(StringEx::Combine("channels:", channelIndex, ":lanes:", laneIndex, ":region"));
                     channel.Lanes.push_back(lane);
                     laneIndex += 1;
                 }

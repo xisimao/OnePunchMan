@@ -230,11 +230,18 @@ namespace Saitama
 		//卡车流量
 		int _trucks;
 
-		//总距离(像素值)
+		//用于计算平均速度
+		//车辆行驶总距离(像素值) 
 		double _totalDistance;
-		//总时间(毫秒)
+		//车辆行驶总时间(毫秒)
 		long long _totalTime;
-		//上一次有车进入区域的时间戳
+
+		//用于计算时间占有率
+		//区域占用总时间(毫秒)
+		long long _totalInTime;
+
+		//用于计算车头时距
+		//上一次有车进入区域的时间戳 
 		long long _lastInRegion;
 		//机动车总数
 		int _vehicles;
