@@ -5,7 +5,8 @@ enum class LogEvent :int
 {
 	None = 0,
 	Thread = 1,
-	Mqtt = 2,
-	Sqlite=3,
-	Detect=4
+	Socket=2,
+	Mqtt = 3,
+	Sqlite=4,
+	Detect=5
 };

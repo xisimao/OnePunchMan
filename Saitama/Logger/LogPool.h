@@ -42,7 +42,7 @@ namespace Saitama
 		template<typename T, typename ...U>
 		static void Debug(LogEvent logEvent, T t, U ...u)
 		{
-			_instance.Log(NULL, LogLevel::Debug, logEvent, t, u...);
+			_instance.Log(LogLevel::Debug, logEvent, t, u...);
 		}
 
 		/**
@@ -65,7 +65,7 @@ namespace Saitama
 		template<typename T, typename ...U>
 		static void Information(LogEvent logEvent, T t, U ...u)
 		{
-			_instance.Log(NULL, LogLevel::Information, logEvent, t, u...);
+			_instance.Log(LogLevel::Information, logEvent, t, u...);
 		}
 
 		/**
@@ -88,7 +88,7 @@ namespace Saitama
 		template<typename T, typename ...U>
 		static void Warning(LogEvent logEvent, T t, U ...u)
 		{
-			_instance.Log(NULL, LogLevel::Warning, logEvent, t, u...);
+			_instance.Log(LogLevel::Warning, logEvent, t, u...);
 		}
 
 		/**
@@ -111,33 +111,7 @@ namespace Saitama
 		template<typename T, typename ...U>
 		static void Error(LogEvent logEvent, T t, U ...u)
 		{
-			_instance.Log(NULL, LogLevel::Error, logEvent, t, u...);
-		}
-
-		/**
-		* @brief: 自定义日志
-		* @param: logLevel 日志的级别
-		* @param: logEvent 日志事件
-		* @param: t 日志的内容
-		* @param: ...u 日志的内容
-		*/
-		template<typename T, typename ...U>
-		static void Target(Logger* logger, LogLevel logLevel, T t, U ...u)
-		{
-			_instance.Log(logger, logLevel, LogEvent::None, t, u...);
-		}
-
-		/**
-		* @brief: 自定义日志
-		* @param: logLevel 日志的级别
-		* @param: logEvent 日志事件
-		* @param: t 日志的内容
-		* @param: ...u 日志的内容
-		*/
-		template<typename T, typename ...U>
-		static void Target(Logger* logger,LogLevel logLevel, LogEvent logEvent, T t, U ...u)
-		{
-			_instance.Log(logger, logLevel, logEvent, t, u...);
+			_instance.Log(LogLevel::Error, logEvent, t, u...);
 		}
 
 		/**
@@ -168,14 +142,6 @@ namespace Saitama
 		static LogType ReadType(const FileConfig& config, const std::string& key);
 
 		/**
-		* @brief: 从配置文件读取日志名
-		* @param: config 配置文件
-		* @param: key 日志级别对应的配置项key
-		* @return: 如果读取成功返回名称否则返回空字符串
-		*/
-		static std::string ReadName(const FileConfig& config, const std::string& key);
-
-		/**
 		* @brief: 从配置文件读取日志级别
 		* @param: config 配置文件
 		* @param: key 日志级别对应的配置项key
@@ -202,24 +168,17 @@ namespace Saitama
 		* @param: ...u 日志的内容
 		*/
 		template<typename T, typename ...U>
-		void Log(Logger* logger,LogLevel logLevel, LogEvent logEvent, T t, U ...u)
+		void Log(LogLevel logLevel, LogEvent logEvent, T t, U ...u)
 		{
 			std::stringstream ss;
 			ss << "[" << DateTime::Now().ToString() << "]";
 			ss << "[" << (int)logLevel << "]";
 			ss << "[" << (int)logEvent << "] ";
 			ContentFormat(&ss, t, u...);
-			if (logger == NULL)
+			std::lock_guard<std::mutex> lck(_mutex);
+			for (std::set<Logger*>::iterator it = _loggers.begin(); it != _loggers.end(); ++it)
 			{
-				std::lock_guard<std::mutex> lck(_mutex);
-				for (std::set<Logger*>::iterator it = _loggers.begin(); it != _loggers.end(); ++it)
-				{
-					(*it)->Log(logLevel, ss.str());
-				}
-			}
-			else
-			{
-				logger->Log(logLevel, ss.str());
+				(*it)->Log(logLevel, ss.str());
 			}
 		}
 
