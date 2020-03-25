@@ -84,18 +84,6 @@ namespace Saitama
 			return Convert<T>(value, 0);
 		}
 
-#ifdef _WIN32
-		/**
-		* @brief: 将字符串转换为字符串类型
-		* @param: value 字符串
-		* @return: 转换成功返回转换结果否则返回空字符串
-		*/
-		template<>
-		static std::string Convert<std::string>(const std::string& value)
-		{
-			return Convert(value, std::string());
-		}
-#endif
 		/**
 		* @brief: 将字符串转换为数字或者布尔类型
 		* @param: value 字符串
@@ -225,7 +213,16 @@ namespace Saitama
 		}
 	};
 
-
+	/**
+	* @brief: 将字符串转换为字符串类型
+	* @param: value 字符串
+	* @return: 转换成功返回转换结果否则返回空字符串
+	*/
+	template<>
+	inline std::string StringEx::Convert<std::string>(const std::string& value)
+	{
+		return Convert(value, std::string());
+	}
 
 }
 

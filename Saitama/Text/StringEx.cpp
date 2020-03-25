@@ -135,14 +135,6 @@ vector<string> StringEx::Split(const string& value, const string& separator, boo
 	return result;
 }
 
-#ifndef _WIN32 
-template<>
-string StringEx::Convert<string>(const string& value)
-{
-	return Convert(value, string());
-}
-#endif
-
 string StringEx::Rounding(float value, int precision)
 {
 	stringstream ss;
