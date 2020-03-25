@@ -255,22 +255,57 @@ int main2()
 
     return 0;
 }
+
+class TestHandler:public SocketHandler
+{
+
+protected:
+
+    SocketHandler* CloneCore()
+    {
+        return new TestHandler();
+    }
+
+    ProtocolPacket HandleCore(int socket, unsigned int ip, unsigned short port, std::string::const_iterator begin, std::string::const_iterator end)
+    {
+        string s(begin, end);
+        cout << s;
+        return ProtocolPacket(AnalysisResult::Request, 0, end - begin,0, 0);
+    }
+
+};
+
 int main()
 {
-    Line line1(Point(358, 608), Point(791, 625));
-    Line line2(Point(27, 1001), Point(358, 608));
-    Line line3(Point(358, 608), Point(27, 1001));
+   ///* stringstream ss;
+   // ss << "OPTIONS /api/channels?timestamp=1585101111002 HTTP/1.1\r\n"
+   //     << "Host: 192.168.201.111:7772\r\n"
+   //     << "Connection: keep-alive\r\n"
+   //     << "Access-Control-Request-Method: POST\r\n"
+   //     << "Origin: http://localhost:8092\r\n"
+   //     << "User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36\r\n"
+   //     << "Access-Control-Request-Headers: authorization,content-type\r\n"
+   //     << "Accept: */*\r\n"
+   //     << "Referer: http://localhost:8092/\r\n"
+   //     << "Accept-Encoding: gzip, deflate\r\n"
+   //     << "Accept-Language: zh-CN,zh;q=0.9\r\n"
+   //     << "\r\n"
+   //     << "\r\n";
 
-    Point p1 = line1.Intersect(line2);
-    Point p11 = line2.Intersect(line1);
-    Point p2 = line1.Intersect(line3);
-    Point p21 = line3.Intersect(line1);
 
-    Line line4(Point(791, 625), Point(358, 608));
-    Point p3 = line4.Intersect(line2);
-    Point p31 = line2.Intersect(line4);
-    Point p4 = line4.Intersect(line3);
-    Point p41 = line3.Intersect(line4);
+
+   // SocketMaid maid(2);
+   // TestHandler handler1;
+
+   // maid.AddConnectEndPoint(EndPoint("127.0.0.1",7777), &handler1);
+   // maid.Start();
+
+   // system("pause");
+
+   // maid.SendTcp(EndPoint("127.0.0.1", 7777), ss.str());
+   // system("pause");
+
+   // maid.Stop();*/
 
     SocketMaid maid(2);
     DataChannel channel("192.168.201.139", 1884);

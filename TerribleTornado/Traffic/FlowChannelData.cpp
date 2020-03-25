@@ -70,6 +70,7 @@ FlowChannel FlowChannelData::GetChannel(const SqliteReader& sqlite)
 			lane.StopLine = laneSqlite.GetString(12);
 			lane.LaneLine1 = laneSqlite.GetString(13);
 			lane.LaneLine2 = laneSqlite.GetString(14);
+			lane.Region = laneSqlite.GetString(15);
 			channel.Lanes.push_back(lane);
 		}
 		laneSqlite.EndQuery();
@@ -93,7 +94,7 @@ bool FlowChannelData::Insert(const FlowChannel& channel)
 	{
 		for (vector<Lane>::const_iterator it = channel.Lanes.begin(); it != channel.Lanes.end(); ++it)
 		{
-			string laneSql(StringEx::Combine("Insert Into Flow_Lane (ChannelIndex,LaneId,LaneName,LaneIndex,LaneType,Direction,FlowDirection,Length,IOIp,IOPort,IOIndex,DetectLine,StopLine,LaneLine1,LaneLine2) Values ("
+			string laneSql(StringEx::Combine("Insert Into Flow_Lane (ChannelIndex,LaneId,LaneName,LaneIndex,LaneType,Direction,FlowDirection,Length,IOIp,IOPort,IOIndex,DetectLine,StopLine,LaneLine1,LaneLine2,Region) Values ("
 				, it->ChannelIndex, ","
 				, "'", it->LaneId, "',"
 				, "'", it->LaneName, "',"
@@ -108,7 +109,8 @@ bool FlowChannelData::Insert(const FlowChannel& channel)
 				, "'", it->DetectLine, "',"
 				, "'", it->StopLine, "',"
 				, "'", it->LaneLine1, "',"
-				, "'", it->LaneLine2, "'"
+				, "'", it->LaneLine2, "',"
+				, "'", it->Region, "'"
 				, ")"));
 			_sqlite.ExecuteRowCount(laneSql);
 		}

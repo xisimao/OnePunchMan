@@ -114,7 +114,7 @@ void DataChannel::DeserializeDetectItems(map<string, DetectItem>* items,const Js
 void DataChannel::HandleDetect(const string& json)
 {
     JsonDeserialization jd(json);
-    unsigned int channelIndex= jd.Get("ImageResults:0:VideoChannel", _channels.size());
+    unsigned int channelIndex= jd.Get("ImageResults:0:VideoChannel", static_cast<unsigned int>(_channels.size()));
     if (channelIndex >= 0 && channelIndex < _channels.size())
     {
         long long timeStamp = DateTime::Now().Milliseconds();
@@ -164,7 +164,7 @@ void DataChannel::HandleRecognize(const string& json)
     unsigned int imageIndex=0;
     while (imageIndex<images.size())
     {
-        unsigned int channelIndex = jd.Get(StringEx::Combine("l1_result:", imageIndex, ":VideoChannel"), _channels.size());
+        unsigned int channelIndex = jd.Get(StringEx::Combine("l1_result:", imageIndex, ":VideoChannel"), static_cast<unsigned int>(_channels.size()));
         if (channelIndex >= 0 && channelIndex < _channels.size())
         {
             int vehicleType = jd.Get<int>(StringEx::Combine("ImageResults:", imageIndex, ":Vehicles:0:Type"));
@@ -299,7 +299,7 @@ void DataChannel::CollectFlow(const DateTime& now)
         for (unsigned int laneIndex = 0; laneIndex < _channels[channelIndex].size(); ++laneIndex)
         {
             LaneDetector* detector = _channels[channelIndex][laneIndex];
-            LaneItem item = detector->Collect();
+            LaneItem item = detector->Collect(timeStamp);
 
             string laneJson;
 

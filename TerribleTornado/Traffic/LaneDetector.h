@@ -186,9 +186,10 @@ namespace Saitama
 
 		/**
 		* @brief: 收集车道计算数据
+		* @param: item 结算时间戳
 		* @return: 车道计算数据
 		*/
-		LaneItem Collect();
+		LaneItem Collect(long long timeStamp);
 
 	private:
 

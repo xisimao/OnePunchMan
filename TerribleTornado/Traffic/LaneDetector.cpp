@@ -184,7 +184,7 @@ IOStatus LaneDetector::Detect(const map<string, DetectItem>& items,long long tim
 	}
 }
 
-LaneItem LaneDetector::Collect()
+LaneItem LaneDetector::Collect(long long timeStamp)
 {
 	lock_guard<mutex> lck(_mutex);
 	LaneItem item;
@@ -221,6 +221,7 @@ LaneItem LaneDetector::Collect()
 	_vehicles = 0;
 	_totalSpan = 0;
 
+	_lastTimeStamp = timeStamp;
 	return item;
 }
 
