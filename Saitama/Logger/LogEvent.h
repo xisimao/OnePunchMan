@@ -8,5 +8,6 @@ enum class LogEvent :int
 	Socket=2,
 	Mqtt = 3,
 	Sqlite=4,
-	Detect=5
+	Detect=5,
+	Decode=6
 };

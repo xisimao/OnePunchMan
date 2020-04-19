@@ -2,6 +2,7 @@
 
 using namespace std;
 using namespace Saitama;
+using namespace TerribleTornado;
 
 const string DataChannel::DetectTopic("aiservice/level_1_imageresult");
 const string DataChannel::RecognizeTopic("aiservice/level_2_result");
@@ -140,13 +141,33 @@ void DataChannel::Update(HttpReceivedEventArgs* e)
     }
 }
 
+void DataChannel::DeserializeDetectItems(map<string, DetectItem>* items, const JsonDeserialization& jd, const string& key, long long timeStamp)
+{
+    int itemIndex = 0;
+    while (true)
+    {
+        string id = jd.Get<string>(StringEx::Combine("ImageResults:0:", key, ":", itemIndex, ":GUID"));
+        if (id.empty())
+        {
+            break;
+        }
+        int type = jd.Get<int>(StringEx::Combine("ImageResults:0:", key, ":", itemIndex, ":Type"));
+        vector<int> rect = jd.GetArray<int>(StringEx::Combine("ImageResults:0:", key, ":", itemIndex, ":Detect:Body:Rect"));
+        if (rect.size() >= 4)
+        {
+            items->insert(pair<string, DetectItem>(id, DetectItem(Saitama::Rectangle(Point(rect[0], rect[1]), rect[2], rect[3]), type)));
+        }
+        itemIndex += 1;
+    }
+}
+
 void DataChannel::HandleDetect(const string& json)
 {
     JsonDeserialization jd(json);
     unsigned int channelIndex= jd.Get("ImageResults:0:VideoChannel", static_cast<unsigned int>(_channels.size()));
     if (channelIndex >= 0 && channelIndex < _channels.size())
     {
-        long long timeStamp = DateTime::Now().Milliseconds();
+        long long timeStamp = DateTime::TimeStamp();
         map<string,DetectItem> detectItems;
         DeserializeDetectItems(&detectItems, jd, "Vehicles", timeStamp);
         DeserializeDetectItems(&detectItems, jd, "Bikes", timeStamp);
@@ -176,7 +197,7 @@ void DataChannel::HandleDetect(const string& json)
             JsonSerialization::SerializeItem(&channelsJson, channelJson);
 
             string ioJson;
-            JsonSerialization::Serialize(&ioJson, "timestamp", DateTime::Now().Milliseconds());
+            JsonSerialization::Serialize(&ioJson, "timestamp", DateTime::TimeStamp());
             JsonSerialization::SerializeJson(&ioJson, "detail", channelsJson);
          
             _mqtt->Send(IOTopic, ioJson, false);
@@ -186,7 +207,7 @@ void DataChannel::HandleDetect(const string& json)
 
 void DataChannel::HandleRecognize(const string& json)
 {
-    long long timeStamp = DateTime::Now().Milliseconds();
+    long long timeStamp = DateTime::TimeStamp();
     JsonDeserialization jd(json);
     vector<string> images = jd.GetArray<string>("imgdata_result");
     unsigned int imageIndex=0;
@@ -202,7 +223,7 @@ void DataChannel::HandleRecognize(const string& json)
                 vector<int> vehicleRect = jd.GetArray<int>(StringEx::Combine("l1_result:", imageIndex, ":Detect:Body:Rect"));
                 if (vehicleRect.size() >= 4)
                 {
-                    DetectItem item(Rectangle(Point(vehicleRect[0], vehicleRect[1]), vehicleRect[2], vehicleRect[3]));
+                    DetectItem item(Saitama::Rectangle(Point(vehicleRect[0], vehicleRect[1]), vehicleRect[2], vehicleRect[3]));
                     lock_guard<mutex> lck(_channelMutex);
                     for (vector<LaneDetector*>::iterator it = _channels[channelIndex].begin(); it != _channels[channelIndex].end(); ++it)
                     {
@@ -245,7 +266,7 @@ void DataChannel::HandleRecognize(const string& json)
                 vector<int> bikeRect = jd.GetArray<int>(StringEx::Combine("l1_result:", imageIndex, ":Detect:Body:Rect"));
                 if (bikeRect.size() >= 4)
                 {
-                    DetectItem item(Rectangle(Point(bikeRect[0], bikeRect[1]), bikeRect[2], bikeRect[3]));
+                    DetectItem item(Saitama::Rectangle(Point(bikeRect[0], bikeRect[1]), bikeRect[2], bikeRect[3]));
                     lock_guard<mutex> lck(_channelMutex);
                     for (vector<LaneDetector*>::iterator it = _channels[channelIndex].begin(); it != _channels[channelIndex].end(); ++it)
                     {
@@ -279,7 +300,7 @@ void DataChannel::HandleRecognize(const string& json)
                 vector<int> pedestrainRect = jd.GetArray<int>(StringEx::Combine("l1_result:", imageIndex, ":Detect:Body:Rect"));
                 if (pedestrainRect.size() >= 4)
                 {
-                    DetectItem item(Rectangle(Point(pedestrainRect[0], pedestrainRect[1]), pedestrainRect[2], pedestrainRect[3]));
+                    DetectItem item(Saitama::Rectangle(Point(pedestrainRect[0], pedestrainRect[1]), pedestrainRect[2], pedestrainRect[3]));
                     lock_guard<mutex> lck(_channelMutex);
                     for (vector<LaneDetector*>::iterator it = _channels[channelIndex].begin(); it != _channels[channelIndex].end(); ++it)
                     {
@@ -378,26 +399,6 @@ void DataChannel::UpdateChannel(const FlowChannel& channel)
     }
 }
 
-void DataChannel::DeserializeDetectItems(map<string, DetectItem>* items, const JsonDeserialization& jd, const string& key, long long timeStamp)
-{
-    int itemIndex = 0;
-    while (true)
-    {
-        string id = jd.Get<string>(StringEx::Combine("ImageResults:0:", key, ":", itemIndex, ":GUID"));
-        if (id.empty())
-        {
-            break;
-        }
-        int type = jd.Get<int>(StringEx::Combine("ImageResults:0:", key, ":", itemIndex, ":Type"));
-        vector<int> rect = jd.GetArray<int>(StringEx::Combine("ImageResults:0:", key, ":", itemIndex, ":Detect:Body:Rect"));
-        if (rect.size() >= 4)
-        {
-            items->insert(pair<string, DetectItem>(id, DetectItem(Rectangle(Point(rect[0], rect[1]), rect[2], rect[3]), type)));
-        }
-        itemIndex += 1;
-    }
-}
-
 bool DataChannel::UrlStartWith(const string& url, const string& key)
 {
     return url.size() >= key.size() && url.substr(0, key.size()).compare(key) == 0;
@@ -425,7 +426,7 @@ void DataChannel::StartCore()
     _mqtt->MqttReceived.Subscribe(this);
     _mqtt->Start();
 
-    while (!Cancelled())
+    while (!_cancelled)
     {
         this_thread::sleep_for(chrono::seconds(1));
 

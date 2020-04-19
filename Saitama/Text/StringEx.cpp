@@ -3,6 +3,11 @@
 using namespace std;
 using namespace Saitama;
 
+const string StringEx::Base64Chars =
+"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+"abcdefghijklmnopqrstuvwxyz"
+"0123456789+/";
+
 string StringEx::ToHex(int value)
 {
 	char temp[9] = { 0 };
@@ -58,6 +63,107 @@ string StringEx::ToBytes(const std::string& value, char separator)
 char StringEx::Xor(const char* buffer, unsigned int size)
 {
 	return (char)accumulate(buffer, buffer + size, 0, [](char a, char b) {return a ^ b; });
+}
+
+string StringEx::ToBase64String(const unsigned char* buffer, unsigned int size) {
+
+	std::string ret;
+	int i = 0;
+	int j = 0;
+	unsigned char char_array_3[3];
+	unsigned char char_array_4[4];
+
+	while (size--) {
+		char_array_3[i++] = *(buffer++);
+		if (i == 3) {
+			char_array_4[0] = static_cast<unsigned char>((char_array_3[0] & 0xfc) >> 2);
+			char_array_4[1] = static_cast<unsigned char>(((char_array_3[0] & 0x03) << 4) +
+				((char_array_3[1] & 0xf0) >> 4));
+			char_array_4[2] = static_cast<unsigned char>(((char_array_3[1] & 0x0f) << 2) +
+				((char_array_3[2] & 0xc0) >> 6));
+			char_array_4[3] = static_cast<unsigned char>(char_array_3[2] & 0x3f);
+
+			for (i = 0; (i < 4); i++) {
+				ret += Base64Chars[char_array_4[i]];
+			}
+			i = 0;
+		}
+	}
+
+	if (i) {
+		for (j = i; j < 3; j++) {
+			char_array_3[j] = '\0';
+		}
+
+		char_array_4[0] = static_cast<unsigned char>((char_array_3[0] & 0xfc) >> 2);
+		char_array_4[1] = static_cast<unsigned char>(((char_array_3[0] & 0x03) << 4) +
+			((char_array_3[1] & 0xf0) >> 4));
+		char_array_4[2] = static_cast<unsigned char>(((char_array_3[1] & 0x0f) << 2) +
+			((char_array_3[2] & 0xc0) >> 6));
+		char_array_4[3] = static_cast<unsigned char>(char_array_3[2] & 0x3f);
+
+		for (j = 0; (j < i + 1); j++) {
+			ret += Base64Chars[char_array_4[j]];
+		}
+
+		while ((i++ < 3)) {
+			ret += '=';
+		}
+	}
+
+	return ret;
+}
+
+string StringEx::FromBase64String(std::string const& value) {
+	size_t in_len = value.size();
+	int i = 0;
+	int j = 0;
+	int in_ = 0;
+	unsigned char char_array_4[4], char_array_3[3];
+	std::string ret;
+
+	while (in_len-- && (value[in_] != '=') && IsBase64(value[in_])) {
+		char_array_4[i++] = value[in_]; in_++;
+		if (i == 4) {
+			for (i = 0; i < 4; i++) {
+				char_array_4[i] = static_cast<unsigned char>(Base64Chars.find(char_array_4[i]));
+			}
+
+			char_array_3[0] = static_cast<unsigned char>((char_array_4[0] << 2) + ((char_array_4[1] & 0x30) >> 4));
+			char_array_3[1] = static_cast<unsigned char>(((char_array_4[1] & 0xf) << 4) + ((char_array_4[2] & 0x3c) >> 2));
+			char_array_3[2] = static_cast<unsigned char>(((char_array_4[2] & 0x3) << 6) + char_array_4[3]);
+
+			for (i = 0; (i < 3); i++) {
+				ret += char_array_3[i];
+			}
+			i = 0;
+		}
+	}
+
+	if (i) {
+		for (j = i; j < 4; j++)
+			char_array_4[j] = 0;
+
+		for (j = 0; j < 4; j++)
+			char_array_4[j] = static_cast<unsigned char>(Base64Chars.find(char_array_4[j]));
+
+		char_array_3[0] = static_cast<unsigned char>((char_array_4[0] << 2) + ((char_array_4[1] & 0x30) >> 4));
+		char_array_3[1] = static_cast<unsigned char>(((char_array_4[1] & 0xf) << 4) + ((char_array_4[2] & 0x3c) >> 2));
+		char_array_3[2] = static_cast<unsigned char>(((char_array_4[2] & 0x3) << 6) + char_array_4[3]);
+
+		for (j = 0; (j < i - 1); j++) {
+			ret += static_cast<std::string::value_type>(char_array_3[j]);
+		}
+	}
+
+	return ret;
+}
+
+inline bool StringEx::IsBase64(unsigned char c) {
+	return (c == 43 || // +
+		(c >= 47 && c <= 57) || // /-9
+		(c >= 65 && c <= 90) || // A-Z
+		(c >= 97 && c <= 122)); // a-z
 }
 
 string StringEx::ToUpper(const string& str)

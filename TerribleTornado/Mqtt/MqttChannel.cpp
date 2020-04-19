@@ -2,12 +2,19 @@
 
 using namespace std;
 using namespace Saitama;
+using namespace TerribleTornado;
 
 const int MqttChannel::KeepAlive = 60;
 const int MqttChannel::ConnectSpan = 5000;
 const int MqttChannel::PollTime = 100;
 
-MqttChannel::MqttChannel(const string& ip, int port, std::vector<std::string> topics)
+MqttChannel::MqttChannel(const string& ip, int port)
+    :MqttChannel(ip,port,vector<string>())
+{
+
+}
+
+MqttChannel::MqttChannel(const string& ip, int port, vector<string> topics)
     :ThreadObject("mqtt"), _mosq(NULL), _ip(ip), _port(port), _topics(topics), _status(-1)
 {
 
@@ -34,18 +41,39 @@ void MqttChannel::ReceivedEventHandler(struct mosquitto* mosq, void* userdata, c
     static_cast<MqttChannel*>(userdata)->MqttReceived.Notice(&args);
 }
 
-bool MqttChannel::Send(const string& topic, const string& message, bool lock)
+bool MqttChannel::Send(const string& topic, const string& message, int qos, bool lock)
 {
     if (_status==0)
     {
         if (lock)
         {
             lock_guard<mutex> lck(_mutex);
-            return mosquitto_publish(_mosq, NULL, topic.c_str(), static_cast<int>(message.size()), message.c_str(), 2, 0) == 0;
+            return mosquitto_publish(_mosq, NULL, topic.c_str(), static_cast<int>(message.size()), message.c_str(), qos, 0) == 0;
         }
         else
         {
-            return mosquitto_publish(_mosq, NULL, topic.c_str(), static_cast<int>(message.size()), message.c_str(), 2, 0) == 0;
+            return mosquitto_publish(_mosq, NULL, topic.c_str(), static_cast<int>(message.size()), message.c_str(), qos, 0) == 0;
+        }
+    }
+    else
+    {
+        return false;
+    }
+    return true;
+}
+
+bool MqttChannel::Send(const string& topic, const unsigned char* message, unsigned int size, int qos, bool lock)
+{
+    if (_status == 0)
+    {
+        if (lock)
+        {
+            lock_guard<mutex> lck(_mutex);
+            return mosquitto_publish(_mosq, NULL, topic.c_str(), size, message, qos, 0) == 0;
+        }
+        else
+        {
+            return mosquitto_publish(_mosq, NULL, topic.c_str(), size, message, qos, 0) == 0;
         }
     }
     else
@@ -77,7 +105,7 @@ void MqttChannel::StartCore()
     mosquitto_subscribe_callback_set(_mosq, SubscribedEventHandler);
     mosquitto_message_callback_set(_mosq, ReceivedEventHandler);
 
-    while (!Cancelled())
+    while (!_cancelled)
     {
         unique_lock<mutex> lck(_mutex);
         if (_status == 0)

@@ -54,6 +54,21 @@ namespace Saitama
 		static char Xor(const char* buffer, unsigned int size);
 
 		/**
+		* @brief: base64算法加密
+		* @param: buffer 需要加密的字节流
+		* @param: size 需要加密的字节流长度
+		* @return: 加密后的字符串
+		*/
+		static std::string ToBase64String(const unsigned char* buffer, unsigned int size);
+
+		/**
+		* @brief: base64算法解密
+		* @param: value 需要解密的字符串
+		* @return: 解密后的字符串
+		*/
+		static std::string FromBase64String(const std::string& value);
+
+		/**
 		* @brief: 将字符串变为大写
 		* @param: value 字符串
 		*/
@@ -211,6 +226,18 @@ namespace Saitama
 		{
 			(*ss) << t;
 		}
+		private:
+
+			/**
+			* @brief: 判断字符是否是base64字符串范围内
+			* @param: value 字符串
+			* @return: 转换成功返回转换结果否则返回空字符串
+			*/
+			static inline bool IsBase64(unsigned char c);
+
+			//base64字符集合
+			static const std::string Base64Chars;
+
 	};
 
 	/**
@@ -223,6 +250,5 @@ namespace Saitama
 	{
 		return Convert(value, std::string());
 	}
-
 }
 

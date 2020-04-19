@@ -10,6 +10,9 @@
     <Filter Include="Traffic">
       <UniqueIdentifier>{6f2d6901-9f1a-40e4-a1cd-1f65cf0bfbb4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Video">
+      <UniqueIdentifier>{b3a923ed-eada-4a0a-b328-41057c054f38}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Traffic\DataChannel.cpp">
@@ -28,6 +31,21 @@
       <Filter>Mqtt</Filter>
     </ClCompile>
     <ClCompile Include="TerribleTornado.cpp" />
+    <ClCompile Include="Video\SeemmoSDK.cpp">
+      <Filter>Video</Filter>
+    </ClCompile>
+    <ClCompile Include="Video\RecognChannel.cpp">
+      <Filter>Video</Filter>
+    </ClCompile>
+    <ClCompile Include="Video\DetectChannel.cpp">
+      <Filter>Video</Filter>
+    </ClCompile>
+    <ClCompile Include="Video\MediaHandler.cpp">
+      <Filter>Video</Filter>
+    </ClCompile>
+    <ClCompile Include="Video\HisiChannel.cpp">
+      <Filter>Video</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Traffic\DataChannel.h">
@@ -51,9 +69,24 @@
     <ClInclude Include="Sqlite\Sqlite.h">
       <Filter>Sqlite</Filter>
     </ClInclude>
+    <ClInclude Include="Video\SeemmoSDK.h">
+      <Filter>Video</Filter>
+    </ClInclude>
+    <ClInclude Include="Video\RecognChannel.h">
+      <Filter>Video</Filter>
+    </ClInclude>
+    <ClInclude Include="Video\DetectChannel.h">
+      <Filter>Video</Filter>
+    </ClInclude>
+    <ClInclude Include="Video\MediaHandler.h">
+      <Filter>Video</Filter>
+    </ClInclude>
+    <ClInclude Include="Video\HisiChannel.h">
+      <Filter>Video</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.config" />
     <None Include="traffic.db" />
+    <None Include="appsettings.json" />
   </ItemGroup>
 </Project>

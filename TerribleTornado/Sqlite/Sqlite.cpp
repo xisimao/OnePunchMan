@@ -2,6 +2,7 @@
 
 using namespace std;
 using namespace Saitama;
+using namespace TerribleTornado;
 
 SqliteReader::SqliteReader()
 	:_stmt(NULL)

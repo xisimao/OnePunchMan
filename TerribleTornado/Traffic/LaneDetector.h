@@ -9,7 +9,7 @@
 #include "Observable.h"
 #include "FlowChannelData.h"
 
-namespace Saitama
+namespace TerribleTornado
 {
 	//检测项
 	class DetectItem
@@ -20,7 +20,7 @@ namespace Saitama
 		* @brief: 构造函数
 		*/
 		DetectItem()
-			:DetectItem(Rectangle(), 0)
+			:DetectItem(Saitama::Rectangle(), 0)
 		{
 
 		}
@@ -29,7 +29,7 @@ namespace Saitama
 		* @brief: 构造函数
 		* @param: region 检测元素区域
 		*/
-		DetectItem(const Rectangle& region)
+		DetectItem(const Saitama::Rectangle& region)
 			:DetectItem(region,0)
 		{
 
@@ -40,14 +40,14 @@ namespace Saitama
 		* @param: region 检测元素区域
 		* @param: type 检测元素类型
 		*/
-		DetectItem(const Rectangle& region,int type)
+		DetectItem(const Saitama::Rectangle& region,int type)
 			:HitPoint(region.Top.X + region.Width / 2, region.Top.Y + region.Height), Type(type)
 		{
 
 		}
 
 		//检测点
-		Point HitPoint;
+		Saitama::Point HitPoint;
 		//检测元素类型
 		int Type;
 		
@@ -204,12 +204,12 @@ namespace Saitama
 		* @param: lane 车道线字符串
 		* @return: 线段
 		*/
-		Line GetLine(const std::string& line);
+		Saitama::Line GetLine(const std::string& line);
 
 		//数据编号
 		std::string _dataId;
 		//当前检测区域
-		Polygon _region;
+		Saitama::Polygon _region;
 		//每个像素代表的米数
 		double _meterPerPixel;
 

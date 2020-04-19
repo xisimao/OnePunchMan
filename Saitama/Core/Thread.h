@@ -23,12 +23,6 @@ namespace Saitama
 		virtual ~ThreadObject();
 
 		/**
-		* @brief: 获取最后一次轮询的命中时间点
-		* @return: 最后一次轮询的命中时间点
-		*/
-		DateTime HitPoint() const;
-
-		/**
 		* @brief: 获取线程名称
 		* @return: 线程名称
 		*/
@@ -52,24 +46,13 @@ namespace Saitama
 	protected:
 
 		/**
-		* @brief: 获取当前程序是否已经提交了取消请求
-		* @return: 返回true表示当前程序已经提交了取消请求
-		*/
-		bool Cancelled();
-
-		/**
 		* @brief: 子类需要实现的具体启动程序
 		* @param: arg 启动参数
 		*/
 		virtual void StartCore() = 0;
 
-		/**
-		* @brief: 子类选择实现的停止启动程序
-		* @param: arg 启动参数
-		*/
-		virtual void StopCore()
-		{
-		}
+		// 当前程序是否已经提交了取消请求
+		bool _cancelled;
 
 	private:
 
@@ -82,7 +65,7 @@ namespace Saitama
 		};
 
 		//轮询中睡眠时间(毫秒)
-		static const int PollTime;
+		static const int SleepTime;
 
 		/**
 		* @brief: 线程启动函数
@@ -90,20 +73,14 @@ namespace Saitama
 		*/
 		void StartThread();
 
-		// 线程 
-		std::thread _thread;
-
 		//线程名称
 		std::string _name;
 
 		// 线程状态
 		ThreadStatus _status;
 
-		// 当前程序是否已经提交了取消请求
-		bool _cancelled;
-
-		//最后一次轮询的命中事件
-		DateTime _hitPoint;
+		// 线程 
+		std::thread _thread;
 
 	};
 

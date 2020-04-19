@@ -59,22 +59,6 @@ DateTime::DateTime(int year, int month, int day, int hour, int minute, int secon
 	}
 }
 
-DateTime::DateTime(long long milliseconds)
-{
-	time_t time = milliseconds / 1000;
-	struct tm timeinfo;
-	localtime_s(&timeinfo, &time);
-
-	_year = timeinfo.tm_year + 1900;
-	_month = timeinfo.tm_mon + 1;
-	_day = timeinfo.tm_mday;
-	_hour = timeinfo.tm_hour;
-	_minute = timeinfo.tm_min;
-	_second = timeinfo.tm_sec;
-	_millisecond = static_cast<int>(milliseconds % 1000);
-	_milliseconds = milliseconds;
-}
-
 int DateTime::Year() const
 {
 	return _year;
@@ -126,31 +110,11 @@ DateTime DateTime::AddMonth(int month)
 	{
 		return DateTime(_year, tempMonth, _day, _hour, _minute, _second, _millisecond);
 	}
-	
-	
-
 }
 
 bool DateTime::Empty() const
 {
 	return _year == 0 && _month == 0 && _day == 0 && _hour == 0 && _minute == 0 && _second == 0;
-}
-
-string DateTime::ToString() const
-{
-	stringstream ss;
-	ss << ToString("%Y-%m-%d %H:%M:%S") << "." << std::setfill('0') << std::setw(3)<< _millisecond;
-	return ss.str();
-}
-
-string DateTime::ToString(const string& format) const
-{
-	time_t time = _milliseconds / 1000;
-	struct tm timeinfo;
-	localtime_s(&timeinfo, &time);
-	char buffer[80] = { 0 };
-	strftime(buffer, 80, format.c_str(), &timeinfo);
-	return string(buffer);
 }
 
 bool DateTime::operator == (const DateTime &right) const
@@ -257,6 +221,23 @@ long long DateTime::operator - (const DateTime &right) const
 	return this->Milliseconds() - right.Milliseconds();
 }
 
+string DateTime::ToString() const
+{
+	stringstream ss;
+	ss << ToString("%Y-%m-%d %H:%M:%S") << "." << std::setfill('0') << std::setw(3) << _millisecond;
+	return ss.str();
+}
+
+string DateTime::ToString(const string& format) const
+{
+	time_t time = _milliseconds / 1000;
+	struct tm timeinfo;
+	localtime_s(&timeinfo, &time);
+	char buffer[80] = { 0 };
+	strftime(buffer, 80, format.c_str(), &timeinfo);
+	return string(buffer);
+}
+
 DateTime DateTime::ParseString(const string& format, const string& value)
 {
 	int year = 0;
@@ -270,6 +251,13 @@ DateTime DateTime::ParseString(const string& format, const string& value)
 	return DateTime(year, month, day, hour, minute, second, millisecond);
 }
 
+long long DateTime::TimeStamp()
+{
+	struct timeb tb;
+	ftime(&tb);
+	return tb.time * 1000 + tb.millitm;
+}
+
 DateTime DateTime::Now()
 {
 	struct timeb tb;
@@ -277,15 +265,6 @@ DateTime DateTime::Now()
 	tm timeinfo;
 	localtime_s(&timeinfo,&tb.time);
 	return DateTime(timeinfo.tm_year+1900, timeinfo.tm_mon + 1, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec, tb.millitm);
-}
-
-DateTime DateTime::UtcNow()
-{
-	struct timeb tb;
-	ftime(&tb);
-	tm timeinfo;
-	gmtime_s(&timeinfo, &tb.time);
-	return DateTime(timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec, tb.millitm);
 }
 
 DateTime DateTime::Today()
@@ -306,3 +285,11 @@ DateTime DateTime::Time()
 	return DateTime(0,0,0,timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec, tb.millitm);
 }
 
+DateTime DateTime::UtcNow()
+{
+	struct timeb tb;
+	ftime(&tb);
+	tm timeinfo;
+	gmtime_s(&timeinfo, &tb.time);
+	return DateTime(timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec, tb.millitm);
+}

@@ -5,7 +5,7 @@
 #include "LogPool.h"
 #include "Thread.h"
 
-namespace Saitama
+namespace TerribleTornado
 {
     //mqtt接收消息事件参数
     class MqttReceivedEventArgs
@@ -38,9 +38,17 @@ namespace Saitama
     };
 
     //mqtt客户端线程
-    class MqttChannel:public ThreadObject
+    class MqttChannel:public Saitama::ThreadObject
     {
     public:
+
+        /**
+        * @brief: 构造函数
+        * @param: ip mqtt服务端地址
+        * @param: port mqtt服务端端口，默认为1883
+        * @param: topics 订阅的主题集合
+        */
+        MqttChannel(const std::string& ip, int port);
 
         /**
         * @brief: 构造函数
@@ -77,16 +85,20 @@ namespace Saitama
         static void ReceivedEventHandler(struct mosquitto* mosq, void* userdata, const struct mosquitto_message* message);
 
         //mqtt接收消息事件
-        Observable<MqttReceivedEventArgs> MqttReceived;
+        Saitama::Observable<MqttReceivedEventArgs> MqttReceived;
 
         /**
          * @brief: mqtt发送消息
          * @param: topic 主题
          * @param: message 发送的消息
+         * @param: qos 服务质量
          * @param: lock 是否加同步锁
          * @return: 返回true表示发送成功
          */
-        bool Send(const std::string& topic,const std::string& message,bool lock =true);
+        bool Send(const std::string& topic,const std::string& message, int qos = 0, bool lock =true);
+
+
+        bool Send(const std::string& topic, const unsigned char* message,unsigned int size,int qos =0, bool lock = true);
 
     protected:
 

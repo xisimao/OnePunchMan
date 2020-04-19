@@ -85,7 +85,7 @@ void ConnectionChannel::MoveTempEndPoints()
 
 void ConnectionChannel::StartCore()
 {
-	while (!Cancelled())
+	while (!_cancelled)
 	{
 		MoveTempEndPoints();
 

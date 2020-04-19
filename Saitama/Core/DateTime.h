@@ -25,12 +25,6 @@ namespace Saitama
 
 		/**
 		* @brief: 构造函数
-		* @param: milliseconds 时间戳
-		*/
-		DateTime(long long milliseconds);
-
-		/**
-		* @brief: 构造函数
 		* @param: year 年
 		* @param: month 月
 		* @param: day 日
@@ -149,16 +143,16 @@ namespace Saitama
 		static DateTime ParseString(const std::string& format, const std::string& value);
 
 		/**
+		* @brief: 返回当前的时间戳
+		* @return: 当前的时间戳
+		*/
+		static long long TimeStamp();
+
+		/**
 		* @brief: 返回当前的日期时间
 		* @return: 当前的日期时间
 		*/
 		static DateTime Now();
-
-		/**
-		* @brief: 返回当前的UTC日期时间
-		* @return: 当前的UTC日期时间
-		*/
-		static DateTime UtcNow();
 
 		/**
 		* @brief: 返回当前的日期
@@ -171,6 +165,12 @@ namespace Saitama
 		* @return: 当前的时间
 		*/
 		static DateTime Time();
+
+		/**
+		* @brief: 返回当前的UTC日期时间
+		* @return: 当前的UTC日期时间
+		*/
+		static DateTime UtcNow();
 
 	private:
 

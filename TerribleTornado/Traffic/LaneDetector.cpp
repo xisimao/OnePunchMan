@@ -2,6 +2,7 @@
 
 using namespace std;
 using namespace Saitama;
+using namespace TerribleTornado;
 
 LaneDetector::LaneDetector(const string& dataId,const Lane& lane)
 	:_persons(0),_bikes(0), _motorcycles(0), _cars(0),_tricycles(0), _buss(0),_vans(0),_trucks(0)

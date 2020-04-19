@@ -7,12 +7,12 @@
 #include "FlowChannelData.h"
 #include "HttpHandler.h"
 
-namespace Saitama
+namespace TerribleTornado
 {
     //数据分发和收集线程
-    class DataChannel :public ThreadObject
-        , public IObserver<MqttReceivedEventArgs>
-        , public IObserver<HttpReceivedEventArgs>
+    class DataChannel :public Saitama::ThreadObject
+        , public Saitama::IObserver<MqttReceivedEventArgs>
+        , public Saitama::IObserver<Saitama::HttpReceivedEventArgs>
     {
     public:
 
@@ -33,7 +33,7 @@ namespace Saitama
         * @brief: http消息接收事件函数
         * @param: e http消息接收事件参数
         */
-        void Update(HttpReceivedEventArgs* e);
+        void Update(Saitama::HttpReceivedEventArgs* e);
 
     protected:
 
@@ -51,7 +51,7 @@ namespace Saitama
         * @param: key 检测项字段的键
         * @return: 检测项集合
         */
-        void DeserializeDetectItems(std::map<std::string,DetectItem>* items, const JsonDeserialization& jd, const std::string& key, long long timeStamp);
+        void DeserializeDetectItems(std::map<std::string,DetectItem>* items, const Saitama::JsonDeserialization& jd, const std::string& key, long long timeStamp);
 
         /**
         * @brief: 处理检测数据
@@ -69,7 +69,7 @@ namespace Saitama
         * @brief: 收集流量数据
         * @param: now 当前时间
         */
-        void CollectFlow(const DateTime& now);
+        void CollectFlow(const Saitama::DateTime& now);
 
         /**
         * @brief: 获取url是否是指定的前缀

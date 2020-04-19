@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <ProjectGuid>{57DA22A4-79E4-4880-AF73-92D7862710E6}</ProjectGuid>
+    <RootNamespace>Fubuki</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>false</SDLCheck>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>./Hisi;./Decode;./FFmpeg;../Saitama/Text;../Saitama/Net;../Saitama/Logger;../Saitama/Core;../Saitama/Convert;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <DisableSpecificWarnings>4819</DisableSpecificWarnings>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="Decode\BGR24Handler.cpp" />
+    <ClCompile Include="Decode\H264Handler.cpp" />
+    <ClCompile Include="Decode\YUV420PHandler.cpp" />
+    <ClCompile Include="Decode\YUV420SPHandler.cpp" />
+    <ClCompile Include="Decode\IVE_8UC3Handler.cpp" />
+    <ClCompile Include="Decode\FrameChannel.cpp" />
+    <ClCompile Include="Decode\FFmpegChannel.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Decode\BGR24Handler.h" />
+    <ClInclude Include="Decode\FFmpegChannel.h" />
+    <ClInclude Include="FFmpeg\libavcodec\avcodec.h" />
+    <ClInclude Include="FFmpeg\libavcodec\avdct.h" />
+    <ClInclude Include="FFmpeg\libavcodec\avfft.h" />
+    <ClInclude Include="FFmpeg\libavcodec\d3d11va.h" />
+    <ClInclude Include="FFmpeg\libavcodec\dirac.h" />
+    <ClInclude Include="FFmpeg\libavcodec\dv_profile.h" />
+    <ClInclude Include="FFmpeg\libavcodec\dxva2.h" />
+    <ClInclude Include="FFmpeg\libavcodec\jni.h" />
+    <ClInclude Include="FFmpeg\libavcodec\mediacodec.h" />
+    <ClInclude Include="FFmpeg\libavcodec\qsv.h" />
+    <ClInclude Include="FFmpeg\libavcodec\vaapi.h" />
+    <ClInclude Include="FFmpeg\libavcodec\vda.h" />
+    <ClInclude Include="FFmpeg\libavcodec\vdpau.h" />
+    <ClInclude Include="FFmpeg\libavcodec\version.h" />
+    <ClInclude Include="FFmpeg\libavcodec\videotoolbox.h" />
+    <ClInclude Include="FFmpeg\libavcodec\vorbis_parser.h" />
+    <ClInclude Include="FFmpeg\libavcodec\xvmc.h" />
+    <ClInclude Include="FFmpeg\libavdevice\avdevice.h" />
+    <ClInclude Include="FFmpeg\libavdevice\version.h" />
+    <ClInclude Include="FFmpeg\libavfilter\avfilter.h" />
+    <ClInclude Include="FFmpeg\libavfilter\avfiltergraph.h" />
+    <ClInclude Include="FFmpeg\libavfilter\buffersink.h" />
+    <ClInclude Include="FFmpeg\libavfilter\buffersrc.h" />
+    <ClInclude Include="FFmpeg\libavfilter\version.h" />
+    <ClInclude Include="FFmpeg\libavformat\avformat.h" />
+    <ClInclude Include="FFmpeg\libavformat\avio.h" />
+    <ClInclude Include="FFmpeg\libavformat\version.h" />
+    <ClInclude Include="FFmpeg\libavutil\adler32.h" />
+    <ClInclude Include="FFmpeg\libavutil\aes.h" />
+    <ClInclude Include="FFmpeg\libavutil\aes_ctr.h" />
+    <ClInclude Include="FFmpeg\libavutil\attributes.h" />
+    <ClInclude Include="FFmpeg\libavutil\audio_fifo.h" />
+    <ClInclude Include="FFmpeg\libavutil\avassert.h" />
+    <ClInclude Include="FFmpeg\libavutil\avconfig.h" />
+    <ClInclude Include="FFmpeg\libavutil\avstring.h" />
+    <ClInclude Include="FFmpeg\libavutil\avutil.h" />
+    <ClInclude Include="FFmpeg\libavutil\base64.h" />
+    <ClInclude Include="FFmpeg\libavutil\blowfish.h" />
+    <ClInclude Include="FFmpeg\libavutil\bprint.h" />
+    <ClInclude Include="FFmpeg\libavutil\bswap.h" />
+    <ClInclude Include="FFmpeg\libavutil\buffer.h" />
+    <ClInclude Include="FFmpeg\libavutil\camellia.h" />
+    <ClInclude Include="FFmpeg\libavutil\cast5.h" />
+    <ClInclude Include="FFmpeg\libavutil\channel_layout.h" />
+    <ClInclude Include="FFmpeg\libavutil\common.h" />
+    <ClInclude Include="FFmpeg\libavutil\cpu.h" />
+    <ClInclude Include="FFmpeg\libavutil\crc.h" />
+    <ClInclude Include="FFmpeg\libavutil\des.h" />
+    <ClInclude Include="FFmpeg\libavutil\dict.h" />
+    <ClInclude Include="FFmpeg\libavutil\display.h" />
+    <ClInclude Include="FFmpeg\libavutil\downmix_info.h" />
+    <ClInclude Include="FFmpeg\libavutil\error.h" />
+    <ClInclude Include="FFmpeg\libavutil\eval.h" />
+    <ClInclude Include="FFmpeg\libavutil\ffversion.h" />
+    <ClInclude Include="FFmpeg\libavutil\fifo.h" />
+    <ClInclude Include="FFmpeg\libavutil\file.h" />
+    <ClInclude Include="FFmpeg\libavutil\frame.h" />
+    <ClInclude Include="FFmpeg\libavutil\hash.h" />
+    <ClInclude Include="FFmpeg\libavutil\hmac.h" />
+    <ClInclude Include="FFmpeg\libavutil\hwcontext.h" />
+    <ClInclude Include="FFmpeg\libavutil\hwcontext_cuda.h" />
+    <ClInclude Include="FFmpeg\libavutil\hwcontext_dxva2.h" />
+    <ClInclude Include="FFmpeg\libavutil\hwcontext_qsv.h" />
+    <ClInclude Include="FFmpeg\libavutil\hwcontext_vaapi.h" />
+    <ClInclude Include="FFmpeg\libavutil\hwcontext_vdpau.h" />
+    <ClInclude Include="FFmpeg\libavutil\imgutils.h" />
+    <ClInclude Include="FFmpeg\libavutil\intfloat.h" />
+    <ClInclude Include="FFmpeg\libavutil\intreadwrite.h" />
+    <ClInclude Include="FFmpeg\libavutil\lfg.h" />
+    <ClInclude Include="FFmpeg\libavutil\log.h" />
+    <ClInclude Include="FFmpeg\libavutil\lzo.h" />
+    <ClInclude Include="FFmpeg\libavutil\macros.h" />
+    <ClInclude Include="FFmpeg\libavutil\mastering_display_metadata.h" />
+    <ClInclude Include="FFmpeg\libavutil\mathematics.h" />
+    <ClInclude Include="FFmpeg\libavutil\md5.h" />
+    <ClInclude Include="FFmpeg\libavutil\mem.h" />
+    <ClInclude Include="FFmpeg\libavutil\motion_vector.h" />
+    <ClInclude Include="FFmpeg\libavutil\murmur3.h" />
+    <ClInclude Include="FFmpeg\libavutil\opt.h" />
+    <ClInclude Include="FFmpeg\libavutil\parseutils.h" />
+    <ClInclude Include="FFmpeg\libavutil\pixdesc.h" />
+    <ClInclude Include="FFmpeg\libavutil\pixelutils.h" />
+    <ClInclude Include="FFmpeg\libavutil\pixfmt.h" />
+    <ClInclude Include="FFmpeg\libavutil\random_seed.h" />
+    <ClInclude Include="FFmpeg\libavutil\rational.h" />
+    <ClInclude Include="FFmpeg\libavutil\rc4.h" />
+    <ClInclude Include="FFmpeg\libavutil\replaygain.h" />
+    <ClInclude Include="FFmpeg\libavutil\ripemd.h" />
+    <ClInclude Include="FFmpeg\libavutil\samplefmt.h" />
+    <ClInclude Include="FFmpeg\libavutil\sha.h" />
+    <ClInclude Include="FFmpeg\libavutil\sha512.h" />
+    <ClInclude Include="FFmpeg\libavutil\spherical.h" />
+    <ClInclude Include="FFmpeg\libavutil\stereo3d.h" />
+    <ClInclude Include="FFmpeg\libavutil\tea.h" />
+    <ClInclude Include="FFmpeg\libavutil\threadmessage.h" />
+    <ClInclude Include="FFmpeg\libavutil\time.h" />
+    <ClInclude Include="FFmpeg\libavutil\timecode.h" />
+    <ClInclude Include="FFmpeg\libavutil\timestamp.h" />
+    <ClInclude Include="FFmpeg\libavutil\tree.h" />
+    <ClInclude Include="FFmpeg\libavutil\twofish.h" />
+    <ClInclude Include="FFmpeg\libavutil\version.h" />
+    <ClInclude Include="FFmpeg\libavutil\xtea.h" />
+    <ClInclude Include="FFmpeg\libpostproc\postprocess.h" />
+    <ClInclude Include="FFmpeg\libpostproc\version.h" />
+    <ClInclude Include="FFmpeg\libswresample\swresample.h" />
+    <ClInclude Include="FFmpeg\libswresample\version.h" />
+    <ClInclude Include="FFmpeg\libswscale\swscale.h" />
+    <ClInclude Include="FFmpeg\libswscale\version.h" />
+    <ClInclude Include="Decode\H264Handler.h" />
+    <ClInclude Include="Decode\YUV420PHandler.h" />
+    <ClInclude Include="Decode\YUV420SPHandler.h" />
+    <ClInclude Include="Decode\IVE_8UC3Handler.h" />
+    <ClInclude Include="Decode\FrameChannel.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

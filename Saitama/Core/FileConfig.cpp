@@ -4,7 +4,7 @@ using namespace std;
 using namespace Saitama;
 
 FileConfig::FileConfig()
-	:FileConfig("app.config")
+	:FileConfig("appsettings.json")
 {
 
 }

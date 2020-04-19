@@ -57,9 +57,17 @@ SocketHandler::ProtocolPacket HttpHandler::HandleCore(int socket, unsigned int i
 		//用空行判断是否是全包
 		size_t packetSize = lines[0].size() + 2;
 		bool hasEmpty = false;
+		int length = 0;
 		for (unsigned int i=1; i < lines.size(); ++i)
 		{
 			packetSize += lines[i].size() + 2;
+
+			vector<string> values = StringEx::Split(lines[i], ":", true);
+			if (values.size() > 1 && StringEx::ToUpper(values[0]).compare("CONTENT-LENGTH") == 0)
+			{
+				length = StringEx::Convert<int>(values[1]);
+			}
+
 			if (lines[i].empty())
 			{
 				hasEmpty = true;
@@ -67,7 +75,8 @@ SocketHandler::ProtocolPacket HttpHandler::HandleCore(int socket, unsigned int i
 			}
 		}
 
-		if (!hasEmpty)
+		//半包
+		if (!hasEmpty||packetSize + length > httpProtocol.size())
 		{
 			return ProtocolPacket(AnalysisResult::Half, 0, static_cast<unsigned int>(httpProtocol.size()), 0, 0);
 		}
@@ -81,10 +90,9 @@ SocketHandler::ProtocolPacket HttpHandler::HandleCore(int socket, unsigned int i
 				<< "Access-Control-Allow-Headers: authorization,content-type\r\n"
 				<< "Access-Control-Allow-Methods: GET,POST,DELETE,PUT\r\n"
 				<< "Access-Control-Allow-Origin: *\r\n"
-				<< "\r\n"
 				<< "\r\n";
 			SendTcp(socket, ss.str(), NULL);
-			return ProtocolPacket(AnalysisResult::Request, 0, static_cast<unsigned int>(packetSize), 0, 0);
+			return ProtocolPacket(AnalysisResult::Request, 0, static_cast<unsigned int>(packetSize+length), 0, 0);
 		}
 		else if (func.compare(HttpFunction::Get) == 0
 			|| func.compare(HttpFunction::Delete) == 0)
@@ -92,50 +100,21 @@ SocketHandler::ProtocolPacket HttpHandler::HandleCore(int socket, unsigned int i
 			HttpReceived.Notice(&e);
 			string response = BuildResponse(HttpCode::OK, e.ResponseJson);
 			SendTcp(socket, response, NULL);
-			return ProtocolPacket(AnalysisResult::Request, 0, static_cast<unsigned int>(packetSize), 0, 0);
+			return ProtocolPacket(AnalysisResult::Request, 0, static_cast<unsigned int>(packetSize + length), 0, 0);
 		}
 		else if (func.compare(HttpFunction::Post) == 0
 			|| func.compare(HttpFunction::Put) == 0)
 		{
-			//获取body长度
-			int length = -1;
-			for (unsigned int i=1; i < lines.size(); ++i)
-			{
-				vector<string> values = StringEx::Split(lines[i], ":", true);
-				if (values.size() > 1 && StringEx::ToUpper(values[0]).compare("CONTENT-LENGTH") == 0)
-				{
-					length=StringEx::Convert<int>(values[1]);
-					break;
-				}
-			}
-
-			//没有长度
-			if (length==-1)
-			{
-				LogPool::Warning(LogEvent::Socket, "not found CONTENT-LENGTH", httpProtocol);
-				return ProtocolPacket(AnalysisResult::Empty, 0, static_cast<unsigned int>(packetSize), 0, 0);
-			}
-			else
-			{
-				//半包
-				if (packetSize + length > httpProtocol.size())
-				{
-					return ProtocolPacket(AnalysisResult::Half, 0, static_cast<unsigned int>(httpProtocol.size()), 0, 0);
-				}
-				else
-				{
-					e.RequestJson = httpProtocol.substr(packetSize, length);
-					HttpReceived.Notice(&e);
-					string response = BuildResponse(HttpCode::OK, e.ResponseJson);
-					SendTcp(socket, response, NULL);
-					return ProtocolPacket(AnalysisResult::Request, 0, static_cast<unsigned int>(packetSize + length), 0, 0);
-				}
-			}
+			e.RequestJson = httpProtocol.substr(packetSize, length);
+			HttpReceived.Notice(&e);
+			string response = BuildResponse(HttpCode::OK, e.ResponseJson);
+			SendTcp(socket, response, NULL);
+			return ProtocolPacket(AnalysisResult::Request, 0, static_cast<unsigned int>(packetSize + length), 0, 0);
 		}
 		else
 		{
 			LogPool::Warning(LogEvent::Socket, "http error fun", httpProtocol);
-			return ProtocolPacket(AnalysisResult::Empty, 0, static_cast<unsigned int>(packetSize), 0,0);
+			return ProtocolPacket(AnalysisResult::Empty, 0, static_cast<unsigned int>(packetSize+length), 0,0);
 		}
 	}
 }

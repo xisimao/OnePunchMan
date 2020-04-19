@@ -170,6 +170,10 @@ namespace Saitama
 		template<typename T, typename ...U>
 		void Log(LogLevel logLevel, LogEvent logEvent, T t, U ...u)
 		{
+			if (logLevel < _defaultLevel)
+			{
+				return;
+			}
 			std::stringstream ss;
 			ss << "[" << DateTime::Now().ToString() << "]";
 			ss << "[" << (int)logLevel << "]";
@@ -211,6 +215,8 @@ namespace Saitama
 		std::string _directory;
 		//日志保存天数
 		unsigned int _holdDays;
+		//默认接收的最小日志级别
+		LogLevel _defaultLevel;
 
 		//写日志同步锁
 		std::mutex _mutex;

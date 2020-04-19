@@ -15,9 +15,15 @@
 #include "FlowChannelData.h"
 #include "SocketMaid.h"
 #include "HttpHandler.h"
+#include "DetectChannel.h"
+#include "MediaHandler.h"
+#include "H264Handler.h"
+#include "FFmpegChannel.h"
 
 using namespace std;
 using namespace Saitama;
+using namespace Fubuki;
+using namespace TerribleTornado;
 
 LaneDetector* GetDetector()
 {
@@ -153,8 +159,9 @@ int main1()
     return 0;
 }
 
-int main()
+int main2()
 {
+    long long l = DateTime::TimeStamp();
     SocketMaid maid(2);
     DataChannel channel("192.168.201.139", 1884);
     HttpHandler handler;
@@ -174,3 +181,95 @@ int main()
     return 0;
 }
 
+//int main3()
+//{
+//    if (SeemmoSDK::Init())
+//    {
+//        RecognChannel recogn(1920, 1080);
+//        DetectChannel detect(1920, 1080, &recogn);
+//
+//        int result = detect.InitUrl("/mtd/seemmo/ncdj1.mp4");
+//        if (result == 0)
+//        {
+//            detect.Start();
+//            recogn.Start();
+//            while (true)
+//            {
+//                this_thread::sleep_for(chrono::milliseconds(1000));
+//            }
+//            detect.Stop();
+//            recogn.Stop();
+//
+//        }
+//        SeemmoSDK::Uninit();
+//    }
+//    return 0;
+//}
+
+class TestFrameHandler :public ThreadObject
+{
+public:
+
+    TestFrameHandler()
+        :ThreadObject("test")
+    {
+
+    }
+
+    bool IsBusy()
+    {
+        return _isBusy;
+    }
+
+    void HandleBGR(unsigned char* bgr, int width, int height, int packetIndex)
+    {
+        _isBusy = true;
+    }
+
+protected:
+
+    void StartCore()
+    {
+        while (!_cancelled)
+        {
+            _isBusy = false;
+
+            this_thread::sleep_for(chrono::milliseconds(100));
+        }
+    }
+private:
+
+    bool _isBusy;
+};
+
+int main()
+{
+    FrameChannel::InitFFmpeg();
+    //for (int i = 0; i < 1; ++i)
+    //{
+    //    DecodeChannel* decode=new DecodeChannel();
+    //    decode->InitFile(StringEx::Combine("ncdj",i+1,".mp4"), &handler, NULL, 1920, 1080, false, false);
+    //    decode->Start();
+    //}
+    //TestFrameHandler handler;
+    //handler.Start();
+    FrameChannel decode;
+    int i=decode.InitFile(StringEx::Combine("a.mp4"), false, true);
+    FrameChannel decode1;
+    //decode1.InitFile(StringEx::Combine("ncdj.mp4"), false, true);
+    //FrameChannel decode1;
+    ////int i1=decode1.InitFile(StringEx::Combine("njdc.mp4"), false, true);
+    FrameChannel decode2;
+    //decode2.InitRtsp("rtsp://192.168.201.125:6554/stream/a.mp4");
+    if (i == 0)
+    {
+        decode.Start();
+    }
+    else
+    {
+        cout << i << endl;
+    }
+    system("pause");
+    decode.Stop();
+    FrameChannel::UninitFFmpeg();
+}

@@ -103,7 +103,7 @@ void SocketChannel::StartCore()
 	sockaddr_in remoteAddress;
 	socklen_t addressLength = sizeof(remoteAddress);
 
-	while (!Cancelled())
+	while (!_cancelled)
 	{
 		MoveTempSockets();
 

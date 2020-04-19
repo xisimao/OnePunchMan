@@ -5,7 +5,7 @@
 #include "sqlite3.h"
 #include "LogPool.h"
 
-namespace Saitama
+namespace TerribleTornado
 {
 	//sqlite查询
 	class SqliteReader

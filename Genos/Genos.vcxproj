@@ -75,6 +75,9 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <ItemGroup>
+    <ClCompile Include="..\Fubuki\Decode\FrameChannel.cpp" />
+    <ClCompile Include="..\Fubuki\Decode\IVE_8UC3Handler.cpp" />
+    <ClCompile Include="..\Fubuki\Decode\YUV420SPHandler.cpp" />
     <ClCompile Include="..\Saitama\Convert\JsonFormatter.cpp" />
     <ClCompile Include="..\Saitama\Core\DateTime.cpp" />
     <ClCompile Include="..\Saitama\Core\FileConfig.cpp" />
@@ -99,9 +102,124 @@
     <ClCompile Include="..\TerribleTornado\Traffic\DataChannel.cpp" />
     <ClCompile Include="..\TerribleTornado\Traffic\FlowChannelData.cpp" />
     <ClCompile Include="..\TerribleTornado\Traffic\LaneDetector.cpp" />
+    <ClCompile Include="..\TerribleTornado\Video\DetectChannel.cpp" />
+    <ClCompile Include="..\TerribleTornado\Video\HisiChannel.cpp" />
+    <ClCompile Include="..\TerribleTornado\Video\RecognChannel.cpp" />
+    <ClCompile Include="..\TerribleTornado\Video\SeemmoSDK.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Fubuki\Decode\FrameChannel.h" />
+    <ClInclude Include="..\Fubuki\Decode\IVE_8UC3Handler.h" />
+    <ClInclude Include="..\Fubuki\Decode\YUV420SPHandler.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavcodec\avcodec.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavcodec\avdct.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavcodec\avfft.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavcodec\d3d11va.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavcodec\dirac.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavcodec\dv_profile.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavcodec\dxva2.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavcodec\jni.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavcodec\mediacodec.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavcodec\qsv.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavcodec\vaapi.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavcodec\vda.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavcodec\vdpau.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavcodec\version.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavcodec\videotoolbox.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavcodec\vorbis_parser.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavcodec\xvmc.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavdevice\avdevice.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavdevice\version.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavfilter\avfilter.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavfilter\avfiltergraph.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavfilter\buffersink.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavfilter\buffersrc.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavfilter\version.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavformat\avformat.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavformat\avio.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavformat\version.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\adler32.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\aes.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\aes_ctr.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\attributes.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\audio_fifo.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\avassert.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\avconfig.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\avstring.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\avutil.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\base64.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\blowfish.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\bprint.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\bswap.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\buffer.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\camellia.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\cast5.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\channel_layout.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\common.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\cpu.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\crc.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\des.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\dict.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\display.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\downmix_info.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\error.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\eval.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\ffversion.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\fifo.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\file.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\frame.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\hash.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\hmac.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\hwcontext.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\hwcontext_cuda.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\hwcontext_dxva2.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\hwcontext_qsv.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\hwcontext_vaapi.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\hwcontext_vdpau.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\imgutils.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\intfloat.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\intreadwrite.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\lfg.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\log.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\lzo.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\macros.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\mastering_display_metadata.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\mathematics.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\md5.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\mem.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\motion_vector.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\murmur3.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\opt.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\parseutils.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\pixdesc.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\pixelutils.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\pixfmt.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\random_seed.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\rational.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\rc4.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\replaygain.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\ripemd.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\samplefmt.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\sha.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\sha512.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\spherical.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\stereo3d.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\tea.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\threadmessage.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\time.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\timecode.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\timestamp.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\tree.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\twofish.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\version.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\xtea.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libpostproc\postprocess.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libpostproc\version.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libswresample\swresample.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libswresample\version.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libswscale\swscale.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\libswscale\version.h" />
     <ClInclude Include="..\Saitama\Convert\JsonFormatter.h" />
     <ClInclude Include="..\Saitama\Core\DateTime.h" />
     <ClInclude Include="..\Saitama\Core\FileConfig.h" />
@@ -125,6 +243,114 @@
     <ClInclude Include="..\Saitama\Net\SocketMaid.h" />
     <ClInclude Include="..\Saitama\Text\Path.h" />
     <ClInclude Include="..\Saitama\Text\StringEx.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\aacdec.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\aacenc.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\acodec.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\autoconf.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\fisheye_calibrate.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hifb.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hiir.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_ae_comm.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_af_comm.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_avs_lut_generate.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_avs_position_query.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_awb_comm.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_buffer.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_common.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_common_cipher.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_comm_3a.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_comm_adec.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_comm_aenc.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_comm_ai.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_comm_aio.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_comm_ao.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_comm_avs.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_comm_dis.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_comm_dpu_match.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_comm_dpu_rect.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_comm_gdc.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_comm_hdmi.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_comm_hdr.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_comm_isp.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_comm_ive.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_comm_pciv.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_comm_photo.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_comm_rc.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_comm_region.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_comm_snap.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_comm_sns.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_comm_svp.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_comm_sys.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_comm_vb.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_comm_vdec.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_comm_venc.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_comm_vgs.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_comm_vi.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_comm_video.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_comm_vo.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_comm_vpss.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_debug.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_defines.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_dsp.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_errno.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_i2c.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_isp_bin.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_isp_debug.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_isp_defines.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_ive.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_math.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_mcc_usrdev.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_md.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_mipi.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_mipi_tx.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_nnie.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_plugin.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_resampler_api.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_runtime_api.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_runtime_comm.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_securec.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_sns_ctrl.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_spi.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_ssp.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_tde_api.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_tde_errcode.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_tde_type.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_type.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_types.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\hi_unf_cipher.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\isp_dehaze.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\ivs_md.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\list.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\mpi_ae.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\mpi_audio.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\mpi_avs.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\mpi_awb.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\mpi_dpu_match.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\mpi_dpu_rect.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\mpi_dsp.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\mpi_gdc.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\mpi_hdmi.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\mpi_hdr.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\mpi_isp.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\mpi_ive.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\mpi_nnie.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\mpi_pciv.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\mpi_photo.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\mpi_region.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\mpi_snap.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\mpi_sys.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\mpi_vb.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\mpi_vdec.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\mpi_venc.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\mpi_vgs.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\mpi_vi.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\mpi_vo.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\mpi_vpss.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\securec.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\securectype.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\vdec_exp.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\vou_exp.h" />
+    <ClInclude Include="..\TerribleTornado\Hisi\watchdog.h" />
     <ClInclude Include="..\TerribleTornado\Mqtt\mosquitto.h" />
     <ClInclude Include="..\TerribleTornado\Mqtt\MqttChannel.h" />
     <ClInclude Include="..\TerribleTornado\Sqlite\Sqlite.h" />
@@ -132,21 +358,25 @@
     <ClInclude Include="..\TerribleTornado\Traffic\DataChannel.h" />
     <ClInclude Include="..\TerribleTornado\Traffic\FlowChannelData.h" />
     <ClInclude Include="..\TerribleTornado\Traffic\LaneDetector.h" />
+    <ClInclude Include="..\TerribleTornado\Video\DetectChannel.h" />
+    <ClInclude Include="..\TerribleTornado\Video\HisiChannel.h" />
+    <ClInclude Include="..\TerribleTornado\Video\RecognChannel.h" />
+    <ClInclude Include="..\TerribleTornado\Video\SeemmoSDK.h" />
   </ItemGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Link>
-      <LibraryDependencies>mosquitto;sqlite3;pthread;%(LibraryDependencies)</LibraryDependencies>
+      <LibraryDependencies>dl;avcodec;avdevice;avfilter;avformat;avutil;swresample;swscale;postproc;mosquitto;sqlite3;pthread;%(LibraryDependencies)</LibraryDependencies>
     </Link>
     <ClCompile>
-      <AdditionalIncludeDirectories>../TerribleTornado/Traffic;../TerribleTornado/Sqlite;../TerribleTornado/Mqtt;../Saitama/Text;../Saitama/Net;../Saitama/Logger;../Saitama/Core;../Saitama/Convert;./Genos;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>/usr/local/include;../TerribleTornado/Video;../TerribleTornado/Traffic;../TerribleTornado/Sqlite;../TerribleTornado/Mqtt;../Fubuki/Hisi;../Fubuki/Decode;../Saitama/Text;../Saitama/Net;../Saitama/Logger;../Saitama/Core;../Saitama/Convert;./Genos;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
     <Link>
-      <LibraryDependencies>mosquitto;sqlite3;pthread;%(LibraryDependencies)</LibraryDependencies>
+      <LibraryDependencies>dsp;isp;ive;hdmi;mpi;nnie;sns_imx277_slvs;sns_imx290;sns_imx334;sns_imx334_slave;sns_imx477;dnvqe;upvqe;VoiceEngine;securec;_hiae;_hiawb;_hidehaze;_hidrc;_hildci;dl;avcodec;avdevice;avfilter;avformat;avutil;swresample;swscale;postproc;mosquitto;sqlite3;pthread;%(LibraryDependencies)</LibraryDependencies>
     </Link>
     <ClCompile>
-      <AdditionalIncludeDirectories>../TerribleTornado/Traffic;../TerribleTornado/Sqlite;../TerribleTornado/Mqtt;../Saitama/Text;../Saitama/Net;../Saitama/Logger;../Saitama/Core;../Saitama/Convert;./Genos;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../TerribleTornado/Video;../TerribleTornado/Traffic;../TerribleTornado/Sqlite;../TerribleTornado/Mqtt;../TerribleTornado/Hisi;../Fubuki/FFmpeg;../Fubuki/Decode;../Saitama/Text;../Saitama/Net;../Saitama/Logger;../Saitama/Core;../Saitama/Convert;./Genos;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

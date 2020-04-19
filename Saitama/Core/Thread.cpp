@@ -3,10 +3,10 @@
 using namespace std;
 using namespace Saitama;
 
-const int ThreadObject::PollTime = 100;
+const int ThreadObject::SleepTime = 100;
 
 ThreadObject::ThreadObject(const string& name)
-	: _name(name), _status(ThreadStatus::Unstarted), _cancelled(false)
+	: _cancelled(false),_name(name), _status(ThreadStatus::Unstarted)
 {
 
 }
@@ -20,22 +20,10 @@ ThreadObject::~ThreadObject()
 	}
 }
 
-bool ThreadObject::Cancelled()
-{
-	_hitPoint = DateTime::Now();
-	return _cancelled;
-}
-
-DateTime ThreadObject::HitPoint() const
-{
-	return _hitPoint;
-}
-
 string ThreadObject::Name() const
 {
 	return _name;
 }
-
 
 void ThreadObject::Start()
 {
@@ -45,7 +33,7 @@ void ThreadObject::Start()
 		_thread.swap(t);
 		while (_status == ThreadStatus::Unstarted)
 		{
-			this_thread::sleep_for(chrono::milliseconds(PollTime));
+			this_thread::sleep_for(chrono::milliseconds(SleepTime));
 		}
 	}
 }
@@ -70,9 +58,8 @@ void ThreadObject::Join()
 void ThreadObject::Stop()
 {
 	_cancelled = true;
-	StopCore();
 	while (_status == ThreadStatus::Running)
 	{
-		this_thread::sleep_for(chrono::milliseconds(PollTime));
+		this_thread::sleep_for(chrono::milliseconds(SleepTime));
 	}
 }

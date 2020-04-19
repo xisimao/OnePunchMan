@@ -6,7 +6,7 @@
 #include "StringEx.h"
 #include "Shape.h"
 
-namespace Saitama
+namespace TerribleTornado
 {
 	//³µµÀ
 	class Lane

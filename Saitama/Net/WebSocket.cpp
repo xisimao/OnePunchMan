@@ -30,7 +30,7 @@ string WebSocket::ConnectBack(const std::string& key, HttpCode code)
 {
 	unsigned char encryptedKey[20] = { 0 };
 	Security::Sha1(key, encryptedKey,20);
-	string encryptedString = Security::Base64_Encode(encryptedKey, 20);
+	string encryptedString = StringEx::ToBase64String(encryptedKey, 20);
 	stringstream ss;
 	ss << "HTTP/1.1 "<<static_cast<int>(code)<<" \r\n";
 	ss << "Upgrade: websocket\r\n";
