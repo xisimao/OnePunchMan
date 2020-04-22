@@ -11,6 +11,7 @@ seemmo_thread_uninit_t SeemmoSDK::seemmo_thread_uninit = NULL;
 seemmo_video_pvc_t SeemmoSDK::seemmo_video_pvc = NULL;
 seemmo_video_pvc_recog_t SeemmoSDK::seemmo_video_pvc_recog = NULL;
 
+bool SeemmoSDK::Inited = false;
 void* SeemmoSDK::Handle = NULL;
 
 bool SeemmoSDK::Init()
@@ -19,7 +20,7 @@ bool SeemmoSDK::Init()
 	Handle = dlopen("/mtd/seemmo/programs/aisdk/3559a/lib/libexport_sdk.so", RTLD_LAZY);
 	if (Handle == NULL)
 	{
-		LogPool::Warning(LogEvent::Detect, "init seemmo sdk failed");
+		LogPool::Error(LogEvent::Detect, "init seemmo sdk failed");
 		return false;
 	}
 	seemmo_process_init = (seemmo_process_init_t)dlsym(Handle, "seemmo_process_init");
@@ -37,7 +38,7 @@ bool SeemmoSDK::Init()
 		|| seemmo_video_pvc_recog == NULL
 		)
 	{
-		LogPool::Warning(LogEvent::Detect, "init func failed");
+		LogPool::Error(LogEvent::Detect, "init func failed");
 		return false;
 	}
 	else
@@ -45,17 +46,16 @@ bool SeemmoSDK::Init()
 		int32_t result = seemmo_process_init("/mtd/seemmo/programs/aisdk", 8, 8, "192.168.201.66:12821", 1, 0);
 		if (result == 0)
 		{
-			LogPool::Information(LogEvent::Detect, "init process sucess");
+			Inited = true;
 		}
 		else
 		{
-			LogPool::Warning(LogEvent::Detect, "init process failed", result);
+			LogPool::Error(LogEvent::Detect, "init process failed", result);
 			return false;
 		}
 	}
 #endif // !_WIN32
-
-	
+	LogPool::Information("init seemmo sdk");
 	return true;
 
 }

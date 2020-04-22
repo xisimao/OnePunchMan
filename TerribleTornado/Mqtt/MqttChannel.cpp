@@ -91,11 +91,11 @@ void MqttChannel::StartCore()
     _mosq = mosquitto_new(NULL, true, this);
     if (_mosq)
     {
-        LogPool::Information(LogEvent::Mqtt, "mqtt init success");
+        LogPool::Information(LogEvent::Mqtt, "init mqtt");
     }
     else
     {
-        LogPool::Information(LogEvent::Mqtt, "mqtt init failed");
+        LogPool::Error(LogEvent::Mqtt, "mosquitto_new");
         mosquitto_destroy(_mosq);
         mosquitto_lib_cleanup();
         return;

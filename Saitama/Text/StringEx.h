@@ -173,7 +173,7 @@ namespace Saitama
 		/**
 		* @brief: 将数字转换为字符串
 		* @param: value 数字
-		* @return: 第一个参数表示转换是否成功，如果为true，第二个参数表示转换结果
+		* @return: 转换结果
 		*/
 		template<typename T>
 		static std::string ToString(T value)
@@ -184,12 +184,31 @@ namespace Saitama
 		}
 
 		/**
+		* @brief: 将布尔转换为字符串
+		* @param: value 布尔类型
+		* @return: 转换结果
+		*/
+		static std::string ToString(bool value)
+		{
+			std::stringstream ss;
+			ss << (value?"true":"false");
+			return std::string(ss.str());
+		}
+		/**
 		* @brief: 四舍五入浮点数
 		* @param: value 源浮点数
 		* @param: precision 精确位数
 		* @return: 四舍五入后的字符串
 		*/
 		static std::string Rounding(float value, int precision);
+		
+		/**
+		* @brief: 四舍五入浮点数
+		* @param: value 源浮点数
+		* @param: precision 精确位数
+		* @return: 四舍五入后的字符串
+		*/
+		static std::string Rounding(double value, int precision);
 
 		/**
 		* @brief: 将多个元素组合成一个字符串。

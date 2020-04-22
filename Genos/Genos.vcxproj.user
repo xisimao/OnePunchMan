@@ -3,8 +3,11 @@
   <PropertyGroup>
     <ShowAllFiles>false</ShowAllFiles>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <DebuggerFlavor>LinuxDebugger</DebuggerFlavor>
+    <RemoteDebugTarget>2146914516;192.168.201.19 (username=, port=12000, authentication=PrivateKey)</RemoteDebugTarget>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
-    <RemoteTarget>908584999;192.168.1.9 (username=, port=12000, authentication=PrivateKey)</RemoteTarget>
+    <RemoteTarget>-1348326008;192.168.0.9 (username=, port=12000, authentication=PrivateKey)</RemoteTarget>
   </PropertyGroup>
 </Project>

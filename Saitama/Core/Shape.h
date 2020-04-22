@@ -117,10 +117,10 @@ namespace Saitama
 			int y = static_cast<int>(round(static_cast<float>(pre * (y3 - y4) - (y1 - y2) * post) / d));
 
 			// Check if the x and y coordinates are within both lines
-			if (x < std::min(x1, x2) || x > std::max(x1, x2) ||
-				x < std::min(x3, x4) || x > std::max(x3, x4)) return Point();
-			if (y < std::min(y1, y2) || y > std::max(y1, y2) ||
-				y < std::min(y3, y4) || y > std::max(y3, y4)) return Point();
+			if (x < (std::min)(x1, x2) || x > (std::max)(x1, x2) ||
+				x < (std::min)(x3, x4) || x > (std::max)(x3, x4)) return Point();
+			if (y < (std::min)(y1, y2) || y > (std::max)(y1, y2) ||
+				y < (std::min)(y3, y4) || y > (std::max)(y3, y4)) return Point();
 
 			return Point(x, y);
 		}
@@ -224,15 +224,15 @@ namespace Saitama
 			for (unsigned int i = 1; i <= _points.size(); i++) {
 				Point p2 = _points[i % _points.size()];
 				if ((point.X - p1.X) * (p2.Y - p1.Y) == (p2.X - p1.X) * (point.Y - p1.Y)
-					&& point.X >= std::min(p1.X, p2.X)
-					&& point.X <= std::max(p1.X, p2.X)
-					&& point.Y >= std::min(p1.Y, p2.Y)
-					&& point.Y <= std::max(p1.Y, p2.Y)) {
+					&& point.X >= (std::min)(p1.X, p2.X)
+					&& point.X <= (std::max)(p1.X, p2.X)
+					&& point.Y >= (std::min)(p1.Y, p2.Y)
+					&& point.Y <= (std::max)(p1.Y, p2.Y)) {
 					return true;
 				}
-				if (point.Y > std::min(p1.Y, p2.Y)
-					&& point.Y <= std::max(p1.Y, p2.Y)
-					&& point.X <= std::max(p1.X, p2.X)
+				if (point.Y > (std::min)(p1.Y, p2.Y)
+					&& point.Y <= (std::max)(p1.Y, p2.Y)
+					&& point.X <= (std::max)(p1.X, p2.X)
 					&& p1.Y != p2.Y
 					&& (p1.X == p2.X || point.X <= (point.Y - p1.Y) * (p2.X - p1.X) / (p2.Y - p1.Y) + p1.X)) 
 				{

@@ -4,20 +4,14 @@ using namespace std;
 using namespace Saitama;
 using namespace TerribleTornado;
 
-LaneDetector::LaneDetector(const string& dataId,const Lane& lane)
-	:_persons(0),_bikes(0), _motorcycles(0), _cars(0),_tricycles(0), _buss(0),_vans(0),_trucks(0)
+LaneDetector::LaneDetector(const string& laneId,const Lane& lane)
+	: _laneId(laneId),_persons(0),_bikes(0), _motorcycles(0), _cars(0),_tricycles(0), _buss(0),_vans(0),_trucks(0)
 	, _totalDistance(0.0), _totalTime(0)
 	, _totalInTime(0)
 	,_lastInRegion(0), _vehicles(0), _totalSpan(0), _iOStatus(IOStatus::Out)
 	,_lastTimeStamp(0),_currentItems(&_items1),_lastItems(&_items2)
 {
-	_dataId = dataId;
 	InitLane(lane);
-}
-
-string LaneDetector::DataId()
-{
-	return _dataId;
 }
 
 void LaneDetector::InitLane(const Lane& lane)
@@ -96,16 +90,20 @@ Line LaneDetector::GetLine(const string& line)
 	return Line();
 }
 
-IOStatus LaneDetector::Detect(const map<string, DetectItem>& items,long long timeStamp)
+IOItem LaneDetector::Detect(const map<string, DetectItem>& items,long long timeStamp)
 {
 	lock_guard<mutex> lck(_mutex);
 	_currentItems->clear();
-	IOStatus status = IOStatus::Out;
+	IOItem item;
+	item.LaneId = _laneId;
+	item.Status= IOStatus::Out;
+	item.Type = 0;
 	for (map<string, DetectItem>::const_iterator it = items.begin(); it!=items.end();++it)
 	{
 		if (Contains(it->second))
 		{
-			status = IOStatus::In;
+			item.Status = IOStatus::In;
+			item.Type = it->second.Type;
 			map<string, DetectItem>::const_iterator mit = _lastItems->find(it->first);
 			//如果是新车则计算流量和车头时距
 			//流量=车数量
@@ -181,15 +179,16 @@ IOStatus LaneDetector::Detect(const map<string, DetectItem>& items,long long tim
 
 	_lastTimeStamp = timeStamp;
 
-	if (status != _iOStatus)
+	if (item.Status != _iOStatus)
 	{
-		_iOStatus = status;
-		LogPool::Debug(LogEvent::Detect, "lane:", _dataId, "io:", (int)status);
-		return status;
+		_iOStatus = item.Status;
+		LogPool::Debug(LogEvent::Detect, "lane:", _laneId, "io:", (int)item.Status);
+		return item;
 	}
 	else
 	{
-		return IOStatus::UnChanged;
+		item.Status = IOStatus::UnChanged;
+		return item;
 	}
 }
 
@@ -197,6 +196,7 @@ LaneItem LaneDetector::Collect(long long timeStamp)
 {
 	lock_guard<mutex> lck(_mutex);
 	LaneItem item;
+	item.LaneId = _laneId;
 
 	item.Persons = _persons;
 	item.Bikes = _bikes;
@@ -212,7 +212,28 @@ LaneItem LaneDetector::Collect(long long timeStamp)
 	item.HeadSpace = item.Speed * 1000 * item.HeadDistance / 3600.0;
 	item.TimeOccupancy = static_cast<double>(_totalInTime) / 60000.0 * 100;
 
-	LogPool::Debug(LogEvent::Detect, "lane:", _dataId, "vehicles:", item.Cars + item.Tricycles + item.Buss + item.Vans + item.Trucks, "bikes:", item.Bikes + item.Motorcycles, "persons:", item.Persons, item.Speed, "km/h ", item.HeadDistance, "sec ", item.TimeOccupancy, "%");
+	if (item.Speed > 40)
+	{
+		item.TrafficStatus = static_cast<int>(TrafficStatus::Good);
+	}
+	else if (item.Speed <= 40 && item.Speed > 30)
+	{
+		item.TrafficStatus = static_cast<int>(TrafficStatus::Normal);
+	}
+	else if (item.Speed <= 30 && item.Speed > 20)
+	{
+		item.TrafficStatus = static_cast<int>(TrafficStatus::Warning);
+	}
+	else if (item.Speed <= 20 && item.Speed > 15)
+	{
+		item.TrafficStatus = static_cast<int>(TrafficStatus::Warning);
+	}
+	else
+	{
+		item.TrafficStatus = static_cast<int>(TrafficStatus::Dead);
+	}
+	
+	LogPool::Debug(LogEvent::Detect, "lane:", _laneId, "vehicles:", item.Cars + item.Tricycles + item.Buss + item.Vans + item.Trucks, "bikes:", item.Bikes + item.Motorcycles, "persons:", item.Persons, item.Speed, "km/h ", item.HeadDistance, "sec ", item.TimeOccupancy, "%");
 
 	_persons = 0;
 	_bikes = 0;

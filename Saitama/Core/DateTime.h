@@ -143,12 +143,6 @@ namespace Saitama
 		static DateTime ParseString(const std::string& format, const std::string& value);
 
 		/**
-		* @brief: 返回当前的时间戳
-		* @return: 当前的时间戳
-		*/
-		static long long TimeStamp();
-
-		/**
 		* @brief: 返回当前的日期时间
 		* @return: 当前的日期时间
 		*/
@@ -165,6 +159,13 @@ namespace Saitama
 		* @return: 当前的时间
 		*/
 		static DateTime Time();
+
+
+		/**
+		* @brief: 返回当前的UTC时间戳
+		* @return: 当前的UTC时间戳
+		*/
+		static long long UtcTimeStamp();
 
 		/**
 		* @brief: 返回当前的UTC日期时间

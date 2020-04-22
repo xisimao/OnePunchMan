@@ -244,7 +244,15 @@ vector<string> StringEx::Split(const string& value, const string& separator, boo
 string StringEx::Rounding(float value, int precision)
 {
 	stringstream ss;
-	ss << setiosflags(ios::fixed) << setprecision(1);
+	ss << setiosflags(ios::fixed) << setprecision(precision);
+	ss << value;
+	return ss.str();
+}
+
+string StringEx::Rounding(double value, int precision)
+{
+	stringstream ss;
+	ss << setiosflags(ios::fixed) << setprecision(precision);
 	ss << value;
 	return ss.str();
 }

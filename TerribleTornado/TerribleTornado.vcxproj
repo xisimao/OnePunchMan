@@ -150,27 +150,28 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Video\HisiChannel.cpp" />
-    <ClCompile Include="Video\MediaHandler.cpp" />
+    <ClCompile Include="Traffic\ChannelDetector.cpp" />
+    <ClCompile Include="Video\DecodeChannel.cpp" />
     <ClCompile Include="Mqtt\MqttChannel.cpp" />
     <ClCompile Include="Sqlite\Sqlite.cpp" />
     <ClCompile Include="TerribleTornado.cpp" />
     <ClCompile Include="Traffic\DataChannel.cpp" />
-    <ClCompile Include="Traffic\FlowChannelData.cpp" />
+    <ClCompile Include="Traffic\FlowChannel.cpp" />
     <ClCompile Include="Traffic\LaneDetector.cpp" />
     <ClCompile Include="Video\DetectChannel.cpp" />
     <ClCompile Include="Video\RecognChannel.cpp" />
     <ClCompile Include="Video\SeemmoSDK.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Video\HisiChannel.h" />
-    <ClInclude Include="Video\MediaHandler.h" />
+    <ClInclude Include="Traffic\ChannelDetector.h" />
+    <ClInclude Include="Traffic\FlowDevice.h" />
+    <ClInclude Include="Video\DecodeChannel.h" />
     <ClInclude Include="Mqtt\mosquitto.h" />
     <ClInclude Include="Mqtt\MqttChannel.h" />
     <ClInclude Include="Sqlite\Sqlite.h" />
     <ClInclude Include="Sqlite\sqlite3.h" />
     <ClInclude Include="Traffic\DataChannel.h" />
-    <ClInclude Include="Traffic\FlowChannelData.h" />
+    <ClInclude Include="Traffic\FlowChannel.h" />
     <ClInclude Include="Traffic\LaneDetector.h" />
     <ClInclude Include="Video\DetectChannel.h" />
     <ClInclude Include="Video\RecognChannel.h" />

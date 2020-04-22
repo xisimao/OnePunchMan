@@ -79,6 +79,7 @@
     <ClCompile Include="..\Fubuki\Decode\IVE_8UC3Handler.cpp" />
     <ClCompile Include="..\Fubuki\Decode\YUV420SPHandler.cpp" />
     <ClCompile Include="..\Saitama\Convert\JsonFormatter.cpp" />
+    <ClCompile Include="..\Saitama\Core\Command.cpp" />
     <ClCompile Include="..\Saitama\Core\DateTime.cpp" />
     <ClCompile Include="..\Saitama\Core\FileConfig.cpp" />
     <ClCompile Include="..\Saitama\Core\Thread.cpp" />
@@ -99,11 +100,12 @@
     <ClCompile Include="..\Saitama\Text\StringEx.cpp" />
     <ClCompile Include="..\TerribleTornado\Mqtt\MqttChannel.cpp" />
     <ClCompile Include="..\TerribleTornado\Sqlite\Sqlite.cpp" />
+    <ClCompile Include="..\TerribleTornado\Traffic\ChannelDetector.cpp" />
     <ClCompile Include="..\TerribleTornado\Traffic\DataChannel.cpp" />
-    <ClCompile Include="..\TerribleTornado\Traffic\FlowChannelData.cpp" />
+    <ClCompile Include="..\TerribleTornado\Traffic\FlowChannel.cpp" />
     <ClCompile Include="..\TerribleTornado\Traffic\LaneDetector.cpp" />
+    <ClCompile Include="..\TerribleTornado\Video\DecodeChannel.cpp" />
     <ClCompile Include="..\TerribleTornado\Video\DetectChannel.cpp" />
-    <ClCompile Include="..\TerribleTornado\Video\HisiChannel.cpp" />
     <ClCompile Include="..\TerribleTornado\Video\RecognChannel.cpp" />
     <ClCompile Include="..\TerribleTornado\Video\SeemmoSDK.cpp" />
     <ClCompile Include="main.cpp" />
@@ -139,7 +141,6 @@
     <ClInclude Include="..\Fubuki\FFmpeg\libavformat\avformat.h" />
     <ClInclude Include="..\Fubuki\FFmpeg\libavformat\avio.h" />
     <ClInclude Include="..\Fubuki\FFmpeg\libavformat\version.h" />
-    <ClInclude Include="..\Fubuki\FFmpeg\libavutil\adler32.h" />
     <ClInclude Include="..\Fubuki\FFmpeg\libavutil\aes.h" />
     <ClInclude Include="..\Fubuki\FFmpeg\libavutil\aes_ctr.h" />
     <ClInclude Include="..\Fubuki\FFmpeg\libavutil\attributes.h" />
@@ -221,6 +222,7 @@
     <ClInclude Include="..\Fubuki\FFmpeg\libswscale\swscale.h" />
     <ClInclude Include="..\Fubuki\FFmpeg\libswscale\version.h" />
     <ClInclude Include="..\Saitama\Convert\JsonFormatter.h" />
+    <ClInclude Include="..\Saitama\Core\Command.h" />
     <ClInclude Include="..\Saitama\Core\DateTime.h" />
     <ClInclude Include="..\Saitama\Core\FileConfig.h" />
     <ClInclude Include="..\Saitama\Core\Observable.h" />
@@ -355,11 +357,13 @@
     <ClInclude Include="..\TerribleTornado\Mqtt\MqttChannel.h" />
     <ClInclude Include="..\TerribleTornado\Sqlite\Sqlite.h" />
     <ClInclude Include="..\TerribleTornado\Sqlite\sqlite3.h" />
+    <ClInclude Include="..\TerribleTornado\Traffic\ChannelDetector.h" />
     <ClInclude Include="..\TerribleTornado\Traffic\DataChannel.h" />
-    <ClInclude Include="..\TerribleTornado\Traffic\FlowChannelData.h" />
+    <ClInclude Include="..\TerribleTornado\Traffic\FlowChannel.h" />
+    <ClInclude Include="..\TerribleTornado\Traffic\FlowDevice.h" />
     <ClInclude Include="..\TerribleTornado\Traffic\LaneDetector.h" />
+    <ClInclude Include="..\TerribleTornado\Video\DecodeChannel.h" />
     <ClInclude Include="..\TerribleTornado\Video\DetectChannel.h" />
-    <ClInclude Include="..\TerribleTornado\Video\HisiChannel.h" />
     <ClInclude Include="..\TerribleTornado\Video\RecognChannel.h" />
     <ClInclude Include="..\TerribleTornado\Video\SeemmoSDK.h" />
   </ItemGroup>

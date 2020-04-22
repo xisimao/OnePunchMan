@@ -53,6 +53,7 @@ SocketHandler::ProtocolPacket HttpHandler::HandleCore(int socket, unsigned int i
 		string func = StringEx::ToUpper(datas[0]);
 		e.Function = func;
 		e.Url = datas[1];
+		e.Code = HttpCode::NotFound;
 
 		//用空行判断是否是全包
 		size_t packetSize = lines[0].size() + 2;
@@ -81,6 +82,7 @@ SocketHandler::ProtocolPacket HttpHandler::HandleCore(int socket, unsigned int i
 			return ProtocolPacket(AnalysisResult::Half, 0, static_cast<unsigned int>(httpProtocol.size()), 0, 0);
 		}
 
+		string response;
 		if (func.compare(HttpFunction::Options) == 0)
 		{
 			stringstream ss;
@@ -91,30 +93,27 @@ SocketHandler::ProtocolPacket HttpHandler::HandleCore(int socket, unsigned int i
 				<< "Access-Control-Allow-Methods: GET,POST,DELETE,PUT\r\n"
 				<< "Access-Control-Allow-Origin: *\r\n"
 				<< "\r\n";
-			SendTcp(socket, ss.str(), NULL);
-			return ProtocolPacket(AnalysisResult::Request, 0, static_cast<unsigned int>(packetSize+length), 0, 0);
+			response = ss.str();
 		}
 		else if (func.compare(HttpFunction::Get) == 0
 			|| func.compare(HttpFunction::Delete) == 0)
 		{
 			HttpReceived.Notice(&e);
-			string response = BuildResponse(HttpCode::OK, e.ResponseJson);
-			SendTcp(socket, response, NULL);
-			return ProtocolPacket(AnalysisResult::Request, 0, static_cast<unsigned int>(packetSize + length), 0, 0);
+			response = BuildResponse(e.Code, e.ResponseJson);
 		}
 		else if (func.compare(HttpFunction::Post) == 0
 			|| func.compare(HttpFunction::Put) == 0)
 		{
 			e.RequestJson = httpProtocol.substr(packetSize, length);
 			HttpReceived.Notice(&e);
-			string response = BuildResponse(HttpCode::OK, e.ResponseJson);
-			SendTcp(socket, response, NULL);
-			return ProtocolPacket(AnalysisResult::Request, 0, static_cast<unsigned int>(packetSize + length), 0, 0);
+			response = BuildResponse(e.Code, e.ResponseJson);
 		}
 		else
 		{
 			LogPool::Warning(LogEvent::Socket, "http error fun", httpProtocol);
-			return ProtocolPacket(AnalysisResult::Empty, 0, static_cast<unsigned int>(packetSize+length), 0,0);
+			response = BuildResponse(e.Code, e.ResponseJson);
 		}
+		SendTcp(socket, response, NULL);
+		return ProtocolPacket(AnalysisResult::Request, 0, static_cast<unsigned int>(packetSize + length), 0, 0);
 	}
 }

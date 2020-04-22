@@ -41,9 +41,9 @@ void ThreadObject::Start()
 void ThreadObject::StartThread()
 {
 	_status = ThreadStatus::Running;
-	LogPool::Information(LogEvent::Thread,"start", _name);
+	LogPool::Information(LogEvent::Thread,"start thread", _name);
 	StartCore();
-	LogPool::Information(LogEvent::Thread,"stop",_name);
+	LogPool::Information(LogEvent::Thread,"stop thread",_name);
 	_status = ThreadStatus::Stopped;
 }
 
@@ -58,6 +58,7 @@ void ThreadObject::Join()
 void ThreadObject::Stop()
 {
 	_cancelled = true;
+	StopCore();
 	while (_status == ThreadStatus::Running)
 	{
 		this_thread::sleep_for(chrono::milliseconds(SleepTime));

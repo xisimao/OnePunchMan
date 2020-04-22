@@ -1,12 +1,10 @@
 #pragma once
-#include <vector>
-
 #include "SeemmoSDK.h"
-#include "FrameChannel.h"
-#include "RecognChannel.h"
-#include "JsonFormatter.h"
-#include "LaneDetector.h"
 #include "MqttChannel.h"
+#include "RecognChannel.h"
+#include "ChannelDetector.h"
+#include "YUV420SPHandler.h"
+#include "IVE_8UC3Handler.h"
 
 extern "C"
 {
@@ -62,81 +60,93 @@ extern "C"
 
 namespace TerribleTornado
 {
-	class FrameItem
-	{
-	public:
-		//yuv420sp
-		unsigned long long Yuv_phy_addr;
-		uint8_t* YuvBuffer;
-		uint8_t* YuvTempBuffer;
-		int YuvSize;
-		//bgr
-		unsigned long long Bgr_phy_addr;
-		uint8_t* BgrBuffer;
-		int BgrSize;
-
-		bool HasValue;
-		int CurrentPacketIndex;
-		int LastPacketIndex;
-		int PacketSpan;
-	};
-
+	//检测线程
 	class DetectChannel :public Saitama::ThreadObject
 	{
 	public:
-		DetectChannel(int channelIndex,int width, int height, MqttChannel* mqtt, const std::vector<LaneDetector*>& lanes,RecognChannel* recogn);
-
+		/**
+		* @brief: 构造函数
+		* @param: channelIndex 视频序号
+		* @param: width 视频解码后宽度
+		* @param: height 视频解码后高度
+		* @param: recogn 视频线程
+		* @param: detector 通道检测
+		*/
+		DetectChannel(int channelIndex,int width, int height,RecognChannel* recogn, ChannelDetector* detector);
+		
+		/**
+		* @brief: 析构函数
+		*/
 		~DetectChannel();
 
-		bool IsBusy(int index);
+		/**
+		* @brief: 当前检测线程是否未初始化或正在处理数据
+		* @return: 如果未初始化或者当前线程正在进行检测返回true，否则返回false，表示可以接收新的yuv数据
+		*/
+		bool IsBusy();
 
-		void HandleYUV(unsigned char* yuv, int width, int height, int packetIndex,int index);
-
-		static const int ItemCount;
+		/**
+		* @brief: 处理yuv数据
+		* @param: yuv yuv字节流
+		* @param: width 图片宽度
+		* @param: height 图片高度
+		* @param: packetIndex 视频帧序号
+		*/
+		void HandleYUV(unsigned char* yuv, int width, int height, int packetIndex);
 
 	protected:
 		void StartCore();
 
 	private:
+
+		//视频帧数据
+		class FrameItem
+		{
+		public:
+			//yuv420sp
+			unsigned long long Yuv_phy_addr;
+			uint8_t* YuvBuffer;
+			uint8_t* YuvTempBuffer;
+			int YuvSize;
+
+			//bgr
+			unsigned long long Bgr_phy_addr;
+			uint8_t* BgrBuffer;
+			int BgrSize;
+			
+			//视频帧序号
+			int PacketIndex;
+			//当前数据项是否已经有了yuv数据
+			bool HasValue;
+		};
+
 		//轮询中睡眠时间(毫秒)
 		static const int SleepTime;
 
-		//IO状态
-		static const std::string IOTopic;
-	
-
-
-		static void GetRecognGuids(std::vector<std::string>* guids, const Saitama::JsonDeserialization& jd, const std::string& key1,const std::string& key2);
-
-		bool YuvToBgr(FrameItem& item);
-
 		/**
-		* @brief: 从json数据中获取检测项集合
-		* @param: json json数据
-		* @param: key 检测项字段的键
-		* @return: 检测项集合
+		* @brief: yuv转8uc3
+		* @return: 转换成功返回true，否则返回false
 		*/
-		static void GetDetecItems(std::map<std::string, DetectItem>* items, const Saitama::JsonDeserialization& jd, const std::string& key);
+		bool YuvToBgr();
 
-		void HandleDetect(const std::map<std::string, DetectItem>& detectItems,long long timeStamp);
-		
-		int _detectIndex;
+		//线程是否初始化完成
+		bool _inited;
+		//通道序号
+		int _channelIndex;
+		//图片宽度
 		int _width;
+		//图片高度
 		int _height;
-		MqttChannel* _mqtt;
-		std::string _yuvTopic;
-		std::mutex _laneMutex;
-		std::vector<LaneDetector*> _lanes;
-
+		//检测线程
 		RecognChannel* _recogn;
+		//通道检测
+		ChannelDetector* _detector;
 
-		std::mutex _frameMutex;
-
-		std::vector<FrameItem> _items;
+		//视频帧数据
+		FrameItem _item;
 
 		//detect
 		std::vector<uint8_t*> _bgrs;
-		std::vector<uint8_t*> _yuvs;
 		std::vector<int> _indexes;
 		std::vector<uint64_t> _timeStamps;
 		std::vector<uint32_t> _widths;
@@ -144,7 +154,9 @@ namespace TerribleTornado
 		std::vector<const char*> _params;
 		std::vector<char> _result;
 
-
+		//debug
+		Fubuki::YUV420SPHandler* _yuvHandler;
+		Fubuki::IVE_8UC3Handler* _bgrHandler;
 	};
 
 }

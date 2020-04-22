@@ -2,32 +2,33 @@
 #include "Thread.h"
 #include "Observable.h"
 #include "JsonFormatter.h"
-#include "MqttChannel.h"
-#include "LaneDetector.h"
-#include "FlowChannelData.h"
 #include "HttpHandler.h"
+#include "Command.h"
+#include "SeemmoSDK.h"
+#include "FlowChannel.h"
+#include "FlowDevice.h"
+#include "MqttChannel.h"
+#include "DetectChannel.h"
+#include "DecodeChannel.h"
+#include "SocketMaid.h"
 
 namespace TerribleTornado
 {
     //数据分发和收集线程
     class DataChannel :public Saitama::ThreadObject
-        , public Saitama::IObserver<MqttReceivedEventArgs>
         , public Saitama::IObserver<Saitama::HttpReceivedEventArgs>
     {
     public:
 
         /**
         * @brief: 构造函数
-        * @param: ip mqtt服务端地址
-        * @param: port mqtt服务端端口，默认为1883
         */
-        DataChannel(const std::string& ip, int port);
+        DataChannel();
 
         /**
-        * @brief: mqtt消息接收事件函数
-        * @param: e mqtt消息接收事件参数
+        * @brief: 析构函数
         */
-        void Update(MqttReceivedEventArgs* e);
+        ~DataChannel();
 
         /**
         * @brief: http消息接收事件函数
@@ -41,35 +42,68 @@ namespace TerribleTornado
 
     private:
 
-
-        void UpdateChannel(const FlowChannel& channel);
-
+        /**
+        * @brief: 查询设备
+        * @param: e http消息接收事件参数
+        */
+        void GetDevice(Saitama::HttpReceivedEventArgs* e);
+        
+        /**
+        * @brief: 设置通道集合
+        * @param: e http消息接收事件参数
+        */
+        void SetDevice(Saitama::HttpReceivedEventArgs* e);
+        
+        /**
+        * @brief: 获取通道
+        * @param: e http消息接收事件参数
+        */
+        void GetChannel(Saitama::HttpReceivedEventArgs* e);
+  
+        /**
+        * @brief: 设置通道
+        * @param: e http消息接收事件参数
+        */
+        void SetChannel(Saitama::HttpReceivedEventArgs* e);
+        
+        /**
+        * @brief: 删除通道
+        * @param: e http消息接收事件参数
+        */
+        void DeleteChannel(Saitama::HttpReceivedEventArgs* e);
+        
+        /**
+        * @brief: 设置通道
+        * @param: channel 通道
+        */
+        void SetChannel(const FlowChannel& channel);
+        
+        /**
+        * @brief: 删除通道
+        * @param: channelIndex 通道序号
+        */
+        void DeleteChannel(int channelIndex);
 
         /**
-        * @brief: 从json数据中获取检测项集合
-        * @param: json json数据
-        * @param: key 检测项字段的键
-        * @return: 检测项集合
+        * @brief: 判断通道序号是否可用
+        * @param: channelIndex 通道序号
+        * @return: 返回ture表示通道序号可用，否则返回false
         */
-        void DeserializeDetectItems(std::map<std::string,DetectItem>* items, const Saitama::JsonDeserialization& jd, const std::string& key, long long timeStamp);
+        bool ChannelIndexEnable(int channelIndex);
 
         /**
-        * @brief: 处理检测数据
-        * @param: json json数据
+        * @brief: 检查通道信息
+        * @param: channel 通道
+        * @return: 检查成功返回空字符串，否则返回错误原因
         */
-        void HandleDetect(const std::string& json);
+        std::string CheckChannel(const FlowChannel& channel);
 
         /**
-        * @brief: 处理识别数据
-        * @param: json json数据
+        * @brief: 获取通道json数据
+        * @param: channel 通道
+        * @return: 通道json数据
         */
-        void HandleRecognize(const std::string& json);
-
-        /**
-        * @brief: 收集流量数据
-        * @param: now 当前时间
-        */
-        void CollectFlow(const Saitama::DateTime& now);
+        std::string GetChannelJson(const FlowChannel& channel);
 
         /**
         * @brief: 获取url是否是指定的前缀
@@ -78,31 +112,48 @@ namespace TerribleTornado
         * @return: 返回true表示url有指定前缀
         */
         bool UrlStartWith(const std::string& url, const std::string& key);
+       
+        /**
+        * @brief: 获取url中的id
+        * @param: url url
+        * @param: key 前缀
+        * @return: id
+        */
+        std::string GetId(const std::string& url, const std::string& key);
+       
+        /**
+        * @brief: 获取错误信息json数据
+        * @param: field 字段名
+        * @param: message 错误信息
+        * @return: json数据
+        */
+        std::string GetErrorJson(const std::string& field, const std::string& message);
 
-        //检测数据 sdk->程序
-        static const std::string DetectTopic;
-        //识别数据 sdk->程序
-        static const std::string RecognizeTopic;
-        //流量 程序->web
+        //流量mqtt主题
         static const std::string FlowTopic;
-        //流量 程序->web
-        static const std::string VideoTopic;
-        //IO状态 程序->web
-        static const std::string IOTopic;
 
-        //mqtt客户端
+        //是否初始化成功
+        bool _inited;
+
+        //socket连接
+        Saitama::SocketMaid* _socketMaid;
+        //http消息解析
+        Saitama::HttpHandler _handler;
+        //mqtt
         MqttChannel* _mqtt;
+        //检测线程集合，等于视频总数
+        std::vector<DetectChannel*> _detects;
+        //识别线程集合，等于视频总数/RecognChannel::ItemCount
+        std::vector<RecognChannel*> _recogns;
+        //通道检测集合，等于视频总数
+        std::vector<ChannelDetector*> _detectors;
+        //解码线程同步锁
+        std::mutex _decodeMutex;
+        //解码线程集合，等于视频总数，如果视频清空则为NULL
+        std::vector<DecodeChannel*> _decodes;
 
-        //mqtt服务端地址
-        std::string _ip;
-        //mqtt服务端端口
-        int _port;
-
-        //同步锁
-        std::mutex _channelMutex;
-        //视频通道线程集合
-        std::vector<std::vector<LaneDetector*>> _channels;
-
+        //系统启动时间
+        Saitama::DateTime _startTime;
         //上一次收集数据的分钟
         int _lastMinute;
     };

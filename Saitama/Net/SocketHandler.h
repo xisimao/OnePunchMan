@@ -115,7 +115,7 @@ namespace Saitama
 		* @brief: 供子类实现的创建实例方法
 		* @return: 新实例指针
 		*/
-		virtual SocketHandler* CloneCore() = 0;
+		virtual SocketHandler* CloneCore() { return new SocketHandler(); };
 
 		/**
 		* @brief: 执行字节流
@@ -126,7 +126,16 @@ namespace Saitama
 		* @param: end 字节流结尾
 		* @return: 协议包
 		*/
-		virtual ProtocolPacket HandleCore(int socket,unsigned int ip, unsigned short port, std::string::const_iterator begin,std::string::const_iterator end) = 0;
+		virtual ProtocolPacket HandleCore(int socket, unsigned int ip, unsigned short port, std::string::const_iterator begin, std::string::const_iterator end)
+		{
+			ProtocolPacket packet;
+			packet.Offset = 0;
+			packet.Size = static_cast<unsigned int>(end - begin);
+			packet.Result = AnalysisResult::Response;
+			packet.ProtocolId = 0;
+			packet.TimeStamp = 0;
+			return packet;
+		}
 
 	private:
 

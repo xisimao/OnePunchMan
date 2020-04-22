@@ -251,7 +251,7 @@ DateTime DateTime::ParseString(const string& format, const string& value)
 	return DateTime(year, month, day, hour, minute, second, millisecond);
 }
 
-long long DateTime::TimeStamp()
+long long DateTime::UtcTimeStamp()
 {
 	struct timeb tb;
 	ftime(&tb);

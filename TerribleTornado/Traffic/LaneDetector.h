@@ -7,7 +7,7 @@
 #include "LogPool.h"
 #include "JsonFormatter.h"
 #include "Observable.h"
-#include "FlowChannelData.h"
+#include "FlowChannel.h"
 
 namespace TerribleTornado
 {
@@ -66,6 +66,15 @@ namespace TerribleTornado
 		Truck = 8
 	};
 
+	enum class TrafficStatus
+	{
+		Good = 1,
+		Normal = 2,
+		Warning = 3,
+		Bad = 4,
+		Dead = 5
+	};
+
 	//io状态
 	enum class IOStatus
 	{
@@ -74,10 +83,22 @@ namespace TerribleTornado
 		UnChanged=-1
 	};
 
-	//车道计算数据项
+	//io数据项
+	class IOItem
+	{
+	public:
+		//车道编号
+		std::string LaneId;
+		int Type;
+		IOStatus Status;
+	};
+
+	//流量数据项
 	class LaneItem
 	{
 	public:
+		//车道编号
+		std::string LaneId;
 
 		//行人流量
 		int Persons;
@@ -103,18 +124,22 @@ namespace TerribleTornado
 		//车头间距(米)=平均速度*车头时距
 		double HeadSpace;
 		//时间占有率(%)
-		double TimeOccupancy;
+		double TimeOccupancy;		
+		//交通状态
+		int TrafficStatus;
 	};
 
 	//视频结构化
 	class VideoStruct
 	{
 	public:
+		std::string LaneId;
 		std::string Image;
 		std::string Feature;
 		int VideoStructType;
 	};
 
+	//机动车
 	class VideoVehicle :public VideoStruct
 	{
 	public:
@@ -130,6 +155,7 @@ namespace TerribleTornado
 		std::string PlateNumber;
 	};
 
+	//非机动车
 	class VideoBike :public VideoStruct
 	{
 	public:
@@ -140,6 +166,7 @@ namespace TerribleTornado
 		int BikeType;
 	};
 
+	//行人
 	class VideoPedestrain :public VideoStruct
 	{
 	public:
@@ -159,23 +186,17 @@ namespace TerribleTornado
 
 		/**
 		* @brief: 构造函数
-		* @param: dataId 数据编号
+		* @param: laneId 车道编号
 		* @param: lane 车道
 		*/
-		LaneDetector(const std::string& dataId,const Lane& lane);
-
-		/**
-		* @brief: 获取车道数据编号
-		* @return: 车道数据编号io状态
-		*/
-		std::string DataId();
+		LaneDetector(const std::string& laneId,const Lane& lane);
 
 		/**
 		* @brief: 检测机动车
 		* @param: item 检测项
 		* @return: 返回车道io状态
 		*/
-		IOStatus Detect(const std::map<std::string, DetectItem>& items,long long timeStamp);
+		IOItem Detect(const std::map<std::string, DetectItem>& items,long long timeStamp);
 
 		/**
 		* @brief: 检测数据是否在车道范围内
@@ -206,8 +227,8 @@ namespace TerribleTornado
 		*/
 		Saitama::Line GetLine(const std::string& line);
 
-		//数据编号
-		std::string _dataId;
+		//车道编号
+		std::string _laneId;
 		//当前检测区域
 		Saitama::Polygon _region;
 		//每个像素代表的米数

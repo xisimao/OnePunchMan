@@ -43,25 +43,45 @@ namespace TerribleTornado
 		std::string GetString(int index) const;
 
 		/**
-		* @brief: 读取数字列
+		* @brief: 读取32位数字列
 		* @param: index 列序号
 		* @return: 列的数字值
 		*/
-		int GetInteger(int index) const;
+		int GetInt(int index) const;
+
+		/**
+		* @brief: 读取64位数字列
+		* @param: index 列序号
+		* @return: 列的数字值
+		*/
+		long long GetLong(int index) const;
 
 		/**
 		* @brief: 结束查询
-		* @param: stmt 查询结果
 		*/
 		void EndQuery();
 
+		/**
+		* @brief: 获取最后一次错误消息
+		* @return: 最后一次错误消息
+		*/
+		const std::string& LastError();
+
 	private:
+
+		/**
+		* @brief: 记录错误日志
+		*/
+		void LogError();
 
 		//数据库
 		sqlite3* _db;
 
 		//查询结果
 		sqlite3_stmt* _stmt;
+
+		//最后一次出错信息
+		std::string _lastError;
 
 	};
 
@@ -94,10 +114,24 @@ namespace TerribleTornado
 		*/
 		int ExecuteKey(const std::string& sql);
 
+		/**
+		* @brief: 获取最后一次错误消息
+		* @return: 最后一次错误消息
+		*/
+		const std::string& LastError();
+
 	private:
+
+		/**
+		* @brief: 记录错误日志
+		*/
+		void LogError();
 
 		//数据库
 		sqlite3* _db;
+
+		//最后一次出错信息
+		std::string _lastError;
 	};
 }
 

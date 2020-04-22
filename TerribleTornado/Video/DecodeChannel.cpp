@@ -1,21 +1,20 @@
-#include "HisiChannel.h"
+#include "DecodeChannel.h"
 
 using namespace std;
 using namespace Saitama;
 using namespace Fubuki;
 using namespace TerribleTornado;
 
-const int HisiChannel::VideoWidth = 1920;
-const int HisiChannel::VideoHeight = 1080;
-const int HisiChannel::YUVSize = 1920*1080*1.5;
+const int DecodeChannel::VideoWidth = 1920;
+const int DecodeChannel::VideoHeight = 1080;
 
-HisiChannel::HisiChannel(int channelIndex,DetectChannel* detectChannel)
-	:FrameChannel(),_channelIndex(channelIndex), _downgrade(false), _decodeContext(NULL), _yuvFrame(NULL), _yuv420spBuffer(NULL), _yuv420spFrame(NULL), _yuv420spSwsContext(NULL),_detectChannel(detectChannel),_detectIndex(channelIndex% DetectChannel::ItemCount)
+DecodeChannel::DecodeChannel(const string& inputUrl, const string& outputUrl,bool loop,int channelIndex,DetectChannel* detectChannel)
+	:FrameChannel(inputUrl,outputUrl,loop),_channelIndex(channelIndex), _useFFmpeg(false), _decodeContext(NULL), _yuvFrame(NULL), _yuv420spBuffer(NULL),_yuv420spSize(static_cast<int>(VideoWidth* VideoHeight * 1.5)), _yuv420spFrame(NULL), _yuv420spSwsContext(NULL),_detectChannel(detectChannel)
 {
-	_yuvHandler = new YUV420SPHandler();
+
 }
 
-int HisiChannel::InitHisi(int videoCount)
+bool DecodeChannel::InitHisi(int videoCount)
 {
 #ifndef _WIN32
 	HI_S32 hi_s32_ret = HI_SUCCESS;
@@ -34,25 +33,25 @@ int HisiChannel::InitHisi(int videoCount)
 	hi_s32_ret = HI_MPI_VB_SetConfig(&stVbConfig);
 	if (HI_SUCCESS != hi_s32_ret)
 	{
-		LogPool::Information(LogEvent::Decode, "HI_MPI_VB_SetConfig", hi_s32_ret);
-		return HI_FAILURE;
+		LogPool::Error(LogEvent::Decode, "HI_MPI_VB_SetConfig", hi_s32_ret);
+		return false;
 	}
 
 	hi_s32_ret = HI_MPI_VB_Init();
 
 	if (HI_SUCCESS != hi_s32_ret)
 	{
-		LogPool::Information(LogEvent::Decode, "HI_MPI_VB_Init", hi_s32_ret);
-		return HI_FAILURE;
+		LogPool::Error(LogEvent::Decode, "HI_MPI_VB_Init", hi_s32_ret);
+		return false;
 	}
 
 	hi_s32_ret = HI_MPI_SYS_Init();
 
 	if (HI_SUCCESS != hi_s32_ret)
 	{
-		LogPool::Information(LogEvent::Decode, "HI_MPI_SYS_Init", hi_s32_ret);
+		LogPool::Error(LogEvent::Decode, "HI_MPI_SYS_Init", hi_s32_ret);
 
-		return HI_FAILURE;
+		return false;
 	}
 
 	//vedc
@@ -177,21 +176,21 @@ int HisiChannel::InitHisi(int videoCount)
 	hi_s32_ret = HI_MPI_VB_ExitModCommPool(VB_UID_VDEC);
 	if (hi_s32_ret != HI_SUCCESS)
 	{
-		LogPool::Information(LogEvent::Decode, "HI_MPI_VB_ExitModCommPool", hi_s32_ret);
-		return HI_FAILURE;
+		LogPool::Error(LogEvent::Decode, "HI_MPI_VB_ExitModCommPool", hi_s32_ret);
+		return false;
 	}
 	hi_s32_ret = HI_MPI_VB_SetModPoolConfig(VB_UID_VDEC, &stVbConf);
 	if (hi_s32_ret != HI_SUCCESS)
 	{
-		LogPool::Information(LogEvent::Decode, "HI_MPI_VB_SetModPoolConfig", hi_s32_ret);
-		return HI_FAILURE;
+		LogPool::Error(LogEvent::Decode, "HI_MPI_VB_SetModPoolConfig", hi_s32_ret);
+		return false;
 	}
 	hi_s32_ret = HI_MPI_VB_InitModCommPool(VB_UID_VDEC);
 	if (hi_s32_ret != HI_SUCCESS)
 	{
-		LogPool::Information(LogEvent::Decode, "HI_MPI_VB_SetModPoolConfig", hi_s32_ret);
+		LogPool::Error(LogEvent::Decode, "HI_MPI_VB_SetModPoolConfig", hi_s32_ret);
 		HI_MPI_VB_ExitModCommPool(VB_UID_VDEC);
-		return HI_FAILURE;
+		return false;
 	}
 
 	VDEC_CHN_ATTR_S stChnAttrs[128];
@@ -202,15 +201,15 @@ int HisiChannel::InitHisi(int videoCount)
 	hi_s32_ret = HI_MPI_VDEC_GetModParam(&stModParam);
 	if (hi_s32_ret != HI_SUCCESS)
 	{
-		LogPool::Information(LogEvent::Decode, "HI_MPI_VDEC_GetModParam", hi_s32_ret);
-		return HI_FAILURE;
+		LogPool::Error(LogEvent::Decode, "HI_MPI_VDEC_GetModParam", hi_s32_ret);
+		return false;
 	}
 	stModParam.enVdecVBSource = VB_SOURCE_MODULE;
 	hi_s32_ret = HI_MPI_VDEC_SetModParam(&stModParam);
 	if (hi_s32_ret != HI_SUCCESS)
 	{
-		LogPool::Information(LogEvent::Decode, "HI_MPI_VDEC_SetModParam", hi_s32_ret);
-		return HI_FAILURE;
+		LogPool::Error(LogEvent::Decode, "HI_MPI_VDEC_SetModParam", hi_s32_ret);
+		return false;
 	}
 	for (int i = 0; i < videoCount; i++)
 	{
@@ -236,15 +235,15 @@ int HisiChannel::InitHisi(int videoCount)
 		hi_s32_ret = HI_MPI_VDEC_CreateChn(i, &stChnAttrs[i]);
 		if (hi_s32_ret != HI_SUCCESS)
 		{
-			LogPool::Information(LogEvent::Decode, "HI_MPI_VDEC_CreateChn", hi_s32_ret);
-			return HI_FAILURE;
+			LogPool::Error(LogEvent::Decode, "HI_MPI_VDEC_CreateChn", hi_s32_ret);
+			return false;
 		}
 
 		hi_s32_ret = HI_MPI_VDEC_GetChnParam(i, &stChnParam);
 		if (hi_s32_ret != HI_SUCCESS)
 		{
-			LogPool::Information(LogEvent::Decode, "HI_MPI_VDEC_GetChnParam", hi_s32_ret);
-			return HI_FAILURE;
+			LogPool::Error(LogEvent::Decode, "HI_MPI_VDEC_GetChnParam", hi_s32_ret);
+			return false;
 		}
 		if (PT_H264 == pastSampleVdec[i].enType)
 		{
@@ -269,14 +268,14 @@ int HisiChannel::InitHisi(int videoCount)
 		hi_s32_ret = HI_MPI_VDEC_SetChnParam(i, &stChnParam);
 		if (hi_s32_ret != HI_SUCCESS)
 		{
-			LogPool::Information(LogEvent::Decode, "HI_MPI_VDEC_SetChnParam", hi_s32_ret);
-			return HI_FAILURE;
+			LogPool::Error(LogEvent::Decode, "HI_MPI_VDEC_SetChnParam", hi_s32_ret);
+			return false;
 		}
 		hi_s32_ret = HI_MPI_VDEC_StartRecvStream(i);
 		if (hi_s32_ret != HI_SUCCESS)
 		{
-			LogPool::Information(LogEvent::Decode, "HI_MPI_VDEC_StartRecvStream", hi_s32_ret);
-			return HI_FAILURE;
+			LogPool::Error(LogEvent::Decode, "HI_MPI_VDEC_StartRecvStream", hi_s32_ret);
+			return false;
 		}
 	}
 
@@ -284,8 +283,8 @@ int HisiChannel::InitHisi(int videoCount)
 		hi_s32_ret = HI_MPI_VDEC_SetDisplayMode(i, VIDEO_DISPLAY_MODE_PLAYBACK);
 		if (hi_s32_ret != HI_SUCCESS)
 		{
-			LogPool::Information(LogEvent::Decode, "HI_MPI_VDEC_SetDisplayMode", hi_s32_ret);
-			return HI_FAILURE;
+			LogPool::Error(LogEvent::Decode, "HI_MPI_VDEC_SetDisplayMode", hi_s32_ret);
+			return false;
 		}
 	}
 
@@ -327,8 +326,8 @@ int HisiChannel::InitHisi(int videoCount)
 
 		if (hi_s32_ret != HI_SUCCESS)
 		{
-			LogPool::Information(LogEvent::Decode, "HI_MPI_VPSS_CreateGrp", hi_s32_ret);
-			return HI_FAILURE;
+			LogPool::Error(LogEvent::Decode, "HI_MPI_VPSS_CreateGrp", hi_s32_ret);
+			return false;
 		}
 
 		for (j = 0; j < VPSS_MAX_PHY_CHN_NUM; j++)
@@ -341,8 +340,8 @@ int HisiChannel::InitHisi(int videoCount)
 
 				if (hi_s32_ret != HI_SUCCESS)
 				{
-					LogPool::Information(LogEvent::Decode, "HI_MPI_VPSS_SetChnAttr", hi_s32_ret);
-					return HI_FAILURE;
+					LogPool::Error(LogEvent::Decode, "HI_MPI_VPSS_SetChnAttr", hi_s32_ret);
+					return false;
 				}
 
 
@@ -351,8 +350,8 @@ int HisiChannel::InitHisi(int videoCount)
 
 				if (hi_s32_ret != HI_SUCCESS)
 				{
-					LogPool::Information(LogEvent::Decode, "HI_MPI_VPSS_EnableChn", hi_s32_ret);
-					return HI_FAILURE;
+					LogPool::Error(LogEvent::Decode, "HI_MPI_VPSS_EnableChn", hi_s32_ret);
+					return false;
 				}
 
 			}
@@ -362,8 +361,8 @@ int HisiChannel::InitHisi(int videoCount)
 
 		if (hi_s32_ret != HI_SUCCESS)
 		{
-			LogPool::Information(LogEvent::Decode, "HI_MPI_VPSS_StartGrp", hi_s32_ret);
-			return HI_FAILURE;
+			LogPool::Error(LogEvent::Decode, "HI_MPI_VPSS_StartGrp", hi_s32_ret);
+			return false;
 		}
 	}
 
@@ -384,8 +383,8 @@ int HisiChannel::InitHisi(int videoCount)
 		hi_s32_ret = HI_MPI_SYS_Bind(&stSrcChn, &stDestChn);
 		if (hi_s32_ret != HI_SUCCESS)
 		{
-			LogPool::Information(LogEvent::Decode, "HI_MPI_SYS_Bind", hi_s32_ret);
-			return HI_FAILURE;
+			LogPool::Error(LogEvent::Decode, "HI_MPI_SYS_Bind", hi_s32_ret);
+			return false;
 		}
 	}
 
@@ -413,15 +412,15 @@ int HisiChannel::InitHisi(int videoCount)
 	hi_s32_ret = HI_MPI_VO_SetPubAttr(VoDev, &stVoPubAttr);
 	if (hi_s32_ret != HI_SUCCESS)
 	{
-		LogPool::Information(LogEvent::Decode, "HI_MPI_VO_SetPubAttr", hi_s32_ret);
-		return HI_FAILURE;
+		LogPool::Error(LogEvent::Decode, "HI_MPI_VO_SetPubAttr", hi_s32_ret);
+		return false;
 	}
 
 	hi_s32_ret = HI_MPI_VO_Enable(VoDev);
 	if (hi_s32_ret != HI_SUCCESS)
 	{
-		LogPool::Information(LogEvent::Decode, "HI_MPI_VO_Enable", hi_s32_ret);
-		return HI_FAILURE;
+		LogPool::Error(LogEvent::Decode, "HI_MPI_VO_Enable", hi_s32_ret);
+		return false;
 	}
 
 
@@ -453,23 +452,23 @@ int HisiChannel::InitHisi(int videoCount)
 	hi_s32_ret = HI_MPI_VO_SetDisplayBufLen(VoLayer, 4);
 	if (HI_SUCCESS != hi_s32_ret)
 	{
-		LogPool::Information(LogEvent::Decode, "HI_MPI_VO_SetDisplayBufLen", hi_s32_ret);
-		return hi_s32_ret;
+		LogPool::Error(LogEvent::Decode, "HI_MPI_VO_SetDisplayBufLen", hi_s32_ret);
+		return false;
 	}
 
 
 	hi_s32_ret = HI_MPI_VO_SetVideoLayerAttr(VoLayer, &stLayerAttr);
 	if (hi_s32_ret != HI_SUCCESS)
 	{
-		LogPool::Information(LogEvent::Decode, "HI_MPI_VO_SetVideoLayerAttr", hi_s32_ret);
-		return HI_FAILURE;
+		LogPool::Error(LogEvent::Decode, "HI_MPI_VO_SetVideoLayerAttr", hi_s32_ret);
+		return false;
 	}
 
 	hi_s32_ret = HI_MPI_VO_EnableVideoLayer(VoLayer);
 	if (hi_s32_ret != HI_SUCCESS)
 	{
-		LogPool::Information(LogEvent::Decode, "HI_MPI_VO_EnableVideoLayer", hi_s32_ret);
-		return HI_FAILURE;
+		LogPool::Error(LogEvent::Decode, "HI_MPI_VO_EnableVideoLayer", hi_s32_ret);
+		return false;
 	}
 
 	/******************************
@@ -485,8 +484,8 @@ int HisiChannel::InitHisi(int videoCount)
 	hi_s32_ret = HI_MPI_VO_GetVideoLayerAttr(VoLayer, &stLayerAttr);
 	if (hi_s32_ret != HI_SUCCESS)
 	{
-		LogPool::Information(LogEvent::Decode, "HI_MPI_VO_GetVideoLayerAttr", hi_s32_ret);
-		return HI_FAILURE;
+		LogPool::Error(LogEvent::Decode, "HI_MPI_VO_GetVideoLayerAttr", hi_s32_ret);
+		return false;
 	}
 	u32Width = stLayerAttr.stImageSize.u32Width;
 	u32Height = stLayerAttr.stImageSize.u32Height;
@@ -504,15 +503,15 @@ int HisiChannel::InitHisi(int videoCount)
 		hi_s32_ret = HI_MPI_VO_SetChnAttr(VoLayer, i, &stChnAttr);
 		if (hi_s32_ret != HI_SUCCESS)
 		{
-			LogPool::Information(LogEvent::Decode, "HI_MPI_VO_SetChnAttr", hi_s32_ret);
-			return HI_FAILURE;
+			LogPool::Error(LogEvent::Decode, "HI_MPI_VO_SetChnAttr", hi_s32_ret);
+			return false;
 		}
 
 		hi_s32_ret = HI_MPI_VO_EnableChn(VoLayer, i);
 		if (hi_s32_ret != HI_SUCCESS)
 		{
-			LogPool::Information(LogEvent::Decode, "HI_MPI_VO_EnableChn", hi_s32_ret);
-			return HI_FAILURE;
+			LogPool::Error(LogEvent::Decode, "HI_MPI_VO_EnableChn", hi_s32_ret);
+			return false;
 		}
 	}
 
@@ -529,20 +528,20 @@ int HisiChannel::InitHisi(int videoCount)
 		hi_s32_ret = HI_MPI_HDMI_Init();
 		if (hi_s32_ret != HI_SUCCESS)
 		{
-			LogPool::Information(LogEvent::Decode, "HI_MPI_HDMI_Init", hi_s32_ret);
-			return HI_FAILURE;
+			LogPool::Error(LogEvent::Decode, "HI_MPI_HDMI_Init", hi_s32_ret);
+			return false;
 		}
 		hi_s32_ret = HI_MPI_HDMI_Open(enHdmiId);
 		if (hi_s32_ret != HI_SUCCESS)
 		{
-			LogPool::Information(LogEvent::Decode, "HI_MPI_HDMI_Open", hi_s32_ret);
-			return HI_FAILURE;
+			LogPool::Error(LogEvent::Decode, "HI_MPI_HDMI_Open", hi_s32_ret);
+			return false;
 		}
 		hi_s32_ret = HI_MPI_HDMI_GetAttr(enHdmiId, &stAttr);
 		if (hi_s32_ret != HI_SUCCESS)
 		{
-			LogPool::Information(LogEvent::Decode, "HI_MPI_HDMI_GetAttr", hi_s32_ret);
-			return HI_FAILURE;
+			LogPool::Error(LogEvent::Decode, "HI_MPI_HDMI_GetAttr", hi_s32_ret);
+			return false;
 		}
 		stAttr.bEnableHdmi = HI_TRUE;
 		stAttr.bEnableVideo = HI_TRUE;
@@ -572,76 +571,120 @@ int HisiChannel::InitHisi(int videoCount)
 		hi_s32_ret = HI_MPI_HDMI_SetAttr(enHdmiId, &stAttr);
 		if (hi_s32_ret != HI_SUCCESS)
 		{
-			LogPool::Information(LogEvent::Decode, "HI_MPI_HDMI_SetAttr", hi_s32_ret);
-			return HI_FAILURE;
+			LogPool::Error(LogEvent::Decode, "HI_MPI_HDMI_SetAttr", hi_s32_ret);
+			return false;
 		}
 		hi_s32_ret = HI_MPI_HDMI_Start(enHdmiId);
 		if (hi_s32_ret != HI_SUCCESS)
 		{
-			LogPool::Information(LogEvent::Decode, "HI_MPI_HDMI_Start", hi_s32_ret);
-			return HI_FAILURE;
+			LogPool::Error(LogEvent::Decode, "HI_MPI_HDMI_Start", hi_s32_ret);
+			return false;
 		}
 	}
 
-	////venc
+	//venc
 	//int ret = 0;
 	//VENC_RECV_PIC_PARAM_S stRecvParam;
 	//VENC_GOP_MODE_E enGopMode;
 	//VENC_GOP_ATTR_S stGopAttr;
-	//SAMPLE_RC_E     enRcMode;
-	//HI_S32 s32VencChn[8] = { 0,1,2,3,4,5,6,7 };
 
-	//std::memset(&stGopAttr, 0, sizeof(VENC_GOP_ATTR_S));
-	//enGopMode = VENC_GOPMODE_NORMALP;
-	//enRcMode = 0;
+	//memset(&stGopAttr, 0, sizeof(VENC_GOP_ATTR_S));
+
 	//stRecvParam.s32RecvPicNum = -1;
-
-
-	//HI_S32 hi_s32_ret = HI_SUCCESS;
-	//VO_INTF_SYNC_E VoIntfSync;// = VO_OUTPUT_1080P60;
-	//PIC_SIZE_E disp_pic_size;
-	//switch (VoIntfSync) {
-	//case VO_OUTPUT_3840x2160_30:
-	//	disp_pic_size = PIC_3840x2160;
-	//	break;
-	//case VO_OUTPUT_1080P60:
-	//	disp_pic_size = PIC_1080P;
-	//	break;
-	//default:
-	//	disp_pic_size = PIC_1080P;
-	//	break;
-	//}
 	//stGopAttr.enGopMode = VENC_GOPMODE_NORMALP;
 	//stGopAttr.stNormalP.s32IPQpDelta = 3;
-	////ret = SAMPLE_COMM_VENC_GetGopAttr(enGopMode, &stGopAttr);
-	////if (ret != 0)
-	////{
-	////	LOG(ERROR) << "SAMPLE_COMM_VENC_GetGopAttr faild!";
-	////}
 	//for (int i = 0; i < 8; i++)
 	//{
-	//	ret = SEEMMO_COMM_VENC_Start(s32VencChn[i], PT_H264, disp_pic_size, enRcMode, 0, &stGopAttr);
-	//	if (ret != 0)
+	//	HI_S32 s32Ret;
+	//	VENC_RECV_PIC_PARAM_S  stRecvParam;
+
+	//	/******************************************
+	//	 step 1:  Creat Encode Chnl
+	//	******************************************/
+
+	//	VENC_CHN_ATTR_S        stVencChnAttr;
+	//	VENC_ATTR_JPEG_S       stJpegAttr;
+	//	HI_U32                 u32FrameRate=30;
+	//	HI_U32                 u32StatTime;
+	//	HI_U32                 u32Gop = 5;
+
+	//	/******************************************
+	//	 step 1:  Create Venc Channel
+	//	******************************************/
+	//	stVencChnAttr.stVencAttr.enType = PT_H264;
+	//	stVencChnAttr.stVencAttr.u32MaxPicWidth = stDispSize.u32Width;
+	//	stVencChnAttr.stVencAttr.u32MaxPicHeight = stDispSize.u32Height;
+	//	stVencChnAttr.stVencAttr.u32PicWidth = stDispSize.u32Width;/*the picture width*/
+	//	stVencChnAttr.stVencAttr.u32PicHeight = stDispSize.u32Height;/*the picture height*/
+	//	stVencChnAttr.stVencAttr.u32BufSize = stDispSize.u32Width * stDispSize.u32Height * 2;/*stream buffer size*/
+	//	stVencChnAttr.stVencAttr.u32Profile = 0;
+	//	stVencChnAttr.stVencAttr.bByFrame = HI_TRUE;/*get stream mode is slice mode or frame mode?*/
+
+	//	if (VENC_GOPMODE_ADVSMARTP == stGopAttr.enGopMode)
 	//	{
-	//		LOG(ERROR) << "SEEMMO_COMM_VENC_Start faild!";
+	//		u32StatTime = stGopAttr.stAdvSmartP.u32BgInterval / u32Gop;
+	//	}
+	//	else if (VENC_GOPMODE_SMARTP == stGopAttr.enGopMode)
+	//	{
+	//		u32StatTime = stGopAttr.stSmartP.u32BgInterval / u32Gop;
+	//	}
+	//	else
+	//	{
+	//		u32StatTime = 1;
+	//	}
+
+	//	stVencChnAttr.stVencAttr.stAttrH264e.bRcnRefShareBuf = HI_FALSE;
+	//	VENC_H264_CBR_S    stH264Cbr;
+
+	//	stVencChnAttr.stRcAttr.enRcMode = VENC_RC_MODE_H264CBR;
+	//	stH264Cbr.u32Gop = u32Gop; /*the interval of IFrame*/
+	//	stH264Cbr.u32StatTime = u32StatTime; /* stream rate statics time(s) */
+	//	stH264Cbr.u32SrcFrameRate = u32FrameRate; /* input (vi) frame rate */
+	//	stH264Cbr.fr32DstFrameRate = u32FrameRate; /* target frame rate */
+	//	stH264Cbr.u32BitRate = 1024 * 2 + 2048 * u32FrameRate / 30;
+
+	//	memcpy(&stVencChnAttr.stRcAttr.stH264Cbr, &stH264Cbr, sizeof(VENC_H264_CBR_S));
+
+	//	memcpy(&stVencChnAttr.stGopAttr, &stGopAttr, sizeof(VENC_GOP_ATTR_S));
+	//	
+
+	//	s32Ret = HI_MPI_VENC_CreateChn(i, &stVencChnAttr);
+	//	if (HI_SUCCESS != s32Ret)
+	//	{
+	//		return false;
+	//	}
+
+	//	/******************************************
+	//	 step 2:  Start Recv Venc Pictures
+	//	******************************************/
+	//	stRecvParam.s32RecvPicNum = -1;
+	//	s32Ret = HI_MPI_VENC_StartRecvFrame(i, &stRecvParam);
+	//	if (HI_SUCCESS != s32Ret)
+	//	{
+	//		return false;
 	//	}
 	//}
-
-	//ret = SEEMMO_COMM_VENC_StartGetStream(s32VencChn, 8);
-	//if (ret != 0)
-	//{
-	//	LOG(ERROR) << "SEEMMO_COMM_VENC_StartGetStream faild!";
-	//}
-
-	//RAW_LOG(INFO, "Venc_Init success!\n");
-	//return HI_SUCCESS;
 #endif
-	return 0;
+	LogPool::Error("init hisi sdk");
+	return true;
 }
 
-void HisiChannel::UninitHisi(int videoCount)
+void DecodeChannel::UninitHisi(int videoCount)
 {
 #ifndef _WIN32
+
+	//venc
+	for (int i = 0; i < videoCount; ++i)
+	{
+		/******************************************
+		 step 1:  Stop Recv Pictures
+		******************************************/
+		HI_MPI_VENC_StopRecvFrame(i);
+		/******************************************
+		 step 2:  Distroy Venc Channel
+		******************************************/
+		HI_MPI_VENC_DestroyChn(i);
+	}
 	//vedc
 	for (int i = 0; i < videoCount; ++i) {
 		MPP_CHN_S stSrcChn;
@@ -745,32 +788,32 @@ void HisiChannel::UninitHisi(int videoCount)
 #endif // !_WIN32
 }
 
-int HisiChannel::InitCore()
+int DecodeChannel::InitCore()
 {
-	if (!_downgrade)
+	if (!_useFFmpeg)
 	{
 		return 0;
 	}
-	if (_formatContext->streams[_videoIndex]->codecpar->codec_id != AVCodecID::AV_CODEC_ID_H264)
+	if (_inputStream->codecpar->codec_id != AVCodecID::AV_CODEC_ID_H264)
 	{
-		LogPool::Error(LogEvent::Decode, "codec is not h264", _url);
+		LogPool::Error(LogEvent::Decode, "codec is not h264", _inputUrl);
 		return 4;
 	}
 
-	AVCodec* decode = avcodec_find_decoder(_formatContext->streams[_videoIndex]->codecpar->codec_id);
+	AVCodec* decode = avcodec_find_decoder(_inputStream->codecpar->codec_id);
 	if (decode == NULL) {
-		LogPool::Error(LogEvent::Decode, "avcodec_find_decoder error", _url);
+		LogPool::Error(LogEvent::Decode, "avcodec_find_decoder error", _inputUrl);
 		return 5;
 	}
 	_decodeContext = avcodec_alloc_context3(decode);
-	if (avcodec_parameters_to_context(_decodeContext, _formatContext->streams[_videoIndex]->codecpar) < 0) {
-		LogPool::Error(LogEvent::Decode, "avcodec_parameters_to_context error", _url);
+	if (avcodec_parameters_to_context(_decodeContext, _inputStream->codecpar) < 0) {
+		LogPool::Error(LogEvent::Decode, "avcodec_parameters_to_context error", _inputUrl);
 		return 6;
 	}
 	_decodeContext->thread_count = 4;
 	_decodeContext->thread_type = FF_THREAD_FRAME;
 	if (avcodec_open2(_decodeContext, decode, NULL) < 0) {//´ò¿ª½âÂëÆ÷
-		LogPool::Error(LogEvent::Decode, "avcodec_open2 error", _url);
+		LogPool::Error(LogEvent::Decode, "avcodec_open2 error", _inputUrl);
 		return 7;
 	}
 
@@ -790,13 +833,13 @@ int HisiChannel::InitCore()
 		SWS_FAST_BILINEAR, NULL, NULL, NULL);
 	if (_yuv420spSwsContext == NULL)
 	{
-		LogPool::Error(LogEvent::Decode, "sws_getContext error", _url);
+		LogPool::Error(LogEvent::Decode, "sws_getContext error", _inputUrl);
 		return 9;
 	}
 	return 0;
 }
 
-void HisiChannel::UninitCore()
+void DecodeChannel::UninitCore()
 {
 	if (_yuv420spSwsContext != NULL)
 	{
@@ -815,9 +858,14 @@ void HisiChannel::UninitCore()
 	}
 }
 
-bool HisiChannel::Decode(const AVPacket* packet, int packetIndex)
+string& DecodeChannel::InputUrl()
 {
-	if (_downgrade)
+	return _inputUrl;
+}
+
+bool DecodeChannel::Decode(const AVPacket* packet, int packetIndex)
+{
+	if (_useFFmpeg)
 	{
 		return DecodeByFFmpeg(packet, packetIndex);
 	}
@@ -825,8 +873,8 @@ bool HisiChannel::Decode(const AVPacket* packet, int packetIndex)
 	{
 		if (!DecodeByHisi(packet, packetIndex))
 		{
-			LogPool::Warning(LogEvent::Decode, "decode downgrade", _url);
-			_downgrade = true;
+			LogPool::Warning(LogEvent::Decode, "decode downgrade", _inputUrl);
+			_useFFmpeg = true;
 			if (InitCore() != 0)
 			{
 				return false;
@@ -836,7 +884,7 @@ bool HisiChannel::Decode(const AVPacket* packet, int packetIndex)
 	}
 }
 
-bool HisiChannel::DecodeByHisi(const AVPacket* packet, int packetIndex)
+bool DecodeChannel::DecodeByHisi(const AVPacket* packet, int packetIndex)
 {
 #ifndef _WIN32
 	int hi_s32_ret = HI_SUCCESS;
@@ -866,11 +914,66 @@ bool HisiChannel::DecodeByHisi(const AVPacket* packet, int packetIndex)
 		if (hi_s32_ret == HI_SUCCESS)
 		{
 			//LogPool::Debug("receive success", _channelIndex, packetIndex);
-			if (!_detectChannel->IsBusy(_detectIndex))
+			if (!_detectChannel->IsBusy())
 			{
-				unsigned char* yuv = reinterpret_cast<unsigned char*>(HI_MPI_SYS_Mmap(frame.stVFrame.u64PhyAddr[0], YUVSize));
-				_detectChannel->HandleYUV(yuv, VideoWidth, VideoHeight, static_cast<int>(frame.stVFrame.u64PTS), _detectIndex);
-				hi_s32_ret = HI_MPI_SYS_Munmap(reinterpret_cast<HI_VOID*>(yuv), YUVSize);
+				unsigned char* yuv = reinterpret_cast<unsigned char*>(HI_MPI_SYS_Mmap(frame.stVFrame.u64PhyAddr[0], _yuv420spSize));
+				_detectChannel->HandleYUV(yuv, VideoWidth, VideoHeight, static_cast<int>(frame.stVFrame.u64PTS));
+				HI_MPI_SYS_Munmap(reinterpret_cast<HI_VOID*>(yuv), _yuv420spSize);
+				
+			//	hi_s32_ret = HI_MPI_VENC_SendFrame(_channelIndex, &frame, 0);
+			//	if (HI_SUCCESS != hi_s32_ret) {
+			//		LogPool::Warning("HI_MPI_VENC_SendFrame");
+			//		continue;
+			//	}
+			//	VENC_CHN_STATUS_S stStat;
+			//	VENC_STREAM_S stStream;
+			//	memset(&stStream, 0, sizeof(stStream));
+
+			//	s32Ret = HI_MPI_VENC_QueryStatus(_channelIndex, &stStat);
+			//	if (HI_SUCCESS != s32Ret)
+			//	{
+			//		LogPool::Warning("HI_MPI_VENC_QueryStatus");
+			//		continue;
+			//	}
+			//	if (0 == stStat.u32CurPacks)
+			//	{
+			//		continue;
+			//	}
+			//	stStream.pstPack = (VENC_PACK_S*)malloc(sizeof(VENC_PACK_S) * stStat.u32CurPacks);
+			//	if (NULL == stStream.pstPack)
+			//	{
+			//		break;
+			//	}
+			//	stStream.u32PackCount = stStat.u32CurPacks;
+			//	s32Ret = HI_MPI_VENC_GetStream(_channelIndex, &stStream, HI_TRUE);
+			//	if (HI_SUCCESS != s32Ret)
+			//	{
+			//		free(stStream.pstPack);
+			//		stStream.pstPack = NULL;
+			//		LogPool::Warning("HI_MPI_VENC_GetStream");
+			//		continue;
+			//	}
+
+			//	av_interleaved_write_frame(_outputFormat, &packet);
+
+			///*	fwrite(pstStream->pstPack[i].pu8Addr + pstStream->pstPack[i].u32Offset,
+			//		pstStream->pstPack[i].u32Len - pstStream->pstPack[i].u32Offset, 1, pFd);*/
+
+			//	s32Ret = HI_MPI_VENC_ReleaseStream(i, &stStream);
+			//	if (HI_SUCCESS != s32Ret)
+			//	{
+			//		LogPool::Warning("HI_MPI_VENC_ReleaseStream");
+			//		free(stStream.pstPack);
+			//		stStream.pstPack = NULL;
+			//		continue;
+			//	}
+
+			//	/*******************************************************
+			//	 step 2.7 : free pack nodes
+			//	*******************************************************/
+			//	free(stStream.pstPack);
+			//	stStream.pstPack = NULL;
+
 			}
 			HI_MPI_VPSS_ReleaseChnFrame(_channelIndex, 0, &frame);
 		}
@@ -884,7 +987,7 @@ bool HisiChannel::DecodeByHisi(const AVPacket* packet, int packetIndex)
 	return true;
 }
 
-bool HisiChannel::DecodeByFFmpeg(const AVPacket* packet, int packetIndex)
+bool DecodeChannel::DecodeByFFmpeg(const AVPacket* packet, int packetIndex)
 {
 	if (avcodec_send_packet(_decodeContext, packet) == 0)
 	{
@@ -897,7 +1000,7 @@ bool HisiChannel::DecodeByFFmpeg(const AVPacket* packet, int packetIndex)
 			}
 			else if (resultReceive < 0)
 			{
-				LogPool::Warning(LogEvent::Decode, "receive error", _url);
+				LogPool::Warning(LogEvent::Decode, "receive error", _inputUrl);
 				return false;
 			}
 			else if (resultReceive >= 0)
@@ -908,9 +1011,9 @@ bool HisiChannel::DecodeByFFmpeg(const AVPacket* packet, int packetIndex)
 				{
 					//_yuvHandler->HandleFrame(_yuv420spBuffer, VideoWidth, VideoHeight, packetIndex);
 
-					if (!_detectChannel->IsBusy(_detectIndex))
+					if (!_detectChannel->IsBusy())
 					{
-						_detectChannel->HandleYUV(_yuv420spBuffer, VideoWidth, VideoHeight, packetIndex, _detectIndex);
+						_detectChannel->HandleYUV(_yuv420spBuffer, VideoWidth, VideoHeight, packetIndex);
 					}
 				}
 			}
@@ -918,7 +1021,7 @@ bool HisiChannel::DecodeByFFmpeg(const AVPacket* packet, int packetIndex)
 	}
 	else
 	{
-		LogPool::Error(LogEvent::Decode, "send error", _url);
+		LogPool::Error(LogEvent::Decode, "send error", _inputUrl);
 		return false;
 	}
 	return true;

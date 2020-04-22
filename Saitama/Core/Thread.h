@@ -51,6 +51,14 @@ namespace Saitama
 		*/
 		virtual void StartCore() = 0;
 
+		/**
+		* @brief: 子类选择实现的停止启动程序
+		* @param: arg 启动参数
+		*/
+		virtual void StopCore()
+		{
+		}
+
 		// 当前程序是否已经提交了取消请求
 		bool _cancelled;
 

@@ -7,12 +7,26 @@ using namespace TerribleTornado;
 SqliteReader::SqliteReader()
 	:_stmt(NULL)
 {
-	sqlite3_open_v2("traffic.db", &_db, SQLITE_OPEN_READONLY | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE,NULL);
+	if (sqlite3_open_v2("traffic.db", &_db, SQLITE_OPEN_READONLY | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL) != 0)
+	{
+		LogError();
+	}
 }
 
 SqliteReader::~SqliteReader()
 {
 	sqlite3_close(_db);
+}
+
+const string& SqliteReader::LastError()
+{
+	return _lastError;
+}
+
+void SqliteReader::LogError()
+{
+	_lastError = string(sqlite3_errmsg(_db));
+	LogPool::Error(LogEvent::Sqlite, _lastError);
 }
 
 bool SqliteReader::BeginQuery(const string& sql)
@@ -24,7 +38,7 @@ bool SqliteReader::BeginQuery(const string& sql)
 	}
 	else
 	{
-		LogPool::Error(LogEvent::Sqlite, sqlite3_errmsg(_db));
+		LogError();
 		return false;
 	}
 }
@@ -41,7 +55,6 @@ bool SqliteReader::HasRow()
 	}
 }
 
-
 string SqliteReader::GetString(int index) const
 {
 	if (_stmt == NULL)
@@ -56,7 +69,7 @@ string SqliteReader::GetString(int index) const
 	}
 }
 
-int SqliteReader::GetInteger(int index) const
+int SqliteReader::GetInt(int index) const
 {
 	if (_stmt == NULL)
 	{
@@ -65,6 +78,18 @@ int SqliteReader::GetInteger(int index) const
 	else
 	{
 		return sqlite3_column_int(_stmt, index);
+	}
+}
+
+long long SqliteReader::GetLong(int index) const
+{
+	if (_stmt == NULL)
+	{
+		return -1;
+	}
+	else
+	{
+		return sqlite3_column_int64(_stmt, index);
 	}
 }
 
@@ -79,12 +104,26 @@ void SqliteReader::EndQuery()
 
 SqliteWriter::SqliteWriter()
 {
-	sqlite3_open_v2("traffic.db", &_db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL);
+	if (sqlite3_open_v2("traffic.db", &_db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL) != 0)
+	{
+		LogError();
+	}
 }
 
 SqliteWriter::~SqliteWriter()
 {
 	sqlite3_close(_db);
+}
+
+const string& SqliteWriter::LastError()
+{
+	return _lastError;
+}
+
+void SqliteWriter::LogError()
+{
+	_lastError = string(sqlite3_errmsg(_db));
+	LogPool::Error(LogEvent::Sqlite, _lastError);
 }
 
 int SqliteWriter::ExecuteRowCount(const std::string& sql)
@@ -96,7 +135,7 @@ int SqliteWriter::ExecuteRowCount(const std::string& sql)
 	}
 	else
 	{
-		LogPool::Error(LogEvent::Sqlite,sqlite3_errmsg(_db));
+		LogError();
 		return -1;
 	} 
 }
@@ -110,7 +149,7 @@ int SqliteWriter::ExecuteKey(const std::string& sql)
 	}
 	else
 	{
-		LogPool::Error(LogEvent::Sqlite, sqlite3_errmsg(_db));
+		LogError();
 		return -1;
 	}
 }

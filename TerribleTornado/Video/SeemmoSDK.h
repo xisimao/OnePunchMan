@@ -7,20 +7,25 @@
 
 namespace TerribleTornado
 {
+	//获取版本
 	typedef const char* (*seemmo_version_t)(void);
+	//初始化进程
 	typedef int32_t(*seemmo_process_init_t)(const char* base_dir,
 		uint32_t img_core_num,
 		uint32_t video_core_num,
 		const char* auth_server,
 		int32_t auth_type,
 		bool log_init_swith);
+	//卸载sdk
 	typedef int32_t(*seemmo_uninit_t)(void);
+	//初始化线程
 	typedef int32_t(*seemmo_thread_init_t)(
 		int type,
 		int device,
 		int batch);
+	//卸载线程
 	typedef int32_t(*seemmo_thread_uninit_t)();
-
+	//视频检测
 	typedef int32_t(*seemmo_video_pvc_t)(
 		int32_t frame_num,
 		const int32_t* video_chn,
@@ -32,7 +37,7 @@ namespace TerribleTornado
 		char* rsp_buf,
 		int32_t* buff_len,
 		int32_t timeout);
-
+	//视频识别
 	typedef int32_t(*seemmo_video_pvc_recog_t)(
 		int32_t image_num,
 		const char** guids,
@@ -54,6 +59,8 @@ namespace TerribleTornado
 		static seemmo_thread_uninit_t seemmo_thread_uninit;
 		static seemmo_video_pvc_t seemmo_video_pvc;
 		static seemmo_video_pvc_recog_t seemmo_video_pvc_recog;
+		//表示是否初始化成功，也是授权成功判断的一句
+		static bool Inited;
 
 	private:
 
