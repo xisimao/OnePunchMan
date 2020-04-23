@@ -114,7 +114,6 @@ void DataChannel::Update(HttpReceivedEventArgs* e)
         }
         else if (e->Function.compare(HttpFunction::Post) == 0)
         {
-            LogPool::Information(e->RequestJson);
             SetDevice(e);
         }
     }
@@ -248,7 +247,7 @@ void DataChannel::SetDevice(HttpReceivedEventArgs* e)
         {
             if (tempChannels.find(i + 1) == tempChannels.end())
             {
-                DeleteChannel(i);
+                DeleteChannel(i+1);
             }
             else
             {
@@ -342,7 +341,7 @@ void DataChannel::DeleteChannel(Saitama::HttpReceivedEventArgs* e)
     string id = GetId(e->Url, "/api/channels");
     int channelIndex = StringEx::Convert<int>(id);
     FlowChannelData data;
-    if (data.Delete(channelIndex) == 1)
+    if (data.Delete(channelIndex))
     {
         DeleteChannel(channelIndex);
         e->Code = HttpCode::OK;

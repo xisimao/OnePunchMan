@@ -144,11 +144,8 @@ bool FlowChannelData::Delete(int channelIndex)
 	int result = _sqlite.ExecuteRowCount(StringEx::Combine("Delete From Flow_Channel Where ChannelIndex=", channelIndex));
 	if (result==1)
 	{
-		result= _sqlite.ExecuteRowCount(StringEx::Combine("Delete From Flow_Lane Where ChannelIndex=", channelIndex));
-		if (result == 1)
-		{
-			return true;
-		}	
+		_sqlite.ExecuteRowCount(StringEx::Combine("Delete From Flow_Lane Where ChannelIndex=", channelIndex));
+		return true;
 	}
 	return false;
 }
