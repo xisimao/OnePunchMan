@@ -15,10 +15,6 @@ using namespace TerribleTornado;
 
 int main(int argc, char* argv[])
 {
-    DateTime d = DateTime::Now();
-    long long tt = d.Milliseconds();
-    long long tt1 = DateTime::UtcTimeStamp();
-
     if (argc > 1)
     {
         string arg(argv[1]);

@@ -65,9 +65,9 @@ char StringEx::Xor(const char* buffer, unsigned int size)
 	return (char)accumulate(buffer, buffer + size, 0, [](char a, char b) {return a ^ b; });
 }
 
-string StringEx::ToBase64String(const unsigned char* buffer, unsigned int size) {
+void StringEx::ToBase64String(const unsigned char* buffer, unsigned int size, string* base64) {
 
-	std::string ret;
+
 	int i = 0;
 	int j = 0;
 	unsigned char char_array_3[3];
@@ -84,7 +84,7 @@ string StringEx::ToBase64String(const unsigned char* buffer, unsigned int size) 
 			char_array_4[3] = static_cast<unsigned char>(char_array_3[2] & 0x3f);
 
 			for (i = 0; (i < 4); i++) {
-				ret += Base64Chars[char_array_4[i]];
+				base64->push_back(Base64Chars[char_array_4[i]]);
 			}
 			i = 0;
 		}
@@ -103,15 +103,13 @@ string StringEx::ToBase64String(const unsigned char* buffer, unsigned int size) 
 		char_array_4[3] = static_cast<unsigned char>(char_array_3[2] & 0x3f);
 
 		for (j = 0; (j < i + 1); j++) {
-			ret += Base64Chars[char_array_4[j]];
+			base64->push_back(Base64Chars[char_array_4[j]]);
 		}
 
 		while ((i++ < 3)) {
-			ret += '=';
+			base64->push_back('=');
 		}
 	}
-
-	return ret;
 }
 
 string StringEx::FromBase64String(std::string const& value) {

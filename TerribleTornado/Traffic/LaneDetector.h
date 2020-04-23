@@ -20,28 +20,28 @@ namespace TerribleTornado
 		* @brief: 构造函数
 		*/
 		DetectItem()
-			:DetectItem(Saitama::Rectangle(), 0)
+			:DetectItem(Saitama::Point(), 0)
 		{
 
 		}
 
 		/**
 		* @brief: 构造函数
-		* @param: region 检测元素区域
+		* @param: point 检测元素点
 		*/
-		DetectItem(const Saitama::Rectangle& region)
-			:DetectItem(region,0)
+		DetectItem(const Saitama::Point& point)
+			:DetectItem(point,0)
 		{
 
 		}
 
 		/**
 		* @brief: 构造函数
-		* @param: region 检测元素区域
+		* @param: point 检测元素点
 		* @param: type 检测元素类型
 		*/
-		DetectItem(const Saitama::Rectangle& region,int type)
-			:HitPoint(region.Top.X + region.Width / 2, region.Top.Y + region.Height), Type(type)
+		DetectItem(const Saitama::Point& point,int type)
+			:HitPoint(point), Type(type)
 		{
 
 		}
@@ -51,6 +51,24 @@ namespace TerribleTornado
 		//检测元素类型
 		int Type;
 		
+	};
+	
+	//识别项
+	class RecognItem
+	{
+	public:
+		//通道序号
+		int ChannelIndex;
+		//guid
+		std::string Guid;
+		//检测项类型
+		int Type;
+		//检测点
+		Saitama::Point HitPoint;
+		//宽度
+		int Width;
+		//高度
+		int Height;
 	};
 
 	//检测元素类型
@@ -66,6 +84,7 @@ namespace TerribleTornado
 		Truck = 8
 	};
 
+	//交通状态
 	enum class TrafficStatus
 	{
 		Good = 1,
@@ -94,7 +113,7 @@ namespace TerribleTornado
 	};
 
 	//流量数据项
-	class LaneItem
+	class FlowItem
 	{
 	public:
 		//车道编号
@@ -133,7 +152,6 @@ namespace TerribleTornado
 	class VideoStruct
 	{
 	public:
-		std::string LaneId;
 		std::string Image;
 		std::string Feature;
 		int VideoStructType;
@@ -193,24 +211,24 @@ namespace TerribleTornado
 
 		/**
 		* @brief: 检测机动车
-		* @param: item 检测项
+		* @param: item 检测数据项
 		* @return: 返回车道io状态
 		*/
 		IOItem Detect(const std::map<std::string, DetectItem>& items,long long timeStamp);
 
 		/**
-		* @brief: 检测数据是否在车道范围内
-		* @param: item 检测项
-		* @return: 在车道内返回true
+		* @brief: 识别机动车
+		* @param: item 识别数据项
+		* @return: 如果识别项在车道内返回车道编号否则返回空字符串
 		*/
-		bool Contains(const DetectItem& item);
+		std::string Recogn(const RecognItem& item);
 
 		/**
 		* @brief: 收集车道计算数据
 		* @param: item 结算时间戳
 		* @return: 车道计算数据
 		*/
-		LaneItem Collect(long long timeStamp);
+		FlowItem Collect(long long timeStamp);
 
 	private:
 
@@ -226,7 +244,14 @@ namespace TerribleTornado
 		* @return: 线段
 		*/
 		Saitama::Line GetLine(const std::string& line);
-
+		
+		/**
+		* @brief: 解析多边形字符串
+		* @param: region 区域字符串
+		* @return: 多边形
+		*/
+		Saitama::Polygon GetPolygon(const std::string& region);
+		
 		//车道编号
 		std::string _laneId;
 		//当前检测区域

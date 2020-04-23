@@ -6,6 +6,7 @@
 #include "JsonFormatter.h"
 #include "LaneDetector.h"
 #include "MqttChannel.h"
+#include "IVE_8UC3Handler.h"
 
 namespace TerribleTornado
 {
@@ -20,6 +21,12 @@ namespace TerribleTornado
 		* @param: mqtt mqtt
 		*/
 		ChannelDetector(int width, int height, MqttChannel* mqtt);
+
+		/**
+		* @brief: 获取通道地址
+		* @return 通道地址
+		*/
+		std::string ChannelUrl();
 
 		/**
 		* @brief: 更新通道
@@ -42,17 +49,18 @@ namespace TerribleTornado
 
 		/**
 		* @brief: 处理检测数据
-		* @param: detectJson 检测结构
-		* @param: timeStamp 时间戳
-		* @return: io json数据
+		* @param: detectJson 检测json数据
+		* @param: params 检测参数
+		* @return: 识别数据集合
 		*/
-		std::vector<std::string> HandleDetect(const std::string& detectJson, long long timeStamp);
+		std::vector<RecognItem> HandleDetect(const std::string& detectJson, std::string* param);
 		
 		/**
 		* @brief: 处理识别数据
-		* @param: recognJson 识别数据
+		* @param: item 识别数据项
+		* @param: recognJson 识别json数据
 		*/
-		void HandleRecognize(const std::string& recognJson);
+		void HandleRecognize(const RecognItem& item,uint8_t* bgrBuffer,const std::string& recognJson);
 
 	private:
 		//轮询中睡眠时间(毫秒)
@@ -65,11 +73,11 @@ namespace TerribleTornado
 
 		/**
 		* @brief: 从json数据中获取检测项集合
-		* @param: guids guid集合
+		* @param: items 识别项集合
 		* @param: jd json解析
 		* @param: key 检测类型，机动车，非机动和和行人
 		*/
-		static void GetRecognGuids(std::vector<std::string>* guids, const Saitama::JsonDeserialization& jd, const std::string& key);
+		void GetRecognItems(std::vector<RecognItem>* items, const Saitama::JsonDeserialization& jd, const std::string& key);
 
 		/**
 		* @brief: 从json数据中获取检测项集合
@@ -77,8 +85,10 @@ namespace TerribleTornado
 		* @param: jd json解析
 		* @param: key 检测类型，机动车，非机动和和行人
 		*/
-		static void GetDetecItems(std::map<std::string, DetectItem>* items, const Saitama::JsonDeserialization& jd, const std::string& key);
+		void GetDetecItems(std::map<std::string, DetectItem>* items, const Saitama::JsonDeserialization& jd, const std::string& key);
 
+		//视频序号
+		int _channelIndex;
 		//视频地址
 		std::string _channelUrl;
 		//mqtt
@@ -87,6 +97,12 @@ namespace TerribleTornado
 		std::mutex _laneMutex;
 		//车道集合
 		std::vector<LaneDetector*> _lanes;
+		//8uc3转换
+		Fubuki::IVE_8UC3Handler _handler;
+		//车道算法筛选区域参数
+		std::string _param;
+		//是否设置过车道参数
+		bool _setParam;
 	};
 
 }

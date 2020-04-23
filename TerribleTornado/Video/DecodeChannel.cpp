@@ -672,7 +672,6 @@ bool DecodeChannel::InitHisi(int videoCount)
 void DecodeChannel::UninitHisi(int videoCount)
 {
 #ifndef _WIN32
-
 	//venc
 	for (int i = 0; i < videoCount; ++i)
 	{
@@ -786,6 +785,7 @@ void DecodeChannel::UninitHisi(int videoCount)
 	HI_MPI_SYS_Exit();
 	HI_MPI_VB_Exit();
 #endif // !_WIN32
+	LogPool::Error("uninit hisi sdk");
 }
 
 int DecodeChannel::InitCore()

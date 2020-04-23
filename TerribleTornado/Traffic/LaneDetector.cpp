@@ -51,8 +51,8 @@ void LaneDetector::InitLane(const Lane& lane)
 		points.push_back(point2);
 		points.push_back(point3);
 		points.push_back(point4);
-		_region= Polygon(points);
-
+		//_region= Polygon(points);
+		_region = GetPolygon(lane.Region);
 		Line line1(point1, point2);
 		Line line2(point3, point4);
 		double pixels = line1.Middle().Distance(line2.Middle());
@@ -90,6 +90,33 @@ Line LaneDetector::GetLine(const string& line)
 	return Line();
 }
 
+Polygon LaneDetector::GetPolygon(const std::string& region)
+{
+	vector<Point> points;
+	if (region.size() > 2)
+	{
+		vector<string> coordinates = StringEx::Split(region.substr(1, region.size() - 2), ",", true);
+		int x, y = 0;
+		for (unsigned int i = 0; i < coordinates.size(); ++i)
+		{
+			if (coordinates[i].size() > 2)
+			{
+				if (i % 2 == 0)
+				{
+					x = StringEx::Convert<int>(coordinates[i].substr(1, coordinates[i].size() - 1));
+				}
+				else
+				{
+					y = StringEx::Convert<int>(coordinates[i].substr(0, coordinates[i].size() - 1));
+					points.push_back(Point(x, y));
+				}
+			}
+		}
+	
+	}
+	return Polygon(points);
+}
+
 IOItem LaneDetector::Detect(const map<string, DetectItem>& items,long long timeStamp)
 {
 	lock_guard<mutex> lck(_mutex);
@@ -100,7 +127,7 @@ IOItem LaneDetector::Detect(const map<string, DetectItem>& items,long long timeS
 	item.Type = 0;
 	for (map<string, DetectItem>::const_iterator it = items.begin(); it!=items.end();++it)
 	{
-		if (Contains(it->second))
+		if (_region.Contains(it->second.HitPoint))
 		{
 			item.Status = IOStatus::In;
 			item.Type = it->second.Type;
@@ -192,10 +219,15 @@ IOItem LaneDetector::Detect(const map<string, DetectItem>& items,long long timeS
 	}
 }
 
-LaneItem LaneDetector::Collect(long long timeStamp)
+string LaneDetector::Recogn(const RecognItem& item)
+{
+	return _region.Contains(item.HitPoint) ? _laneId : string();
+}
+
+FlowItem LaneDetector::Collect(long long timeStamp)
 {
 	lock_guard<mutex> lck(_mutex);
-	LaneItem item;
+	FlowItem item;
 	item.LaneId = _laneId;
 
 	item.Persons = _persons;
@@ -257,7 +289,4 @@ LaneItem LaneDetector::Collect(long long timeStamp)
 	return item;
 }
 
-bool LaneDetector::Contains(const DetectItem& item)
-{
-	return _region.Contains(item.HitPoint);
-}
+

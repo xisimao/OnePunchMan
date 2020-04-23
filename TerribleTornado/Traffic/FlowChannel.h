@@ -77,16 +77,13 @@ namespace TerribleTornado
 		//车道集合
 		std::vector<Lane> Lanes;
 
-		//更新时间戳
-		long long TimeStamp;
-
 		/**
 		* @brief: 获取通道rtmp地址
 		* @return: 通道rtmp地址
 		*/
-		std::string RtmpUrl() const
+		std::string RtmpUrl(const std::string ip) const
 		{
-			return Saitama::StringEx::Combine("rtmp://127.0.0.1:1935/live/", ChannelIndex);
+			return Saitama::StringEx::Combine("rtmp://",ip,":1935/live/", ChannelIndex);
 		}
 	};
 

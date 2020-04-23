@@ -59,7 +59,7 @@ namespace Saitama
 		* @param: size 需要加密的字节流长度
 		* @return: 加密后的字符串
 		*/
-		static std::string ToBase64String(const unsigned char* buffer, unsigned int size);
+		static void ToBase64String(const unsigned char* buffer, unsigned int size, std::string* base64);
 
 		/**
 		* @brief: base64算法解密

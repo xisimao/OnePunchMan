@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <algorithm>
 #include <math.h>
+#include "StringEx.h"
 
 namespace Saitama
 {
@@ -55,6 +56,14 @@ namespace Saitama
 			return sqrt(static_cast<double>(x)* static_cast<double>(x) + static_cast<double>(y)* static_cast<double>(y));
 		}
 
+		/**
+		* @brief: 获取点的json数据
+		* @return: 点的json数据
+		*/
+		std::string ToJson() const
+		{
+			return StringEx::Combine("[", X, ",", Y, "]");
+		}
 	};
 
 	//线段
@@ -170,7 +179,7 @@ namespace Saitama
 		* @param: height 矩形的高度
 		*/
 		Rectangle(const Point& top, int width, int height)
-			:Top(top), Width(width), Height(height)
+			:Top(top), Width(width), Height(height), HitPoint(top.X + width / 2, top.Y + height)
 		{
 
 		}
@@ -181,7 +190,8 @@ namespace Saitama
 		int Width;
 		//矩形的高度
 		int Height;
-
+		//测试点
+		Point HitPoint;
 	};
 
 	//多边形
@@ -242,6 +252,30 @@ namespace Saitama
 				p1 = p2;
 			}
 			return intersectCount % 2 == 1;
+		}
+		
+		/**
+		* @brief: 获取多边形的json数据
+		* @return: 多边形的json数据
+		*/
+		std::string ToJson() const
+		{
+			std::string json;
+			json.append("[");
+			for (unsigned int i = 0; i < _points.size(); ++i)
+			{
+				json.append(_points[i].ToJson());
+				json.append(",");
+			}
+			if (json.size() == 1)
+			{
+				json.append("]");
+			}
+			else
+			{
+				json[json.size() - 1] = ']';
+			}
+			return json;
 		}
 
 	private:

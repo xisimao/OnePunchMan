@@ -100,10 +100,11 @@ namespace TerribleTornado
 
         /**
         * @brief: 获取通道json数据
+        * @param: e http消息接收事件参数
         * @param: channel 通道
         * @return: 通道json数据
         */
-        std::string GetChannelJson(const FlowChannel& channel);
+        std::string GetChannelJson(Saitama::HttpReceivedEventArgs* e,const FlowChannel& channel);
 
         /**
         * @brief: 获取url是否是指定的前缀

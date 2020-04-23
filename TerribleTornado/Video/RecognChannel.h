@@ -5,6 +5,7 @@
 #include "SeemmoSDK.h"
 #include "Thread.h"
 #include "ChannelDetector.h"
+#include "IVE_8UC3Handler.h"
 
 namespace TerribleTornado
 {
@@ -27,11 +28,10 @@ namespace TerribleTornado
 		~RecognChannel();
 
 		/**
-		* @brief: 推送guid集合
-		* @param: channelIndex 通道序号
-		* @param: guids guid集合
+		* @brief: 推送识别数据项集合
+		* @param: items 识别数据项集合
 		*/
-		void PushGuids(int channelIndex,const std::vector<std::string>& guids);
+		void PushItems(const std::vector<RecognItem> items);
 		
 		/**
 		* @brief: 获取是否初始化完成
@@ -46,16 +46,6 @@ namespace TerribleTornado
 		void StartCore();
 
 	private:
-		//guid数据项
-		class GuidItem
-		{
-		public:
-			//通道序号
-			int ChannelIndex;
-			//guid
-			std::string Guid;
-		};
-
 		//最大缓存数量
 		static const int MaxCacheCount;
 		//线程休眠时间(ms)
@@ -70,7 +60,7 @@ namespace TerribleTornado
 		//guid数据项集合同步锁
 		std::mutex _mutex;
 		//guid数据项集合
-		std::queue<GuidItem> _guidsCache;
+		std::queue<RecognItem> _items;
 
 		//recogn
 		std::vector<uint8_t*> _bgrs;
@@ -78,5 +68,7 @@ namespace TerribleTornado
 		std::string _param;
 		std::vector<char> _result;
 
+		//debug
+		Fubuki::IVE_8UC3Handler* _bgrHandler;
 	};
 }

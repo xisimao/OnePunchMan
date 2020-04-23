@@ -4,6 +4,7 @@ using namespace std;
 using namespace Saitama;
 using namespace Fubuki;
 
+const int IVE_8UC3Handler::HeaderSize = 54;
 
 IVE_8UC3Handler::IVE_8UC3Handler(int count)
 	:_index(0), _count(count)
@@ -11,16 +12,8 @@ IVE_8UC3Handler::IVE_8UC3Handler(int count)
 
 }
 
-void IVE_8UC3Handler::HandleFrame(unsigned char* ive, int width, int height, int packetIndex)
+unsigned char* IVE_8UC3Handler::IveToBmp(unsigned char* ive, int width, int height)
 {
-	if (_index >= _count)
-	{
-		return;
-	}
-	FILE* fw = NULL;
-	if ((fw = fopen(StringEx::Combine("ive_", packetIndex, ".bmp").c_str(), "wb")) == NULL) {
-		return;
-	}
 	typedef struct
 	{
 		int imageSize;
@@ -43,42 +36,64 @@ void IVE_8UC3Handler::HandleFrame(unsigned char* ive, int width, int height, int
 		int  colorImportant;
 	}InfoHead;
 
-	BmpHead m_BMPHeader = { 0 };
-	InfoHead  m_BMPInfoHeader = { 0 };
-	char bfType[2] = { 'B','M' };
-	int header_size = sizeof(bfType) + sizeof(BmpHead) + sizeof(InfoHead);
+	BmpHead bmpHeader = { 0 };
+	InfoHead  bmpInfoHeader = { 0 };
+	char type[2] = { 'B','M' };
 
-	m_BMPHeader.imageSize = width* height * 3 + header_size;
-	m_BMPHeader.startPosition = header_size;
+	bmpHeader.imageSize = width * height * 3 + HeaderSize;
+	bmpHeader.startPosition = HeaderSize;
 
-	m_BMPInfoHeader.Length = sizeof(InfoHead);
-	m_BMPInfoHeader.width = width;
+	bmpInfoHeader.Length = sizeof(InfoHead);
+	bmpInfoHeader.width = width;
 	//BMP storage pixel data in opposite direction of Y-axis (from bottom to top).
-	m_BMPInfoHeader.height = -height;
-	m_BMPInfoHeader.colorPlane = 1;
-	m_BMPInfoHeader.bitColor = 24;
-	m_BMPInfoHeader.realSize = header_size;
+	bmpInfoHeader.height = -height;
+	bmpInfoHeader.colorPlane = 1;
+	bmpInfoHeader.bitColor = 24;
+	bmpInfoHeader.realSize = HeaderSize;
 
-	fwrite(bfType, 1, sizeof(bfType), fw);
-	fwrite(&m_BMPHeader, 1, sizeof(BmpHead), fw);
-	fwrite(&m_BMPInfoHeader, 1, sizeof(InfoHead), fw);
+	uint8_t* bmp = new uint8_t[ width * height * 3+ HeaderSize];
+
+	memcpy(bmp, &type, sizeof(type));
+	memcpy(bmp + sizeof(type), &bmpHeader, sizeof(BmpHead));
+	memcpy(bmp + sizeof(type) + sizeof(BmpHead), &bmpInfoHeader, sizeof(InfoHead));
 
 	//BMP save R1|G1|B1,R2|G2|B2 as B1|G1|R1,B2|G2|R2
 	//It saves pixel data in Little Endian
 	uint8_t* b = ive;
 	uint8_t* g = b + width * height;
 	uint8_t* r = g + width * height;
-	uint8_t* dst = new uint8_t[width * height * 3];
+	uint8_t* image = bmp + HeaderSize;
 	for (int j = 0; j < height; j++) {
 		for (int i = 0; i < width; i++) {
-			dst[(j * width + i) * 3 + 0] = b[j * width + i];
-			dst[(j * width + i) * 3 + 1] = g[j * width + i];
-			dst[(j * width + i) * 3 + 2] = r[j * width + i];
+			image[(j * width + i) * 3 + 0] = b[j * width + i];
+			image[(j * width + i) * 3 + 1] = g[j * width + i];
+			image[(j * width + i) * 3 + 2] = r[j * width + i];
 		}
 	}
+	return bmp;
+}
 
-	fwrite(dst, 1, width*height*3, fw);
+void IVE_8UC3Handler::HandleFrame(unsigned char* ive, int width, int height, long long packetIndex)
+{
+	if (_index >= _count)
+	{
+		return;
+	}
+	FILE* fw = NULL;
+	if ((fw = fopen(StringEx::Combine("ive_", packetIndex, ".bmp").c_str(), "wb")) == NULL) {
+		return;
+	}
+	unsigned char* bmp = IveToBmp(ive, width, height);
+	fwrite(bmp, 1, width*height*3+ HeaderSize, fw);
 	fclose(fw);
-	delete[] dst;
+	delete[] bmp;
 	_index += 1;
+}
+
+void IVE_8UC3Handler::ToBase64String(unsigned char* ive, int width, int height, std::string* base64)
+{
+	unsigned char* bmp = IveToBmp(ive, width, height);
+	base64->assign("data:image/bmp;base64,");
+	StringEx::ToBase64String(bmp, width * height * 3+HeaderSize, base64);
+	delete[] bmp;
 }

@@ -37,15 +37,14 @@ DetectChannel::DetectChannel(int channelIndex, int width, int height, RecognChan
 	_widths.push_back(_width);
 	_heights.push_back(_height);
 	_bgrs.push_back(_item.BgrBuffer);
-	_params.push_back("{\"Detect\":{\"DetectRegion\":[],\"IsDet\":true,\"MaxCarWidth\":10,\"MinCarWidth\":10,\"Mode\":0,\"Threshold\":20,\"Version\":1001}}");
+	_param = "{\"Detect\":{\"DetectRegion\":[],\"IsDet\":true,\"MaxCarWidth\":10,\"MinCarWidth\":10,\"Mode\":0,\"Threshold\":20,\"Version\":1001}}";
 #endif // !_WIN32
-
+	_params.resize(1);
 	_timeStamps.resize(1);
 	_result.resize(4 * 1024 * 1024);
 
-
-	_yuvHandler = new YUV420SPHandler();
-	_bgrHandler = new IVE_8UC3Handler;
+	//_yuvHandler = new YUV420SPHandler();
+	//_bgrHandler = new IVE_8UC3Handler;
 }
 
 DetectChannel::~DetectChannel()
@@ -148,15 +147,15 @@ void DetectChannel::StartCore()
 	_inited = true;
 	while (!_cancelled)
 	{
-		long long detectTimeStamp = DateTime::UtcTimeStamp();
-
 		if (_item.HasValue)
 		{
+			long long detectTimeStamp = DateTime::UtcTimeStamp();
 			memcpy(_item.YuvBuffer, _item.YuvTempBuffer, _item.YuvSize);
+			_params[0] = _param.c_str();
+			_timeStamps[0] = _item.PacketIndex;
 			_item.HasValue = false;
 			if (YuvToBgr())
 			{
-				_timeStamps[0] = detectTimeStamp;
 				int32_t size = static_cast<int32_t>(_result.size());
 				int result = SeemmoSDK::seemmo_video_pvc(1,
 					_indexes.data(),
@@ -170,12 +169,11 @@ void DetectChannel::StartCore()
 					0);
 				if (result == 0)
 				{
-					vector<string> recognGuids = _detector->HandleDetect(_result.data(),detectTimeStamp);
-					if (!recognGuids.empty())
+					vector<RecognItem> recognItems = _detector->HandleDetect(_result.data(), &_param);
+					if (!recognItems.empty())
 					{
-						_recogn->PushGuids(_channelIndex,recognGuids);
+						_recogn->PushItems(recognItems);
 					}
-					LogPool::Information(_result.data());
 				}
 				LogPool::Debug("detect span", _indexes[0], DateTime::UtcTimeStamp() - detectTimeStamp);
 			}

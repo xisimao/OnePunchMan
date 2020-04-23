@@ -67,6 +67,10 @@ void SeemmoSDK::Uninit()
 	{
 		seemmo_uninit();
 	}
-	dlclose(Handle);
+	if (Handle != NULL)
+	{
+		dlclose(Handle);
+	}
 #endif // !_WIN32
+	LogPool::Information("uninit seemmo sdk");
 }

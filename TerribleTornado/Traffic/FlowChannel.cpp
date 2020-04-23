@@ -45,7 +45,6 @@ FlowChannel FlowChannelData::FillChannel(const SqliteReader& sqlite)
 	channel.ChannelName = sqlite.GetString(1);
 	channel.ChannelUrl = sqlite.GetString(2);
 	channel.ChannelType = sqlite.GetInt(3);
-	channel.TimeStamp = sqlite.GetLong(4);
 
 	SqliteReader laneSqlite;
 	string laneSql(StringEx::Combine("Select * From Flow_Lane Where ChannelIndex=", channel.ChannelIndex));
@@ -79,12 +78,11 @@ FlowChannel FlowChannelData::FillChannel(const SqliteReader& sqlite)
 
 bool FlowChannelData::Insert(const FlowChannel& channel)
 {
-	string channelSql(StringEx::Combine("Insert Into Flow_Channel (ChannelIndex,ChannelName,ChannelUrl,ChannelType,TimeStamp) Values ("
+	string channelSql(StringEx::Combine("Insert Into Flow_Channel (ChannelIndex,ChannelName,ChannelUrl,ChannelType) Values ("
 		, channel.ChannelIndex, ","
 		, "'", channel.ChannelName, "',"
 		, "'", channel.ChannelUrl, "',"
-		, channel.ChannelType,","
-		, channel.TimeStamp
+		, channel.ChannelType
 		, ")"));
 	if (_sqlite.ExecuteRowCount(channelSql)==1)
 	{

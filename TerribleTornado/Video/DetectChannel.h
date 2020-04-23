@@ -153,6 +153,7 @@ namespace TerribleTornado
 		std::vector<uint32_t> _heights;
 		std::vector<const char*> _params;
 		std::vector<char> _result;
+		std::string _param;
 
 		//debug
 		Fubuki::YUV420SPHandler* _yuvHandler;

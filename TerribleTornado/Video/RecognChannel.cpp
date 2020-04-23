@@ -1,11 +1,12 @@
 #include "RecognChannel.h"
 
 using namespace std;
+using namespace Fubuki;
 using namespace Saitama;
 using namespace TerribleTornado;
 
 const int RecognChannel::ItemCount = 4;
-const int RecognChannel::MaxCacheCount = 20;
+const int RecognChannel::MaxCacheCount = 100;
 const int RecognChannel::SleepTime = 50;
 
 RecognChannel::RecognChannel(int recognIndex,int width, int height, const vector<ChannelDetector*>& detectors)
@@ -15,6 +16,7 @@ RecognChannel::RecognChannel(int recognIndex,int width, int height, const vector
 	_guids.resize(1);
 	_param = "{\"Detect\":{\"DetectRegion\":[],\"IsDet\":true,\"MaxCarWidth\":0,\"MinCarWidth\":0,\"Mode\":0,\"Threshold\":20,\"Version\":1001},\"Recognize\":{\"Person\":{\"IsRec\":true},\"Feature\":{\"IsRec\":true},\"Vehicle\":{\"Brand\":{\"IsRec\":true},\"Plate\":{\"IsRec\":true},\"Color\":{\"IsRec\":true},\"Marker\":{\"IsRec\":true},\"Sunroof\":{\"IsRec\":true},\"SpareTire\":{\"IsRec\":true},\"Slag\":{\"IsRec\":true},\"Rack\":{\"IsRec\":true},\"Danger\":{\"IsRec\":true},\"Crash\":{\"IsRec\":true},\"Call\":{\"IsRec\":true},\"Belt\":{\"IsRec\":true},\"Convertible\":{\"IsRec\":true},\"Manned\":{\"IsRec\":true}}}}";
 	_result.resize(4 * 1024 * 1024);
+	//_bgrHandler = new IVE_8UC3Handler();
 }
 
 RecognChannel::~RecognChannel()
@@ -27,19 +29,16 @@ bool RecognChannel::Inited()
 	return _inited;
 }
 
-void RecognChannel::PushGuids(int channelIndex,const vector<string>& guids)
+void RecognChannel::PushItems(const vector<RecognItem> items)
 {
-	if (!guids.empty())
+	if (!items.empty())
 	{
-		if (_guidsCache.size() < MaxCacheCount)
+		if (_items.size() < MaxCacheCount)
 		{
 			lock_guard<mutex> lck(_mutex);
-			for (vector<string>::const_iterator it = guids.begin(); it != guids.end(); ++it)
+			for (vector<RecognItem>::const_iterator it = items.begin(); it != items.end(); ++it)
 			{
-				GuidItem item;
-				item.ChannelIndex = channelIndex;
-				item.Guid = *it;
-				_guidsCache.push(item);
+				_items.push(*it);
 			}
 		}
 		else
@@ -71,16 +70,17 @@ void RecognChannel::StartCore()
 	_inited = true;
 	while (!_cancelled)
 	{
-		if (_guidsCache.empty())
+		if (_items.empty())
 		{
 			this_thread::sleep_for(chrono::milliseconds(SleepTime));
 		}
 		else
 		{
-			lock_guard<mutex> lck(_mutex);
-			GuidItem guid = _guidsCache.front();
-			_guidsCache.pop();
-			_guids[0] = guid.Guid.c_str();
+			unique_lock<mutex> lck(_mutex);
+			RecognItem item = _items.front();
+			_items.pop();
+			lck.unlock();
+			_guids[0] = item.Guid.c_str();
 			int32_t size = static_cast<int32_t>(_result.size());
 			int result=SeemmoSDK::seemmo_video_pvc_recog(1
 				, _guids.data()
@@ -91,8 +91,7 @@ void RecognChannel::StartCore()
 				, 0);
 			if (result == 0)
 			{
-				LogPool::Information(_result.data());
-				_detectors[guid.ChannelIndex-1]->HandleRecognize(_result.data());
+				_detectors[item.ChannelIndex-1]->HandleRecognize(item,_bgrs[0],_result.data());
 			}
 		}
 	}

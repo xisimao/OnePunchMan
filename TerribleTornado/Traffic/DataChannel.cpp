@@ -7,7 +7,7 @@ using namespace TerribleTornado;
 const string DataChannel::FlowTopic("Flow");
 
 DataChannel::DataChannel()
-    :ThreadObject("data")
+    :ThreadObject("data"), _socketMaid(NULL),_mqtt(NULL)
 {
     DecodeChannel::InitFFmpeg();
     DecodeChannel::UninitHisi(FlowChannelData::ChannelCount);
@@ -32,18 +32,24 @@ DataChannel::DataChannel()
     _inited = true;
     _mqtt = new MqttChannel("127.0.0.1", 1883);
     _mqtt->Start();
+
+
     for (int i = 0; i < FlowChannelData::ChannelCount; ++i)
     {
         _decodes.push_back(NULL);
         ChannelDetector* detector = new ChannelDetector(DecodeChannel::VideoWidth, DecodeChannel::VideoHeight, _mqtt);
         _detectors.push_back(detector);
+    }
+
+    for (int i = 0; i < FlowChannelData::ChannelCount; ++i)
+    {
         if (i % RecognChannel::ItemCount == 0)
         {
             RecognChannel* recogn = new RecognChannel(i / RecognChannel::ItemCount, DecodeChannel::VideoWidth, DecodeChannel::VideoHeight, _detectors);
             _recogns.push_back(recogn);
             recogn->Start();
         }
-        DetectChannel* detect = new DetectChannel(i + 1, DecodeChannel::VideoWidth, DecodeChannel::VideoHeight, _recogns[i / RecognChannel::ItemCount], detector);
+        DetectChannel* detect = new DetectChannel(i + 1, DecodeChannel::VideoWidth, DecodeChannel::VideoHeight, _recogns[i / RecognChannel::ItemCount], _detectors[i]);
         _detects.push_back(detect);
         detect->Start();
     }
@@ -61,9 +67,12 @@ DataChannel::DataChannel()
 
 DataChannel::~DataChannel()
 {
-    _socketMaid->Stop();
+    if (_socketMaid != NULL)
+    {
+        _socketMaid->Stop();
+    }
 
-    for (unsigned int i=0;i<_decodes.size();++i)
+    for (unsigned int i = 0; i < _decodes.size(); ++i)
     {
         if (_decodes[i] != NULL)
         {
@@ -86,7 +95,10 @@ DataChannel::~DataChannel()
     {
         delete _detectors[i];
     }
-    _mqtt->Stop();
+    if (_mqtt != NULL)
+    {
+        _mqtt->Stop();
+    }  
     SeemmoSDK::Uninit();
     DecodeChannel::UninitHisi(FlowChannelData::ChannelCount);
     DecodeChannel::UninitFFmpeg();
@@ -102,6 +114,7 @@ void DataChannel::Update(HttpReceivedEventArgs* e)
         }
         else if (e->Function.compare(HttpFunction::Post) == 0)
         {
+            LogPool::Information(e->RequestJson);
             SetDevice(e);
         }
     }
@@ -153,7 +166,7 @@ void DataChannel::GetDevice(HttpReceivedEventArgs* e)
     string channelsJson;
     for (unsigned int i=0;i<channels.size();++i)
     {
-        string channelJson = GetChannelJson(channels[i]);
+        string channelJson = GetChannelJson(e,channels[i]);
         JsonSerialization::SerializeItem(&channelsJson, channelJson);
     }
 
@@ -165,6 +178,8 @@ void DataChannel::GetDevice(HttpReceivedEventArgs* e)
     JsonSerialization::Serialize(&deviceJson, "sn", device.SN);
     JsonSerialization::Serialize(&deviceJson, "diskUsed", device.DiskUsed);
     JsonSerialization::Serialize(&deviceJson, "diskTotal", device.DiskTotal);
+    JsonSerialization::Serialize(&deviceJson, "videoWidth", DecodeChannel::VideoWidth);
+    JsonSerialization::Serialize(&deviceJson, "videoHeight", DecodeChannel::VideoHeight);
     JsonSerialization::SerializeJson(&deviceJson, "channels", channelsJson);
 
     e->Code = HttpCode::OK;
@@ -173,7 +188,6 @@ void DataChannel::GetDevice(HttpReceivedEventArgs* e)
 
 void DataChannel::SetDevice(HttpReceivedEventArgs* e)
 {
-    long long timeStamp = DateTime::UtcTimeStamp();
     JsonDeserialization jd(e->RequestJson);
     int channelIndex = 0;
     vector<FlowChannel> channels;
@@ -189,7 +203,6 @@ void DataChannel::SetDevice(HttpReceivedEventArgs* e)
         channel.ChannelName = jd.Get<string>(StringEx::Combine("channels:", channelIndex, ":channelName"));
         channel.ChannelUrl = jd.Get<string>(StringEx::Combine("channels:", channelIndex, ":channelUrl"));
         channel.ChannelType = jd.Get<int>(StringEx::Combine("channels:", channelIndex, ":channelType"));
-        channel.TimeStamp = timeStamp;
         int laneIndex = 0;
         while (true)
         {
@@ -263,22 +276,20 @@ void DataChannel::GetChannel(Saitama::HttpReceivedEventArgs* e)
     }
     else
     {
-        e->ResponseJson = GetChannelJson(channel);
+        e->ResponseJson = GetChannelJson(e, channel);
         e->Code = HttpCode::OK;
     }
 }
 
 void DataChannel::SetChannel(Saitama::HttpReceivedEventArgs* e)
 {
-    long long timeStamp = DateTime::UtcTimeStamp();
     JsonDeserialization jd(e->RequestJson);
-  
+
     FlowChannel channel;
     channel.ChannelIndex = jd.Get<int>("channelIndex");
     channel.ChannelName = jd.Get<string>("channelName");
     channel.ChannelUrl = jd.Get<string>("channelUrl");
     channel.ChannelType = jd.Get<int>("channelType");
-    channel.TimeStamp = timeStamp;
     int laneIndex = 0;
     while (true)
     {
@@ -345,24 +356,35 @@ void DataChannel::DeleteChannel(Saitama::HttpReceivedEventArgs* e)
 
 void DataChannel::SetChannel(const FlowChannel& channel)
 {
-    DeleteChannel(channel.ChannelIndex);
     lock_guard<mutex> lck(_decodeMutex);
-    if(ChannelIndexEnable(channel.ChannelIndex))
+    if (ChannelIndexEnable(channel.ChannelIndex))
     {
-        if (channel.ChannelType == static_cast<int>(ChannelType::RTSP))
+        //如果地址不一致
+        if (_detectors[channel.ChannelIndex - 1]->ChannelUrl().compare(channel.ChannelUrl) != 0)
         {
-            DecodeChannel* decode = new DecodeChannel(channel.ChannelUrl, channel.RtmpUrl(), false, channel.ChannelIndex, _detects[channel.ChannelIndex - 1]);
-            decode->Start();
-            _decodes[channel.ChannelIndex - 1] = decode;
-            _detectors[channel.ChannelIndex - 1]->UpdateChannel(channel);
+            if (_decodes[channel.ChannelIndex - 1] != NULL)
+            {
+                _decodes[channel.ChannelIndex - 1]->Stop();
+                delete _decodes[channel.ChannelIndex - 1];
+            }
+            if (channel.ChannelType == static_cast<int>(ChannelType::RTSP))
+            {
+                DecodeChannel* decode = new DecodeChannel(channel.ChannelUrl, channel.RtmpUrl("127.0.0.1"), false, channel.ChannelIndex, _detects[channel.ChannelIndex - 1]);
+                decode->Start();
+                _decodes[channel.ChannelIndex - 1] = decode;
+            }
+            else if (channel.ChannelType == static_cast<int>(ChannelType::File))
+            {
+                DecodeChannel* decode = new DecodeChannel(channel.ChannelUrl, channel.RtmpUrl("127.0.0.1"), true, channel.ChannelIndex, _detects[channel.ChannelIndex - 1]);
+                decode->Start();
+                _decodes[channel.ChannelIndex - 1] = decode;
+            }
+            else
+            {
+                _decodes[channel.ChannelIndex - 1] = NULL;
+            }
         }
-        else if (channel.ChannelType == static_cast<int>(ChannelType::File))
-        {
-            DecodeChannel* decode = new DecodeChannel(channel.ChannelUrl, channel.RtmpUrl(), true, channel.ChannelIndex, _detects[channel.ChannelIndex - 1]);
-            decode->Start();
-            _decodes[channel.ChannelIndex - 1] = decode;
-            _detectors[channel.ChannelIndex - 1]->UpdateChannel(channel);
-        }
+        _detectors[channel.ChannelIndex - 1]->UpdateChannel(channel);
    }
 }
 
@@ -393,15 +415,14 @@ string DataChannel::CheckChannel(const FlowChannel& channel)
     }
 }
 
-string DataChannel::GetChannelJson(const FlowChannel& channel)
+string DataChannel::GetChannelJson(Saitama::HttpReceivedEventArgs* e, const FlowChannel& channel)
 {
     string channelJson;
     JsonSerialization::Serialize(&channelJson, "channelIndex", channel.ChannelIndex);
     JsonSerialization::Serialize(&channelJson, "channelName", channel.ChannelName);
     JsonSerialization::Serialize(&channelJson, "channelUrl", channel.ChannelUrl);
-    JsonSerialization::Serialize(&channelJson, "rtmpUrl", channel.RtmpUrl());
+    JsonSerialization::Serialize(&channelJson, "rtmpUrl", channel.RtmpUrl(EndPoint::GetLocalEndPoint(e->Socket).HostIp()));
     JsonSerialization::Serialize(&channelJson, "channelType", channel.ChannelType);
-    JsonSerialization::Serialize(&channelJson, "timeStamp", channel.TimeStamp);
     if (ChannelIndexEnable(channel.ChannelIndex))
     {
         lock_guard<mutex> lck(_decodeMutex);
