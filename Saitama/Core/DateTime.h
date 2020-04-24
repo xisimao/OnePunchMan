@@ -94,7 +94,7 @@ namespace Saitama
 		* @brief: 返回表示时间的总毫秒数
 		* @return: 表示时间的总毫秒数
 		*/
-		long long Milliseconds() const;
+		long long TimeStamp() const;
 
 		/**
 		* @brief: 增加月份
@@ -203,6 +203,6 @@ namespace Saitama
 		//毫秒
 		int _millisecond;
 		//时间戳
-		long long _milliseconds;
+		long long _timeStamp;
 	};
 }

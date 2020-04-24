@@ -170,9 +170,11 @@ void DataChannel::GetDevice(HttpReceivedEventArgs* e)
     }
 
     string deviceJson;
+    DateTime now = DateTime::UtcNow();
     JsonSerialization::Serialize(&deviceJson, "licenceStatus", device.LicenceStatus);
     JsonSerialization::Serialize(&deviceJson, "startTime", _startTime.ToString());
-    JsonSerialization::Serialize(&deviceJson, "deviceTime", DateTime::UtcTimeStamp());
+    JsonSerialization::Serialize(&deviceJson, "deviceTime", now.TimeStamp());
+    JsonSerialization::Serialize(&deviceJson, "deviceTime_Desc", now.ToString());
     JsonSerialization::Serialize(&deviceJson, "softwareVersion", device.SoftwareVersion);
     JsonSerialization::Serialize(&deviceJson, "sn", device.SN);
     JsonSerialization::Serialize(&deviceJson, "diskUsed", device.DiskUsed);
@@ -504,7 +506,7 @@ void DataChannel::StartCore()
         if (currentMinute != _lastMinute)
         {
             _lastMinute = currentMinute;
-            long long timeStamp = DateTime(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), 0).Milliseconds();
+            long long timeStamp = DateTime(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), 0).TimeStamp();
             string json;
             for (unsigned int i = 0; i < _detectors.size(); ++i)
             {
