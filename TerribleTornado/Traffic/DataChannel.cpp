@@ -144,7 +144,7 @@ void DataChannel::GetDevice(HttpReceivedEventArgs* e)
 {
     FlowDevice device;
     device.LicenceStatus = SeemmoSDK::Inited;
-    device.SoftwareVersion = "1.0";
+    device.SoftwareVersion = "1.0.0";
     device.SN = StringEx::Trim(Command::Execute("cat /mtd/basesys/data/devsn"));
     string df = Command::Execute("df");
     vector<string> rows = StringEx::Split(df, "\n", true);
