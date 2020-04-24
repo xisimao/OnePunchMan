@@ -668,4 +668,11 @@ void SocketMaid::Stop()
 	{
 		_channels[i]->Stop();
 	}
+	for (map<int, SocketItem>::iterator it = _sockets.begin(); it != _sockets.end(); ++it)
+	{
+		if (it->second.Data.Type == SocketType::Listen||it->second.Data.Type==SocketType::Udp)
+		{
+			Socket::Close(it->first);
+		}
+	}
 }

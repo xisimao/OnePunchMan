@@ -88,7 +88,12 @@ int Socket::Bind(const EndPoint& endPoint)
 	{
 		return -1;
 	}
-
+	int flag = 1;
+	if (setsockopt(udpSocket, SOL_SOCKET, SO_REUSEADDR, (const char*)&flag, sizeof(flag)) < 0)
+	{
+		LogPool::Error(LogEvent::Socket, "setsockopt", WSAErrorCode);
+		return -1;
+	}
 	sockaddr_in address;
 	address.sin_family = AF_INET;
 	address.sin_addr.s_addr = endPoint.NetIp();
@@ -117,6 +122,12 @@ int Socket::Listen(const EndPoint& endPoint)
 	if (tcpSocket == -1)
 	{
 		LogPool::Error(LogEvent::Socket, "socket",WSAErrorCode);
+		return -1;
+	}
+	int flag = 1;
+	if (setsockopt(tcpSocket, SOL_SOCKET, SO_REUSEADDR, (const char*)&flag, sizeof(flag)) < 0)
+	{
+		LogPool::Error(LogEvent::Socket, "setsockopt", WSAErrorCode);
 		return -1;
 	}
 	sockaddr_in address;
