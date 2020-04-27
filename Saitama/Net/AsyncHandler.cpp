@@ -1,7 +1,7 @@
 ﻿#include "AsyncHandler.h"
 
 using namespace std;
-using namespace Saitama;
+using namespace OnePunchMan;
 
 AsyncHandler::AsyncHandler(long long timeStamp, unsigned int protocolId)
 	:_timeStamp(timeStamp),_protocolId(protocolId)

@@ -1,7 +1,7 @@
 ﻿#include "WebSocket.h"
 
 using namespace std;
-using namespace Saitama;
+using namespace OnePunchMan;
 
 string WebSocket::Connect(EndPoint endPoint, const std::string& url)
 {

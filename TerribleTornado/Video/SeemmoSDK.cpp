@@ -1,8 +1,7 @@
 #include "SeemmoSDK.h"
 
 using namespace std;
-using namespace TerribleTornado;
-using namespace Saitama;
+using namespace OnePunchMan;
 
 seemmo_process_init_t SeemmoSDK::seemmo_process_init=NULL;
 seemmo_uninit_t SeemmoSDK::seemmo_uninit = NULL;

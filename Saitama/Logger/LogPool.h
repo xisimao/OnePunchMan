@@ -8,7 +8,7 @@
 #include "ConsoleLogger.h"
 #include "FileLogger.h"
 
-namespace Saitama
+namespace OnePunchMan
 {
 	//#define Stack(level,...) LogPool::Socket(level ,"[",__FILE__,":" __LINE__," ", __FUNCTION__,"]",##__VA_ARGS__);
 	

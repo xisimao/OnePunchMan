@@ -7,7 +7,7 @@
 #define pclose(file) _pclose(file)
 #endif 
 
-namespace Saitama
+namespace OnePunchMan
 {
 	//命令行
 	class Command

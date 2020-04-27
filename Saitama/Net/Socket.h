@@ -12,7 +12,7 @@
 #include "EndPoint.h"
 #include "LogPool.h"
 
-namespace Saitama
+namespace OnePunchMan
 {
 
 #define StatusPort 7771

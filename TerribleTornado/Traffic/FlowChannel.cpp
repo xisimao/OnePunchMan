@@ -1,8 +1,7 @@
 #include "FlowChannel.h"
 
 using namespace std;
-using namespace Saitama;
-using namespace TerribleTornado;
+using namespace OnePunchMan;
 
 const int FlowChannelData::ChannelCount = 8;
 

@@ -1,7 +1,7 @@
 #include "StringEx.h"
 
 using namespace std;
-using namespace Saitama;
+using namespace OnePunchMan;
 
 const string StringEx::Base64Chars =
 "ABCDEFGHIJKLMNOPQRSTUVWXYZ"

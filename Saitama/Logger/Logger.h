@@ -7,7 +7,7 @@
 #include "LogEvent.h"
 #include "DateTime.h"
 
-namespace Saitama
+namespace OnePunchMan
 {
 	//日志类型
 	enum class LogType

@@ -1,12 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Sqlite">
-      <UniqueIdentifier>{db9755b2-b2d9-41d7-9947-68ef08cf6838}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Mqtt">
-      <UniqueIdentifier>{229a493f-227b-40d5-bdde-f807021afac1}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Traffic">
       <UniqueIdentifier>{6f2d6901-9f1a-40e4-a1cd-1f65cf0bfbb4}</UniqueIdentifier>
     </Filter>
@@ -17,12 +11,6 @@
   <ItemGroup>
     <ClCompile Include="Traffic\DataChannel.cpp">
       <Filter>Traffic</Filter>
-    </ClCompile>
-    <ClCompile Include="Sqlite\Sqlite.cpp">
-      <Filter>Sqlite</Filter>
-    </ClCompile>
-    <ClCompile Include="Mqtt\MqttChannel.cpp">
-      <Filter>Mqtt</Filter>
     </ClCompile>
     <ClCompile Include="TerribleTornado.cpp" />
     <ClCompile Include="Video\SeemmoSDK.cpp">
@@ -50,18 +38,6 @@
   <ItemGroup>
     <ClInclude Include="Traffic\DataChannel.h">
       <Filter>Traffic</Filter>
-    </ClInclude>
-    <ClInclude Include="Mqtt\MqttChannel.h">
-      <Filter>Mqtt</Filter>
-    </ClInclude>
-    <ClInclude Include="Mqtt\mosquitto.h">
-      <Filter>Mqtt</Filter>
-    </ClInclude>
-    <ClInclude Include="Sqlite\sqlite3.h">
-      <Filter>Sqlite</Filter>
-    </ClInclude>
-    <ClInclude Include="Sqlite\Sqlite.h">
-      <Filter>Sqlite</Filter>
     </ClInclude>
     <ClInclude Include="Video\SeemmoSDK.h">
       <Filter>Video</Filter>

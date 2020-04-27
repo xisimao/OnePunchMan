@@ -4,7 +4,7 @@
 #include "ConnectionChannel.h"
 #include "NoticeHandler.h"
 
-namespace Saitama
+namespace OnePunchMan
 {
 	//协议通信
 	class SocketMaid :

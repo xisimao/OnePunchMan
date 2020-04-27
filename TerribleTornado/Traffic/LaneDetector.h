@@ -9,7 +9,7 @@
 #include "Observable.h"
 #include "FlowChannel.h"
 
-namespace TerribleTornado
+namespace OnePunchMan
 {
 	//检测项
 	class DetectItem
@@ -20,7 +20,7 @@ namespace TerribleTornado
 		* @brief: 构造函数
 		*/
 		DetectItem()
-			:DetectItem(Saitama::Point(), 0)
+			:DetectItem(Point(), 0)
 		{
 
 		}
@@ -29,7 +29,7 @@ namespace TerribleTornado
 		* @brief: 构造函数
 		* @param: point 检测元素点
 		*/
-		DetectItem(const Saitama::Point& point)
+		DetectItem(const Point& point)
 			:DetectItem(point,0)
 		{
 
@@ -40,14 +40,14 @@ namespace TerribleTornado
 		* @param: point 检测元素点
 		* @param: type 检测元素类型
 		*/
-		DetectItem(const Saitama::Point& point,int type)
+		DetectItem(const Point& point,int type)
 			:HitPoint(point), Type(type)
 		{
 
 		}
 
 		//检测点
-		Saitama::Point HitPoint;
+		Point HitPoint;
 		//检测元素类型
 		int Type;
 		
@@ -64,7 +64,7 @@ namespace TerribleTornado
 		//检测项类型
 		int Type;
 		//检测点
-		Saitama::Point HitPoint;
+		Point HitPoint;
 		//宽度
 		int Width;
 		//高度
@@ -108,7 +108,9 @@ namespace TerribleTornado
 	public:
 		//车道编号
 		std::string LaneId;
+		//检测类型
 		int Type;
+		//io状态
 		IOStatus Status;
 	};
 
@@ -243,19 +245,19 @@ namespace TerribleTornado
 		* @param: lane 车道线字符串
 		* @return: 线段
 		*/
-		Saitama::Line GetLine(const std::string& line);
+		Line GetLine(const std::string& line);
 		
 		/**
 		* @brief: 解析多边形字符串
 		* @param: region 区域字符串
 		* @return: 多边形
 		*/
-		Saitama::Polygon GetPolygon(const std::string& region);
+		Polygon GetPolygon(const std::string& region);
 		
 		//车道编号
 		std::string _laneId;
 		//当前检测区域
-		Saitama::Polygon _region;
+		Polygon _region;
 		//每个像素代表的米数
 		double _meterPerPixel;
 

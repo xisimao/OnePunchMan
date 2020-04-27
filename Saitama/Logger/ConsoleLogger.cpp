@@ -1,7 +1,7 @@
 #include "ConsoleLogger.h"
 
 using namespace std;
-using namespace Saitama;
+using namespace OnePunchMan;
 
 ConsoleLogger::ConsoleLogger(LogLevel minLevel, LogLevel maxLevel)
 	:Logger(minLevel,maxLevel)

@@ -3,7 +3,7 @@
 #include <mutex>
 #include <algorithm>
 
-namespace Saitama
+namespace OnePunchMan
 {
 	// 提供用于接收基于推送的通知的机制
 	template <typename T>

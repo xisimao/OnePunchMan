@@ -5,7 +5,7 @@
 #include "Sqlite.h"
 #include "StringEx.h"
 
-namespace TerribleTornado
+namespace OnePunchMan
 {
 	//³µµÀ
 	class Lane
@@ -83,7 +83,7 @@ namespace TerribleTornado
 		*/
 		std::string RtmpUrl(const std::string ip) const
 		{
-			return Saitama::StringEx::Combine("rtmp://",ip,":1935/live/", ChannelIndex);
+			return StringEx::Combine("rtmp://",ip,":1935/live/", ChannelIndex);
 		}
 	};
 

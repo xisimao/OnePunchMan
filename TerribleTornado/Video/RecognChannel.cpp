@@ -1,9 +1,7 @@
 #include "RecognChannel.h"
 
 using namespace std;
-using namespace Fubuki;
-using namespace Saitama;
-using namespace TerribleTornado;
+using namespace OnePunchMan;
 
 const int RecognChannel::ItemCount = 4;
 const int RecognChannel::MaxCacheCount = 100;

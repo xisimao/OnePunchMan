@@ -7,7 +7,7 @@
 #include "StringEx.h"
 #include "JsonFormatter.h"
 
-namespace Saitama
+namespace OnePunchMan
 {
 	//读取文件配置文件
 	class FileConfig

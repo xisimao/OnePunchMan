@@ -1,7 +1,7 @@
 #include "FileConfig.h"
 
 using namespace std;
-using namespace Saitama;
+using namespace OnePunchMan;
 
 FileConfig::FileConfig()
 	:FileConfig("appsettings.json")

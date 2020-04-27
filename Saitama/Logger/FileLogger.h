@@ -16,7 +16,7 @@
 #include "Logger.h"
 #include "DateTime.h"
 
-namespace Saitama
+namespace OnePunchMan
 {
 	//文件日志类 
 	class FileLogger : public Logger

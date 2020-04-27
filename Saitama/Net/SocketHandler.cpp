@@ -1,7 +1,7 @@
 ﻿#include "SocketHandler.h"
 
 using namespace std;
-using namespace Saitama;
+using namespace OnePunchMan;
 
 SocketHandler::SocketHandler()
 	:_transmitSize(0),_receiveSize(0)

@@ -1,381 +1,150 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClInclude Include="FFmpeg\libavutil\adler32.h">
+    <ClInclude Include="FFmpeg\BGR24Handler.h">
       <Filter>FFmpeg</Filter>
     </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\aes.h">
+    <ClInclude Include="FFmpeg\H264Handler.h">
       <Filter>FFmpeg</Filter>
     </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\aes_ctr.h">
+    <ClInclude Include="FFmpeg\IVE_8UC3Handler.h">
       <Filter>FFmpeg</Filter>
     </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\attributes.h">
+    <ClInclude Include="FFmpeg\YUV420PHandler.h">
       <Filter>FFmpeg</Filter>
     </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\audio_fifo.h">
+    <ClInclude Include="FFmpeg\YUV420SPHandler.h">
       <Filter>FFmpeg</Filter>
     </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\avassert.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavcodec\avcodec.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\avconfig.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavcodec\avdct.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavdevice\avdevice.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavcodec\avfft.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavfilter\avfilter.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavfilter\avfiltergraph.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavformat\avformat.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavformat\avio.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\avstring.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\avutil.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\base64.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\blowfish.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\bprint.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\bswap.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\buffer.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavfilter\buffersink.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavfilter\buffersrc.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\camellia.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\cast5.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\channel_layout.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\common.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\cpu.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\crc.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavcodec\d3d11va.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\des.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\dict.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavcodec\dirac.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\display.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\downmix_info.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavcodec\dv_profile.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavcodec\dxva2.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\error.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\eval.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\ffversion.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\fifo.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\file.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\frame.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\hash.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\hmac.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\hwcontext.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\hwcontext_cuda.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\hwcontext_dxva2.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\hwcontext_qsv.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\hwcontext_vaapi.h">
-      <Filter>FFmpeg</Filter>
+    <ClInclude Include="Sqlite\Sqlite.h">
+      <Filter>Sqlite</Filter>
     </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\hwcontext_vdpau.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\imgutils.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\intfloat.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\intreadwrite.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavcodec\jni.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\lfg.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\log.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\lzo.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\macros.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\mastering_display_metadata.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\mathematics.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\md5.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavcodec\mediacodec.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\mem.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\motion_vector.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\murmur3.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\opt.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\parseutils.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\pixdesc.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\pixelutils.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\pixfmt.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libpostproc\postprocess.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavcodec\qsv.h">
-      <Filter>FFmpeg</Filter>
+    <ClInclude Include="Mqtt\MqttChannel.h">
+      <Filter>Mqtt</Filter>
     </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\random_seed.h">
+    <ClInclude Include="FFmpeg\FFmpegChannel.h">
       <Filter>FFmpeg</Filter>
     </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\rational.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\rc4.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\replaygain.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\ripemd.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\samplefmt.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\sha.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\sha512.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\spherical.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\stereo3d.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libswresample\swresample.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libswscale\swscale.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\tea.h">
-      <Filter>FFmpeg</Filter>
+    <ClInclude Include="opencv\opencv2\core\affine.hpp">
+      <Filter>opencv</Filter>
     </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\threadmessage.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\time.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\timecode.h">
-      <Filter>FFmpeg</Filter>
+    <ClInclude Include="opencv\opencv2\highgui\cap_ios.h">
+      <Filter>opencv</Filter>
     </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\timestamp.h">
-      <Filter>FFmpeg</Filter>
+    <ClInclude Include="opencv\opencv2\core\core.hpp">
+      <Filter>opencv</Filter>
     </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\tree.h">
-      <Filter>FFmpeg</Filter>
+    <ClInclude Include="opencv\opencv2\core.hpp">
+      <Filter>opencv</Filter>
     </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\twofish.h">
-      <Filter>FFmpeg</Filter>
+    <ClInclude Include="opencv\opencv2\core\core_c.h">
+      <Filter>opencv</Filter>
     </ClInclude>
-    <ClInclude Include="FFmpeg\libavcodec\vaapi.h">
-      <Filter>FFmpeg</Filter>
+    <ClInclude Include="opencv\opencv2\core\cuda_devptrs.hpp">
+      <Filter>opencv</Filter>
     </ClInclude>
-    <ClInclude Include="FFmpeg\libavcodec\vda.h">
-      <Filter>FFmpeg</Filter>
+    <ClInclude Include="opencv\opencv2\core\devmem2d.hpp">
+      <Filter>opencv</Filter>
     </ClInclude>
-    <ClInclude Include="FFmpeg\libavcodec\vdpau.h">
-      <Filter>FFmpeg</Filter>
+    <ClInclude Include="opencv\opencv2\core\eigen.hpp">
+      <Filter>opencv</Filter>
     </ClInclude>
-    <ClInclude Include="FFmpeg\libswresample\version.h">
-      <Filter>FFmpeg</Filter>
+    <ClInclude Include="opencv\opencv2\core\gpumat.hpp">
+      <Filter>opencv</Filter>
     </ClInclude>
-    <ClInclude Include="FFmpeg\libavdevice\version.h">
-      <Filter>FFmpeg</Filter>
+    <ClInclude Include="opencv\opencv2\highgui.hpp">
+      <Filter>opencv</Filter>
     </ClInclude>
-    <ClInclude Include="FFmpeg\libpostproc\version.h">
-      <Filter>FFmpeg</Filter>
+    <ClInclude Include="opencv\opencv2\highgui\highgui.hpp">
+      <Filter>opencv</Filter>
     </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\version.h">
-      <Filter>FFmpeg</Filter>
+    <ClInclude Include="opencv\opencv2\highgui\highgui_c.h">
+      <Filter>opencv</Filter>
     </ClInclude>
-    <ClInclude Include="FFmpeg\libavfilter\version.h">
-      <Filter>FFmpeg</Filter>
+    <ClInclude Include="opencv\opencv2\imgproc\imgproc.hpp">
+      <Filter>opencv</Filter>
     </ClInclude>
-    <ClInclude Include="FFmpeg\libavformat\version.h">
-      <Filter>FFmpeg</Filter>
+    <ClInclude Include="opencv\opencv2\imgproc.hpp">
+      <Filter>opencv</Filter>
     </ClInclude>
-    <ClInclude Include="FFmpeg\libavcodec\version.h">
-      <Filter>FFmpeg</Filter>
+    <ClInclude Include="opencv\opencv2\imgproc\imgproc_c.h">
+      <Filter>opencv</Filter>
     </ClInclude>
-    <ClInclude Include="FFmpeg\libswscale\version.h">
-      <Filter>FFmpeg</Filter>
+    <ClInclude Include="opencv\opencv2\core\internal.hpp">
+      <Filter>opencv</Filter>
     </ClInclude>
-    <ClInclude Include="FFmpeg\libavcodec\videotoolbox.h">
-      <Filter>FFmpeg</Filter>
+    <ClInclude Include="opencv\opencv2\highgui\ios.h">
+      <Filter>opencv</Filter>
     </ClInclude>
-    <ClInclude Include="FFmpeg\libavcodec\vorbis_parser.h">
-      <Filter>FFmpeg</Filter>
+    <ClInclude Include="opencv\opencv2\core\mat.hpp">
+      <Filter>opencv</Filter>
     </ClInclude>
-    <ClInclude Include="FFmpeg\libavutil\xtea.h">
-      <Filter>FFmpeg</Filter>
+    <ClInclude Include="opencv\opencv2\opencv.hpp">
+      <Filter>opencv</Filter>
     </ClInclude>
-    <ClInclude Include="FFmpeg\libavcodec\xvmc.h">
-      <Filter>FFmpeg</Filter>
+    <ClInclude Include="opencv\opencv2\opencv_modules.hpp">
+      <Filter>opencv</Filter>
     </ClInclude>
-    <ClInclude Include="Decode\H264Handler.h">
-      <Filter>Decode</Filter>
+    <ClInclude Include="opencv\opencv2\core\opengl_interop.hpp">
+      <Filter>opencv</Filter>
     </ClInclude>
-    <ClInclude Include="Decode\YUV420PHandler.h">
-      <Filter>Decode</Filter>
+    <ClInclude Include="opencv\opencv2\core\opengl_interop_deprecated.hpp">
+      <Filter>opencv</Filter>
     </ClInclude>
-    <ClInclude Include="Decode\YUV420SPHandler.h">
-      <Filter>Decode</Filter>
+    <ClInclude Include="opencv\opencv2\core\operations.hpp">
+      <Filter>opencv</Filter>
     </ClInclude>
-    <ClInclude Include="Decode\BGR24Handler.h">
-      <Filter>Decode</Filter>
+    <ClInclude Include="opencv\opencv2\imgproc\types_c.h">
+      <Filter>opencv</Filter>
     </ClInclude>
-    <ClInclude Include="Decode\IVE_8UC3Handler.h">
-      <Filter>Decode</Filter>
+    <ClInclude Include="opencv\opencv2\core\types_c.h">
+      <Filter>opencv</Filter>
     </ClInclude>
-    <ClInclude Include="Decode\FrameChannel.h">
-      <Filter>Decode</Filter>
+    <ClInclude Include="opencv\opencv2\core\version.hpp">
+      <Filter>opencv</Filter>
     </ClInclude>
-    <ClInclude Include="Decode\FFmpegChannel.h">
-      <Filter>Decode</Filter>
+    <ClInclude Include="opencv\opencv2\core\wimage.hpp">
+      <Filter>opencv</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="FFmpeg">
       <UniqueIdentifier>{e485cb48-b200-4bbd-b59b-f49b5ec44353}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Decode">
-      <UniqueIdentifier>{c99dc60c-65de-4f3a-8f08-1e7e5d6b4b04}</UniqueIdentifier>
+    <Filter Include="Mqtt">
+      <UniqueIdentifier>{fb4661cc-b9ee-43bc-ba8e-ab099d6c8b81}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sqlite">
+      <UniqueIdentifier>{7a7899b0-4050-4f25-9e2c-8a21a5887bb5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="opencv">
+      <UniqueIdentifier>{1fefa0f5-34f9-4c85-b61b-6d3e34d9108b}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Decode\H264Handler.cpp">
-      <Filter>Decode</Filter>
+    <ClCompile Include="FFmpeg\BGR24Handler.cpp">
+      <Filter>FFmpeg</Filter>
     </ClCompile>
-    <ClCompile Include="Decode\YUV420PHandler.cpp">
-      <Filter>Decode</Filter>
+    <ClCompile Include="FFmpeg\H264Handler.cpp">
+      <Filter>FFmpeg</Filter>
     </ClCompile>
-    <ClCompile Include="Decode\YUV420SPHandler.cpp">
-      <Filter>Decode</Filter>
+    <ClCompile Include="FFmpeg\IVE_8UC3Handler.cpp">
+      <Filter>FFmpeg</Filter>
     </ClCompile>
-    <ClCompile Include="Decode\BGR24Handler.cpp">
-      <Filter>Decode</Filter>
+    <ClCompile Include="FFmpeg\YUV420PHandler.cpp">
+      <Filter>FFmpeg</Filter>
     </ClCompile>
-    <ClCompile Include="Decode\IVE_8UC3Handler.cpp">
-      <Filter>Decode</Filter>
+    <ClCompile Include="FFmpeg\YUV420SPHandler.cpp">
+      <Filter>FFmpeg</Filter>
     </ClCompile>
-    <ClCompile Include="Decode\FrameChannel.cpp">
-      <Filter>Decode</Filter>
+    <ClCompile Include="Sqlite\Sqlite.cpp">
+      <Filter>Sqlite</Filter>
     </ClCompile>
-    <ClCompile Include="Decode\FFmpegChannel.cpp">
-      <Filter>Decode</Filter>
+    <ClCompile Include="Mqtt\MqttChannel.cpp">
+      <Filter>Mqtt</Filter>
+    </ClCompile>
+    <ClCompile Include="FFmpeg\FFmpegChannel.cpp">
+      <Filter>FFmpeg</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

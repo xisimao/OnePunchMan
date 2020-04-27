@@ -8,7 +8,7 @@
 #include "LogPool.h"
 #include "StringEx.h"
 
-namespace Saitama
+namespace OnePunchMan
 {
 	//»’÷æ∂¡»°
 	class LogReader

@@ -1,7 +1,7 @@
 ﻿#include "Command.h"
 
 using namespace std;
-using namespace Saitama;
+using namespace OnePunchMan;
 
 string Command::Execute(const std::string& cmd)
 {

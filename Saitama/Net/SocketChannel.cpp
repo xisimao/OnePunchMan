@@ -1,7 +1,7 @@
 ﻿#include "SocketChannel.h"
 
 using namespace std;
-using namespace Saitama;
+using namespace OnePunchMan;
 
 #ifndef _WIN32
 const int SocketChannel::MaxEvents = 100;

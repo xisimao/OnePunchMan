@@ -1,7 +1,7 @@
 ﻿#include "NoticeHandler.h"
 
 using namespace std;
-using namespace Saitama;
+using namespace OnePunchMan;
 
 NoticeHandler::NoticeHandler(unsigned int protocolId)
 	:NoticeHandler(0,protocolId, NULL)

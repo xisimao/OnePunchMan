@@ -7,10 +7,10 @@
 #include "ChannelDetector.h"
 #include "IVE_8UC3Handler.h"
 
-namespace TerribleTornado
+namespace OnePunchMan
 {
 	//识别线程
-	class RecognChannel :public Saitama::ThreadObject
+	class RecognChannel :public ThreadObject
 	{
 	public:
 		/**
@@ -69,6 +69,6 @@ namespace TerribleTornado
 		std::vector<char> _result;
 
 		//debug
-		Fubuki::IVE_8UC3Handler* _bgrHandler;
+		IVE_8UC3Handler* _bgrHandler;
 	};
 }

@@ -1,7 +1,7 @@
 #include "Security.h"
 
 using namespace std;
-using namespace Saitama;
+using namespace OnePunchMan;
 
 void Security::Sha1(const string& value, unsigned char * hash, unsigned int capacity) {
 	

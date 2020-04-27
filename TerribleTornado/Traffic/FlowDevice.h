@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 
-namespace TerribleTornado
+namespace OnePunchMan
 {
 	//流量设备
 	class FlowDevice

@@ -3,7 +3,7 @@
 #include <math.h>
 #include "StringEx.h"
 
-namespace Saitama
+namespace OnePunchMan
 {
 	//点
 	class Point

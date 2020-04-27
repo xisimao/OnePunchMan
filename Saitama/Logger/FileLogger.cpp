@@ -2,7 +2,7 @@
 
 #include <iostream>
 using namespace std;
-using namespace Saitama;
+using namespace OnePunchMan;
 
 FileLogger::FileLogger(LogLevel minLevel, LogLevel maxLevel, const string& name,const string& directory,int holdDays)
 	:Logger(minLevel,maxLevel),_name(name), _date(DateTime::Today()),_directory(directory),_holdDays(holdDays)

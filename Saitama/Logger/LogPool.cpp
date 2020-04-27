@@ -1,7 +1,7 @@
 ﻿#include "LogPool.h"
 
 using namespace std;
-using namespace Saitama;
+using namespace OnePunchMan;
 
 LogPool LogPool::_instance;
 

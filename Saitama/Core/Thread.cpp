@@ -1,7 +1,7 @@
 ﻿#include "Thread.h"
 
 using namespace std;
-using namespace Saitama;
+using namespace OnePunchMan;
 
 const int ThreadObject::SleepTime = 100;
 

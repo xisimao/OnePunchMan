@@ -1,17 +1,17 @@
 #include "ChannelDetector.h"
 
 using namespace std;
-using namespace Saitama;
-using namespace Fubuki;
-using namespace TerribleTornado;
+using namespace OnePunchMan;
 
 const string ChannelDetector::IOTopic("IO");
 const string ChannelDetector::VideoStructTopic("VideoStruct");
 
 ChannelDetector::ChannelDetector(int width, int height, MqttChannel* mqtt)
-	:_channelIndex(0),_channelUrl(),_mqtt(mqtt),_param(),_setParam(true)
+	:_channelIndex(0),_channelUrl(), _width(width),_height(height),_mqtt(mqtt),_param(),_setParam(true)
 {
-
+	_videoTopic = StringEx::Combine("video", _channelIndex);
+	//_jpgParams.push_back(cv::IMWRITE_JPEG_QUALITY);
+	//_jpgParams.push_back(10);
 }
 
 string ChannelDetector::ChannelUrl()
@@ -80,7 +80,7 @@ void ChannelDetector::GetRecognItems(vector<RecognItem>* items, const JsonDeseri
 			item.Type= jd.Get<int>(StringEx::Combine("FilterResults", ":0:", key, ":", itemIndex, ":Type"));
 			item.Width = jd.Get<int>(StringEx::Combine("FilterResults", ":0:", key, ":", itemIndex, ":Detect:Body:Width"));
 			item.Height = jd.Get<int>(StringEx::Combine("FilterResults", ":0:", key, ":", itemIndex, ":Detect:Body:Height"));
-			Saitama::Rectangle rectangle(Point(rect[0], rect[1]), rect[2], rect[3]);
+			Rectangle rectangle(Point(rect[0], rect[1]), rect[2], rect[3]);
 			item.HitPoint = rectangle.HitPoint;
 			items->push_back(item);
 		}
@@ -102,7 +102,7 @@ void ChannelDetector::GetDetecItems(map<string, DetectItem>* items, const JsonDe
 		vector<int> rect = jd.GetArray<int>(StringEx::Combine("ImageResults:0:", key, ":", itemIndex, ":Detect:Body:Rect"));
 		if (rect.size() >= 4)
 		{
-			items->insert(pair<string, DetectItem>(id, DetectItem(Saitama::Rectangle(Point(rect[0], rect[1]), rect[2], rect[3]).HitPoint, type)));
+			items->insert(pair<string, DetectItem>(id, DetectItem(Rectangle(Point(rect[0], rect[1]), rect[2], rect[3]).HitPoint, type)));
 		}
 		itemIndex += 1;
 	}
@@ -138,11 +138,11 @@ void ChannelDetector::CollectFlow(string* flowJson, long long timeStamp)
 	}
 }
 
-vector<RecognItem> ChannelDetector::HandleDetect(const string& detectJson, std::string* param)
+vector<RecognItem> ChannelDetector::HandleDetect(const string& detectJson,unsigned char* bgrBuffer, string* param)
 {
 	if (!_setParam)
 	{
-		param->assign(_param);
+		//param->assign(_param);
 		_setParam = true;
 	}
 
@@ -152,6 +152,7 @@ vector<RecognItem> ChannelDetector::HandleDetect(const string& detectJson, std::
 	GetDetecItems(&detectItems, detectJd, "Vehicles");
 	GetDetecItems(&detectItems, detectJd, "Bikes");
 	GetDetecItems(&detectItems, detectJd, "Pedestrains");
+	LogPool::Debug("detect result", _channelIndex, detectItems.size());
 	string lanesJson;
 	unique_lock<mutex> lck(_laneMutex);
 	for (unsigned int laneIndex = 0; laneIndex < _lanes.size(); ++laneIndex)
@@ -173,8 +174,42 @@ vector<RecognItem> ChannelDetector::HandleDetect(const string& detectJson, std::
 		JsonSerialization::SerializeJson(&channelJson, "lanes", lanesJson);
 		JsonSerialization::Serialize(&channelJson, "channelUrl", _channelUrl);
 		JsonSerialization::Serialize(&channelJson, "timeStamp", timeStamp);
-		_mqtt->Send(IOTopic, channelJson, true);
+		_mqtt->Send(IOTopic, channelJson);
 	}
+
+	//long long l = DateTime::UtcTimeStamp();
+	//LogPool::Debug("bgrtojpg1", _channelUrl);
+	//
+	//cv::Mat image(_height, _width, CV_8UC3, bgrBuffer);
+	//LogPool::Debug("bgrtojpg2", _channelUrl);
+	//std::vector<int> jpgParams;
+	//jpgParams.push_back(cv::IMWRITE_JPEG_QUALITY);
+	//jpgParams.push_back(10);
+	//std::vector<unsigned char> buff;
+	//cv::imencode(".jpg", image, buff, jpgParams);
+	//_bgrHandler.WriteJpg(buff.data(), buff.size(), DateTime::UtcTimeStamp());
+	//long long l1 = DateTime::UtcTimeStamp();
+
+	//LogPool::Debug("bgrtojpg3", _channelUrl,l1-l);
+	///*long long l = DateTime::UtcTimeStamp();
+	/*cv::Mat image(_height, _width, CV_8UC3);
+	int bIndex = 0;
+	int gIndex = bIndex + _height * _width;
+	int rIndex = gIndex + _height * _width;
+	for (int h = 0; h < _height; ++h) {
+		for (int w = 0; w < _width; ++w) {
+			int bgrIndex = h * _width + w * 3;
+			image.data[bgrIndex] = ive[bIndex++];
+			image.data[bgrIndex + 1] = ive[gIndex++];
+			image.data[bgrIndex + 2] = ive[rIndex++];
+		}
+	}
+
+	std::vector<unsigned char> buff;
+	cv::imencode(".jpg", image, buff, _jpgParams);
+	_mqtt->Send(_videoTopic, buff.data(), static_cast<unsigned int>(buff.size()));
+	long long l1 = DateTime::UtcTimeStamp();
+	LogPool::Debug("bgrtojpg",_channelUrl, l1 - l);*/
 
 	vector<RecognItem> items;
 	GetRecognItems(&items, detectJd, "Vehicles");

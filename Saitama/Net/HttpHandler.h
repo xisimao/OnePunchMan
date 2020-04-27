@@ -2,7 +2,7 @@
 #include "SocketHandler.h"
 #include "Observable.h"
 
-namespace Saitama
+namespace OnePunchMan
 {
 	enum class HttpCode
 	{
@@ -31,6 +31,8 @@ namespace Saitama
 		int Socket;
 		//请求方法
 		std::string Function;
+		//发起请求的主机地址
+		std::string Host;
 		//请求url
 		std::string Url;
 		//请求内容

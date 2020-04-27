@@ -12,11 +12,11 @@
 #include "DecodeChannel.h"
 #include "SocketMaid.h"
 
-namespace TerribleTornado
+namespace OnePunchMan
 {
     //数据分发和收集线程
-    class DataChannel :public Saitama::ThreadObject
-        , public Saitama::IObserver<Saitama::HttpReceivedEventArgs>
+    class DataChannel :public ThreadObject
+        , public IObserver<HttpReceivedEventArgs>
     {
     public:
 
@@ -34,7 +34,7 @@ namespace TerribleTornado
         * @brief: http消息接收事件函数
         * @param: e http消息接收事件参数
         */
-        void Update(Saitama::HttpReceivedEventArgs* e);
+        void Update(HttpReceivedEventArgs* e);
 
     protected:
 
@@ -46,31 +46,31 @@ namespace TerribleTornado
         * @brief: 查询设备
         * @param: e http消息接收事件参数
         */
-        void GetDevice(Saitama::HttpReceivedEventArgs* e);
+        void GetDevice(HttpReceivedEventArgs* e);
         
         /**
         * @brief: 设置通道集合
         * @param: e http消息接收事件参数
         */
-        void SetDevice(Saitama::HttpReceivedEventArgs* e);
+        void SetDevice(HttpReceivedEventArgs* e);
         
         /**
         * @brief: 获取通道
         * @param: e http消息接收事件参数
         */
-        void GetChannel(Saitama::HttpReceivedEventArgs* e);
+        void GetChannel(HttpReceivedEventArgs* e);
   
         /**
         * @brief: 设置通道
         * @param: e http消息接收事件参数
         */
-        void SetChannel(Saitama::HttpReceivedEventArgs* e);
+        void SetChannel(HttpReceivedEventArgs* e);
         
         /**
         * @brief: 删除通道
         * @param: e http消息接收事件参数
         */
-        void DeleteChannel(Saitama::HttpReceivedEventArgs* e);
+        void DeleteChannel(HttpReceivedEventArgs* e);
         
         /**
         * @brief: 设置通道
@@ -104,7 +104,7 @@ namespace TerribleTornado
         * @param: channel 通道
         * @return: 通道json数据
         */
-        std::string GetChannelJson(Saitama::HttpReceivedEventArgs* e,const FlowChannel& channel);
+        std::string GetChannelJson(HttpReceivedEventArgs* e,const FlowChannel& channel);
 
         /**
         * @brief: 获取url是否是指定的前缀
@@ -137,9 +137,9 @@ namespace TerribleTornado
         bool _inited;
 
         //socket连接
-        Saitama::SocketMaid* _socketMaid;
+        SocketMaid* _socketMaid;
         //http消息解析
-        Saitama::HttpHandler _handler;
+        HttpHandler _handler;
         //mqtt
         MqttChannel* _mqtt;
         //检测线程集合，等于视频总数
@@ -154,7 +154,7 @@ namespace TerribleTornado
         std::vector<DecodeChannel*> _decodes;
 
         //系统启动时间
-        Saitama::DateTime _startTime;
+        DateTime _startTime;
         //上一次收集数据的分钟
         int _lastMinute;
     };

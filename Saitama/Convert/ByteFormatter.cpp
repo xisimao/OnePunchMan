@@ -1,7 +1,7 @@
 ﻿#include "ByteFormatter.h"
 
 using namespace std;
-using namespace Saitama;
+using namespace OnePunchMan;
 
 unsigned int ByteFormatter::Serialize(char* buffer, unsigned int capacity, const bool& value)
 {

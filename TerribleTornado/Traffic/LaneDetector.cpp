@@ -1,8 +1,7 @@
 #include "LaneDetector.h"
 
 using namespace std;
-using namespace Saitama;
-using namespace TerribleTornado;
+using namespace OnePunchMan;
 
 LaneDetector::LaneDetector(const string& laneId,const Lane& lane)
 	: _laneId(laneId),_persons(0),_bikes(0), _motorcycles(0), _cars(0),_tricycles(0), _buss(0),_vans(0),_trucks(0)
@@ -66,7 +65,7 @@ Line LaneDetector::GetLine(const string& line)
 	{
 		vector<Point> points;
 		vector<string> coordinates = StringEx::Split(line.substr(1, line.size() - 2), ",", true);
-		int x, y = 0;
+		int x=0, y = 0;
 		for (unsigned int i = 0; i < coordinates.size(); ++i)
 		{
 			if (coordinates[i].size() > 2)
@@ -96,7 +95,7 @@ Polygon LaneDetector::GetPolygon(const std::string& region)
 	if (region.size() > 2)
 	{
 		vector<string> coordinates = StringEx::Split(region.substr(1, region.size() - 2), ",", true);
-		int x, y = 0;
+		int x=0, y = 0;
 		for (unsigned int i = 0; i < coordinates.size(); ++i)
 		{
 			if (coordinates[i].size() > 2)

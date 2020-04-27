@@ -9,7 +9,7 @@
 #include "SocketHandler.h"
 #include "Thread.h"
 
-namespace Saitama
+namespace OnePunchMan
 {
 	// tcp套接字连接事件参数
 	class ConnectedEventArgs

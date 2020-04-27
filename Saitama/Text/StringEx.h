@@ -7,7 +7,7 @@
 #include <map>
 #include <iomanip>
 
-namespace Saitama
+namespace OnePunchMan
 {
 	//文本操作类
 	class StringEx

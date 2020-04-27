@@ -5,7 +5,7 @@
 #include <string.h>
 #include <algorithm>
 
-namespace Saitama
+namespace OnePunchMan
 {
 	//字符串容器二进制序列化
 	class StringFormatter

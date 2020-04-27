@@ -1,8 +1,7 @@
 #include "DataChannel.h"
 
 using namespace std;
-using namespace Saitama;
-using namespace TerribleTornado;
+using namespace OnePunchMan;
 
 const string DataChannel::FlowTopic("Flow");
 
@@ -265,7 +264,7 @@ void DataChannel::SetDevice(HttpReceivedEventArgs* e)
     }
 }
 
-void DataChannel::GetChannel(Saitama::HttpReceivedEventArgs* e)
+void DataChannel::GetChannel(HttpReceivedEventArgs* e)
 {
     string id = GetId(e->Url, "/api/channels");
     int channelIndex = StringEx::Convert<int>(id);
@@ -282,7 +281,7 @@ void DataChannel::GetChannel(Saitama::HttpReceivedEventArgs* e)
     }
 }
 
-void DataChannel::SetChannel(Saitama::HttpReceivedEventArgs* e)
+void DataChannel::SetChannel(HttpReceivedEventArgs* e)
 {
     JsonDeserialization jd(e->RequestJson);
 
@@ -338,7 +337,7 @@ void DataChannel::SetChannel(Saitama::HttpReceivedEventArgs* e)
     }
 }
 
-void DataChannel::DeleteChannel(Saitama::HttpReceivedEventArgs* e)
+void DataChannel::DeleteChannel(HttpReceivedEventArgs* e)
 {
     string id = GetId(e->Url, "/api/channels");
     int channelIndex = StringEx::Convert<int>(id);
@@ -416,13 +415,13 @@ string DataChannel::CheckChannel(const FlowChannel& channel)
     }
 }
 
-string DataChannel::GetChannelJson(Saitama::HttpReceivedEventArgs* e, const FlowChannel& channel)
+string DataChannel::GetChannelJson(HttpReceivedEventArgs* e, const FlowChannel& channel)
 {
     string channelJson;
     JsonSerialization::Serialize(&channelJson, "channelIndex", channel.ChannelIndex);
     JsonSerialization::Serialize(&channelJson, "channelName", channel.ChannelName);
     JsonSerialization::Serialize(&channelJson, "channelUrl", channel.ChannelUrl);
-    JsonSerialization::Serialize(&channelJson, "rtmpUrl", channel.RtmpUrl(EndPoint::GetLocalEndPoint(e->Socket).HostIp()));
+    JsonSerialization::Serialize(&channelJson, "rtmpUrl", channel.RtmpUrl(e->Host));
     JsonSerialization::Serialize(&channelJson, "channelType", channel.ChannelType);
     if (ChannelIndexEnable(channel.ChannelIndex))
     {

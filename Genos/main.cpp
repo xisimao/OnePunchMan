@@ -1,11 +1,7 @@
-#include <iostream>
-
 #include "DataChannel.h"
 
 using namespace std;
-using namespace Fubuki;
-using namespace Saitama;
-using namespace TerribleTornado;
+using namespace OnePunchMan;
 
 int main(int argc, char* argv[])
 {

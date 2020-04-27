@@ -5,7 +5,7 @@
 
 #include "StringEx.h"
 
-namespace Saitama
+namespace OnePunchMan
 {
 	//json序列化
 	class JsonSerialization

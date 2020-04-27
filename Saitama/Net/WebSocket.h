@@ -4,7 +4,7 @@
 #include "Security.h"
 #include "HttpHandler.h"
 
-namespace Saitama
+namespace OnePunchMan
 {
 	//websocket协议
 	class WebSocket

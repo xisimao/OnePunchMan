@@ -1,7 +1,7 @@
 #include "LogReader.h"
 
 using namespace std;
-using namespace Saitama;
+using namespace OnePunchMan;
 
 tuple<vector<LogItem>, int> LogReader::ReadLogs(const std::string logDirectory, const string& logName, const DateTime& logDate, int logLevel, int logEvent, int pageNum, int pageSize,bool hasTotal)
 {

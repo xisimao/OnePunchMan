@@ -4,7 +4,7 @@
 #include "Observable.h"
 #include "WebSocket.h"
 
-namespace Saitama
+namespace OnePunchMan
 {
 	//客户端连接事件参数
 	class WebSocketOpenedEventArgs

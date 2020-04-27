@@ -2,13 +2,14 @@
 #include <vector>
 
 #include "SeemmoSDK.h"
-#include "FrameChannel.h"
+#include "FFmpegChannel.h"
 #include "JsonFormatter.h"
 #include "LaneDetector.h"
 #include "MqttChannel.h"
 #include "IVE_8UC3Handler.h"
+#include "BGR24Handler.h"
 
-namespace TerribleTornado
+namespace OnePunchMan
 {
 	//通道检测
 	class ChannelDetector
@@ -50,10 +51,11 @@ namespace TerribleTornado
 		/**
 		* @brief: 处理检测数据
 		* @param: detectJson 检测json数据
+		* @param: bgrBuffer bgr字节流
 		* @param: params 检测参数
 		* @return: 识别数据集合
 		*/
-		std::vector<RecognItem> HandleDetect(const std::string& detectJson, std::string* param);
+		std::vector<RecognItem> HandleDetect(const std::string& detectJson, unsigned char* bgrBuffer, std::string* param);
 		
 		/**
 		* @brief: 处理识别数据
@@ -77,7 +79,7 @@ namespace TerribleTornado
 		* @param: jd json解析
 		* @param: key 检测类型，机动车，非机动和和行人
 		*/
-		void GetRecognItems(std::vector<RecognItem>* items, const Saitama::JsonDeserialization& jd, const std::string& key);
+		void GetRecognItems(std::vector<RecognItem>* items, const JsonDeserialization& jd, const std::string& key);
 
 		/**
 		* @brief: 从json数据中获取检测项集合
@@ -85,12 +87,16 @@ namespace TerribleTornado
 		* @param: jd json解析
 		* @param: key 检测类型，机动车，非机动和和行人
 		*/
-		void GetDetecItems(std::map<std::string, DetectItem>* items, const Saitama::JsonDeserialization& jd, const std::string& key);
+		void GetDetecItems(std::map<std::string, DetectItem>* items, const JsonDeserialization& jd, const std::string& key);
 
 		//视频序号
 		int _channelIndex;
 		//视频地址
 		std::string _channelUrl;
+		//视频宽度
+		int _width;
+		//视频高度
+		int _height;
 		//mqtt
 		MqttChannel* _mqtt;
 		//车道集合同步锁
@@ -98,11 +104,17 @@ namespace TerribleTornado
 		//车道集合
 		std::vector<LaneDetector*> _lanes;
 		//8uc3转换
-		Fubuki::IVE_8UC3Handler _handler;
+		IVE_8UC3Handler _handler;
+		//bgr
+		BGR24Handler _bgrHandler;
 		//车道算法筛选区域参数
 		std::string _param;
 		//是否设置过车道参数
 		bool _setParam;
+		//视频播放主题
+		std::string _videoTopic;
+		//用于压缩jpg图片的参数
+		std::vector<int> _jpgParams;
 	};
 
 }

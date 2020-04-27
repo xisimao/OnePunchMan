@@ -1,9 +1,7 @@
 #include "DetectChannel.h"
 
 using namespace std;
-using namespace Saitama;
-using namespace Fubuki;
-using namespace TerribleTornado;
+using namespace OnePunchMan;
 
 const int DetectChannel::SleepTime=10;
 
@@ -22,21 +20,22 @@ DetectChannel::DetectChannel(int channelIndex, int width, int height, RecognChan
 	}
 	_item.YuvTempBuffer = new uint8_t[_item.YuvSize];
 
-	_item.BgrSize = _width * _height * 3;
-	if (HI_MPI_SYS_MmzAlloc_Cached(reinterpret_cast<HI_U64*>(&_item.Bgr_phy_addr),
-		reinterpret_cast<HI_VOID**>(&_item.BgrBuffer),
+	_item.IveSize = _width * _height * 3;
+	if (HI_MPI_SYS_MmzAlloc_Cached(reinterpret_cast<HI_U64*>(&_item.Ive_phy_addr),
+		reinterpret_cast<HI_VOID**>(&_item.IveBuffer),
 		"bgr_buffer",
 		NULL,
-		_item.BgrSize) != HI_SUCCESS) {
+		_item.IveSize) != HI_SUCCESS) {
 		LogPool::Information("HI_MPI_SYS_MmzAlloc_Cached yuv");
 		return;
 	}
+	_item.BgrBuffer = new uint8_t[_item.IveSize];
 
 	_item.HasValue = false;
 	_indexes.push_back(_channelIndex);
 	_widths.push_back(_width);
 	_heights.push_back(_height);
-	_bgrs.push_back(_item.BgrBuffer);
+	_ives.push_back(_item.IveBuffer);
 	_param = "{\"Detect\":{\"DetectRegion\":[],\"IsDet\":true,\"MaxCarWidth\":10,\"MinCarWidth\":10,\"Mode\":0,\"Threshold\":20,\"Version\":1001}}";
 #endif // !_WIN32
 	_params.resize(1);
@@ -50,9 +49,10 @@ DetectChannel::DetectChannel(int channelIndex, int width, int height, RecognChan
 DetectChannel::~DetectChannel()
 {
 #ifndef _WIN32
+	delete[] _item.BgrBuffer;
 	delete[] _item.YuvTempBuffer;
 	HI_MPI_SYS_MmzFree(_item.Yuv_phy_addr, reinterpret_cast<HI_VOID*>(_item.YuvBuffer));
-	HI_MPI_SYS_MmzFree(_item.Bgr_phy_addr, reinterpret_cast<HI_VOID*>(_item.BgrBuffer));
+	HI_MPI_SYS_MmzFree(_item.Ive_phy_addr, reinterpret_cast<HI_VOID*>(_item.IveBuffer));
 #endif // !_WIN32
 }
 
@@ -92,10 +92,10 @@ bool DetectChannel::YuvToBgr()
 	bgr_image_list.enType = IVE_IMAGE_TYPE_U8C3_PLANAR;
 	bgr_image_list.u32Height = _height;
 	bgr_image_list.u32Width = _width;
-	bgr_image_list.au64PhyAddr[0] = _item.Bgr_phy_addr;
+	bgr_image_list.au64PhyAddr[0] = _item.Ive_phy_addr;
 	bgr_image_list.au64PhyAddr[1] = bgr_image_list.au64PhyAddr[0] + bgr_image_list.u32Height * bgr_image_list.u32Width;
 	bgr_image_list.au64PhyAddr[2] = bgr_image_list.au64PhyAddr[1] + bgr_image_list.u32Height * bgr_image_list.u32Width;
-	bgr_image_list.au64VirAddr[0] = reinterpret_cast<HI_U64>(_item.BgrBuffer);
+	bgr_image_list.au64VirAddr[0] = reinterpret_cast<HI_U64>(_item.IveBuffer);
 	bgr_image_list.au64VirAddr[1] = bgr_image_list.au64VirAddr[0] + bgr_image_list.u32Height * bgr_image_list.u32Width;
 	bgr_image_list.au64VirAddr[2] = bgr_image_list.au64VirAddr[1] + bgr_image_list.u32Height * bgr_image_list.u32Width;
 	bgr_image_list.au32Stride[0] = bgr_image_list.u32Width;
@@ -118,8 +118,19 @@ bool DetectChannel::YuvToBgr()
 		return false;
 	}
 
+	uint8_t* b = _item.IveBuffer;
+	uint8_t* g = b + _width * _height;
+	uint8_t* r = g + _width * _height;
+	for (int j = 0; j < _height; j++) {
+		for (int i = 0; i < _width; i++) {
+			_item.BgrBuffer[(j * _width + i) * 3 + 0] = b[j * _width + i];
+			_item.BgrBuffer[(j * _width + i) * 3 + 1] = g[j * _width + i];
+			_item.BgrBuffer[(j * _width + i) * 3 + 2] = r[j * _width + i];
+		}
+	}
+
 	//_yuvHandler->HandleFrame(_item.YuvBuffer, 1920, 1080, _item.PacketIndex);
-	//_bgrHandler->HandleFrame(_item.BgrBuffer, 1920, 1080, _item.PacketIndex);
+	//_bgrHandler->HandleFrame(_item.IveBuffer, 1920, 1080, _item.PacketIndex);
 
 #endif // !_WIN32
 	return true;
@@ -160,7 +171,7 @@ void DetectChannel::StartCore()
 				int result = SeemmoSDK::seemmo_video_pvc(1,
 					_indexes.data(),
 					_timeStamps.data(),
-					const_cast<const std::uint8_t**>(_bgrs.data()),
+					const_cast<const std::uint8_t**>(_ives.data()),
 					_heights.data(),
 					_widths.data(),
 					_params.data(),
@@ -169,7 +180,7 @@ void DetectChannel::StartCore()
 					0);
 				if (result == 0)
 				{
-					vector<RecognItem> recognItems = _detector->HandleDetect(_result.data(), &_param);
+					vector<RecognItem> recognItems = _detector->HandleDetect(_result.data(), _item.BgrBuffer, &_param);
 					if (!recognItems.empty())
 					{
 						_recogn->PushItems(recognItems);

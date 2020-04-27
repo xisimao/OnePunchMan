@@ -1,7 +1,7 @@
 ﻿#include "StringFormatter.h"
 
 using namespace std;
-using namespace Saitama;
+using namespace OnePunchMan;
 
 void StringFormatter::Serialize(string* buffer, const bool& value)
 {

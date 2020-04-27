@@ -3,7 +3,7 @@
 
 #include "AsyncHandler.h"
 
-namespace Saitama
+namespace OnePunchMan
 {
 	//通知协议到达
 	class NoticeHandler : public AsyncHandler

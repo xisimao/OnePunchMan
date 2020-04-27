@@ -5,7 +5,7 @@
 
 #include "LogPool.h"
 
-namespace TerribleTornado
+namespace OnePunchMan
 {
 	//ªÒ»°∞Ê±æ
 	typedef const char* (*seemmo_version_t)(void);

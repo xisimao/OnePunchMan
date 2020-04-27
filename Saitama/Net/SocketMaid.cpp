@@ -1,7 +1,7 @@
 ﻿#include "SocketMaid.h"
 
 using namespace std;
-using namespace Saitama;
+using namespace OnePunchMan;
 
 SocketMaid::SocketMaid()
 	:SocketMaid(4)

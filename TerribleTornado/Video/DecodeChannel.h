@@ -1,5 +1,5 @@
 #pragma once
-#include "FrameChannel.h"
+#include "FFmpegChannel.h"
 #include "YUV420SPHandler.h"
 #include "DetectChannel.h"
 
@@ -54,10 +54,10 @@ extern "C"
 #include "mpi_ive.h"
 #endif // !_WIN32
 
-namespace TerribleTornado
+namespace OnePunchMan
 {
 	//½âÂëÏß³Ì
-	class DecodeChannel :public Fubuki::FrameChannel
+	class DecodeChannel :public FFmpegChannel
 	{
 	public:
 		/**

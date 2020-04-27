@@ -1,7 +1,7 @@
 #include "JsonFormatter.h"
 
 using namespace std;
-using namespace Saitama;
+using namespace OnePunchMan;
 
 JsonDeserialization::JsonDeserialization()
 {

@@ -1,15 +1,13 @@
 #include "DecodeChannel.h"
 
 using namespace std;
-using namespace Saitama;
-using namespace Fubuki;
-using namespace TerribleTornado;
+using namespace OnePunchMan;
 
 const int DecodeChannel::VideoWidth = 1920;
 const int DecodeChannel::VideoHeight = 1080;
 
 DecodeChannel::DecodeChannel(const string& inputUrl, const string& outputUrl,bool loop,int channelIndex,DetectChannel* detectChannel)
-	:FrameChannel(inputUrl,outputUrl,loop),_channelIndex(channelIndex), _useFFmpeg(false), _decodeContext(NULL), _yuvFrame(NULL), _yuv420spBuffer(NULL),_yuv420spSize(static_cast<int>(VideoWidth* VideoHeight * 1.5)), _yuv420spFrame(NULL), _yuv420spSwsContext(NULL),_detectChannel(detectChannel)
+	:FFmpegChannel(inputUrl,outputUrl,loop),_channelIndex(channelIndex), _useFFmpeg(false), _decodeContext(NULL), _yuvFrame(NULL), _yuv420spBuffer(NULL),_yuv420spSize(static_cast<int>(VideoWidth* VideoHeight * 1.5)), _yuv420spFrame(NULL), _yuv420spSwsContext(NULL),_detectChannel(detectChannel)
 {
 
 }

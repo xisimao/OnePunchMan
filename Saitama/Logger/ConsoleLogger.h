@@ -4,7 +4,7 @@
 
 #include "Logger.h"
 
-namespace Saitama
+namespace OnePunchMan
 {
 	//控制台日志类
 	class ConsoleLogger : public Logger

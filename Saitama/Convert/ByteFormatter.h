@@ -4,7 +4,7 @@
 #include <set>
 #include <string.h>
 
-namespace Saitama
+namespace OnePunchMan
 {
 	//字符数组二进制序列化
 	class ByteFormatter

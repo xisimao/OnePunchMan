@@ -1,7 +1,7 @@
 ﻿#include "Path.h"
 
 using namespace std;
-using namespace Saitama;
+using namespace OnePunchMan;
 
 #ifdef _WIN32 
 const char Path::Separator = '\\';

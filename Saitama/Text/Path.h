@@ -11,7 +11,7 @@
 #define getcwd(buffer,capcacity) _getcwd(buffer,capcacity)
 #endif
 
-namespace Saitama
+namespace OnePunchMan
 {
 	// 对包含文件或目录路径信息的执行操作
 	class Path

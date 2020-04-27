@@ -15,7 +15,7 @@
 
 #include "LogPool.h"
 
-namespace Saitama
+namespace OnePunchMan
 {
 #ifdef _WIN32 
 #define WSAErrorCode WSAGetLastError()

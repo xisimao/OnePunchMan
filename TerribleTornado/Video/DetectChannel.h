@@ -58,10 +58,10 @@ extern "C"
 #endif // !_WIN32
 
 
-namespace TerribleTornado
+namespace OnePunchMan
 {
 	//检测线程
-	class DetectChannel :public Saitama::ThreadObject
+	class DetectChannel :public ThreadObject
 	{
 	public:
 		/**
@@ -110,10 +110,11 @@ namespace TerribleTornado
 			int YuvSize;
 
 			//bgr
-			unsigned long long Bgr_phy_addr;
+			unsigned long long Ive_phy_addr;
+			uint8_t* IveBuffer;
+			int IveSize;
 			uint8_t* BgrBuffer;
-			int BgrSize;
-			
+
 			//视频帧序号
 			int PacketIndex;
 			//当前数据项是否已经有了yuv数据
@@ -146,7 +147,7 @@ namespace TerribleTornado
 		FrameItem _item;
 
 		//detect
-		std::vector<uint8_t*> _bgrs;
+		std::vector<uint8_t*> _ives;
 		std::vector<int> _indexes;
 		std::vector<uint64_t> _timeStamps;
 		std::vector<uint32_t> _widths;
@@ -156,8 +157,8 @@ namespace TerribleTornado
 		std::string _param;
 
 		//debug
-		Fubuki::YUV420SPHandler* _yuvHandler;
-		Fubuki::IVE_8UC3Handler* _bgrHandler;
+		YUV420SPHandler* _yuvHandler;
+		IVE_8UC3Handler* _bgrHandler;
 	};
 
 }

@@ -5,7 +5,7 @@
 
 #include "LogPool.h"
 
-namespace Saitama
+namespace OnePunchMan
 {
 	//线程对象基类
 	class ThreadObject

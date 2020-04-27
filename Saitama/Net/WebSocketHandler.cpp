@@ -1,7 +1,7 @@
 ﻿#include "WebSocketHandler.h"
 
 using namespace std;
-using namespace Saitama;
+using namespace OnePunchMan;
 
 SocketHandler* WebSocketHandler::CloneCore()
 {

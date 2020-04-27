@@ -89,13 +89,13 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_WINSOCK_DEPRECATED_NO_WARNINGS;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>../Fubuki/Decode;../Fubuki/FFmpeg;./Video;./Traffic;./Sqlite;./Mqtt;../Saitama/Text;../Saitama/Net;../Saitama/Logger;../Saitama/Core;../Saitama/Convert;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../Fubuki/opencv;../Fubuki/include/ffmpeg;../Fubuki/include/sqlite;../Fubuki/include/mqtt;../Fubuki/Mqtt;../Fubuki/Sqlite;../Fubuki/FFmpeg;../Fubuki/OpenCV;./Video;./Traffic;./Sqlite;./Mqtt;../Saitama/Text;../Saitama/Net;../Saitama/Logger;../Saitama/Core;../Saitama/Convert;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4819</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>../x64/Debug;./lib/win/mosquitto;./lib/win/sqlite3;./lib/win/ffmpeg;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>../x64/Debug;../Fubuki/static/win/opencv;../Fubuki/static/win/mosquitto;../Fubuki/static/win/sqlite3;../Fubuki/static/win/ffmpeg;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>Saitama.lib;Fubuki.lib;avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;postproc.lib;swresample.lib;swscale.lib;sqlite3.lib;mosquitto.lib;Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -141,19 +141,21 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>../Fubuki/include/opencv;../Fubuki/include/ffmpeg;../Fubuki/include/sqlite;../Fubuki/include/mqtt;../Fubuki/Mqtt;../Fubuki/Sqlite;../Fubuki/FFmpeg;../Fubuki/OpenCV;./Video;./Traffic;./Sqlite;./Mqtt;../Saitama/Text;../Saitama/Net;../Saitama/Logger;../Saitama/Core;../Saitama/Convert;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>../x64/Release;../Fubuki/static/win/opencv;../Fubuki/static/win/mosquitto;../Fubuki/static/win/sqlite3;../Fubuki/static/win/ffmpeg;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opencv_core2413.lib;opencv_highgui2413.lib;Saitama.lib;Fubuki.lib;avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;postproc.lib;swresample.lib;swscale.lib;sqlite3.lib;mosquitto.lib;Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Traffic\ChannelDetector.cpp" />
     <ClCompile Include="Video\DecodeChannel.cpp" />
-    <ClCompile Include="Mqtt\MqttChannel.cpp" />
-    <ClCompile Include="Sqlite\Sqlite.cpp" />
     <ClCompile Include="TerribleTornado.cpp" />
     <ClCompile Include="Traffic\DataChannel.cpp" />
     <ClCompile Include="Traffic\FlowChannel.cpp" />
@@ -166,10 +168,6 @@
     <ClInclude Include="Traffic\ChannelDetector.h" />
     <ClInclude Include="Traffic\FlowDevice.h" />
     <ClInclude Include="Video\DecodeChannel.h" />
-    <ClInclude Include="Mqtt\mosquitto.h" />
-    <ClInclude Include="Mqtt\MqttChannel.h" />
-    <ClInclude Include="Sqlite\Sqlite.h" />
-    <ClInclude Include="Sqlite\sqlite3.h" />
     <ClInclude Include="Traffic\DataChannel.h" />
     <ClInclude Include="Traffic\FlowChannel.h" />
     <ClInclude Include="Traffic\LaneDetector.h" />

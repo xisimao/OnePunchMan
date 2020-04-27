@@ -1,7 +1,7 @@
 ﻿#include "DateTime.h"
 
 using namespace std;
-using namespace Saitama;
+using namespace OnePunchMan;
 
 DateTime::DateTime()
 	:DateTime(0,0,0)
