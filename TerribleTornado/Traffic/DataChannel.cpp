@@ -32,7 +32,6 @@ DataChannel::DataChannel()
     _mqtt = new MqttChannel("127.0.0.1", 1883);
     _mqtt->Start();
 
-
     for (int i = 0; i < FlowChannelData::ChannelCount; ++i)
     {
         _decodes.push_back(NULL);
@@ -169,10 +168,10 @@ void DataChannel::GetDevice(HttpReceivedEventArgs* e)
     }
 
     string deviceJson;
-    DateTime now = DateTime::UtcNow();
+    DateTime now = DateTime::Now();
     JsonSerialization::Serialize(&deviceJson, "licenceStatus", device.LicenceStatus);
     JsonSerialization::Serialize(&deviceJson, "startTime", _startTime.ToString());
-    JsonSerialization::Serialize(&deviceJson, "deviceTime", now.TimeStamp());
+    JsonSerialization::Serialize(&deviceJson, "deviceTime", now.UtcTimeStamp());
     JsonSerialization::Serialize(&deviceJson, "deviceTime_Desc", now.ToString());
     JsonSerialization::Serialize(&deviceJson, "softwareVersion", device.SoftwareVersion);
     JsonSerialization::Serialize(&deviceJson, "sn", device.SN);
@@ -505,7 +504,7 @@ void DataChannel::StartCore()
         if (currentMinute != _lastMinute)
         {
             _lastMinute = currentMinute;
-            long long timeStamp = DateTime(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), 0).TimeStamp();
+            long long timeStamp = DateTime(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), 0).UtcTimeStamp();
             string json;
             for (unsigned int i = 0; i < _detectors.size(); ++i)
             {

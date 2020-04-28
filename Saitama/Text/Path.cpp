@@ -43,3 +43,13 @@ string Path::GetFileName(const string& path)
 		return path.substr(start, end);
 	}
 }
+
+void Path::CreateDirectory(const string& directory)
+{
+
+#ifdef _WIN32 
+	_mkdir(directory.c_str());
+#else
+	mkdir(directory.c_str(), S_IRWXU);
+#endif
+}

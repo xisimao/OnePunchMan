@@ -8,14 +8,15 @@ BGR24Handler::BGR24Handler(int count)
 
 }
 
-void BGR24Handler::HandleFrame(unsigned char* bgr24, int width, int height,int packetIndex)
+void BGR24Handler::HandleFrame(unsigned char* bgr24, int width, int height, long long packetIndex)
 {
-	if (_index >= _count)
+	if (_count>0&&_index >= _count)
 	{
 		return;
 	}
+	Path::CreateDirectory("../images");
 	FILE* fw = NULL;
-	if ((fw = fopen(StringEx::Combine("bgr24_", packetIndex, ".bmp").c_str(), "wb")) == NULL) {
+	if ((fw = fopen(StringEx::Combine("../images/bgr24_", packetIndex, ".bmp").c_str(), "wb")) == NULL) {
 		return;
 	}
 	
@@ -63,21 +64,6 @@ void BGR24Handler::HandleFrame(unsigned char* bgr24, int width, int height,int p
 	//It saves pixel data in Little Endian
 
 	fwrite(bgr24, 1,width*height*3,fw);
-	fclose(fw);
-	_index += 1;
-}
-
-void BGR24Handler::WriteJpg(unsigned char* jpg, int size, int packetIndex)
-{
-	if (_index >= _count)
-	{
-		return;
-	}
-	FILE* fw = NULL;
-	if ((fw = fopen(StringEx::Combine("jpg_", packetIndex, ".jpg").c_str(), "wb")) == NULL) {
-		return;
-	}
-	fwrite(jpg, 1,size, fw);
 	fclose(fw);
 	_index += 1;
 }

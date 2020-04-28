@@ -1,10 +1,14 @@
 ﻿#pragma once
 #include <string>
 #include <sstream>
+
 #ifdef _WIN32 
 #include <direct.h>
+#include <io.h>
 #else
 #include <unistd.h>
+#include <dirent.h>
+#include <sys/stat.h> 
 #endif
 
 #ifdef _WIN32 
@@ -79,6 +83,14 @@ namespace OnePunchMan
 		{
 			(*ss) << t;
 		}
+
+		/**
+		* @brief: 创建文件夹
+		* @param: directory 文件夹路径
+		*/
+		static void CreateDirectory(const std::string& directory);
+
+	private:
 
 		//路径分隔符
 		static const char Separator;

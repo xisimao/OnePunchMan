@@ -2,6 +2,7 @@
 #include <stdio.h>
 
 #include "StringEx.h"
+#include "Path.h"
 
 namespace OnePunchMan
 {
@@ -22,15 +23,7 @@ namespace OnePunchMan
 		* @param: height 图片高度
 		* @param: packetIndex 帧序号
 		*/
-		void HandleFrame(unsigned char* bgr24, int width, int height,int packetIndex);
-
-		/**
-		* @brief: 写入jpg文件
-		* @param: jpg jpg的字节流
-		* @param: size jpg的字节流长度
-		* @param: packetIndex 帧序号
-		*/
-		void WriteJpg(unsigned char* jpg, int size, int packetIndex);
+		void HandleFrame(unsigned char* bgr24, int width, int height, long long packetIndex);
 
 	private:
 		//当前写入数量

@@ -179,19 +179,38 @@ namespace OnePunchMan
 		* @param: height 矩形的高度
 		*/
 		Rectangle(const Point& top, int width, int height)
-			:Top(top), Width(width), Height(height), HitPoint(top.X + width / 2, top.Y + height)
+			:_hitPoint(top.X + width / 2, top.Y + height)
 		{
-
+			_points.push_back(top);
+			_points.push_back(Point(top.X+width,top.Y));
+			_points.push_back(Point(top.X+width,top.Y+height));
+			_points.push_back(Point(top.X,top.Y+height));
 		}
 
-		//矩形左上角的点
-		Point Top;
-		//矩形的宽度
-		int Width;
-		//矩形的高度
-		int Height;
+		/**
+		* @brief: 获取检测点
+		* @return: 检测点
+		*/
+		const Point& HitPoint() const
+		{
+			return _hitPoint;
+		}
+
+		/**
+		* @brief: 获取矩形的点集合
+		* @return: 矩形的点集合
+		*/
+		const std::vector<Point>& Points() const
+		{
+			return _points;
+		}
+
+	private:
+
 		//测试点
-		Point HitPoint;
+		Point _hitPoint;
+		//点集合
+		std::vector<Point> _points;
 	};
 
 	//多边形
@@ -216,6 +235,15 @@ namespace OnePunchMan
 			:_points(points)
 		{
 			
+		}
+
+		/**
+		* @brief: 获取多边形的点集合
+		* @return: 多边形的点集合
+		*/
+		const std::vector<Point>& Points() const
+		{
+			return _points;
 		}
 
 		/**

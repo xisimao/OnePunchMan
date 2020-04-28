@@ -3,8 +3,6 @@
 #include "MqttChannel.h"
 #include "RecognChannel.h"
 #include "ChannelDetector.h"
-#include "YUV420SPHandler.h"
-#include "IVE_8UC3Handler.h"
 
 extern "C"
 {
@@ -113,7 +111,6 @@ namespace OnePunchMan
 			unsigned long long Ive_phy_addr;
 			uint8_t* IveBuffer;
 			int IveSize;
-			uint8_t* BgrBuffer;
 
 			// ”∆µ÷°–Ú∫≈
 			int PacketIndex;
@@ -155,10 +152,6 @@ namespace OnePunchMan
 		std::vector<const char*> _params;
 		std::vector<char> _result;
 		std::string _param;
-
-		//debug
-		YUV420SPHandler* _yuvHandler;
-		IVE_8UC3Handler* _bgrHandler;
 	};
 
 }

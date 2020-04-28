@@ -67,8 +67,7 @@ namespace OnePunchMan
 		std::vector<const char*> _guids;
 		std::string _param;
 		std::vector<char> _result;
-
-		//debug
-		IVE_8UC3Handler* _bgrHandler;
+		//用于压缩jpg图片的参数
+		std::vector<int> _jpgParams;
 	};
 }

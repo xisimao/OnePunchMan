@@ -1,12 +1,13 @@
 #pragma once
 #include <vector>
 
+#include "opencv2/opencv.hpp"
+
 #include "SeemmoSDK.h"
 #include "FFmpegChannel.h"
 #include "JsonFormatter.h"
 #include "LaneDetector.h"
 #include "MqttChannel.h"
-#include "IVE_8UC3Handler.h"
 #include "BGR24Handler.h"
 
 namespace OnePunchMan
@@ -20,8 +21,9 @@ namespace OnePunchMan
 		* @param: width 图片宽度
 		* @param: height 图片高度
 		* @param: mqtt mqtt
+		* @param: debug 是否处于调试模式，处于调试模式则输出画线后的bmp
 		*/
-		ChannelDetector(int width, int height, MqttChannel* mqtt);
+		ChannelDetector(int width, int height, MqttChannel* mqtt,bool debug=false);
 
 		/**
 		* @brief: 获取通道地址
@@ -51,18 +53,20 @@ namespace OnePunchMan
 		/**
 		* @brief: 处理检测数据
 		* @param: detectJson 检测json数据
-		* @param: bgrBuffer bgr字节流
 		* @param: params 检测参数
+		* @param: iveBuffer 图片字节流
+		* @param: packetIndex 帧序号
 		* @return: 识别数据集合
 		*/
-		std::vector<RecognItem> HandleDetect(const std::string& detectJson, unsigned char* bgrBuffer, std::string* param);
+		std::vector<RecognItem> HandleDetect(const std::string& detectJson, std::string* param, const unsigned char* iveBuffer,long long packetIndex);
 		
 		/**
 		* @brief: 处理识别数据
 		* @param: item 识别数据项
+		* @param: iveBuffer 图片字节流
 		* @param: recognJson 识别json数据
 		*/
-		void HandleRecognize(const RecognItem& item,uint8_t* bgrBuffer,const std::string& recognJson);
+		void HandleRecognize(const RecognItem& item, const unsigned char* iveBuffer,const std::string& recognJson);
 
 	private:
 		//轮询中睡眠时间(毫秒)
@@ -89,6 +93,16 @@ namespace OnePunchMan
 		*/
 		void GetDetecItems(std::map<std::string, DetectItem>* items, const JsonDeserialization& jd, const std::string& key);
 
+		/**
+		* @brief: hisi ive_8uc3转opencv mat
+		* @param: iveBuffer ive字节流
+		* @param: image opencv mat
+		*/
+		void IveToMat(const unsigned char* iveBuffer,cv::Mat* image);
+
+
+		void DrawDetect(const std::map<std::string, DetectItem>& detectItems, const unsigned char* iveBuffer, long long packetIndex);
+
 		//视频序号
 		int _channelIndex;
 		//视频地址
@@ -103,16 +117,14 @@ namespace OnePunchMan
 		std::mutex _laneMutex;
 		//车道集合
 		std::vector<LaneDetector*> _lanes;
-		//8uc3转换
-		IVE_8UC3Handler _handler;
-		//bgr
-		BGR24Handler _bgrHandler;
 		//车道算法筛选区域参数
 		std::string _param;
 		//是否设置过车道参数
 		bool _setParam;
-		//视频播放主题
-		std::string _videoTopic;
+		//是否处于调试模式
+		bool _debug;
+		//bgr
+		BGR24Handler _bgrHandler;
 		//用于压缩jpg图片的参数
 		std::vector<int> _jpgParams;
 	};

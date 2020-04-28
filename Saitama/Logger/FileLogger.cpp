@@ -8,7 +8,7 @@ FileLogger::FileLogger(LogLevel minLevel, LogLevel maxLevel, const string& name,
 	:Logger(minLevel,maxLevel),_name(name), _date(DateTime::Today()),_directory(directory),_holdDays(holdDays)
 {
 	//创建日志目录
-	CreateDirectory(_directory);
+	Path::CreateDirectory(_directory);
 
 	//删除日志
 	DeleteLog(_directory, _holdDays);
@@ -23,17 +23,7 @@ FileLogger::~FileLogger()
 
 string FileLogger::GetLogFileName(const string& logName, const DateTime& logDate)
 {
-	return StringEx::Combine(logName, "_", logDate.ToString("%Y%m%d"), ".log");
-}
-
-void FileLogger::CreateDirectory(const string& directory)
-{
-
-#ifdef _WIN32 
-	_mkdir(directory.c_str());
-#else
-	mkdir(directory.c_str(), S_IRWXU);
-#endif
+	return Path::Combine(logName, "_", logDate.ToString("%Y%m%d"), ".log");
 }
 
 void FileLogger::DeleteLog(const std::string& directory, unsigned int holdDays)
@@ -41,7 +31,7 @@ void FileLogger::DeleteLog(const std::string& directory, unsigned int holdDays)
 	long long holdMilliseconds = holdDays * 24 * 60 * 60 * 1000;
 	DateTime today = DateTime::Today();
 #ifdef _WIN32 
-	string filter = StringEx::Combine(directory, Path::Separator, "*");
+	string filter = Path::Combine(directory, "*");
 	_finddata_t fileInfo;
 	intptr_t handle = _findfirst(filter.c_str(), &fileInfo);
 	if (handle == -1L)

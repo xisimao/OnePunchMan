@@ -8,7 +8,7 @@ const int FlowChannelData::ChannelCount = 8;
 vector<FlowChannel> FlowChannelData::GetList()
 {
 	vector<FlowChannel> channels;
-	string channelSql("Select * From Flow_Channel");
+	string channelSql("Select * From Flow_Channel Order By ChannelIndex");
 	SqliteReader sqlite;
 	if (sqlite.BeginQuery(channelSql))
 	{

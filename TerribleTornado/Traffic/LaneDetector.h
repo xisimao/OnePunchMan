@@ -11,46 +11,43 @@
 
 namespace OnePunchMan
 {
+	//检测元素状态
+	enum class DetectStatus
+	{
+		New,
+		In,
+		Out
+	};
+
+	//检测元素类型
+	enum class DetectType
+	{
+		None=0,
+		Pedestrain = 1,
+		Bike = 2,
+		Motobike = 3,
+		Car = 4,
+		Tricycle = 5,
+		Bus = 6,
+		Van = 7,
+		Truck = 8
+	};
+
 	//检测项
 	class DetectItem
 	{
 	public:
-
-		/**
-		* @brief: 构造函数
-		*/
-		DetectItem()
-			:DetectItem(Point(), 0)
-		{
-
-		}
-
-		/**
-		* @brief: 构造函数
-		* @param: point 检测元素点
-		*/
-		DetectItem(const Point& point)
-			:DetectItem(point,0)
-		{
-
-		}
-
-		/**
-		* @brief: 构造函数
-		* @param: point 检测元素点
-		* @param: type 检测元素类型
-		*/
-		DetectItem(const Point& point,int type)
-			:HitPoint(point), Type(type)
-		{
-
-		}
-
-		//检测点
-		Point HitPoint;
+		//输入
+		//检测区域
+		Rectangle Region;
 		//检测元素类型
-		int Type;
+		DetectType Type;
 		
+		//输出
+		//检测元素状态
+		DetectStatus Status;
+		//移动距离
+		double Distance;
 	};
 	
 	//识别项
@@ -63,25 +60,12 @@ namespace OnePunchMan
 		std::string Guid;
 		//检测项类型
 		int Type;
-		//检测点
-		Point HitPoint;
+		//检测区域
+		Rectangle Region;
 		//宽度
 		int Width;
 		//高度
 		int Height;
-	};
-
-	//检测元素类型
-	enum class DetectType
-	{
-		Pedestrain = 1,
-		Bike = 2,
-		Motobike = 3,
-		Car = 4,
-		Tricycle = 5,
-		Bus = 6,
-		Van = 7,
-		Truck = 8
 	};
 
 	//交通状态
@@ -94,14 +78,6 @@ namespace OnePunchMan
 		Dead = 5
 	};
 
-	//io状态
-	enum class IOStatus
-	{
-		In = 1,
-		Out = 0,
-		UnChanged=-1
-	};
-
 	//io数据项
 	class IOItem
 	{
@@ -109,9 +85,11 @@ namespace OnePunchMan
 		//车道编号
 		std::string LaneId;
 		//检测类型
-		int Type;
+		DetectType Type;
 		//io状态
-		IOStatus Status;
+		bool Status;
+		//io状态是否改变
+		bool Changed;
 	};
 
 	//流量数据项
@@ -216,7 +194,7 @@ namespace OnePunchMan
 		* @param: item 检测数据项
 		* @return: 返回车道io状态
 		*/
-		IOItem Detect(const std::map<std::string, DetectItem>& items,long long timeStamp);
+		IOItem Detect(std::map<std::string, DetectItem>* items,long long timeStamp);
 
 		/**
 		* @brief: 识别机动车
@@ -231,6 +209,12 @@ namespace OnePunchMan
 		* @return: 车道计算数据
 		*/
 		FlowItem Collect(long long timeStamp);
+		
+		/**
+		* @brief: 获取当前检测区域
+		* @return: 当前检测区域
+		*/
+		const Polygon& Region();
 
 	private:
 
@@ -297,7 +281,7 @@ namespace OnePunchMan
 		long long _totalSpan;
 
 		//io状态
-		IOStatus _iOStatus;
+		bool _iOStatus;
 
 		//上一帧的时间戳
 		long long _lastTimeStamp;

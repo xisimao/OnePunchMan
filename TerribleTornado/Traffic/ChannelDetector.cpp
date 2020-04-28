@@ -6,12 +6,12 @@ using namespace OnePunchMan;
 const string ChannelDetector::IOTopic("IO");
 const string ChannelDetector::VideoStructTopic("VideoStruct");
 
-ChannelDetector::ChannelDetector(int width, int height, MqttChannel* mqtt)
+ChannelDetector::ChannelDetector(int width, int height, MqttChannel* mqtt,bool debug)
 	:_channelIndex(0),_channelUrl(), _width(width),_height(height),_mqtt(mqtt),_param(),_setParam(true)
+	,_debug(debug), _bgrHandler(-1)
 {
-	_videoTopic = StringEx::Combine("video", _channelIndex);
-	//_jpgParams.push_back(cv::IMWRITE_JPEG_QUALITY);
-	//_jpgParams.push_back(10);
+	_jpgParams.push_back(cv::IMWRITE_JPEG_QUALITY);
+	_jpgParams.push_back(10);
 }
 
 string ChannelDetector::ChannelUrl()
@@ -61,6 +61,31 @@ void ChannelDetector::ClearChannel()
 	_channelUrl = string();
 }
 
+void ChannelDetector::GetDetecItems(map<string, DetectItem>* items, const JsonDeserialization& jd, const string& key)
+{
+	int itemIndex = 0;
+	while (true)
+	{
+		string id = jd.Get<string>(StringEx::Combine("ImageResults:0:", key, ":", itemIndex, ":GUID"));
+		if (id.empty())
+		{
+			break;
+		}
+		int type = jd.Get<int>(StringEx::Combine("ImageResults:0:", key, ":", itemIndex, ":Type"));
+		vector<int> rect = jd.GetArray<int>(StringEx::Combine("ImageResults:0:", key, ":", itemIndex, ":Detect:Body:Rect"));
+		if (rect.size() >= 4)
+		{
+			DetectItem item;
+			item.Region = Rectangle(Point(rect[0], rect[1]), rect[2], rect[3]);
+			item.Type = static_cast<DetectType>(type);
+			item.Status = DetectStatus::Out;
+			item.Distance = 0.0;
+			items->insert(pair<string, DetectItem>(id, item));
+		}
+		itemIndex += 1;
+	}
+}
+
 void ChannelDetector::GetRecognItems(vector<RecognItem>* items, const JsonDeserialization& jd, const string& key)
 {
 	int itemIndex = 0;
@@ -80,31 +105,24 @@ void ChannelDetector::GetRecognItems(vector<RecognItem>* items, const JsonDeseri
 			item.Type= jd.Get<int>(StringEx::Combine("FilterResults", ":0:", key, ":", itemIndex, ":Type"));
 			item.Width = jd.Get<int>(StringEx::Combine("FilterResults", ":0:", key, ":", itemIndex, ":Detect:Body:Width"));
 			item.Height = jd.Get<int>(StringEx::Combine("FilterResults", ":0:", key, ":", itemIndex, ":Detect:Body:Height"));
-			Rectangle rectangle(Point(rect[0], rect[1]), rect[2], rect[3]);
-			item.HitPoint = rectangle.HitPoint;
+			item.Region = Rectangle(Point(rect[0], rect[1]), rect[2], rect[3]);
 			items->push_back(item);
 		}
 		itemIndex += 1;
 	}
 }
 
-void ChannelDetector::GetDetecItems(map<string, DetectItem>* items, const JsonDeserialization& jd, const string& key)
+void ChannelDetector::IveToMat(const unsigned char* iveBuffer, cv::Mat* image)
 {
-	int itemIndex = 0;
-	while (true)
-	{
-		string id = jd.Get<string>(StringEx::Combine("ImageResults:0:", key, ":", itemIndex, ":GUID"));
-		if (id.empty())
-		{
-			break;
+	const unsigned char* b = iveBuffer;
+	const unsigned char* g = b + _width * _height;
+	const unsigned char* r = g + _width * _height;
+	for (int j = 0; j < _height; j++) {
+		for (int i = 0; i < _width; i++) {
+			image->data[(j * _width + i) * 3 + 0] = b[j * _width + i];
+			image->data[(j * _width + i) * 3 + 1] = g[j * _width + i];
+			image->data[(j * _width + i) * 3 + 2] = r[j * _width + i];
 		}
-		int type = jd.Get<int>(StringEx::Combine("ImageResults:0:", key, ":", itemIndex, ":Type"));
-		vector<int> rect = jd.GetArray<int>(StringEx::Combine("ImageResults:0:", key, ":", itemIndex, ":Detect:Body:Rect"));
-		if (rect.size() >= 4)
-		{
-			items->insert(pair<string, DetectItem>(id, DetectItem(Rectangle(Point(rect[0], rect[1]), rect[2], rect[3]).HitPoint, type)));
-		}
-		itemIndex += 1;
 	}
 }
 
@@ -138,7 +156,7 @@ void ChannelDetector::CollectFlow(string* flowJson, long long timeStamp)
 	}
 }
 
-vector<RecognItem> ChannelDetector::HandleDetect(const string& detectJson,unsigned char* bgrBuffer, string* param)
+vector<RecognItem> ChannelDetector::HandleDetect(const string& detectJson, string* param, const unsigned char* iveBuffer, long long packetIndex)
 {
 	if (!_setParam)
 	{
@@ -146,19 +164,19 @@ vector<RecognItem> ChannelDetector::HandleDetect(const string& detectJson,unsign
 		_setParam = true;
 	}
 
-	long long timeStamp = DateTime::UtcTimeStamp();
+	long long timeStamp = DateTime::NowUtcTimeStamp();
 	JsonDeserialization detectJd(detectJson);
 	map<string, DetectItem> detectItems;
 	GetDetecItems(&detectItems, detectJd, "Vehicles");
 	GetDetecItems(&detectItems, detectJd, "Bikes");
 	GetDetecItems(&detectItems, detectJd, "Pedestrains");
-	LogPool::Debug("detect result", _channelIndex, detectItems.size());
+
 	string lanesJson;
 	unique_lock<mutex> lck(_laneMutex);
 	for (unsigned int laneIndex = 0; laneIndex < _lanes.size(); ++laneIndex)
 	{
-		IOItem item = _lanes[laneIndex]->Detect(detectItems, timeStamp);
-		if (item.Status != IOStatus::UnChanged)
+		IOItem item = _lanes[laneIndex]->Detect(&detectItems, timeStamp);
+		if (item.Changed)
 		{
 			string laneJson;
 			JsonSerialization::Serialize(&laneJson, "laneId", item.LaneId);
@@ -174,43 +192,12 @@ vector<RecognItem> ChannelDetector::HandleDetect(const string& detectJson,unsign
 		JsonSerialization::SerializeJson(&channelJson, "lanes", lanesJson);
 		JsonSerialization::Serialize(&channelJson, "channelUrl", _channelUrl);
 		JsonSerialization::Serialize(&channelJson, "timeStamp", timeStamp);
-		_mqtt->Send(IOTopic, channelJson);
-	}
-
-	//long long l = DateTime::UtcTimeStamp();
-	//LogPool::Debug("bgrtojpg1", _channelUrl);
-	//
-	//cv::Mat image(_height, _width, CV_8UC3, bgrBuffer);
-	//LogPool::Debug("bgrtojpg2", _channelUrl);
-	//std::vector<int> jpgParams;
-	//jpgParams.push_back(cv::IMWRITE_JPEG_QUALITY);
-	//jpgParams.push_back(10);
-	//std::vector<unsigned char> buff;
-	//cv::imencode(".jpg", image, buff, jpgParams);
-	//_bgrHandler.WriteJpg(buff.data(), buff.size(), DateTime::UtcTimeStamp());
-	//long long l1 = DateTime::UtcTimeStamp();
-
-	//LogPool::Debug("bgrtojpg3", _channelUrl,l1-l);
-	///*long long l = DateTime::UtcTimeStamp();
-	/*cv::Mat image(_height, _width, CV_8UC3);
-	int bIndex = 0;
-	int gIndex = bIndex + _height * _width;
-	int rIndex = gIndex + _height * _width;
-	for (int h = 0; h < _height; ++h) {
-		for (int w = 0; w < _width; ++w) {
-			int bgrIndex = h * _width + w * 3;
-			image.data[bgrIndex] = ive[bIndex++];
-			image.data[bgrIndex + 1] = ive[gIndex++];
-			image.data[bgrIndex + 2] = ive[rIndex++];
+		if (_mqtt != NULL)
+		{
+			_mqtt->Send(IOTopic, channelJson);
 		}
 	}
-
-	std::vector<unsigned char> buff;
-	cv::imencode(".jpg", image, buff, _jpgParams);
-	_mqtt->Send(_videoTopic, buff.data(), static_cast<unsigned int>(buff.size()));
-	long long l1 = DateTime::UtcTimeStamp();
-	LogPool::Debug("bgrtojpg",_channelUrl, l1 - l);*/
-
+	DrawDetect(detectItems, iveBuffer, packetIndex);
 	vector<RecognItem> items;
 	GetRecognItems(&items, detectJd, "Vehicles");
 	GetRecognItems(&items, detectJd, "Bikes");
@@ -218,16 +205,20 @@ vector<RecognItem> ChannelDetector::HandleDetect(const string& detectJson,unsign
 	return items;
 }
 
-void ChannelDetector::HandleRecognize(const RecognItem& recognItem, uint8_t* bgrBuffer, const string& recognJson)
+void ChannelDetector::HandleRecognize(const RecognItem& recognItem, const unsigned char* iveBuffer, const string& recognJson)
 {
-	long long timeStamp = DateTime::UtcTimeStamp();
+	long long timeStamp = DateTime::NowUtcTimeStamp();
+	cv::Mat image(_height, _width, CV_8UC3);
+	IveToMat(iveBuffer, &image);
+	std::vector<unsigned char> jpgBuffer;
+	cv::imencode(".jpg", image, jpgBuffer, _jpgParams);
+
 	JsonDeserialization jd(recognJson);	
 	if (recognItem.Type == static_cast<int>(DetectType::Pedestrain))
 	{
 		int pedestrainType = jd.Get<int>(StringEx::Combine("ImageResults:0:Pedestrains:0:Type"));
 		if (pedestrainType != 0)
 		{
-			DetectItem detectItem(recognItem.HitPoint);
 			unique_lock<mutex> lck(_laneMutex);
 			for (unsigned int laneIndex = 0; laneIndex < _lanes.size(); ++laneIndex)
 			{
@@ -240,7 +231,8 @@ void ChannelDetector::HandleRecognize(const RecognItem& recognItem, uint8_t* bgr
 					pedestrain.Age = jd.Get<int>(StringEx::Combine("ImageResults:0:Pedestrains:0:Recognize:Age:TopList:0:Code"));
 					pedestrain.UpperColor = jd.Get<int>(StringEx::Combine("ImageResults:0:Pedestrains:0:Recognize:UpperColor:TopList:0:Code"));
 					//pedestrain.Feature = jd.Get<string>(StringEx::Combine("ImageResults:", imageIndex, ":Pedestrains:0:Recognize:Feature:Feature"));
-					_handler.ToBase64String(bgrBuffer, recognItem.Width,recognItem.Height,&pedestrain.Image);
+					pedestrain.Image.assign("data:image/jpg;base64,");
+					StringEx::ToBase64String(jpgBuffer.data(), static_cast<unsigned int>(jpgBuffer.size()), &pedestrain.Image);
 					string videoStructJson;
 					JsonSerialization::Serialize(&videoStructJson, "channelUrl", _channelUrl);
 					JsonSerialization::Serialize(&videoStructJson, "laneId", laneId);
@@ -251,7 +243,10 @@ void ChannelDetector::HandleRecognize(const RecognItem& recognItem, uint8_t* bgr
 					JsonSerialization::Serialize(&videoStructJson, "sex", pedestrain.Sex);
 					JsonSerialization::Serialize(&videoStructJson, "age", pedestrain.Age);
 					JsonSerialization::Serialize(&videoStructJson, "upperColor", pedestrain.UpperColor);
-					_mqtt->Send(VideoStructTopic, videoStructJson);
+					if (_mqtt != NULL)
+					{
+						_mqtt->Send(VideoStructTopic, videoStructJson);
+					}
 					LogPool::Debug(LogEvent::Detect, "lane:", laneId, "pedestrain");
 					return;
 				}
@@ -264,7 +259,6 @@ void ChannelDetector::HandleRecognize(const RecognItem& recognItem, uint8_t* bgr
 		int bikeType = jd.Get<int>(StringEx::Combine("ImageResults:0:Bikes:0:Type"));
 		if (bikeType != 0)
 		{
-			DetectItem item(recognItem.HitPoint);
 			unique_lock<mutex> lck(_laneMutex);
 			for (unsigned int laneIndex = 0; laneIndex < _lanes.size(); ++laneIndex)
 			{
@@ -275,7 +269,8 @@ void ChannelDetector::HandleRecognize(const RecognItem& recognItem, uint8_t* bgr
 					VideoBike bike;
 					bike.BikeType = bikeType;
 					//bike.Feature = jd.Get<string>(StringEx::Combine("ImageResults:", imageIndex, ":Bikes:0:Recognize:Feature:Feature"));
-					_handler.ToBase64String(bgrBuffer, recognItem.Width,recognItem.Height, &bike.Image);
+					bike.Image.assign("data:image/jpg;base64,");
+					StringEx::ToBase64String(jpgBuffer.data(), static_cast<unsigned int>(jpgBuffer.size()), &bike.Image);
 					string videoStructJson;
 					JsonSerialization::Serialize(&videoStructJson, "channelUrl", _channelUrl);
 					JsonSerialization::Serialize(&videoStructJson, "laneId", laneId);
@@ -283,8 +278,11 @@ void ChannelDetector::HandleRecognize(const RecognItem& recognItem, uint8_t* bgr
 					JsonSerialization::Serialize(&videoStructJson, "videoStructType", bike.VideoStructType);
 					//JsonSerialization::Serialize(&videoStructJson, "feature", bike.Feature);
 					JsonSerialization::Serialize(&videoStructJson, "image", bike.Image);
-					JsonSerialization::Serialize(&videoStructJson, "bikeType", bike.BikeType);
-					_mqtt->Send(VideoStructTopic, videoStructJson);
+					JsonSerialization::Serialize(&videoStructJson, "bikeType", bike.BikeType);				
+					if (_mqtt != NULL)
+					{
+						_mqtt->Send(VideoStructTopic, videoStructJson);
+					}
 					LogPool::Debug(LogEvent::Detect, "lane:", laneId, "bike:", bike.BikeType);
 					return;
 				}
@@ -296,7 +294,6 @@ void ChannelDetector::HandleRecognize(const RecognItem& recognItem, uint8_t* bgr
 		int vehicleType = jd.Get<int>(StringEx::Combine("ImageResults:0:Vehicles:0:Type"));
 		if (vehicleType != 0)
 		{
-			DetectItem detectItem(recognItem.HitPoint);
 			unique_lock<mutex> lck(_laneMutex);
 			for (unsigned int laneIndex = 0; laneIndex < _lanes.size(); ++laneIndex)
 			{
@@ -311,7 +308,8 @@ void ChannelDetector::HandleRecognize(const RecognItem& recognItem, uint8_t* bgr
 					vehicle.PlateType = jd.Get<int>(StringEx::Combine("ImageResults:0:Vehicles:0:Recognize:Plate:Type"));
 					vehicle.PlateNumber = jd.Get<string>(StringEx::Combine("ImageResults:0:Vehicles:0:Recognize:Plate:Licence"));
 					//vehicle.Feature = jd.Get<string>(StringEx::Combine("ImageResults:", imageIndex, ":Vehicles:0:Recognize:Feature:Feature"));
-					_handler.ToBase64String(bgrBuffer, recognItem.Width ,recognItem.Height , &vehicle.Image);
+					vehicle.Image.assign("data:image/jpg;base64,");
+					StringEx::ToBase64String(jpgBuffer.data(), static_cast<unsigned int>(jpgBuffer.size()), &vehicle.Image);
 					string videoStructJson;
 					JsonSerialization::Serialize(&videoStructJson, "channelUrl", _channelUrl);
 					JsonSerialization::Serialize(&videoStructJson, "laneId", laneId);
@@ -324,12 +322,71 @@ void ChannelDetector::HandleRecognize(const RecognItem& recognItem, uint8_t* bgr
 					JsonSerialization::Serialize(&videoStructJson, "carBrand", vehicle.CarBrand);
 					JsonSerialization::Serialize(&videoStructJson, "plateType", vehicle.PlateType);
 					JsonSerialization::Serialize(&videoStructJson, "plateNumber", vehicle.PlateNumber);
-					_mqtt->Send(VideoStructTopic, videoStructJson);
+					if (_mqtt != NULL)
+					{
+						_mqtt->Send(VideoStructTopic, videoStructJson);
+					}
 					LogPool::Debug(LogEvent::Detect, "lane:", laneId, "vehicle:", vehicle.CarType);
 					return;
 				}
 			}
 		}
 	}
+}
+
+void ChannelDetector::DrawDetect(const map<string, DetectItem>& detectItems, const unsigned char* iveBuffer, long long packetIndex)
+{
+	if (!_debug)
+	{
+		return;
+	}
+	cv::Mat image(_height, _width, CV_8UC3);
+	IveToMat(iveBuffer, &image);
+	vector<vector<cv::Point>> lanesPoints;
+	unique_lock<mutex> lck(_laneMutex);
+	for (unsigned int i = 0; i < _lanes.size(); ++i)
+	{
+		vector<cv::Point> points;
+		for (unsigned int j = 0; j < _lanes[i]->Region().Points().size();++j)
+		{
+			points.push_back(cv::Point(_lanes[i]->Region().Points()[j].X, _lanes[i]->Region().Points()[j].Y));
+		}
+		lanesPoints.push_back(points);
+	}
+	lck.unlock();
+	cv::polylines(image, lanesPoints, true, cv::Scalar(0, 0, 255), 3);
+	for (map<string, DetectItem>::const_iterator it = detectItems.begin(); it != detectItems.end(); ++it)
+	{
+		cv::Point point(it->second.Region.HitPoint().X, it->second.Region.HitPoint().Y);
+		cv::putText(image, StringEx::ToString(it->second.Distance), point, cv::FONT_HERSHEY_SIMPLEX, 2, cv::Scalar(0, 0, 0), 5);
+		cv::Scalar scalar;
+		//绿色新车
+		if (it->second.Status == DetectStatus::New)
+		{
+			scalar = cv::Scalar(0, 255, 0);
+		}
+		//黄色在区域
+		else if (it->second.Status == DetectStatus::In)
+		{
+			scalar = cv::Scalar(0, 255, 255);
+		}
+		//蓝色不在区域
+		else
+		{
+			scalar = cv::Scalar(255, 0, 0);
+		}
+		cv::circle(image, point, 10 , scalar, -1);
+	}
+	LogPool::Debug("detect result", detectItems.size(), packetIndex);
+
+	std::vector<unsigned char> jpgBuffer;
+	cv::imencode(".jpg", image, jpgBuffer, _jpgParams);
+	Path::CreateDirectory("../images");
+	FILE* fw = NULL;
+	if ((fw = fopen(StringEx::Combine("../images/detect_", packetIndex, ".jpg").c_str(), "wb")) == NULL) {
+		return;
+	}
+	fwrite(jpgBuffer.data(), 1, jpgBuffer.size(), fw);
+	fclose(fw);
 }
 

@@ -29,8 +29,6 @@ DetectChannel::DetectChannel(int channelIndex, int width, int height, RecognChan
 		LogPool::Information("HI_MPI_SYS_MmzAlloc_Cached yuv");
 		return;
 	}
-	_item.BgrBuffer = new uint8_t[_item.IveSize];
-
 	_item.HasValue = false;
 	_indexes.push_back(_channelIndex);
 	_widths.push_back(_width);
@@ -41,15 +39,11 @@ DetectChannel::DetectChannel(int channelIndex, int width, int height, RecognChan
 	_params.resize(1);
 	_timeStamps.resize(1);
 	_result.resize(4 * 1024 * 1024);
-
-	//_yuvHandler = new YUV420SPHandler();
-	//_bgrHandler = new IVE_8UC3Handler;
 }
 
 DetectChannel::~DetectChannel()
 {
 #ifndef _WIN32
-	delete[] _item.BgrBuffer;
 	delete[] _item.YuvTempBuffer;
 	HI_MPI_SYS_MmzFree(_item.Yuv_phy_addr, reinterpret_cast<HI_VOID*>(_item.YuvBuffer));
 	HI_MPI_SYS_MmzFree(_item.Ive_phy_addr, reinterpret_cast<HI_VOID*>(_item.IveBuffer));
@@ -117,18 +111,6 @@ bool DetectChannel::YuvToBgr()
 		LogPool::Information("HI_MPI_IVE_Query", hi_s32_ret);
 		return false;
 	}
-
-	uint8_t* b = _item.IveBuffer;
-	uint8_t* g = b + _width * _height;
-	uint8_t* r = g + _width * _height;
-	for (int j = 0; j < _height; j++) {
-		for (int i = 0; i < _width; i++) {
-			_item.BgrBuffer[(j * _width + i) * 3 + 0] = b[j * _width + i];
-			_item.BgrBuffer[(j * _width + i) * 3 + 1] = g[j * _width + i];
-			_item.BgrBuffer[(j * _width + i) * 3 + 2] = r[j * _width + i];
-		}
-	}
-
 	//_yuvHandler->HandleFrame(_item.YuvBuffer, 1920, 1080, _item.PacketIndex);
 	//_bgrHandler->HandleFrame(_item.IveBuffer, 1920, 1080, _item.PacketIndex);
 
@@ -160,7 +142,7 @@ void DetectChannel::StartCore()
 	{
 		if (_item.HasValue)
 		{
-			long long detectTimeStamp = DateTime::UtcTimeStamp();
+			long long detectTimeStamp = DateTime::NowUtcTimeStamp();
 			memcpy(_item.YuvBuffer, _item.YuvTempBuffer, _item.YuvSize);
 			_params[0] = _param.c_str();
 			_timeStamps[0] = _item.PacketIndex;
@@ -180,13 +162,13 @@ void DetectChannel::StartCore()
 					0);
 				if (result == 0)
 				{
-					vector<RecognItem> recognItems = _detector->HandleDetect(_result.data(), _item.BgrBuffer, &_param);
+					vector<RecognItem> recognItems = _detector->HandleDetect(_result.data(), &_param, _ives[0], _timeStamps[0]);
 					if (!recognItems.empty())
 					{
 						_recogn->PushItems(recognItems);
 					}
 				}
-				LogPool::Debug("detect span", _indexes[0], DateTime::UtcTimeStamp() - detectTimeStamp);
+				LogPool::Debug("detect span", _indexes[0], DateTime::NowUtcTimeStamp() - detectTimeStamp);
 			}
 		}
 		else

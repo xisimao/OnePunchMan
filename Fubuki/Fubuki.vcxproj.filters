@@ -25,87 +25,6 @@
     <ClInclude Include="FFmpeg\FFmpegChannel.h">
       <Filter>FFmpeg</Filter>
     </ClInclude>
-    <ClInclude Include="opencv\opencv2\core\affine.hpp">
-      <Filter>opencv</Filter>
-    </ClInclude>
-    <ClInclude Include="opencv\opencv2\highgui\cap_ios.h">
-      <Filter>opencv</Filter>
-    </ClInclude>
-    <ClInclude Include="opencv\opencv2\core\core.hpp">
-      <Filter>opencv</Filter>
-    </ClInclude>
-    <ClInclude Include="opencv\opencv2\core.hpp">
-      <Filter>opencv</Filter>
-    </ClInclude>
-    <ClInclude Include="opencv\opencv2\core\core_c.h">
-      <Filter>opencv</Filter>
-    </ClInclude>
-    <ClInclude Include="opencv\opencv2\core\cuda_devptrs.hpp">
-      <Filter>opencv</Filter>
-    </ClInclude>
-    <ClInclude Include="opencv\opencv2\core\devmem2d.hpp">
-      <Filter>opencv</Filter>
-    </ClInclude>
-    <ClInclude Include="opencv\opencv2\core\eigen.hpp">
-      <Filter>opencv</Filter>
-    </ClInclude>
-    <ClInclude Include="opencv\opencv2\core\gpumat.hpp">
-      <Filter>opencv</Filter>
-    </ClInclude>
-    <ClInclude Include="opencv\opencv2\highgui.hpp">
-      <Filter>opencv</Filter>
-    </ClInclude>
-    <ClInclude Include="opencv\opencv2\highgui\highgui.hpp">
-      <Filter>opencv</Filter>
-    </ClInclude>
-    <ClInclude Include="opencv\opencv2\highgui\highgui_c.h">
-      <Filter>opencv</Filter>
-    </ClInclude>
-    <ClInclude Include="opencv\opencv2\imgproc\imgproc.hpp">
-      <Filter>opencv</Filter>
-    </ClInclude>
-    <ClInclude Include="opencv\opencv2\imgproc.hpp">
-      <Filter>opencv</Filter>
-    </ClInclude>
-    <ClInclude Include="opencv\opencv2\imgproc\imgproc_c.h">
-      <Filter>opencv</Filter>
-    </ClInclude>
-    <ClInclude Include="opencv\opencv2\core\internal.hpp">
-      <Filter>opencv</Filter>
-    </ClInclude>
-    <ClInclude Include="opencv\opencv2\highgui\ios.h">
-      <Filter>opencv</Filter>
-    </ClInclude>
-    <ClInclude Include="opencv\opencv2\core\mat.hpp">
-      <Filter>opencv</Filter>
-    </ClInclude>
-    <ClInclude Include="opencv\opencv2\opencv.hpp">
-      <Filter>opencv</Filter>
-    </ClInclude>
-    <ClInclude Include="opencv\opencv2\opencv_modules.hpp">
-      <Filter>opencv</Filter>
-    </ClInclude>
-    <ClInclude Include="opencv\opencv2\core\opengl_interop.hpp">
-      <Filter>opencv</Filter>
-    </ClInclude>
-    <ClInclude Include="opencv\opencv2\core\opengl_interop_deprecated.hpp">
-      <Filter>opencv</Filter>
-    </ClInclude>
-    <ClInclude Include="opencv\opencv2\core\operations.hpp">
-      <Filter>opencv</Filter>
-    </ClInclude>
-    <ClInclude Include="opencv\opencv2\imgproc\types_c.h">
-      <Filter>opencv</Filter>
-    </ClInclude>
-    <ClInclude Include="opencv\opencv2\core\types_c.h">
-      <Filter>opencv</Filter>
-    </ClInclude>
-    <ClInclude Include="opencv\opencv2\core\version.hpp">
-      <Filter>opencv</Filter>
-    </ClInclude>
-    <ClInclude Include="opencv\opencv2\core\wimage.hpp">
-      <Filter>opencv</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="FFmpeg">
@@ -116,9 +35,6 @@
     </Filter>
     <Filter Include="Sqlite">
       <UniqueIdentifier>{7a7899b0-4050-4f25-9e2c-8a21a5887bb5}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="opencv">
-      <UniqueIdentifier>{1fefa0f5-34f9-4c85-b61b-6d3e34d9108b}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

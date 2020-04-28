@@ -14,7 +14,8 @@ RecognChannel::RecognChannel(int recognIndex,int width, int height, const vector
 	_guids.resize(1);
 	_param = "{\"Detect\":{\"DetectRegion\":[],\"IsDet\":true,\"MaxCarWidth\":0,\"MinCarWidth\":0,\"Mode\":0,\"Threshold\":20,\"Version\":1001},\"Recognize\":{\"Person\":{\"IsRec\":true},\"Feature\":{\"IsRec\":true},\"Vehicle\":{\"Brand\":{\"IsRec\":true},\"Plate\":{\"IsRec\":true},\"Color\":{\"IsRec\":true},\"Marker\":{\"IsRec\":true},\"Sunroof\":{\"IsRec\":true},\"SpareTire\":{\"IsRec\":true},\"Slag\":{\"IsRec\":true},\"Rack\":{\"IsRec\":true},\"Danger\":{\"IsRec\":true},\"Crash\":{\"IsRec\":true},\"Call\":{\"IsRec\":true},\"Belt\":{\"IsRec\":true},\"Convertible\":{\"IsRec\":true},\"Manned\":{\"IsRec\":true}}}}";
 	_result.resize(4 * 1024 * 1024);
-	//_bgrHandler = new IVE_8UC3Handler();
+	_jpgParams.push_back(cv::IMWRITE_JPEG_QUALITY);
+	_jpgParams.push_back(10);
 }
 
 RecognChannel::~RecognChannel()

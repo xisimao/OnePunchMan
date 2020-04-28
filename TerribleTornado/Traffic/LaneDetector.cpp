@@ -7,7 +7,7 @@ LaneDetector::LaneDetector(const string& laneId,const Lane& lane)
 	: _laneId(laneId),_persons(0),_bikes(0), _motorcycles(0), _cars(0),_tricycles(0), _buss(0),_vans(0),_trucks(0)
 	, _totalDistance(0.0), _totalTime(0)
 	, _totalInTime(0)
-	,_lastInRegion(0), _vehicles(0), _totalSpan(0), _iOStatus(IOStatus::Out)
+	,_lastInRegion(0), _vehicles(0), _totalSpan(0), _iOStatus(false)
 	,_lastTimeStamp(0),_currentItems(&_items1),_lastItems(&_items2)
 {
 	InitLane(lane);
@@ -26,7 +26,7 @@ void LaneDetector::InitLane(const Lane& lane)
 	{
 		_region = Polygon();
 		_meterPerPixel = 0;
-		LogPool::Warning(LogEvent::Detect,"line empty");
+		LogPool::Warning(LogEvent::Detect,"line empty channel", lane.ChannelIndex,"lane", lane.LaneId);
 		return;
 	}
 	else
@@ -116,19 +116,28 @@ Polygon LaneDetector::GetPolygon(const std::string& region)
 	return Polygon(points);
 }
 
-IOItem LaneDetector::Detect(const map<string, DetectItem>& items,long long timeStamp)
+const Polygon& LaneDetector::Region()
+{
+	return _region;
+}
+
+IOItem LaneDetector::Detect(map<string, DetectItem>* items,long long timeStamp)
 {
 	lock_guard<mutex> lck(_mutex);
 	_currentItems->clear();
 	IOItem item;
 	item.LaneId = _laneId;
-	item.Status= IOStatus::Out;
-	item.Type = 0;
-	for (map<string, DetectItem>::const_iterator it = items.begin(); it!=items.end();++it)
+	item.Status= false;
+	item.Type = DetectType::None;
+	for (map<string, DetectItem>::iterator it = items->begin(); it!=items->end();++it)
 	{
-		if (_region.Contains(it->second.HitPoint))
+		if (it->second.Status !=DetectStatus::Out)
 		{
-			item.Status = IOStatus::In;
+			continue;
+		}
+		if (_region.Contains(it->second.Region.HitPoint()))
+		{
+			item.Status = true;
 			item.Type = it->second.Type;
 			map<string, DetectItem>::const_iterator mit = _lastItems->find(it->first);
 			//如果是新车则计算流量和车头时距
@@ -136,40 +145,41 @@ IOItem LaneDetector::Detect(const map<string, DetectItem>& items,long long timeS
 			//车头时距=所有进入区域的时间差的平均值
 			if (mit == _lastItems->end())
 			{
-				if (it->second.Type == (int)DetectType::Car)
+				it->second.Status = DetectStatus::New;
+				if (it->second.Type == DetectType::Car)
 				{
 					_cars += 1;
 					_vehicles += 1;
 				}
-				else if (it->second.Type == (int)DetectType::Tricycle)
+				else if (it->second.Type == DetectType::Tricycle)
 				{
 					_tricycles += 1;
 					_vehicles += 1;
 				}
-				else if (it->second.Type == (int)DetectType::Bus)
+				else if (it->second.Type == DetectType::Bus)
 				{
 					_buss += 1;
 					_vehicles += 1;
 				}
-				else if (it->second.Type == (int)DetectType::Van)
+				else if (it->second.Type == DetectType::Van)
 				{
 					_vans += 1;
 					_vehicles += 1;
 				}
-				else if (it->second.Type == (int)DetectType::Truck)
+				else if (it->second.Type == DetectType::Truck)
 				{
 					_trucks += 1;
 					_vehicles += 1;
 				}
-				else if (it->second.Type == (int)DetectType::Bike)
+				else if (it->second.Type == DetectType::Bike)
 				{
 					_bikes += 1;
 				}
-				else if (it->second.Type == (int)DetectType::Motobike)
+				else if (it->second.Type == DetectType::Motobike)
 				{
 					_motorcycles += 1;
 				}
-				else if (it->second.Type == (int)DetectType::Pedestrain)
+				else if (it->second.Type == DetectType::Pedestrain)
 				{
 					_persons += 1;
 				}
@@ -185,7 +195,10 @@ IOItem LaneDetector::Detect(const map<string, DetectItem>& items,long long timeS
 			//总时间=两次检测到的时间戳时长
 			else
 			{
-				_totalDistance += it->second.HitPoint.Distance(mit->second.HitPoint);
+				it->second.Status = DetectStatus::In;
+				double distance=it->second.Region.HitPoint().Distance(mit->second.Region.HitPoint());
+				it->second.Distance = distance;
+				_totalDistance += distance;
 				_totalTime += timeStamp - _lastTimeStamp;
 			}
 			_currentItems->insert(pair<string, DetectItem>(it->first, it->second));
@@ -205,22 +218,22 @@ IOItem LaneDetector::Detect(const map<string, DetectItem>& items,long long timeS
 
 	_lastTimeStamp = timeStamp;
 
-	if (item.Status != _iOStatus)
+	if (item.Status == _iOStatus)
 	{
-		_iOStatus = item.Status;
-		LogPool::Debug(LogEvent::Detect, "lane:", _laneId, "io:", (int)item.Status);
-		return item;
+		item.Changed = false;
 	}
 	else
 	{
-		item.Status = IOStatus::UnChanged;
-		return item;
+		item.Changed = true;
+		_iOStatus = item.Status;
+		LogPool::Debug(LogEvent::Detect, "lane:", _laneId, "io:", item.Status);
 	}
+	return item;
 }
 
 string LaneDetector::Recogn(const RecognItem& item)
 {
-	return _region.Contains(item.HitPoint) ? _laneId : string();
+	return _region.Contains(item.Region.HitPoint()) ? _laneId : string();
 }
 
 FlowItem LaneDetector::Collect(long long timeStamp)

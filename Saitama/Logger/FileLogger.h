@@ -60,8 +60,6 @@ namespace OnePunchMan
 		*/
 		void Close();
 
-		void CreateDirectory(const std::string& directory);
-
 		/**
 		* @brief: 删除日志
 		* @param: directory 目录

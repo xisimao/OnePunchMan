@@ -33,7 +33,6 @@ std::string HttpHandler::BuildResponse(HttpCode code, const string& responseJson
 SocketHandler::ProtocolPacket HttpHandler::HandleCore(int socket, unsigned int ip, unsigned short port, string::const_iterator begin, string::const_iterator end)
 { 
 	string httpProtocol(begin, end);
-	LogPool::Debug(httpProtocol);
 	vector<string> lines = StringEx::Split(httpProtocol, "\r\n");
 	HttpReceivedEventArgs e;
 	e.Socket = socket;

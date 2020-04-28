@@ -3,13 +3,12 @@
 using namespace std;
 using namespace OnePunchMan;
 
-FFmpegChannel::FFmpegChannel(const string& inputUrl, const string& outputUrl,bool loop)
+FFmpegChannel::FFmpegChannel(const string& inputUrl, const string& outputUrl,bool debug)
 	:ThreadObject("decode"),
 	_inputUrl(inputUrl), _inputFormat(NULL), _inputStream(NULL), _inputVideoIndex(-1)
 	, _outputUrl(outputUrl), _outputFormat(NULL), _outputStream(NULL), _outputCodec(NULL)
-	, _options(NULL), _loop(loop), _channelStatus(ChannelStatus::Normal)
+	, _debug(debug), _options(NULL), _channelStatus(ChannelStatus::Normal)
 	, _decodeContext(NULL), _yuvFrame(NULL), _bgrFrame(NULL), _bgrWidth(1920), _bgrHeight(1080), _bgrBuffer(NULL), _bgrSwsContext(NULL)
-	, _h264Handler(new H264Handler()), _yuvHandler(new YUV420PHandler()), _bgrHandler(new BGR24Handler())
 {
 	if (inputUrl.size() >= 4&&inputUrl.substr(4).compare("rtsp")==0)
 	{
@@ -126,7 +125,7 @@ ChannelStatus FFmpegChannel::Init()
 	}
 
 	if (InitDecoder()) {
-		LogPool::Information(LogEvent::Decode, "init frame channel success", _inputUrl, _outputUrl, _loop);
+		LogPool::Information(LogEvent::Decode, "init frame channel success", _inputUrl, _outputUrl, _debug);
 		_channelStatus = ChannelStatus::Normal;
 	}
 	else
@@ -226,7 +225,6 @@ bool FFmpegChannel::Decode(const AVPacket* packet, int packetIndex)
 {
 	if (avcodec_send_packet(_decodeContext, packet) == 0)
 	{
-		_h264Handler->HandleFrame(packet->data, packet->size);
 		while (true)
 		{
 			int resultReceive = avcodec_receive_frame(_decodeContext, _yuvFrame);
@@ -241,22 +239,11 @@ bool FFmpegChannel::Decode(const AVPacket* packet, int packetIndex)
 			}
 			else if (resultReceive >= 0)
 			{
-				_yuvHandler->HandleFrame(_yuvFrame->data[0], _decodeContext->width, _decodeContext->height, packetIndex);
 				if (sws_scale(_bgrSwsContext, _yuvFrame->data,
 					_yuvFrame->linesize, 0, _decodeContext->height,
 					_bgrFrame->data, _bgrFrame->linesize) != 0)
 				{
-					long long l = DateTime::UtcTimeStamp();
-					cv::Mat image(_bgrHeight, _bgrWidth, CV_8UC3,_bgrFrame->data[0]);
-					std::vector<int> jpgParams;
-					jpgParams.push_back(cv::IMWRITE_JPEG_QUALITY);
-					jpgParams.push_back(10);
-					std::vector<unsigned char> buff;
-					cv::imencode(".jpg", image, buff, jpgParams);
-					long long l1 = DateTime::UtcTimeStamp();
-					LogPool::Debug("bgrtojpg", _inputUrl, l1 - l);
-					_bgrHandler->WriteJpg(buff.data(), buff.size(), packetIndex);
-					////_bgrHandler->HandleFrame(_bgrFrame->data[0], _decodeContext->width, _decodeContext->height, packetIndex);
+					_bgrHandler.HandleFrame(_bgrFrame->data[0], _decodeContext->width, _decodeContext->height, packetIndex);
 				}
 			}
 		}
@@ -290,7 +277,12 @@ void FFmpegChannel::StartCore()
 		if (result == AVERROR_EOF)
 		{
 			Decode(NULL, packetIndex);
-			if (_loop)
+			if (_debug)
+			{
+				LogPool::Information(LogEvent::Decode, "read eof", _inputUrl);
+				break;
+			}
+			else
 			{
 				Uninit();
 				if (Init() != ChannelStatus::Normal)
@@ -301,11 +293,6 @@ void FFmpegChannel::StartCore()
 				packetIndex = 0;
 				continue;
 			}
-			else
-			{
-				LogPool::Information(LogEvent::Decode, "read eof", _inputUrl);
-				break;
-			}
 		}
 		else if (result != 0)
 		{
@@ -315,7 +302,7 @@ void FFmpegChannel::StartCore()
 		}
 		if (packet.stream_index == _inputVideoIndex) 
 		{
-			long long start = DateTime::UtcTimeStamp();
+			long long start = DateTime::NowUtcTimeStamp();
 			packetIndex += 1;
 			if (!Decode(&packet, packetIndex))
 			{
@@ -330,7 +317,7 @@ void FFmpegChannel::StartCore()
 				packet.pos = -1;
 				av_interleaved_write_frame(_outputFormat, &packet);
 			}
-			long long end = DateTime::UtcTimeStamp();
+			long long end = DateTime::NowUtcTimeStamp();
 			long long sleepTime = frameSpan - (end - start);
 			if (sleepTime > 0)
 			{

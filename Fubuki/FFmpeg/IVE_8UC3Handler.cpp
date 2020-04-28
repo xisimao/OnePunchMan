@@ -11,8 +11,16 @@ IVE_8UC3Handler::IVE_8UC3Handler(int count)
 
 }
 
-unsigned char* IVE_8UC3Handler::IveToBmp(unsigned char* ive, int width, int height)
+void IVE_8UC3Handler::HandleFrame(unsigned char* ive, int width, int height, long long packetIndex)
 {
+	if (_index >= _count)
+	{
+		return;
+	}
+	FILE* fw = NULL;
+	if ((fw = fopen(StringEx::Combine("ive_", packetIndex, ".bmp").c_str(), "wb")) == NULL) {
+		return;
+	}
 	typedef struct
 	{
 		int imageSize;
@@ -50,7 +58,7 @@ unsigned char* IVE_8UC3Handler::IveToBmp(unsigned char* ive, int width, int heig
 	bmpInfoHeader.bitColor = 24;
 	bmpInfoHeader.realSize = HeaderSize;
 
-	uint8_t* bmp = new uint8_t[ width * height * 3+ HeaderSize];
+	uint8_t* bmp = new uint8_t[width * height * 3 + HeaderSize];
 
 	memcpy(bmp, &type, sizeof(type));
 	memcpy(bmp + sizeof(type), &bmpHeader, sizeof(BmpHead));
@@ -69,30 +77,8 @@ unsigned char* IVE_8UC3Handler::IveToBmp(unsigned char* ive, int width, int heig
 			image[(j * width + i) * 3 + 2] = r[j * width + i];
 		}
 	}
-	return bmp;
-}
-
-void IVE_8UC3Handler::HandleFrame(unsigned char* ive, int width, int height, long long packetIndex)
-{
-	if (_index >= _count)
-	{
-		return;
-	}
-	FILE* fw = NULL;
-	if ((fw = fopen(StringEx::Combine("ive_", packetIndex, ".bmp").c_str(), "wb")) == NULL) {
-		return;
-	}
-	unsigned char* bmp = IveToBmp(ive, width, height);
 	fwrite(bmp, 1, width*height*3+ HeaderSize, fw);
 	fclose(fw);
 	delete[] bmp;
 	_index += 1;
-}
-
-void IVE_8UC3Handler::ToBase64String(unsigned char* ive, int width, int height, std::string* base64)
-{
-	unsigned char* bmp = IveToBmp(ive, width, height);
-	base64->assign("data:image/bmp;base64,");
-	StringEx::ToBase64String(bmp, width * height * 3+HeaderSize, base64);
-	delete[] bmp;
 }

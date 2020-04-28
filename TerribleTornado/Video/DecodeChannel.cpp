@@ -900,10 +900,6 @@ bool DecodeChannel::DecodeByHisi(const AVPacket* packet, int packetIndex)
 			LogPool::Debug("send error", _channelIndex, hi_s32_ret);
 			return false;
 		}
-		//else
-		//{
-		//	LogPool::Debug("send success", _channelIndex, packetIndex);
-		//}
 	}
 	VIDEO_FRAME_INFO_S frame;
 	while (true)
@@ -911,69 +907,78 @@ bool DecodeChannel::DecodeByHisi(const AVPacket* packet, int packetIndex)
 		hi_s32_ret = HI_MPI_VPSS_GetChnFrame(_channelIndex, 0, &frame, 0);
 		if (hi_s32_ret == HI_SUCCESS)
 		{
-			//LogPool::Debug("receive success", _channelIndex, packetIndex);
-			if (!_detectChannel->IsBusy())
+			while (true)
 			{
-				unsigned char* yuv = reinterpret_cast<unsigned char*>(HI_MPI_SYS_Mmap(frame.stVFrame.u64PhyAddr[0], _yuv420spSize));
-				_detectChannel->HandleYUV(yuv, VideoWidth, VideoHeight, static_cast<int>(frame.stVFrame.u64PTS));
-				HI_MPI_SYS_Munmap(reinterpret_cast<HI_VOID*>(yuv), _yuv420spSize);
-				
-			//	hi_s32_ret = HI_MPI_VENC_SendFrame(_channelIndex, &frame, 0);
-			//	if (HI_SUCCESS != hi_s32_ret) {
-			//		LogPool::Warning("HI_MPI_VENC_SendFrame");
-			//		continue;
-			//	}
-			//	VENC_CHN_STATUS_S stStat;
-			//	VENC_STREAM_S stStream;
-			//	memset(&stStream, 0, sizeof(stStream));
+				if (_detectChannel->IsBusy())
+				{
+					if (_debug)
+					{
+						this_thread::sleep_for(chrono::milliseconds(10));
+						continue;
+					}				
+				}
+				else
+				{
+					unsigned char* yuv = reinterpret_cast<unsigned char*>(HI_MPI_SYS_Mmap(frame.stVFrame.u64PhyAddr[0], _yuv420spSize));
+					_detectChannel->HandleYUV(yuv, VideoWidth, VideoHeight, static_cast<int>(frame.stVFrame.u64PTS));
+					HI_MPI_SYS_Munmap(reinterpret_cast<HI_VOID*>(yuv), _yuv420spSize);
+					break;
+					//	hi_s32_ret = HI_MPI_VENC_SendFrame(_channelIndex, &frame, 0);
+					//	if (HI_SUCCESS != hi_s32_ret) {
+					//		LogPool::Warning("HI_MPI_VENC_SendFrame");
+					//		continue;
+					//	}
+					//	VENC_CHN_STATUS_S stStat;
+					//	VENC_STREAM_S stStream;
+					//	memset(&stStream, 0, sizeof(stStream));
 
-			//	s32Ret = HI_MPI_VENC_QueryStatus(_channelIndex, &stStat);
-			//	if (HI_SUCCESS != s32Ret)
-			//	{
-			//		LogPool::Warning("HI_MPI_VENC_QueryStatus");
-			//		continue;
-			//	}
-			//	if (0 == stStat.u32CurPacks)
-			//	{
-			//		continue;
-			//	}
-			//	stStream.pstPack = (VENC_PACK_S*)malloc(sizeof(VENC_PACK_S) * stStat.u32CurPacks);
-			//	if (NULL == stStream.pstPack)
-			//	{
-			//		break;
-			//	}
-			//	stStream.u32PackCount = stStat.u32CurPacks;
-			//	s32Ret = HI_MPI_VENC_GetStream(_channelIndex, &stStream, HI_TRUE);
-			//	if (HI_SUCCESS != s32Ret)
-			//	{
-			//		free(stStream.pstPack);
-			//		stStream.pstPack = NULL;
-			//		LogPool::Warning("HI_MPI_VENC_GetStream");
-			//		continue;
-			//	}
+					//	s32Ret = HI_MPI_VENC_QueryStatus(_channelIndex, &stStat);
+					//	if (HI_SUCCESS != s32Ret)
+					//	{
+					//		LogPool::Warning("HI_MPI_VENC_QueryStatus");
+					//		continue;
+					//	}
+					//	if (0 == stStat.u32CurPacks)
+					//	{
+					//		continue;
+					//	}
+					//	stStream.pstPack = (VENC_PACK_S*)malloc(sizeof(VENC_PACK_S) * stStat.u32CurPacks);
+					//	if (NULL == stStream.pstPack)
+					//	{
+					//		break;
+					//	}
+					//	stStream.u32PackCount = stStat.u32CurPacks;
+					//	s32Ret = HI_MPI_VENC_GetStream(_channelIndex, &stStream, HI_TRUE);
+					//	if (HI_SUCCESS != s32Ret)
+					//	{
+					//		free(stStream.pstPack);
+					//		stStream.pstPack = NULL;
+					//		LogPool::Warning("HI_MPI_VENC_GetStream");
+					//		continue;
+					//	}
 
-			//	av_interleaved_write_frame(_outputFormat, &packet);
+					//	av_interleaved_write_frame(_outputFormat, &packet);
 
-			///*	fwrite(pstStream->pstPack[i].pu8Addr + pstStream->pstPack[i].u32Offset,
-			//		pstStream->pstPack[i].u32Len - pstStream->pstPack[i].u32Offset, 1, pFd);*/
+					///*	fwrite(pstStream->pstPack[i].pu8Addr + pstStream->pstPack[i].u32Offset,
+					//		pstStream->pstPack[i].u32Len - pstStream->pstPack[i].u32Offset, 1, pFd);*/
 
-			//	s32Ret = HI_MPI_VENC_ReleaseStream(i, &stStream);
-			//	if (HI_SUCCESS != s32Ret)
-			//	{
-			//		LogPool::Warning("HI_MPI_VENC_ReleaseStream");
-			//		free(stStream.pstPack);
-			//		stStream.pstPack = NULL;
-			//		continue;
-			//	}
+					//	s32Ret = HI_MPI_VENC_ReleaseStream(i, &stStream);
+					//	if (HI_SUCCESS != s32Ret)
+					//	{
+					//		LogPool::Warning("HI_MPI_VENC_ReleaseStream");
+					//		free(stStream.pstPack);
+					//		stStream.pstPack = NULL;
+					//		continue;
+					//	}
 
-			//	/*******************************************************
-			//	 step 2.7 : free pack nodes
-			//	*******************************************************/
-			//	free(stStream.pstPack);
-			//	stStream.pstPack = NULL;
-
+					//	/*******************************************************
+					//	 step 2.7 : free pack nodes
+					//	*******************************************************/
+					//	free(stStream.pstPack);
+					//	stStream.pstPack = NULL;
+				}
 			}
-			HI_MPI_VPSS_ReleaseChnFrame(_channelIndex, 0, &frame);
+			HI_MPI_VPSS_ReleaseChnFrame(_channelIndex, 0, &frame);			
 		}
 		else
 		{

@@ -43,7 +43,7 @@ DateTime::DateTime(int year, int month, int day, int hour, int minute, int secon
 
 	if (year == 0)
 	{
-		_timeStamp = hour * 24 * 60 * 60 * 1000 + minute * 60 * 1000 + second * 1000 + millisecond;
+		_utcTimeStamp = hour * 24 * 60 * 60 * 1000 + minute * 60 * 1000 + second * 1000 + millisecond;
 	}
 	else
 	{
@@ -55,7 +55,7 @@ DateTime::DateTime(int year, int month, int day, int hour, int minute, int secon
 		timeinfo.tm_min = _minute;
 		timeinfo.tm_sec = _second;
 		time_t t = mktime(&timeinfo);
-		_timeStamp = t * 1000 + millisecond;
+		_utcTimeStamp = t * 1000 + millisecond;
 	}
 }
 
@@ -94,9 +94,9 @@ int DateTime::Millisecond() const
 	return _millisecond;
 }
 
-long long DateTime::TimeStamp() const
+long long DateTime::UtcTimeStamp() const
 {
-	return _timeStamp;
+	return _utcTimeStamp;
 }
 
 DateTime DateTime::AddMonth(int month)
@@ -218,7 +218,7 @@ bool DateTime::operator <= (const DateTime &right) const
 
 long long DateTime::operator - (const DateTime &right) const
 {
-	return this->TimeStamp() - right.TimeStamp();
+	return this->UtcTimeStamp() - right.UtcTimeStamp();
 }
 
 string DateTime::ToString() const
@@ -230,7 +230,7 @@ string DateTime::ToString() const
 
 string DateTime::ToString(const string& format) const
 {
-	time_t time = _timeStamp / 1000;
+	time_t time = _utcTimeStamp / 1000;
 	struct tm timeinfo;
 	localtime_s(&timeinfo, &time);
 	char buffer[80] = { 0 };
@@ -251,7 +251,7 @@ DateTime DateTime::ParseString(const string& format, const string& value)
 	return DateTime(year, month, day, hour, minute, second, millisecond);
 }
 
-long long DateTime::UtcTimeStamp()
+long long DateTime::NowUtcTimeStamp()
 {
 	struct timeb tb;
 	ftime(&tb);

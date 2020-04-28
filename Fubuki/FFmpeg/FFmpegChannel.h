@@ -3,12 +3,7 @@
 #include <bitset>
 
 #include "Thread.h"
-#include "H264Handler.h"
-#include "YUV420PHandler.h"
 #include "BGR24Handler.h"
-#include "MqttChannel.h"
-
-#include "opencv2/opencv.hpp"
 
 extern "C"
 {
@@ -46,9 +41,9 @@ namespace OnePunchMan
 		* @brief: 构造函数
 		* @param: inputUrl 输入url
 		* @param: outputUrl 输出url
-		* @param: loop 是否循环播放
+		* @param: debug 是否处于调试模式,处于调试模式不循环播放文件
 		*/
-		FFmpegChannel(const std::string& inputUrl, const std::string& outputUrl, bool loop);
+		FFmpegChannel(const std::string& inputUrl, const std::string& outputUrl, bool debug);
 
 		/**
 		* @brief: 析构函数
@@ -104,6 +99,9 @@ namespace OnePunchMan
 		AVStream* _outputStream;
 		AVCodecContext* _outputCodec;
 
+		//是否处于调试模式
+		bool _debug;
+
 	private:
 		/**
 		* @brief: 初始化视频读取
@@ -118,8 +116,6 @@ namespace OnePunchMan
 
 		//输入视频初始化参数
 		AVDictionary* _options;
-		//是否循环读取
-		bool _loop;
 		//当前视频状态
 		ChannelStatus _channelStatus;
 
@@ -138,12 +134,8 @@ namespace OnePunchMan
 		uint8_t* _bgrBuffer;
 		//yuv转bgr
 		SwsContext* _bgrSwsContext;
-		//h264写入
-		H264Handler* _h264Handler;
-		//yuv420p写入
-		YUV420PHandler* _yuvHandler;
-		//bgr24写入
-		BGR24Handler* _bgrHandler;
+		//bgr写入bmp
+		BGR24Handler _bgrHandler;
 	};
 
 }

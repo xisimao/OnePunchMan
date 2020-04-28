@@ -91,10 +91,10 @@ namespace OnePunchMan
 		int Millisecond() const;
 
 		/**
-		* @brief: 返回表示时间的总毫秒数
-		* @return: 表示时间的总毫秒数
+		* @brief: 返回表示时间的utc时间戳
+		* @return: 表示时间的utc时间戳
 		*/
-		long long TimeStamp() const;
+		long long UtcTimeStamp() const;
 
 		/**
 		* @brief: 增加月份
@@ -160,12 +160,11 @@ namespace OnePunchMan
 		*/
 		static DateTime Time();
 
-
 		/**
 		* @brief: 返回当前的UTC时间戳
 		* @return: 当前的UTC时间戳
 		*/
-		static long long UtcTimeStamp();
+		static long long NowUtcTimeStamp();
 
 		/**
 		* @brief: 返回当前的UTC日期时间
@@ -202,7 +201,7 @@ namespace OnePunchMan
 		int _second;
 		//毫秒
 		int _millisecond;
-		//时间戳
-		long long _timeStamp;
+		//utc时间戳
+		long long _utcTimeStamp;
 	};
 }

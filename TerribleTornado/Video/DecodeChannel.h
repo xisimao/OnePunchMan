@@ -1,6 +1,5 @@
 #pragma once
 #include "FFmpegChannel.h"
-#include "YUV420SPHandler.h"
 #include "DetectChannel.h"
 
 extern "C"
@@ -64,11 +63,11 @@ namespace OnePunchMan
 		* @brief: 构造函数
 		* @param: inputUrl 输入视频
 		* @param: outputUrl 输出视频
-		* @param: loop 是否循环
+		* @param: debug 是否处于调试模式,处于调试模式同步调用算法
 		* @param: channelIndex 通道序号
 		* @param: detectChannel 检测线程
 		*/
-		DecodeChannel(const std::string& inputUrl,const std::string& outputUrl,bool loop,int channelIndex, DetectChannel* detectChannel);
+		DecodeChannel(const std::string& inputUrl,const std::string& outputUrl,bool debug,int channelIndex, DetectChannel* detectChannel);
 		
 		/**
 		* @brief: 初始化hisi sdk
