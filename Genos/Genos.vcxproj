@@ -39,6 +39,7 @@
     <ClCompile Include="..\Fubuki\FFmpeg\FFmpegChannel.cpp" />
     <ClCompile Include="..\Fubuki\FFmpeg\H264Handler.cpp" />
     <ClCompile Include="..\Fubuki\FFmpeg\IVE_8UC3Handler.cpp" />
+    <ClCompile Include="..\Fubuki\FFmpeg\JPGHandler.cpp" />
     <ClCompile Include="..\Fubuki\FFmpeg\YUV420PHandler.cpp" />
     <ClCompile Include="..\Fubuki\FFmpeg\YUV420SPHandler.cpp" />
     <ClCompile Include="..\Fubuki\Mqtt\MqttChannel.cpp" />
@@ -78,6 +79,7 @@
     <ClInclude Include="..\Fubuki\FFmpeg\FFmpegChannel.h" />
     <ClInclude Include="..\Fubuki\FFmpeg\H264Handler.h" />
     <ClInclude Include="..\Fubuki\FFmpeg\IVE_8UC3Handler.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\JPGHandler.h" />
     <ClInclude Include="..\Fubuki\FFmpeg\YUV420PHandler.h" />
     <ClInclude Include="..\Fubuki\FFmpeg\YUV420SPHandler.h" />
     <ClInclude Include="..\Fubuki\Mqtt\MqttChannel.h" />
@@ -178,7 +180,7 @@
     </ClCompile>
     <Link />
     <Link>
-      <LibraryDependencies>dsp;isp;ive;hdmi;mpi;nnie;sns_imx277_slvs;sns_imx290;sns_imx334;sns_imx334_slave;sns_imx477;dnvqe;upvqe;VoiceEngine;securec;_hiae;_hiawb;_hidehaze;_hidrc;_hildci;opencv_highgui;opencv_core;opencv_imgproc;opencv_flann;opencv_calib3d;opencv_features2d;avcodec;avdevice;avfilter;avformat;avutil;swresample;swscale;postproc;sqlite3;mosquitto;dl;pthread;%(LibraryDependencies)</LibraryDependencies>
+      <LibraryDependencies>turbojpeg;dsp;isp;ive;hdmi;mpi;nnie;sns_imx277_slvs;sns_imx290;sns_imx334;sns_imx334_slave;sns_imx477;dnvqe;upvqe;VoiceEngine;securec;_hiae;_hiawb;_hidehaze;_hidrc;_hildci;opencv_highgui;opencv_core;opencv_imgproc;opencv_flann;opencv_calib3d;opencv_features2d;avcodec;avdevice;avfilter;avformat;avutil;swresample;swscale;postproc;sqlite3;mosquitto;dl;pthread;%(LibraryDependencies)</LibraryDependencies>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

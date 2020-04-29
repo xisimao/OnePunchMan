@@ -3,7 +3,6 @@
 #include <bitset>
 
 #include "Thread.h"
-#include "BGR24Handler.h"
 
 extern "C"
 {
@@ -17,8 +16,8 @@ namespace OnePunchMan
 	//通道状态
 	enum class ChannelStatus
 	{
-		//已结束
-		End,
+		//初始化
+		None,
 		//正常
 		Normal,
 		//输入初始化错误
@@ -33,6 +32,13 @@ namespace OnePunchMan
 		DecodeError
 	};
 
+	//解码结果
+	enum class DecodeResult
+	{
+		Handle,
+		Skip,
+		Error
+	};
 	//视频帧读取线程
 	class FFmpegChannel :public ThreadObject
 	{
@@ -66,6 +72,12 @@ namespace OnePunchMan
 		*/
 		ChannelStatus Status();
 
+		/**
+		* @brief: 获取处理帧间隔
+		* @return: 处理帧间隔
+		*/
+		int PacketSpan();
+
 	protected:
 		void StartCore();
 
@@ -74,7 +86,7 @@ namespace OnePunchMan
 		* @return: 初始化成功返回ture，否则返回false，初始化失败会结束线程
 		*/
 		virtual bool InitDecoder();
-		
+
 		/**
 		* @brief: 卸载解码器
 		*/
@@ -84,9 +96,9 @@ namespace OnePunchMan
 		* @brief: 解码
 		* @param: packet 视频帧
 		* @param: packetIndex 视频帧序号
-		* @return: 解码成功返回true，否则返回false，解码失败会结束线程
+		* @return: 解码成功返回Handle，略过返回Ski，否则返回Error，解码失败会结束线程
 		*/
-		virtual bool Decode(const AVPacket* packet, int packetIndex);
+		virtual DecodeResult Decode(const AVPacket* packet, int packetIndex);
 
 		//视频输入相关
 		std::string _inputUrl;
@@ -134,8 +146,10 @@ namespace OnePunchMan
 		uint8_t* _bgrBuffer;
 		//yuv转bgr
 		SwsContext* _bgrSwsContext;
-		//bgr写入bmp
-		BGR24Handler _bgrHandler;
+		//上一次处理帧的序号
+		int _lastPacketIndex;
+		//两次处理帧的间隔
+		int _packetSpan;
 	};
 
 }

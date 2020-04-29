@@ -23,7 +23,7 @@ FileLogger::~FileLogger()
 
 string FileLogger::GetLogFileName(const string& logName, const DateTime& logDate)
 {
-	return Path::Combine(logName, "_", logDate.ToString("%Y%m%d"), ".log");
+	return StringEx::Combine(logName, "_", logDate.ToString("%Y%m%d"), ".log");
 }
 
 void FileLogger::DeleteLog(const std::string& directory, unsigned int holdDays)

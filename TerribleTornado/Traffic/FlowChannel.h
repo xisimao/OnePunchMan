@@ -41,6 +41,7 @@ namespace OnePunchMan
 		std::string LaneLine1;
 		//车道线2
 		std::string LaneLine2;
+		//检测区域
 		std::string Region;
 	};
 

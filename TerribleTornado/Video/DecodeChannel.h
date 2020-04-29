@@ -63,11 +63,11 @@ namespace OnePunchMan
 		* @brief: 构造函数
 		* @param: inputUrl 输入视频
 		* @param: outputUrl 输出视频
-		* @param: debug 是否处于调试模式,处于调试模式同步调用算法
 		* @param: channelIndex 通道序号
 		* @param: detectChannel 检测线程
+		* @param: debug 是否处于调试模式,处于调试模式同步调用算法
 		*/
-		DecodeChannel(const std::string& inputUrl,const std::string& outputUrl,bool debug,int channelIndex, DetectChannel* detectChannel);
+		DecodeChannel(const std::string& inputUrl,const std::string& outputUrl,int channelIndex, DetectChannel* detectChannel, bool debug=false);
 		
 		/**
 		* @brief: 初始化hisi sdk
@@ -98,7 +98,7 @@ namespace OnePunchMan
 
 		void UninitCore();
 
-		bool Decode(const AVPacket* packet, int packetIndex);
+		DecodeResult Decode(const AVPacket* packet, int packetIndex);
 
 	private:
 
@@ -106,17 +106,17 @@ namespace OnePunchMan
 		* @brief: 使用hisi解码
 		* @param: packet 视频帧
 		* @param: packetIndex 视频帧序号
-		* @return: 解码成功返回true，否则返回false
+		* @return: 解码成功返回Handle,略过返回Skip,否则返回Error
 		*/
-		bool DecodeByHisi(const AVPacket* packet, int packetIndex);
+		DecodeResult DecodeByHisi(const AVPacket* packet, int packetIndex);
 		
 		/**
 		* @brief: 使用ffmpeg解码
 		* @param: packet 视频帧
 		* @param: packetIndex 视频帧序号
-		* @return: 解码成功返回true，否则返回false
+		* @return: 解码成功返回Handle,略过返回Skip,否则返回Error
 		*/
-		bool DecodeByFFmpeg(const AVPacket* packet, int packetIndex);
+		DecodeResult DecodeByFFmpeg(const AVPacket* packet, int packetIndex);
 
 		//通道序号
 		int _channelIndex;

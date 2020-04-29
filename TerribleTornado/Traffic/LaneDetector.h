@@ -132,8 +132,6 @@ namespace OnePunchMan
 	class VideoStruct
 	{
 	public:
-		std::string Image;
-		std::string Feature;
 		int VideoStructType;
 	};
 
@@ -184,10 +182,15 @@ namespace OnePunchMan
 
 		/**
 		* @brief: 构造函数
-		* @param: laneId 车道编号
 		* @param: lane 车道
 		*/
-		LaneDetector(const std::string& laneId,const Lane& lane);
+		LaneDetector(const Lane& lane);
+
+		/**
+		* @brief: 获取车道是否初始化成功
+		* @return: 车道是否初始化成功
+		*/
+		bool Inited() const;
 
 		/**
 		* @brief: 检测机动车
@@ -219,12 +222,6 @@ namespace OnePunchMan
 	private:
 
 		/**
-		* @brief: 初始化车道
-		* @param: lane 车道
-		*/
-		void InitLane(const Lane& lane);
-
-		/**
 		* @brief: 解析线段字符串
 		* @param: lane 车道线字符串
 		* @return: 线段
@@ -244,6 +241,8 @@ namespace OnePunchMan
 		Polygon _region;
 		//每个像素代表的米数
 		double _meterPerPixel;
+		//车道是否初始化成功
+		bool _inited;
 
 		//行人流量
 		int _persons;

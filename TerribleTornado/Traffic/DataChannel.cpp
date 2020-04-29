@@ -6,7 +6,7 @@ using namespace OnePunchMan;
 const string DataChannel::FlowTopic("Flow");
 
 DataChannel::DataChannel()
-    :ThreadObject("data"), _socketMaid(NULL),_mqtt(NULL)
+    :ThreadObject("data"), _socketMaid(NULL), _mqtt(NULL)
 {
     DecodeChannel::InitFFmpeg();
     DecodeChannel::UninitHisi(FlowChannelData::ChannelCount);
@@ -21,9 +21,9 @@ DataChannel::DataChannel()
         return;
     }
 
-    _socketMaid=new SocketMaid(2);
+    _socketMaid = new SocketMaid(2);
     _handler.HttpReceived.Subscribe(this);
-    if (_socketMaid->AddListenEndPoint(EndPoint(7772), &_handler)==-1)
+    if (_socketMaid->AddListenEndPoint(EndPoint(7772), &_handler) == -1)
     {
         _inited = false;
         return;
@@ -96,7 +96,7 @@ DataChannel::~DataChannel()
     if (_mqtt != NULL)
     {
         _mqtt->Stop();
-    }  
+    }
     SeemmoSDK::Uninit();
     DecodeChannel::UninitHisi(FlowChannelData::ChannelCount);
     DecodeChannel::UninitFFmpeg();
@@ -161,22 +161,22 @@ void DataChannel::GetDevice(HttpReceivedEventArgs* e)
     FlowChannelData data;
     vector<FlowChannel> channels = data.GetList();
     string channelsJson;
-    for (unsigned int i=0;i<channels.size();++i)
+    for (unsigned int i = 0; i < channels.size(); ++i)
     {
-        string channelJson = GetChannelJson(e,channels[i]);
+        string channelJson = GetChannelJson(e, channels[i]);
         JsonSerialization::SerializeItem(&channelsJson, channelJson);
     }
 
     string deviceJson;
     DateTime now = DateTime::Now();
     JsonSerialization::Serialize(&deviceJson, "licenceStatus", device.LicenceStatus);
-    JsonSerialization::Serialize(&deviceJson, "startTime", _startTime.ToString());
-    JsonSerialization::Serialize(&deviceJson, "deviceTime", now.UtcTimeStamp());
-    JsonSerialization::Serialize(&deviceJson, "deviceTime_Desc", now.ToString());
     JsonSerialization::Serialize(&deviceJson, "softwareVersion", device.SoftwareVersion);
     JsonSerialization::Serialize(&deviceJson, "sn", device.SN);
     JsonSerialization::Serialize(&deviceJson, "diskUsed", device.DiskUsed);
     JsonSerialization::Serialize(&deviceJson, "diskTotal", device.DiskTotal);
+    JsonSerialization::Serialize(&deviceJson, "startTime", _startTime.ToString());
+    JsonSerialization::Serialize(&deviceJson, "deviceTime", now.UtcTimeStamp());
+    JsonSerialization::Serialize(&deviceJson, "deviceTime_Desc", now.ToString());
     JsonSerialization::Serialize(&deviceJson, "videoWidth", DecodeChannel::VideoWidth);
     JsonSerialization::Serialize(&deviceJson, "videoHeight", DecodeChannel::VideoHeight);
     JsonSerialization::SerializeJson(&deviceJson, "channels", channelsJson);
@@ -190,7 +190,7 @@ void DataChannel::SetDevice(HttpReceivedEventArgs* e)
     JsonDeserialization jd(e->RequestJson);
     int channelIndex = 0;
     vector<FlowChannel> channels;
-    map<int,FlowChannel> tempChannels;
+    map<int, FlowChannel> tempChannels;
     while (true)
     {
         FlowChannel channel;
@@ -218,9 +218,9 @@ void DataChannel::SetDevice(HttpReceivedEventArgs* e)
             lane.Direction = jd.Get<int>(StringEx::Combine("channels:", channelIndex, ":lanes:", laneIndex, ":direction"));
             lane.FlowDirection = jd.Get<int>(StringEx::Combine("channels:", channelIndex, ":lanes:", laneIndex, ":flowDirection"));
             lane.Length = jd.Get<int>(StringEx::Combine("channels:", channelIndex, ":lanes:", laneIndex, ":length"));
-            lane.IOIp = jd.Get<string>(StringEx::Combine("channels:", channelIndex, ":lanes:", laneIndex, ":iOIp"));
-            lane.IOPort = jd.Get<int>(StringEx::Combine("channels:", channelIndex, ":lanes:", laneIndex, ":iOPort"));
-            lane.IOIndex = jd.Get<int>(StringEx::Combine("channels:", channelIndex, ":lanes:", laneIndex, ":iOIndex"));
+            lane.IOIp = jd.Get<string>(StringEx::Combine("channels:", channelIndex, ":lanes:", laneIndex, ":ioIp"));
+            lane.IOPort = jd.Get<int>(StringEx::Combine("channels:", channelIndex, ":lanes:", laneIndex, ":ioPort"));
+            lane.IOIndex = jd.Get<int>(StringEx::Combine("channels:", channelIndex, ":lanes:", laneIndex, ":ioIndex"));
             lane.DetectLine = jd.Get<string>(StringEx::Combine("channels:", channelIndex, ":lanes:", laneIndex, ":detectLine"));
             lane.StopLine = jd.Get<string>(StringEx::Combine("channels:", channelIndex, ":lanes:", laneIndex, ":stopLine"));
             lane.LaneLine1 = jd.Get<string>(StringEx::Combine("channels:", channelIndex, ":lanes:", laneIndex, ":laneLine1"));
@@ -237,7 +237,7 @@ void DataChannel::SetDevice(HttpReceivedEventArgs* e)
             return;
         }
         channels.push_back(channel);
-        tempChannels.insert(pair<int,FlowChannel>(channel.ChannelIndex, channel));
+        tempChannels.insert(pair<int, FlowChannel>(channel.ChannelIndex, channel));
         channelIndex += 1;
     }
     FlowChannelData data;
@@ -247,11 +247,11 @@ void DataChannel::SetDevice(HttpReceivedEventArgs* e)
         {
             if (tempChannels.find(i + 1) == tempChannels.end())
             {
-                DeleteChannel(i+1);
+                DeleteChannel(i + 1);
             }
             else
             {
-                SetChannel(tempChannels[i+1]);
+                SetChannel(tempChannels[i + 1]);
             }
         }
         e->Code = HttpCode::OK;
@@ -305,9 +305,9 @@ void DataChannel::SetChannel(HttpReceivedEventArgs* e)
         lane.Direction = jd.Get<int>(StringEx::Combine("lanes:", laneIndex, ":direction"));
         lane.FlowDirection = jd.Get<int>(StringEx::Combine("lanes:", laneIndex, ":flowDirection"));
         lane.Length = jd.Get<int>(StringEx::Combine("lanes:", laneIndex, ":length"));
-        lane.IOIp = jd.Get<string>(StringEx::Combine("lanes:", laneIndex, ":iOIp"));
-        lane.IOPort = jd.Get<int>(StringEx::Combine("lanes:", laneIndex, ":iOPort"));
-        lane.IOIndex = jd.Get<int>(StringEx::Combine("clanes:", laneIndex, ":iOIndex"));
+        lane.IOIp = jd.Get<string>(StringEx::Combine("lanes:", laneIndex, ":ioIp"));
+        lane.IOPort = jd.Get<int>(StringEx::Combine("lanes:", laneIndex, ":ioPort"));
+        lane.IOIndex = jd.Get<int>(StringEx::Combine("clanes:", laneIndex, ":ioIndex"));
         lane.DetectLine = jd.Get<string>(StringEx::Combine("lanes:", laneIndex, ":detectLine"));
         lane.StopLine = jd.Get<string>(StringEx::Combine("lanes:", laneIndex, ":stopLine"));
         lane.LaneLine1 = jd.Get<string>(StringEx::Combine("lanes:", laneIndex, ":laneLine1"));
@@ -368,13 +368,13 @@ void DataChannel::SetChannel(const FlowChannel& channel)
             }
             if (channel.ChannelType == static_cast<int>(ChannelType::RTSP))
             {
-                DecodeChannel* decode = new DecodeChannel(channel.ChannelUrl, channel.RtmpUrl("127.0.0.1"), false, channel.ChannelIndex, _detects[channel.ChannelIndex - 1]);
+                DecodeChannel* decode = new DecodeChannel(channel.ChannelUrl, channel.RtmpUrl("127.0.0.1"), channel.ChannelIndex, _detects[channel.ChannelIndex - 1]);
                 decode->Start();
                 _decodes[channel.ChannelIndex - 1] = decode;
             }
             else if (channel.ChannelType == static_cast<int>(ChannelType::File))
             {
-                DecodeChannel* decode = new DecodeChannel(channel.ChannelUrl, channel.RtmpUrl("127.0.0.1"), true, channel.ChannelIndex, _detects[channel.ChannelIndex - 1]);
+                DecodeChannel* decode = new DecodeChannel(channel.ChannelUrl, channel.RtmpUrl("127.0.0.1"), channel.ChannelIndex, _detects[channel.ChannelIndex - 1]);
                 decode->Start();
                 _decodes[channel.ChannelIndex - 1] = decode;
             }
@@ -384,7 +384,7 @@ void DataChannel::SetChannel(const FlowChannel& channel)
             }
         }
         _detectors[channel.ChannelIndex - 1]->UpdateChannel(channel);
-   }
+    }
 }
 
 void DataChannel::DeleteChannel(int channelIndex)
@@ -392,7 +392,7 @@ void DataChannel::DeleteChannel(int channelIndex)
     lock_guard<mutex> lck(_decodeMutex);
     if (ChannelIndexEnable(channelIndex))
     {
-        if (_decodes[channelIndex-1] != NULL)
+        if (_decodes[channelIndex - 1] != NULL)
         {
             _decodes[channelIndex - 1]->Stop();
             delete _decodes[channelIndex - 1];
@@ -426,6 +426,8 @@ string DataChannel::GetChannelJson(HttpReceivedEventArgs* e, const FlowChannel& 
     {
         lock_guard<mutex> lck(_decodeMutex);
         JsonSerialization::Serialize(&channelJson, "channelStatus", _decodes[channel.ChannelIndex - 1] == NULL ? 0 : static_cast<int>(_decodes[channel.ChannelIndex - 1]->Status()));
+        JsonSerialization::Serialize(&channelJson, "packetSpan", _decodes[channel.ChannelIndex - 1] == NULL ? 0 : _decodes[channel.ChannelIndex - 1]->PacketSpan());
+        JsonSerialization::Serialize(&channelJson, "channelInited", _detectors[channel.ChannelIndex - 1]->Inited());
     }
     string lanesJson;
     for (vector<Lane>::const_iterator lit = channel.Lanes.begin(); lit != channel.Lanes.end(); ++lit)
@@ -439,9 +441,9 @@ string DataChannel::GetChannelJson(HttpReceivedEventArgs* e, const FlowChannel& 
         JsonSerialization::Serialize(&laneJson, "direction", lit->Direction);
         JsonSerialization::Serialize(&laneJson, "flowDirection", lit->FlowDirection);
         JsonSerialization::Serialize(&laneJson, "length", lit->Length);
-        JsonSerialization::Serialize(&laneJson, "iOIp", lit->IOIp);
-        JsonSerialization::Serialize(&laneJson, "iOPort", lit->IOPort);
-        JsonSerialization::Serialize(&laneJson, "iOIndex", lit->IOIndex);
+        JsonSerialization::Serialize(&laneJson, "ioIp", lit->IOIp);
+        JsonSerialization::Serialize(&laneJson, "ioPort", lit->IOPort);
+        JsonSerialization::Serialize(&laneJson, "ioIndex", lit->IOIndex);
         JsonSerialization::Serialize(&laneJson, "detectLine", lit->DetectLine);
         JsonSerialization::Serialize(&laneJson, "stopLine", lit->StopLine);
         JsonSerialization::Serialize(&laneJson, "laneLine1", lit->LaneLine1);
@@ -466,10 +468,10 @@ bool DataChannel::UrlStartWith(const string& url, const string& key)
     {
         return url.compare(key) == 0;
     }
-    else if(url.size() >= key.size())
+    else if (url.size() >= key.size())
     {
         return url.substr(0, key.size()).compare(key) == 0
-            &&url[key.size()]=='/';
+            && url[key.size()] == '/';
     }
     else
     {
@@ -479,10 +481,10 @@ bool DataChannel::UrlStartWith(const string& url, const string& key)
 
 string DataChannel::GetId(const std::string& url, const std::string& key)
 {
-    return url.size() >= key.size() ? url.substr(key.size()+1, url.size() - key.size()-1) : string();
+    return url.size() >= key.size() ? url.substr(key.size() + 1, url.size() - key.size() - 1) : string();
 }
 
-string DataChannel::GetErrorJson(const string& field,const string& message)
+string DataChannel::GetErrorJson(const string& field, const string& message)
 {
     return StringEx::Combine("{\"", field, "\":[\"", message, "\"]}");
 }
@@ -508,7 +510,7 @@ void DataChannel::StartCore()
             string json;
             for (unsigned int i = 0; i < _detectors.size(); ++i)
             {
-                _detectors[i]->CollectFlow(&json,timeStamp);
+                _detectors[i]->CollectFlow(&json, timeStamp);
             }
             if (!json.empty())
             {

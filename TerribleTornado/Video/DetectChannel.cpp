@@ -142,7 +142,7 @@ void DetectChannel::StartCore()
 	{
 		if (_item.HasValue)
 		{
-			long long detectTimeStamp = DateTime::NowUtcTimeStamp();
+			long long detectTimeStamp = DateTime::UtcNowTimeStamp();
 			memcpy(_item.YuvBuffer, _item.YuvTempBuffer, _item.YuvSize);
 			_params[0] = _param.c_str();
 			_timeStamps[0] = _item.PacketIndex;
@@ -168,7 +168,7 @@ void DetectChannel::StartCore()
 						_recogn->PushItems(recognItems);
 					}
 				}
-				LogPool::Debug("detect span", _indexes[0], DateTime::NowUtcTimeStamp() - detectTimeStamp);
+				LogPool::Debug("detect span", _indexes[0], DateTime::UtcNowTimeStamp() - detectTimeStamp);
 			}
 		}
 		else

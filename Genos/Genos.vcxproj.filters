@@ -38,6 +38,7 @@
     <ClCompile Include="..\TerribleTornado\Video\DetectChannel.cpp" />
     <ClCompile Include="..\TerribleTornado\Video\RecognChannel.cpp" />
     <ClCompile Include="..\TerribleTornado\Video\SeemmoSDK.cpp" />
+    <ClCompile Include="..\Fubuki\FFmpeg\JPGHandler.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Saitama\Convert\JsonFormatter.h" />
@@ -81,5 +82,6 @@
     <ClInclude Include="..\TerribleTornado\Video\DetectChannel.h" />
     <ClInclude Include="..\TerribleTornado\Video\RecognChannel.h" />
     <ClInclude Include="..\TerribleTornado\Video\SeemmoSDK.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\JPGHandler.h" />
   </ItemGroup>
 </Project>

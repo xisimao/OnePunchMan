@@ -42,11 +42,11 @@ int main(int argc, char* argv[])
             FlowChannelData data;
             FlowChannel channel = data.Get(channelIndex);
             detector.UpdateChannel(channel);
-            vector< ChannelDetector*> detectors;
+            vector<ChannelDetector*> detectors;
             detectors.push_back(&detector);
             RecognChannel recogn(0, DecodeChannel::VideoWidth, DecodeChannel::VideoHeight, detectors);
             DetectChannel detect(1, DecodeChannel::VideoWidth, DecodeChannel::VideoHeight, &recogn, &detector);
-            DecodeChannel decode(channel.ChannelUrl, string(), true, channel.ChannelIndex, &detect);
+            DecodeChannel decode(channel.ChannelUrl, string(), channel.ChannelIndex, &detect,true);
             recogn.Start();
             detect.Start();
             decode.Start();

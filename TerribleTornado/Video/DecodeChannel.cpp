@@ -6,8 +6,8 @@ using namespace OnePunchMan;
 const int DecodeChannel::VideoWidth = 1920;
 const int DecodeChannel::VideoHeight = 1080;
 
-DecodeChannel::DecodeChannel(const string& inputUrl, const string& outputUrl,bool loop,int channelIndex,DetectChannel* detectChannel)
-	:FFmpegChannel(inputUrl,outputUrl,loop),_channelIndex(channelIndex), _useFFmpeg(false), _decodeContext(NULL), _yuvFrame(NULL), _yuv420spBuffer(NULL),_yuv420spSize(static_cast<int>(VideoWidth* VideoHeight * 1.5)), _yuv420spFrame(NULL), _yuv420spSwsContext(NULL),_detectChannel(detectChannel)
+DecodeChannel::DecodeChannel(const string& inputUrl, const string& outputUrl, int channelIndex, DetectChannel* detectChannel, bool debug)
+	:FFmpegChannel(inputUrl, outputUrl, debug), _channelIndex(channelIndex), _useFFmpeg(false), _decodeContext(NULL), _yuvFrame(NULL), _yuv420spBuffer(NULL), _yuv420spSize(static_cast<int>(VideoWidth* VideoHeight * 1.5)), _yuv420spFrame(NULL), _yuv420spSwsContext(NULL), _detectChannel(detectChannel)
 {
 
 }
@@ -861,7 +861,7 @@ string& DecodeChannel::InputUrl()
 	return _inputUrl;
 }
 
-bool DecodeChannel::Decode(const AVPacket* packet, int packetIndex)
+DecodeResult DecodeChannel::Decode(const AVPacket* packet, int packetIndex)
 {
 	if (_useFFmpeg)
 	{
@@ -869,21 +869,23 @@ bool DecodeChannel::Decode(const AVPacket* packet, int packetIndex)
 	}
 	else
 	{
-		if (!DecodeByHisi(packet, packetIndex))
+		DecodeResult result = DecodeByHisi(packet, packetIndex);
+		if (result == DecodeResult::Error)
 		{
 			LogPool::Warning(LogEvent::Decode, "decode downgrade", _inputUrl);
 			_useFFmpeg = true;
-			if (InitCore() != 0)
+			if (InitCore() == 0)
 			{
-				return false;
+				return DecodeResult::Skip;
 			}
 		}
-		return true;
+		return result;
 	}
 }
 
-bool DecodeChannel::DecodeByHisi(const AVPacket* packet, int packetIndex)
+DecodeResult DecodeChannel::DecodeByHisi(const AVPacket* packet, int packetIndex)
 {
+	bool handled = false;
 #ifndef _WIN32
 	int hi_s32_ret = HI_SUCCESS;
 	if (packet != NULL)
@@ -895,16 +897,16 @@ bool DecodeChannel::DecodeByHisi(const AVPacket* packet, int packetIndex)
 		stStream.bEndOfFrame = HI_TRUE;
 		stStream.bEndOfStream = HI_FALSE;
 		stStream.bDisplay = HI_TRUE;
-		hi_s32_ret = HI_MPI_VDEC_SendStream(_channelIndex, &stStream, 0);
+		hi_s32_ret = HI_MPI_VDEC_SendStream(_channelIndex - 1, &stStream, 0);
 		if (HI_SUCCESS != hi_s32_ret) {
 			LogPool::Debug("send error", _channelIndex, hi_s32_ret);
-			return false;
+			return DecodeResult::Error;
 		}
 	}
 	VIDEO_FRAME_INFO_S frame;
 	while (true)
 	{
-		hi_s32_ret = HI_MPI_VPSS_GetChnFrame(_channelIndex, 0, &frame, 0);
+		hi_s32_ret = HI_MPI_VPSS_GetChnFrame(_channelIndex - 1, 0, &frame, 0);
 		if (hi_s32_ret == HI_SUCCESS)
 		{
 			while (true)
@@ -915,10 +917,15 @@ bool DecodeChannel::DecodeByHisi(const AVPacket* packet, int packetIndex)
 					{
 						this_thread::sleep_for(chrono::milliseconds(10));
 						continue;
-					}				
+					}
+					else
+					{
+						break;
+					}
 				}
 				else
 				{
+					handled = true;
 					unsigned char* yuv = reinterpret_cast<unsigned char*>(HI_MPI_SYS_Mmap(frame.stVFrame.u64PhyAddr[0], _yuv420spSize));
 					_detectChannel->HandleYUV(yuv, VideoWidth, VideoHeight, static_cast<int>(frame.stVFrame.u64PTS));
 					HI_MPI_SYS_Munmap(reinterpret_cast<HI_VOID*>(yuv), _yuv420spSize);
@@ -978,20 +985,21 @@ bool DecodeChannel::DecodeByHisi(const AVPacket* packet, int packetIndex)
 					//	stStream.pstPack = NULL;
 				}
 			}
-			HI_MPI_VPSS_ReleaseChnFrame(_channelIndex, 0, &frame);			
+			HI_MPI_VPSS_ReleaseChnFrame(_channelIndex - 1, 0, &frame);
 		}
 		else
 		{
-			HI_MPI_VPSS_ReleaseChnFrame(_channelIndex, 0, &frame);
+			HI_MPI_VPSS_ReleaseChnFrame(_channelIndex - 1, 0, &frame);
 			break;
 		}
 	}
 #endif // !_WIN32
-	return true;
+	return handled ? DecodeResult::Handle : DecodeResult::Skip;
 }
 
-bool DecodeChannel::DecodeByFFmpeg(const AVPacket* packet, int packetIndex)
+DecodeResult DecodeChannel::DecodeByFFmpeg(const AVPacket* packet, int packetIndex)
 {
+	bool handled = false;
 	if (avcodec_send_packet(_decodeContext, packet) == 0)
 	{
 		while (true)
@@ -1003,8 +1011,8 @@ bool DecodeChannel::DecodeByFFmpeg(const AVPacket* packet, int packetIndex)
 			}
 			else if (resultReceive < 0)
 			{
-				LogPool::Warning(LogEvent::Decode, "receive error", _inputUrl);
-				return false;
+				LogPool::Error(LogEvent::Decode, "receive error", _inputUrl);
+				return DecodeResult::Error;
 			}
 			else if (resultReceive >= 0)
 			{
@@ -1016,6 +1024,7 @@ bool DecodeChannel::DecodeByFFmpeg(const AVPacket* packet, int packetIndex)
 
 					if (!_detectChannel->IsBusy())
 					{
+						handled = true;
 						_detectChannel->HandleYUV(_yuv420spBuffer, VideoWidth, VideoHeight, packetIndex);
 					}
 				}
@@ -1025,7 +1034,7 @@ bool DecodeChannel::DecodeByFFmpeg(const AVPacket* packet, int packetIndex)
 	else
 	{
 		LogPool::Error(LogEvent::Decode, "send error", _inputUrl);
-		return false;
+		return DecodeResult::Error;
 	}
-	return true;
+	return handled ? DecodeResult::Handle : DecodeResult::Skip;
 }

@@ -17,8 +17,9 @@ void IVE_8UC3Handler::HandleFrame(unsigned char* ive, int width, int height, lon
 	{
 		return;
 	}
-	FILE* fw = NULL;
-	if ((fw = fopen(StringEx::Combine("ive_", packetIndex, ".bmp").c_str(), "wb")) == NULL) {
+	Path::CreateDirectory("../images");
+	FILE* fw = fopen(StringEx::Combine("../images/ive_", packetIndex, ".bmp").c_str(), "wb");
+	if (fw ==NULL) {
 		return;
 	}
 	typedef struct

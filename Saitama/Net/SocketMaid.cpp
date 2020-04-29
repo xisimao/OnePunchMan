@@ -38,7 +38,7 @@ SocketMaid::~SocketMaid()
 void SocketMaid::Update(AcceptedEventArgs* e)
 {
 	EndPoint localEndPoint = EndPoint::GetLocalEndPoint(e->ListenSocket);
-	LogPool::Information(LogEvent::Socket,"accept", e->TcpSocket, localEndPoint.ToString(), EndPoint::GetRemoteEndPoint(e->TcpSocket).ToString());
+	LogPool::Debug(LogEvent::Socket,"accept", e->TcpSocket, localEndPoint.ToString(), EndPoint::GetRemoteEndPoint(e->TcpSocket).ToString());
 	EndPoint remoteEndPoint = EndPoint::GetRemoteEndPoint(e->TcpSocket);
 	SocketChannel* channel = Select();
 	if (channel == NULL)
@@ -329,7 +329,7 @@ void SocketMaid::RemoveSocket(int socket, int result)
 	{
 		const SocketData& data = _sockets[socket].Data;
 		SocketHandler* handler = _sockets[socket].Handler;
-		LogPool::Information(LogEvent::Socket, "close", socket,
+		LogPool::Debug(LogEvent::Socket, "close", socket,
 			result,
 			data.StartTime.ToString(),
 			data.Local.ToString(),

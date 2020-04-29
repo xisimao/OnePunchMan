@@ -3,17 +3,12 @@
 using namespace std;
 using namespace OnePunchMan;
 
-LaneDetector::LaneDetector(const string& laneId,const Lane& lane)
-	: _laneId(laneId),_persons(0),_bikes(0), _motorcycles(0), _cars(0),_tricycles(0), _buss(0),_vans(0),_trucks(0)
+LaneDetector::LaneDetector(const Lane& lane)
+	: _laneId(lane.LaneId),_persons(0),_bikes(0), _motorcycles(0), _cars(0),_tricycles(0), _buss(0),_vans(0),_trucks(0)
 	, _totalDistance(0.0), _totalTime(0)
 	, _totalInTime(0)
 	,_lastInRegion(0), _vehicles(0), _totalSpan(0), _iOStatus(false)
 	,_lastTimeStamp(0),_currentItems(&_items1),_lastItems(&_items2)
-{
-	InitLane(lane);
-}
-
-void LaneDetector::InitLane(const Lane& lane)
 {
 	Line detectLine = GetLine(lane.DetectLine);
 	Line stopLine = GetLine(lane.StopLine);
@@ -26,8 +21,8 @@ void LaneDetector::InitLane(const Lane& lane)
 	{
 		_region = Polygon();
 		_meterPerPixel = 0;
-		LogPool::Warning(LogEvent::Detect,"line empty channel", lane.ChannelIndex,"lane", lane.LaneId);
-		return;
+		LogPool::Warning(LogEvent::Detect, "line empty channel", lane.ChannelIndex, "lane", lane.LaneId);
+		_inited = false;
 	}
 	else
 	{
@@ -42,21 +37,30 @@ void LaneDetector::InitLane(const Lane& lane)
 		{
 			_region = Polygon();
 			_meterPerPixel = 0;
-			LogPool::Warning(LogEvent::Detect,"intersect point empty");
-			return;
+			LogPool::Warning(LogEvent::Detect, "intersect point empty");
+			_inited = false;
 		}
-		vector<Point> points;
-		points.push_back(point1);
-		points.push_back(point2);
-		points.push_back(point3);
-		points.push_back(point4);
-		//_region= Polygon(points);
-		_region = GetPolygon(lane.Region);
-		Line line1(point1, point2);
-		Line line2(point3, point4);
-		double pixels = line1.Middle().Distance(line2.Middle());
-		_meterPerPixel = lane.Length / pixels;
+		else
+		{
+			vector<Point> points;
+			points.push_back(point1);
+			points.push_back(point2);
+			points.push_back(point3);
+			points.push_back(point4);
+			//_region= Polygon(points);
+			_region = GetPolygon(lane.Region);
+			Line line1(point1, point2);
+			Line line2(point3, point4);
+			double pixels = line1.Middle().Distance(line2.Middle());
+			_meterPerPixel = lane.Length / pixels;
+			_inited = true;
+		}
 	}
+}
+
+bool LaneDetector::Inited() const
+{
+	return _inited;
 }
 
 Line LaneDetector::GetLine(const string& line)

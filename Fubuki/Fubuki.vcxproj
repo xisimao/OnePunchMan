@@ -148,6 +148,7 @@
     <ClCompile Include="FFmpeg\IVE_8UC3Handler.cpp" />
     <ClCompile Include="FFmpeg\YUV420PHandler.cpp" />
     <ClCompile Include="FFmpeg\YUV420SPHandler.cpp" />
+    <ClCompile Include="FFmpeg\JPGHandler.cpp" />
     <ClCompile Include="Mqtt\MqttChannel.cpp" />
     <ClCompile Include="Sqlite\Sqlite.cpp" />
   </ItemGroup>
@@ -158,6 +159,7 @@
     <ClInclude Include="FFmpeg\IVE_8UC3Handler.h" />
     <ClInclude Include="FFmpeg\YUV420PHandler.h" />
     <ClInclude Include="FFmpeg\YUV420SPHandler.h" />
+    <ClInclude Include="FFmpeg\JPGHandler.h" />
     <ClInclude Include="Mqtt\MqttChannel.h" />
     <ClInclude Include="Sqlite\Sqlite.h" />
   </ItemGroup>

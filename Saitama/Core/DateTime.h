@@ -164,7 +164,7 @@ namespace OnePunchMan
 		* @brief: 返回当前的UTC时间戳
 		* @return: 当前的UTC时间戳
 		*/
-		static long long NowUtcTimeStamp();
+		static long long UtcNowTimeStamp();
 
 		/**
 		* @brief: 返回当前的UTC日期时间

@@ -2,6 +2,7 @@
 #include <vector>
 
 #include "opencv2/opencv.hpp"
+#include "turbojpeg.h"
 
 #include "SeemmoSDK.h"
 #include "FFmpegChannel.h"
@@ -9,6 +10,7 @@
 #include "LaneDetector.h"
 #include "MqttChannel.h"
 #include "BGR24Handler.h"
+#include "JPGHandler.h"
 
 namespace OnePunchMan
 {
@@ -26,10 +28,21 @@ namespace OnePunchMan
 		ChannelDetector(int width, int height, MqttChannel* mqtt,bool debug=false);
 
 		/**
+		* @brief: 析构函数
+		*/
+		~ChannelDetector();
+
+		/**
 		* @brief: 获取通道地址
 		* @return 通道地址
 		*/
-		std::string ChannelUrl();
+		std::string ChannelUrl() const;
+
+		/**
+		* @brief: 获取车道是否初始化成功
+		* @return 车道是否初始化成功
+		*/
+		bool Inited() const;
 
 		/**
 		* @brief: 更新通道
@@ -94,13 +107,20 @@ namespace OnePunchMan
 		void GetDetecItems(std::map<std::string, DetectItem>* items, const JsonDeserialization& jd, const std::string& key);
 
 		/**
-		* @brief: hisi ive_8uc3转opencv mat
+		* @brief: hisi ive_8uc3转bgr
 		* @param: iveBuffer ive字节流
-		* @param: image opencv mat
+		* @param: width 图片宽度
+		* @param: height 图片高度
+		* @param: bgrBuffer 写入的bgr字节流
 		*/
-		void IveToMat(const unsigned char* iveBuffer,cv::Mat* image);
-
-
+		void IveToBgr(const unsigned char* iveBuffer,int width,int height,unsigned char* bgrBuffer);
+		
+		/**
+		* @brief: 绘制检测区域
+		* @param: detectItems 检测项集合
+		* @param: iveBuffer ive字节流
+		* @param: packetIndex 帧序号
+		*/
 		void DrawDetect(const std::map<std::string, DetectItem>& detectItems, const unsigned char* iveBuffer, long long packetIndex);
 
 		//视频序号
@@ -117,16 +137,22 @@ namespace OnePunchMan
 		std::mutex _laneMutex;
 		//车道集合
 		std::vector<LaneDetector*> _lanes;
+		//车道初始化是否成功
+		bool _inited;
 		//车道算法筛选区域参数
 		std::string _param;
 		//是否设置过车道参数
 		bool _setParam;
+		//bgr字节流
+		unsigned char* _bgrBuffer;
 		//是否处于调试模式
 		bool _debug;
-		//bgr
+		//调试用bgr字节流
+		unsigned char* _debugBgrBuffer;
+		//调试时写bmp
 		BGR24Handler _bgrHandler;
-		//用于压缩jpg图片的参数
-		std::vector<int> _jpgParams;
+		//调试时写jpg
+		JPGHandler _jpgHandler;
 	};
 
 }

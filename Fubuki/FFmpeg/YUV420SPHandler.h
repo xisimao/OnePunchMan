@@ -1,5 +1,6 @@
 #pragma once
 #include "StringEx.h"
+#include "Path.h"
 
 namespace OnePunchMan
 {
