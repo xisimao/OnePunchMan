@@ -3,15 +3,18 @@
 using namespace std;
 using namespace OnePunchMan;
 
+const int FFmpegChannel::DestinationWidth = 1920;
+const int FFmpegChannel::DestinationHeight = 1080;
+
 FFmpegChannel::FFmpegChannel(const string& inputUrl, const string& outputUrl, bool debug)
 	:ThreadObject("decode"),
 	_inputUrl(inputUrl), _inputFormat(NULL), _inputStream(NULL), _inputVideoIndex(-1)
 	, _outputUrl(outputUrl), _outputFormat(NULL), _outputStream(NULL), _outputCodec(NULL)
 	, _debug(debug), _options(NULL), _channelStatus(ChannelStatus::None)
-	, _decodeContext(NULL), _yuvFrame(NULL), _bgrFrame(NULL), _bgrWidth(1920), _bgrHeight(1080), _bgrBuffer(NULL), _bgrSwsContext(NULL)
+	, _decodeContext(NULL), _yuvFrame(NULL), _bgrFrame(NULL), _bgrBuffer(NULL), _bgrSwsContext(NULL)
 	, _lastPacketIndex(0), _packetSpan(0)
 {
-	if (inputUrl.size() >= 4 && inputUrl.substr(4).compare("rtsp") == 0)
+	if (inputUrl.size() >= 4 && inputUrl.substr(0,4).compare("rtsp") == 0)
 	{
 		av_dict_set(&_options, "rtsp_transport", "tcp", 0);
 		av_dict_set(&_options, "stimeout", "5000000", 0);
@@ -34,9 +37,24 @@ void FFmpegChannel::UninitFFmpeg()
 	LogPool::Information(LogEvent::Decode, "uninit video sdk");
 }
 
+const string& FFmpegChannel::InputUrl() const
+{
+	return _inputUrl;
+}
+
 ChannelStatus FFmpegChannel::Status()
 {
 	return _channelStatus;
+}
+
+int FFmpegChannel::SourceWidth() const
+{
+	return _inputStream == NULL ? 0 : _inputStream->codecpar->width;
+}
+
+int FFmpegChannel::SourceHeight() const
+{
+	return _inputStream == NULL ? 0 : _inputStream->codecpar->height;
 }
 
 int FFmpegChannel::PacketSpan()
@@ -72,7 +90,7 @@ ChannelStatus FFmpegChannel::Init()
 	}
 
 	_inputStream = _inputFormat->streams[_inputVideoIndex];
-
+	
 	if (!_outputUrl.empty())
 	{
 		avformat_alloc_output_context2(&_outputFormat, NULL, "flv", _outputUrl.c_str());
@@ -187,13 +205,13 @@ bool FFmpegChannel::InitDecoder()
 
 	//yuvתrgb
 	_bgrFrame = av_frame_alloc();
-	_bgrBuffer = (uint8_t*)av_malloc(av_image_get_buffer_size(AV_PIX_FMT_BGR24, _bgrWidth, _bgrHeight, 1));
-	if (av_image_fill_arrays(_bgrFrame->data, _bgrFrame->linesize, _bgrBuffer, AV_PIX_FMT_BGR24, _bgrWidth, _bgrHeight, 1) < 0)
+	_bgrBuffer = (uint8_t*)av_malloc(av_image_get_buffer_size(AV_PIX_FMT_BGR24, DestinationWidth, DestinationHeight, 1));
+	if (av_image_fill_arrays(_bgrFrame->data, _bgrFrame->linesize, _bgrBuffer, AV_PIX_FMT_BGR24, DestinationWidth, DestinationHeight, 1) < 0)
 	{
 		LogPool::Warning(LogEvent::Decode, "av_image_fill_arrays error");
 		return false;
 	}
-	_bgrSwsContext = sws_getContext(_decodeContext->width, _decodeContext->height, _decodeContext->pix_fmt, _bgrWidth, _bgrHeight, AV_PIX_FMT_BGR24,
+	_bgrSwsContext = sws_getContext(_decodeContext->width, _decodeContext->height, _decodeContext->pix_fmt, DestinationWidth, DestinationHeight, AV_PIX_FMT_BGR24,
 		SWS_FAST_BILINEAR, NULL, NULL, NULL);
 	if (_bgrSwsContext == NULL)
 	{
@@ -330,7 +348,7 @@ void FFmpegChannel::StartCore()
 				packet.pos = -1;
 				if (av_write_frame(_outputFormat, &packet) != 0)
 				{
-					LogPool::Debug(LogEvent::Decode, "write frame",_outputUrl, packetIndex);
+					//LogPool::Debug(LogEvent::Decode, "write frame",_outputUrl, packetIndex);
 				}
 			}
 			long long end = DateTime::UtcNowTimeStamp();

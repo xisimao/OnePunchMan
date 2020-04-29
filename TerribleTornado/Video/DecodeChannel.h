@@ -82,21 +82,10 @@ namespace OnePunchMan
 		*/
 		static void UninitHisi(int videoCount);
 
-		/**
-		* @brief: 获取输入通道地址
-		* @return: 输入通道地址
-		*/
-		std::string& InputUrl();
-
-		//解码后的视频宽度
-		static const int VideoWidth;
-		//解码后的视频高度
-		static const int VideoHeight;
-
 	protected:
-		int InitCore();
+		bool InitDecoder();
 
-		void UninitCore();
+		void UninitDecoder();
 
 		DecodeResult Decode(const AVPacket* packet, int packetIndex);
 
@@ -138,7 +127,6 @@ namespace OnePunchMan
 		SwsContext* _yuv420spSwsContext;
 		//检测线程
 		DetectChannel* _detectChannel;
-	
 	};
 
 }

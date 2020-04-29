@@ -3,11 +3,8 @@
 using namespace std;
 using namespace OnePunchMan;
 
-const int DecodeChannel::VideoWidth = 1920;
-const int DecodeChannel::VideoHeight = 1080;
-
 DecodeChannel::DecodeChannel(const string& inputUrl, const string& outputUrl, int channelIndex, DetectChannel* detectChannel, bool debug)
-	:FFmpegChannel(inputUrl, outputUrl, debug), _channelIndex(channelIndex), _useFFmpeg(false), _decodeContext(NULL), _yuvFrame(NULL), _yuv420spBuffer(NULL), _yuv420spSize(static_cast<int>(VideoWidth* VideoHeight * 1.5)), _yuv420spFrame(NULL), _yuv420spSwsContext(NULL), _detectChannel(detectChannel)
+	:FFmpegChannel(inputUrl, outputUrl, debug), _channelIndex(channelIndex), _useFFmpeg(false), _decodeContext(NULL), _yuvFrame(NULL), _yuv420spBuffer(NULL), _yuv420spSize(static_cast<int>(DestinationWidth* DestinationHeight * 1.5)), _yuv420spFrame(NULL), _yuv420spSwsContext(NULL), _detectChannel(detectChannel)
 {
 
 }
@@ -17,8 +14,8 @@ bool DecodeChannel::InitHisi(int videoCount)
 #ifndef _WIN32
 	HI_S32 hi_s32_ret = HI_SUCCESS;
 	SIZE_S stDispSize;
-	stDispSize.u32Width = VideoWidth;
-	stDispSize.u32Height = VideoHeight;
+	stDispSize.u32Width = DestinationWidth;
+	stDispSize.u32Height = DestinationHeight;
 	VB_CONFIG_S stVbConfig;
 	memset(&stVbConfig, 0, sizeof(VB_CONFIG_S));
 	stVbConfig.u32MaxPoolCnt = 1;
@@ -388,8 +385,8 @@ bool DecodeChannel::InitHisi(int videoCount)
 
 
 	//vo
-	RECT_S                 stDefDispRect = { 0, 0, VideoWidth, VideoHeight };
-	SIZE_S                 stDefImageSize = { VideoWidth, VideoHeight };
+	RECT_S                 stDefDispRect = { 0, 0, DestinationWidth, DestinationHeight };
+	SIZE_S                 stDefImageSize = { DestinationWidth, DestinationHeight };
 
 	VO_DEV                 VoDev = 0;
 	VO_LAYER               VoLayer = 0;
@@ -425,8 +422,8 @@ bool DecodeChannel::InitHisi(int videoCount)
 	/******************************
 	* Set and start layer VoDev#.
 	********************************/
-	stLayerAttr.stDispRect.u32Width = VideoWidth;
-	stLayerAttr.stDispRect.u32Height = VideoHeight;
+	stLayerAttr.stDispRect.u32Width = DestinationWidth;
+	stLayerAttr.stDispRect.u32Height = DestinationHeight;
 	stLayerAttr.u32DispFrmRt = 30;
 	stLayerAttr.bClusterMode = HI_FALSE;
 	stLayerAttr.bDoubleFrame = HI_FALSE;
@@ -786,33 +783,33 @@ void DecodeChannel::UninitHisi(int videoCount)
 	LogPool::Error("uninit hisi sdk");
 }
 
-int DecodeChannel::InitCore()
+bool DecodeChannel::InitDecoder()
 {
 	if (!_useFFmpeg)
 	{
-		return 0;
+		return true;
 	}
 	if (_inputStream->codecpar->codec_id != AVCodecID::AV_CODEC_ID_H264)
 	{
 		LogPool::Error(LogEvent::Decode, "codec is not h264", _inputUrl);
-		return 4;
+		return false;
 	}
 
 	AVCodec* decode = avcodec_find_decoder(_inputStream->codecpar->codec_id);
 	if (decode == NULL) {
 		LogPool::Error(LogEvent::Decode, "avcodec_find_decoder error", _inputUrl);
-		return 5;
+		return false;
 	}
 	_decodeContext = avcodec_alloc_context3(decode);
 	if (avcodec_parameters_to_context(_decodeContext, _inputStream->codecpar) < 0) {
 		LogPool::Error(LogEvent::Decode, "avcodec_parameters_to_context error", _inputUrl);
-		return 6;
+		return false;
 	}
 	_decodeContext->thread_count = 4;
 	_decodeContext->thread_type = FF_THREAD_FRAME;
 	if (avcodec_open2(_decodeContext, decode, NULL) < 0) {//打开解码器
 		LogPool::Error(LogEvent::Decode, "avcodec_open2 error", _inputUrl);
-		return 7;
+		return false;
 	}
 
 	//初始化帧
@@ -821,23 +818,23 @@ int DecodeChannel::InitCore()
 	//yuv转rgb
 	_yuv420spFrame = av_frame_alloc();
 
-	_yuv420spBuffer = (uint8_t*)av_malloc(av_image_get_buffer_size(AV_PIX_FMT_NV21, VideoWidth, VideoHeight, 1) * sizeof(uint8_t));
-	if (av_image_fill_arrays(_yuv420spFrame->data, _yuv420spFrame->linesize, _yuv420spBuffer, AV_PIX_FMT_NV21, VideoWidth, VideoHeight, 1) < 0)
+	_yuv420spBuffer = (uint8_t*)av_malloc(av_image_get_buffer_size(AV_PIX_FMT_NV21, DestinationWidth, DestinationHeight, 1) * sizeof(uint8_t));
+	if (av_image_fill_arrays(_yuv420spFrame->data, _yuv420spFrame->linesize, _yuv420spBuffer, AV_PIX_FMT_NV21, DestinationWidth, DestinationHeight, 1) < 0)
 	{
 		LogPool::Error(LogEvent::Decode, "av_image_fill_arrays error");
-		return 8;
+		return false;
 	}
-	_yuv420spSwsContext = sws_getContext(_decodeContext->width, _decodeContext->height, _decodeContext->pix_fmt, VideoWidth, VideoHeight, AV_PIX_FMT_NV21,
+	_yuv420spSwsContext = sws_getContext(_decodeContext->width, _decodeContext->height, _decodeContext->pix_fmt, DestinationWidth, DestinationHeight, AV_PIX_FMT_NV21,
 		SWS_FAST_BILINEAR, NULL, NULL, NULL);
 	if (_yuv420spSwsContext == NULL)
 	{
 		LogPool::Error(LogEvent::Decode, "sws_getContext error", _inputUrl);
-		return 9;
+		return false;
 	}
-	return 0;
+	return true;
 }
 
-void DecodeChannel::UninitCore()
+void DecodeChannel::UninitDecoder()
 {
 	if (_yuv420spSwsContext != NULL)
 	{
@@ -856,11 +853,6 @@ void DecodeChannel::UninitCore()
 	}
 }
 
-string& DecodeChannel::InputUrl()
-{
-	return _inputUrl;
-}
-
 DecodeResult DecodeChannel::Decode(const AVPacket* packet, int packetIndex)
 {
 	if (_useFFmpeg)
@@ -874,7 +866,7 @@ DecodeResult DecodeChannel::Decode(const AVPacket* packet, int packetIndex)
 		{
 			LogPool::Warning(LogEvent::Decode, "decode downgrade", _inputUrl);
 			_useFFmpeg = true;
-			if (InitCore() == 0)
+			if (InitDecoder() == 0)
 			{
 				return DecodeResult::Skip;
 			}
@@ -927,7 +919,7 @@ DecodeResult DecodeChannel::DecodeByHisi(const AVPacket* packet, int packetIndex
 				{
 					handled = true;
 					unsigned char* yuv = reinterpret_cast<unsigned char*>(HI_MPI_SYS_Mmap(frame.stVFrame.u64PhyAddr[0], _yuv420spSize));
-					_detectChannel->HandleYUV(yuv, VideoWidth, VideoHeight, static_cast<int>(frame.stVFrame.u64PTS));
+					_detectChannel->HandleYUV(yuv, DestinationWidth, DestinationHeight, static_cast<int>(frame.stVFrame.u64PTS));
 					HI_MPI_SYS_Munmap(reinterpret_cast<HI_VOID*>(yuv), _yuv420spSize);
 					break;
 					//	hi_s32_ret = HI_MPI_VENC_SendFrame(_channelIndex, &frame, 0);
@@ -1020,12 +1012,12 @@ DecodeResult DecodeChannel::DecodeByFFmpeg(const AVPacket* packet, int packetInd
 					_yuvFrame->linesize, 0, _decodeContext->height,
 					_yuv420spFrame->data, _yuv420spFrame->linesize) != 0)
 				{
-					//_yuvHandler->HandleFrame(_yuv420spBuffer, VideoWidth, VideoHeight, packetIndex);
+					//_yuvHandler->HandleFrame(_yuv420spBuffer, DestinationWidth, DestinationHeight, packetIndex);
 
 					if (!_detectChannel->IsBusy())
 					{
 						handled = true;
-						_detectChannel->HandleYUV(_yuv420spBuffer, VideoWidth, VideoHeight, packetIndex);
+						_detectChannel->HandleYUV(_yuv420spBuffer, DestinationWidth, DestinationHeight, packetIndex);
 					}
 				}
 			}

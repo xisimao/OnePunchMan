@@ -38,14 +38,14 @@ int main(int argc, char* argv[])
             {
                 channelIndex = StringEx::Convert<int>(argv[2]);
             }
-            ChannelDetector detector(DecodeChannel::VideoWidth, DecodeChannel::VideoHeight, NULL, true);
+            ChannelDetector detector(FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, NULL, true);
             FlowChannelData data;
             FlowChannel channel = data.Get(channelIndex);
             detector.UpdateChannel(channel);
             vector<ChannelDetector*> detectors;
             detectors.push_back(&detector);
-            RecognChannel recogn(0, DecodeChannel::VideoWidth, DecodeChannel::VideoHeight, detectors);
-            DetectChannel detect(1, DecodeChannel::VideoWidth, DecodeChannel::VideoHeight, &recogn, &detector);
+            RecognChannel recogn(0, FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, detectors);
+            DetectChannel detect(1, FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, &recogn, &detector);
             DecodeChannel decode(channel.ChannelUrl, string(), channel.ChannelIndex, &detect,true);
             recogn.Start();
             detect.Start();

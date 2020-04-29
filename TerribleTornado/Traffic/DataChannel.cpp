@@ -35,7 +35,7 @@ DataChannel::DataChannel()
     for (int i = 0; i < FlowChannelData::ChannelCount; ++i)
     {
         _decodes.push_back(NULL);
-        ChannelDetector* detector = new ChannelDetector(DecodeChannel::VideoWidth, DecodeChannel::VideoHeight, _mqtt);
+        ChannelDetector* detector = new ChannelDetector(FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, _mqtt);
         _detectors.push_back(detector);
     }
 
@@ -43,11 +43,11 @@ DataChannel::DataChannel()
     {
         if (i % RecognChannel::ItemCount == 0)
         {
-            RecognChannel* recogn = new RecognChannel(i / RecognChannel::ItemCount, DecodeChannel::VideoWidth, DecodeChannel::VideoHeight, _detectors);
+            RecognChannel* recogn = new RecognChannel(i / RecognChannel::ItemCount, FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, _detectors);
             _recogns.push_back(recogn);
             recogn->Start();
         }
-        DetectChannel* detect = new DetectChannel(i + 1, DecodeChannel::VideoWidth, DecodeChannel::VideoHeight, _recogns[i / RecognChannel::ItemCount], _detectors[i]);
+        DetectChannel* detect = new DetectChannel(i + 1, FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, _recogns[i / RecognChannel::ItemCount], _detectors[i]);
         _detects.push_back(detect);
         detect->Start();
     }
@@ -169,16 +169,16 @@ void DataChannel::GetDevice(HttpReceivedEventArgs* e)
 
     string deviceJson;
     DateTime now = DateTime::Now();
-    JsonSerialization::Serialize(&deviceJson, "licenceStatus", device.LicenceStatus);
-    JsonSerialization::Serialize(&deviceJson, "softwareVersion", device.SoftwareVersion);
-    JsonSerialization::Serialize(&deviceJson, "sn", device.SN);
-    JsonSerialization::Serialize(&deviceJson, "diskUsed", device.DiskUsed);
-    JsonSerialization::Serialize(&deviceJson, "diskTotal", device.DiskTotal);
-    JsonSerialization::Serialize(&deviceJson, "startTime", _startTime.ToString());
     JsonSerialization::Serialize(&deviceJson, "deviceTime", now.UtcTimeStamp());
     JsonSerialization::Serialize(&deviceJson, "deviceTime_Desc", now.ToString());
-    JsonSerialization::Serialize(&deviceJson, "videoWidth", DecodeChannel::VideoWidth);
-    JsonSerialization::Serialize(&deviceJson, "videoHeight", DecodeChannel::VideoHeight);
+    JsonSerialization::Serialize(&deviceJson, "startTime", _startTime.ToString());
+    JsonSerialization::Serialize(&deviceJson, "diskUsed", device.DiskUsed);
+    JsonSerialization::Serialize(&deviceJson, "diskTotal", device.DiskTotal);
+    JsonSerialization::Serialize(&deviceJson, "licenceStatus", device.LicenceStatus);
+    JsonSerialization::Serialize(&deviceJson, "sn", device.SN);
+    JsonSerialization::Serialize(&deviceJson, "softwareVersion", device.SoftwareVersion);
+    JsonSerialization::Serialize(&deviceJson, "destinationWidth", FFmpegChannel::DestinationWidth);
+    JsonSerialization::Serialize(&deviceJson, "destinationHeight", FFmpegChannel::DestinationHeight);
     JsonSerialization::SerializeJson(&deviceJson, "channels", channelsJson);
 
     e->Code = HttpCode::OK;
@@ -427,7 +427,9 @@ string DataChannel::GetChannelJson(HttpReceivedEventArgs* e, const FlowChannel& 
         lock_guard<mutex> lck(_decodeMutex);
         JsonSerialization::Serialize(&channelJson, "channelStatus", _decodes[channel.ChannelIndex - 1] == NULL ? 0 : static_cast<int>(_decodes[channel.ChannelIndex - 1]->Status()));
         JsonSerialization::Serialize(&channelJson, "packetSpan", _decodes[channel.ChannelIndex - 1] == NULL ? 0 : _decodes[channel.ChannelIndex - 1]->PacketSpan());
-        JsonSerialization::Serialize(&channelJson, "channelInited", _detectors[channel.ChannelIndex - 1]->Inited());
+        JsonSerialization::Serialize(&channelJson, "sourceWidth", _decodes[channel.ChannelIndex - 1] == NULL ? 0 : _decodes[channel.ChannelIndex - 1]->SourceWidth());
+        JsonSerialization::Serialize(&channelJson, "sourceHeight", _decodes[channel.ChannelIndex - 1] == NULL ? 0 : _decodes[channel.ChannelIndex - 1]->SourceHeight());
+        JsonSerialization::Serialize(&channelJson, "lanesInited", _detectors[channel.ChannelIndex - 1]->LanesInited());
     }
     string lanesJson;
     for (vector<Lane>::const_iterator lit = channel.Lanes.begin(); lit != channel.Lanes.end(); ++lit)

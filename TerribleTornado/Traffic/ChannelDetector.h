@@ -42,7 +42,7 @@ namespace OnePunchMan
 		* @brief: 获取车道是否初始化成功
 		* @return 车道是否初始化成功
 		*/
-		bool Inited() const;
+		bool LanesInited() const;
 
 		/**
 		* @brief: 更新通道
@@ -138,7 +138,7 @@ namespace OnePunchMan
 		//车道集合
 		std::vector<LaneDetector*> _lanes;
 		//车道初始化是否成功
-		bool _inited;
+		bool _lanesInited;
 		//车道算法筛选区域参数
 		std::string _param;
 		//是否设置过车道参数

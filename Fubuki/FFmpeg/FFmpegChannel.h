@@ -67,6 +67,12 @@ namespace OnePunchMan
 		static void UninitFFmpeg();
 
 		/**
+		* @brief: 获取输入通道地址
+		* @return: 输入通道地址
+		*/
+		const std::string& InputUrl() const;
+
+		/**
 		* @brief: 获取通道状态
 		* @return: 通道状态
 		*/
@@ -77,6 +83,23 @@ namespace OnePunchMan
 		* @return: 处理帧间隔
 		*/
 		int PacketSpan();
+
+		/**
+		* @brief: 获取输出视频输入宽度
+		* @return: 视频输入宽度
+		*/
+		int SourceWidth() const;
+
+		/**
+		* @brief: 获取输出视频输入高度
+		* @return: 视频输入高度
+		*/
+		int SourceHeight() const;
+
+		//解码后的视频宽度
+		static const int DestinationWidth;
+		//解码后的视频高度
+		static const int DestinationHeight;
 
 	protected:
 		void StartCore();
@@ -138,10 +161,6 @@ namespace OnePunchMan
 		AVFrame* _yuvFrame;
 		//bgr
 		AVFrame* _bgrFrame;
-		//bgr宽度
-		int _bgrWidth;
-		//bgr高度
-		int _bgrHeight;
 		//bgr字节流
 		uint8_t* _bgrBuffer;
 		//yuv转bgr

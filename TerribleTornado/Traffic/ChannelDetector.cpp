@@ -8,7 +8,7 @@ const string ChannelDetector::VideoStructTopic("VideoStruct");
 
 ChannelDetector::ChannelDetector(int width, int height, MqttChannel* mqtt,bool debug)
 	:_channelIndex(0),_channelUrl(), _width(width),_height(height),_mqtt(mqtt)
-	, _inited(false),_param(),_setParam(true),_bgrBuffer(new unsigned char[width * height * 3])
+	, _lanesInited(false),_param(),_setParam(true),_bgrBuffer(new unsigned char[width * height * 3])
 	, _debug(debug), _debugBgrBuffer(new unsigned char[width * height * 3]), _bgrHandler(), _jpgHandler()
 {
 }
@@ -24,9 +24,9 @@ string ChannelDetector::ChannelUrl() const
 	return _channelUrl;
 }
 
-bool ChannelDetector::Inited() const
+bool ChannelDetector::LanesInited() const
 {
-	return _inited;
+	return _lanesInited;
 }
 
 void ChannelDetector::UpdateChannel(const FlowChannel& channel)
@@ -39,7 +39,7 @@ void ChannelDetector::UpdateChannel(const FlowChannel& channel)
 	_lanes.clear();
 	string regionsParam;
 	regionsParam.append("[");
-	_inited = true;
+	_lanesInited = true;
 	for (vector<Lane>::const_iterator lit = channel.Lanes.begin(); lit != channel.Lanes.end(); ++lit)
 	{
 		regionsParam.append(lit->Region);
@@ -47,7 +47,7 @@ void ChannelDetector::UpdateChannel(const FlowChannel& channel)
 		LaneDetector* laneDetector = new LaneDetector(*lit);
 		if (!laneDetector->Inited())
 		{
-			_inited = false;
+			_lanesInited = false;
 		}	
 		_lanes.push_back(laneDetector);
 	}
@@ -75,6 +75,8 @@ void ChannelDetector::ClearChannel()
 	}
 	_lanes.clear();
 	_channelUrl = string();
+	_channelIndex = 0;
+	_lanesInited = false;
 }
 
 void ChannelDetector::GetDetecItems(map<string, DetectItem>* items, const JsonDeserialization& jd, const string& key)

@@ -9,20 +9,7 @@
 using namespace std;
 using namespace OnePunchMan;
 
-int main()
-{
-    FILE* file = fopen("C:\\Users\\Administrator\\Desktop\\1.jpg","rb");
-    unsigned char* jpg = new unsigned char[75444];
-    fread(jpg, 1, 75444, file);
-    fclose(file);
-
-    string s("data:image/jpg;base64,");
-    StringEx::ToBase64String(jpg, 75444, &s);
-
-    return 0;
-}
-
-int main1(int argc, char* argv[])
+int main(int argc, char* argv[])
 {
     if (argc >= 2)
     {
@@ -57,14 +44,14 @@ int main1(int argc, char* argv[])
             {
                 channelIndex = StringEx::Convert<int>(argv[2]);
             }
-            ChannelDetector detector(DecodeChannel::VideoWidth, DecodeChannel::VideoHeight, NULL,true);
+            ChannelDetector detector(FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, NULL,true);
             FlowChannelData data;
             FlowChannel channel = data.Get(channelIndex);
             detector.UpdateChannel(channel);
             vector<ChannelDetector*> detectors;
             detectors.push_back(&detector);
-            RecognChannel recogn(0, DecodeChannel::VideoWidth, DecodeChannel::VideoHeight, detectors);
-            DetectChannel detect(1, DecodeChannel::VideoWidth, DecodeChannel::VideoHeight, &recogn, &detector);
+            RecognChannel recogn(0, FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, detectors);
+            DetectChannel detect(1, FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, &recogn, &detector);
             DecodeChannel decode(channel.ChannelUrl,string(), channel.ChannelIndex, &detect, true);
             recogn.Start();
             detect.Start();
