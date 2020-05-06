@@ -14,7 +14,7 @@ MqttChannel::MqttChannel(const string& ip, int port)
 }
 
 MqttChannel::MqttChannel(const string& ip, int port, vector<string> topics)
-    :ThreadObject("mqtt"), _mosq(NULL), _ip(ip), _port(port), _topics(topics), _status(-1)
+    :ThreadObject("mqtt"), _mosq(NULL), _ip(ip), _port(port), _topics(topics), _connected(false)
 {
 
 }
@@ -40,9 +40,14 @@ void MqttChannel::ReceivedEventHandler(struct mosquitto* mosq, void* userdata, c
     static_cast<MqttChannel*>(userdata)->MqttReceived.Notice(&args);
 }
 
+bool MqttChannel::Connected()
+{
+    return _connected;
+}
+
 bool MqttChannel::Send(const string& topic, const string& message, int qos, bool lock)
 {
-    if (_status==0)
+    if (_connected)
     {
         if (lock)
         {
@@ -63,7 +68,7 @@ bool MqttChannel::Send(const string& topic, const string& message, int qos, bool
 
 bool MqttChannel::Send(const string& topic, const unsigned char* message, unsigned int size, int qos, bool lock)
 {
-    if (_status == 0)
+    if (_connected)
     {
         if (lock)
         {
@@ -107,24 +112,24 @@ void MqttChannel::StartCore()
     while (!_cancelled)
     {
         unique_lock<mutex> lck(_mutex);
-        if (_status == 0)
+        if (_connected)
         {
             int i = mosquitto_loop(_mosq, 0, 1);
             if (i == 4)
             {
-                if (_status == 0)
+                if (_connected)
                 {
-                    _status = -1;
+                    _connected = false;
                     LogPool::Information(LogEvent::Mqtt, "mqtt disconnect");
                 }
             }
         }
         else
         {
-            _status = mosquitto_connect(_mosq, _ip.c_str(), _port, KeepAlive);
+            _connected = mosquitto_connect(_mosq, _ip.c_str(), _port, KeepAlive)==0;
         }
         lck.unlock();
-        if (_status == 0)
+        if (_connected)
         {
             this_thread::sleep_for(chrono::milliseconds(PollTime));
         }

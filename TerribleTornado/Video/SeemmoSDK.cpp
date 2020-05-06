@@ -10,7 +10,6 @@ seemmo_thread_uninit_t SeemmoSDK::seemmo_thread_uninit = NULL;
 seemmo_video_pvc_t SeemmoSDK::seemmo_video_pvc = NULL;
 seemmo_video_pvc_recog_t SeemmoSDK::seemmo_video_pvc_recog = NULL;
 
-bool SeemmoSDK::Inited = false;
 void* SeemmoSDK::Handle = NULL;
 
 bool SeemmoSDK::Init()
@@ -43,11 +42,7 @@ bool SeemmoSDK::Init()
 	else
 	{
 		int32_t result = seemmo_process_init("/mtd/seemmo/programs/aisdk", 8, 8, "192.168.201.66:12821", 1, 0);
-		if (result == 0)
-		{
-			Inited = true;
-		}
-		else
+		if (result != 0)
 		{
 			LogPool::Error(LogEvent::Detect, "init process failed", result);
 			return false;

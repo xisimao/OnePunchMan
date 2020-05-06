@@ -1,15 +1,23 @@
-#include "FlowChannel.h"
+#include "FlowData.h"
 
 using namespace std;
 using namespace OnePunchMan;
 
 const int FlowChannelData::ChannelCount = 8;
 
+const string FlowChannelData::DbName("flow.db");
+
+FlowChannelData::FlowChannelData()
+	:_sqlite(DbName)
+{
+
+}
+
 vector<FlowChannel> FlowChannelData::GetList()
 {
 	vector<FlowChannel> channels;
 	string channelSql("Select * From Flow_Channel Order By ChannelIndex");
-	SqliteReader sqlite;
+	SqliteReader sqlite(DbName);
 	if (sqlite.BeginQuery(channelSql))
 	{
 		while (sqlite.HasRow()) 
@@ -25,7 +33,7 @@ FlowChannel FlowChannelData::Get(int channelIndex)
 {
 	FlowChannel channel;
 	string sql(StringEx::Combine("Select * From Flow_Channel Where ChannelIndex=", channelIndex));
-	SqliteReader sqlite;
+	SqliteReader sqlite(DbName);
 	if (sqlite.BeginQuery(sql))
 	{
 		if (sqlite.HasRow()) 
@@ -45,13 +53,13 @@ FlowChannel FlowChannelData::FillChannel(const SqliteReader& sqlite)
 	channel.ChannelUrl = sqlite.GetString(2);
 	channel.ChannelType = sqlite.GetInt(3);
 
-	SqliteReader laneSqlite;
+	SqliteReader laneSqlite(DbName);
 	string laneSql(StringEx::Combine("Select * From Flow_Lane Where ChannelIndex=", channel.ChannelIndex));
 	if (laneSqlite.BeginQuery(laneSql))
 	{
 		while (laneSqlite.HasRow())
 		{
-			Lane lane;
+			FlowLane lane;
 			lane.ChannelIndex = laneSqlite.GetInt(0);
 			lane.LaneId = laneSqlite.GetString(1);
 			lane.LaneName = laneSqlite.GetString(2);
@@ -85,7 +93,7 @@ bool FlowChannelData::Insert(const FlowChannel& channel)
 		, ")"));
 	if (_sqlite.ExecuteRowCount(channelSql)==1)
 	{
-		for (vector<Lane>::const_iterator it = channel.Lanes.begin(); it != channel.Lanes.end(); ++it)
+		for (vector<FlowLane>::const_iterator it = channel.Lanes.begin(); it != channel.Lanes.end(); ++it)
 		{
 			string laneSql(StringEx::Combine("Insert Into Flow_Lane (ChannelIndex,LaneId,LaneName,LaneIndex,LaneType,Direction,FlowDirection,Length,IOIp,IOPort,IOIndex,DetectLine,StopLine,LaneLine1,LaneLine2,Region) Values ("
 				, it->ChannelIndex, ","

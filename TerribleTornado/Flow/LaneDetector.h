@@ -7,67 +7,10 @@
 #include "LogPool.h"
 #include "JsonFormatter.h"
 #include "Observable.h"
-#include "FlowChannel.h"
+#include "FlowData.h"
 
 namespace OnePunchMan
 {
-	//检测元素状态
-	enum class DetectStatus
-	{
-		New,
-		In,
-		Out
-	};
-
-	//检测元素类型
-	enum class DetectType
-	{
-		None=0,
-		Pedestrain = 1,
-		Bike = 2,
-		Motobike = 3,
-		Car = 4,
-		Tricycle = 5,
-		Bus = 6,
-		Van = 7,
-		Truck = 8
-	};
-
-	//检测项
-	class DetectItem
-	{
-	public:
-		//输入
-		//检测区域
-		Rectangle Region;
-		//检测元素类型
-		DetectType Type;
-		
-		//输出
-		//检测元素状态
-		DetectStatus Status;
-		//移动距离
-		double Distance;
-	};
-	
-	//识别项
-	class RecognItem
-	{
-	public:
-		//通道序号
-		int ChannelIndex;
-		//guid
-		std::string Guid;
-		//检测项类型
-		int Type;
-		//检测区域
-		Rectangle Region;
-		//宽度
-		int Width;
-		//高度
-		int Height;
-	};
-
 	//交通状态
 	enum class TrafficStatus
 	{
@@ -79,7 +22,7 @@ namespace OnePunchMan
 	};
 
 	//io数据项
-	class IOItem
+	class IOResult
 	{
 	public:
 		//车道编号
@@ -93,7 +36,7 @@ namespace OnePunchMan
 	};
 
 	//流量数据项
-	class FlowItem
+	class FlowResult
 	{
 	public:
 		//车道编号
@@ -184,7 +127,7 @@ namespace OnePunchMan
 		* @brief: 构造函数
 		* @param: lane 车道
 		*/
-		LaneDetector(const Lane& lane);
+		LaneDetector(const FlowLane& lane);
 
 		/**
 		* @brief: 获取车道是否初始化成功
@@ -193,11 +136,12 @@ namespace OnePunchMan
 		bool Inited() const;
 
 		/**
-		* @brief: 检测机动车
-		* @param: item 检测数据项
+		* @brief: 检测
+		* @param: items 检测数据项集合
+		* @param: timeStamp 时间戳
 		* @return: 返回车道io状态
 		*/
-		IOItem Detect(std::map<std::string, DetectItem>* items,long long timeStamp);
+		IOResult Detect(std::map<std::string, DetectItem>* items,long long timeStamp);
 
 		/**
 		* @brief: 识别机动车
@@ -208,10 +152,10 @@ namespace OnePunchMan
 
 		/**
 		* @brief: 收集车道计算数据
-		* @param: item 结算时间戳
+		* @param: timeStamp 计算时间戳
 		* @return: 车道计算数据
 		*/
-		FlowItem Collect(long long timeStamp);
+		FlowResult Collect(long long timeStamp);
 		
 		/**
 		* @brief: 获取当前检测区域
@@ -221,20 +165,6 @@ namespace OnePunchMan
 
 	private:
 
-		/**
-		* @brief: 解析线段字符串
-		* @param: lane 车道线字符串
-		* @return: 线段
-		*/
-		Line GetLine(const std::string& line);
-		
-		/**
-		* @brief: 解析多边形字符串
-		* @param: region 区域字符串
-		* @return: 多边形
-		*/
-		Polygon GetPolygon(const std::string& region);
-		
 		//车道编号
 		std::string _laneId;
 		//当前检测区域

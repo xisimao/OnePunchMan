@@ -1,11 +1,5 @@
-﻿#include "DataChannel.h"
-#include <iostream>  
-#include <stdio.h>  
-#include <setjmp.h>  
-#include <string.h>  
-#include <stdlib.h>  
-#include <jpeglib.h>
-#include "turbojpeg.h"
+﻿#include "FlowStartup.h"
+
 using namespace std;
 using namespace OnePunchMan;
 
@@ -44,7 +38,7 @@ int main(int argc, char* argv[])
             {
                 channelIndex = StringEx::Convert<int>(argv[2]);
             }
-            ChannelDetector detector(FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, NULL,true);
+            FlowChannelDetector detector(FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, NULL,true);
             FlowChannelData data;
             FlowChannel channel = data.Get(channelIndex);
             detector.UpdateChannel(channel);
@@ -66,9 +60,16 @@ int main(int argc, char* argv[])
     }
     else
     {
-        DataChannel channel;
-        channel.Start();
-        channel.Join();
+        FlowStartup channel;
+        if (channel.Init())
+        {
+            channel.Start();
+            channel.Join();
+        }
+        else
+        {
+            LogPool::Information("init flow system failed");
+        }
     }
 
     return 0;

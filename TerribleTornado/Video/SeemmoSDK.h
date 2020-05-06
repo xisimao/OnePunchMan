@@ -59,8 +59,6 @@ namespace OnePunchMan
 		static seemmo_thread_uninit_t seemmo_thread_uninit;
 		static seemmo_video_pvc_t seemmo_video_pvc;
 		static seemmo_video_pvc_recog_t seemmo_video_pvc_recog;
-		//表示是否初始化成功，也是授权成功判断的一句
-		static bool Inited;
 
 	private:
 

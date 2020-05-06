@@ -3,17 +3,17 @@
 using namespace std;
 using namespace OnePunchMan;
 
-LaneDetector::LaneDetector(const Lane& lane)
+LaneDetector::LaneDetector(const FlowLane& lane)
 	: _laneId(lane.LaneId),_persons(0),_bikes(0), _motorcycles(0), _cars(0),_tricycles(0), _buss(0),_vans(0),_trucks(0)
 	, _totalDistance(0.0), _totalTime(0)
 	, _totalInTime(0)
 	,_lastInRegion(0), _vehicles(0), _totalSpan(0), _iOStatus(false)
 	,_lastTimeStamp(0),_currentItems(&_items1),_lastItems(&_items2)
 {
-	Line detectLine = GetLine(lane.DetectLine);
-	Line stopLine = GetLine(lane.StopLine);
-	Line laneLine1 = GetLine(lane.LaneLine1);
-	Line laneLine2 = GetLine(lane.LaneLine2);
+	Line detectLine = Line::FromJson(lane.DetectLine);
+	Line stopLine = Line::FromJson(lane.StopLine);
+	Line laneLine1 = Line::FromJson(lane.LaneLine1);
+	Line laneLine2 = Line::FromJson(lane.LaneLine2);
 	if (detectLine.Empty() ||
 		stopLine.Empty() ||
 		laneLine1.Empty() ||
@@ -48,7 +48,7 @@ LaneDetector::LaneDetector(const Lane& lane)
 			points.push_back(point3);
 			points.push_back(point4);
 			//_region= Polygon(points);
-			_region = GetPolygon(lane.Region);
+			_region = Polygon::FromJson(lane.Region);
 			Line line1(point1, point2);
 			Line line2(point3, point4);
 			double pixels = line1.Middle().Distance(line2.Middle());
@@ -63,73 +63,16 @@ bool LaneDetector::Inited() const
 	return _inited;
 }
 
-Line LaneDetector::GetLine(const string& line)
-{
-	if (line.size() > 2)
-	{
-		vector<Point> points;
-		vector<string> coordinates = StringEx::Split(line.substr(1, line.size() - 2), ",", true);
-		int x=0, y = 0;
-		for (unsigned int i = 0; i < coordinates.size(); ++i)
-		{
-			if (coordinates[i].size() > 2)
-			{
-				if (i % 2 == 0)
-				{
-					x = StringEx::Convert<int>(coordinates[i].substr(1, coordinates[i].size() - 1));
-				}
-				else
-				{
-					y = StringEx::Convert<int>(coordinates[i].substr(0, coordinates[i].size() - 1));
-					points.push_back(Point(x, y));
-				}
-			}
-		}
-		if (points.size() >= 2)
-		{
-			return Line(points[0], points[1]);
-		}
-	}
-	return Line();
-}
-
-Polygon LaneDetector::GetPolygon(const std::string& region)
-{
-	vector<Point> points;
-	if (region.size() > 2)
-	{
-		vector<string> coordinates = StringEx::Split(region.substr(1, region.size() - 2), ",", true);
-		int x=0, y = 0;
-		for (unsigned int i = 0; i < coordinates.size(); ++i)
-		{
-			if (coordinates[i].size() > 2)
-			{
-				if (i % 2 == 0)
-				{
-					x = StringEx::Convert<int>(coordinates[i].substr(1, coordinates[i].size() - 1));
-				}
-				else
-				{
-					y = StringEx::Convert<int>(coordinates[i].substr(0, coordinates[i].size() - 1));
-					points.push_back(Point(x, y));
-				}
-			}
-		}
-	
-	}
-	return Polygon(points);
-}
-
 const Polygon& LaneDetector::Region()
 {
 	return _region;
 }
 
-IOItem LaneDetector::Detect(map<string, DetectItem>* items,long long timeStamp)
+IOResult LaneDetector::Detect(map<string, DetectItem>* items,long long timeStamp)
 {
 	lock_guard<mutex> lck(_mutex);
 	_currentItems->clear();
-	IOItem item;
+	IOResult item;
 	item.LaneId = _laneId;
 	item.Status= false;
 	item.Type = DetectType::None;
@@ -240,10 +183,10 @@ string LaneDetector::Recogn(const RecognItem& item)
 	return _region.Contains(item.Region.HitPoint()) ? _laneId : string();
 }
 
-FlowItem LaneDetector::Collect(long long timeStamp)
+FlowResult LaneDetector::Collect(long long timeStamp)
 {
 	lock_guard<mutex> lck(_mutex);
-	FlowItem item;
+	FlowResult item;
 	item.LaneId = _laneId;
 
 	item.Persons = _persons;

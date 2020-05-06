@@ -14,8 +14,9 @@ namespace OnePunchMan
 
 		/**
 		* @brief: 构造函数
+		* @param: filePath 数据库文件路径
 		*/
-		SqliteReader();
+		SqliteReader(const std::string& filePath);
 
 		/**
 		* @brief: 析构函数
@@ -92,8 +93,9 @@ namespace OnePunchMan
 
 		/**
 		* @brief: 构造函数
+		* @param: filePath 数据库文件路径
 		*/
-		SqliteWriter();
+		SqliteWriter(const std::string& filePath);
 
 		/**
 		* @brief: 析构函数

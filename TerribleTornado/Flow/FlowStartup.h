@@ -5,17 +5,17 @@
 #include "HttpHandler.h"
 #include "Command.h"
 #include "SeemmoSDK.h"
-#include "FlowChannel.h"
-#include "FlowDevice.h"
+#include "FlowData.h"
 #include "MqttChannel.h"
 #include "DetectChannel.h"
 #include "DecodeChannel.h"
+#include "FlowChannelDetector.h"
 #include "SocketMaid.h"
 
 namespace OnePunchMan
 {
-    //数据分发和收集线程
-    class DataChannel :public ThreadObject
+    //流量系统启动线程
+    class FlowStartup :public ThreadObject
         , public IObserver<HttpReceivedEventArgs>
     {
     public:
@@ -23,12 +23,17 @@ namespace OnePunchMan
         /**
         * @brief: 构造函数
         */
-        DataChannel();
+        FlowStartup();
 
         /**
         * @brief: 析构函数
         */
-        ~DataChannel();
+        ~FlowStartup();
+
+        /**
+        * @brief: 初始化系统
+        */
+        bool Init();
 
         /**
         * @brief: http消息接收事件函数
@@ -133,8 +138,8 @@ namespace OnePunchMan
         //流量mqtt主题
         static const std::string FlowTopic;
 
-        //是否初始化成功
-        bool _inited;
+        //算法是否初始化成功
+        bool _sdkInited;
 
         //socket连接
         SocketMaid* _socketMaid;
@@ -147,7 +152,7 @@ namespace OnePunchMan
         //识别线程集合，等于视频总数/RecognChannel::ItemCount
         std::vector<RecognChannel*> _recogns;
         //通道检测集合，等于视频总数
-        std::vector<ChannelDetector*> _detectors;
+        std::vector<FlowChannelDetector*> _detectors;
         //解码线程同步锁
         std::mutex _decodeMutex;
         //解码线程集合，等于视频总数，如果视频清空则为NULL

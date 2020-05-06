@@ -11,7 +11,7 @@ LogPool::LogPool()
 	FileConfig config;
 
 	//读取配置文件
-	_directory = config.Get("Logging:Directory", string("log"));
+	_directory = config.Get("Logging:Directory", string("logs"));
 	_holdDays = config.Get<unsigned int>("Logging:HoldDays");
 	_defaultLevel=ReadLevel(config, "Logging:Default");
 	//添加文件日志

@@ -4,25 +4,16 @@
 
 #include "Sqlite.h"
 #include "StringEx.h"
+#include "TrafficData.h"
 
 namespace OnePunchMan
 {
-	//车道
-	class Lane
+	//流量车道
+	class FlowLane:public TrafficLane
 	{
 	public:
-		//通道序号
-		int ChannelIndex;
-		//车道编号
-		std::string LaneId;
-		//车道名称
-		std::string LaneName;
-		//车道序号
-		int LaneIndex;
 		//车道类型
 		int LaneType;
-		//车道方向
-		int Direction;
 		//车道流向
 		int FlowDirection;
 		//车道长度
@@ -45,53 +36,21 @@ namespace OnePunchMan
 		std::string Region;
 	};
 
-	//通道类型
-	enum class ChannelType
-	{
-		GB28181 = 1,
-		RTSP = 2,
-		File = 3,
-		ONVIF = 4
-	};
-
-	//设备状态
-	enum class DeviceStatus
-	{
-		Normal = 1,
-		Error = 2
-	};
-
 	//流量视频通道
-	class FlowChannel
+	class FlowChannel:public TrafficChannel
 	{
 	public:
-		//通道序号
-		int ChannelIndex;
-		//通道名称
-		std::string ChannelName;
-		//通道地址
-		std::string ChannelUrl;
-		//通道类型
-		int ChannelType;
-		//通道状态
-		int ChannelStatus;
 		//车道集合
-		std::vector<Lane> Lanes;
-
-		/**
-		* @brief: 获取通道rtmp地址
-		* @return: 通道rtmp地址
-		*/
-		std::string RtmpUrl(const std::string ip) const
-		{
-			return StringEx::Combine("rtmp://",ip,":1935/live/", ChannelIndex);
-		}
+		std::vector<FlowLane> Lanes;
 	};
 
 	//流量视频通道数据库操作
 	class FlowChannelData
 	{
 	public:
+
+		FlowChannelData();
+
 		/**
 		* @brief: 查询通道列表
 		* @return: 通道列表
@@ -148,6 +107,10 @@ namespace OnePunchMan
 		static const int ChannelCount;
 
 	private:
+
+		//数据库名称
+		static const std::string DbName;
+
 		/**
 		* @brief: 填充通道
 		* @param: sqlite 查询结果

@@ -1,35 +1,28 @@
-#include "ChannelDetector.h"
+#include "FlowChannelDetector.h"
 
 using namespace std;
 using namespace OnePunchMan;
 
-const string ChannelDetector::IOTopic("IO");
-const string ChannelDetector::VideoStructTopic("VideoStruct");
+const string FlowChannelDetector::IOTopic("IO");
+const string FlowChannelDetector::VideoStructTopic("VideoStruct");
 
-ChannelDetector::ChannelDetector(int width, int height, MqttChannel* mqtt,bool debug)
-	:_channelIndex(0),_channelUrl(), _width(width),_height(height),_mqtt(mqtt)
-	, _lanesInited(false),_param(),_setParam(true),_bgrBuffer(new unsigned char[width * height * 3])
-	, _debug(debug), _debugBgrBuffer(new unsigned char[width * height * 3]), _bgrHandler(), _jpgHandler()
+FlowChannelDetector::FlowChannelDetector(int width, int height, MqttChannel* mqtt,bool debug)
+	:ChannelDetector(width,height,mqtt)
+	,_lanesInited(false),_debug(debug), _debugBgrBuffer(new unsigned char[width * height * 3]), _bgrHandler(), _jpgHandler()
 {
 }
 
-ChannelDetector::~ChannelDetector()
+FlowChannelDetector::~FlowChannelDetector()
 {
-	delete[] _bgrBuffer;
 	delete[] _debugBgrBuffer;
 }
 
-string ChannelDetector::ChannelUrl() const
-{
-	return _channelUrl;
-}
-
-bool ChannelDetector::LanesInited() const
+bool FlowChannelDetector::LanesInited() const
 {
 	return _lanesInited;
 }
 
-void ChannelDetector::UpdateChannel(const FlowChannel& channel)
+void FlowChannelDetector::UpdateChannel(const FlowChannel& channel)
 {
 	lock_guard<mutex> lck(_laneMutex);
 	for (vector<LaneDetector*>::iterator it = _lanes.begin();it!=_lanes.end(); ++it)
@@ -40,7 +33,7 @@ void ChannelDetector::UpdateChannel(const FlowChannel& channel)
 	string regionsParam;
 	regionsParam.append("[");
 	_lanesInited = true;
-	for (vector<Lane>::const_iterator lit = channel.Lanes.begin(); lit != channel.Lanes.end(); ++lit)
+	for (vector<FlowLane>::const_iterator lit = channel.Lanes.begin(); lit != channel.Lanes.end(); ++lit)
 	{
 		regionsParam.append(lit->Region);
 		regionsParam.append(",");
@@ -66,7 +59,7 @@ void ChannelDetector::UpdateChannel(const FlowChannel& channel)
 	_channelUrl = channel.ChannelUrl;
 }
 
-void ChannelDetector::ClearChannel()
+void FlowChannelDetector::ClearChannel()
 {
 	lock_guard<mutex> lck(_laneMutex);
 	for (vector<LaneDetector*>::iterator it = _lanes.begin(); it != _lanes.end(); ++it)
@@ -79,78 +72,13 @@ void ChannelDetector::ClearChannel()
 	_lanesInited = false;
 }
 
-void ChannelDetector::GetDetecItems(map<string, DetectItem>* items, const JsonDeserialization& jd, const string& key)
-{
-	int itemIndex = 0;
-	while (true)
-	{
-		string id = jd.Get<string>(StringEx::Combine("ImageResults:0:", key, ":", itemIndex, ":GUID"));
-		if (id.empty())
-		{
-			break;
-		}
-		int type = jd.Get<int>(StringEx::Combine("ImageResults:0:", key, ":", itemIndex, ":Type"));
-		vector<int> rect = jd.GetArray<int>(StringEx::Combine("ImageResults:0:", key, ":", itemIndex, ":Detect:Body:Rect"));
-		if (rect.size() >= 4)
-		{
-			DetectItem item;
-			item.Region = Rectangle(Point(rect[0], rect[1]), rect[2], rect[3]);
-			item.Type = static_cast<DetectType>(type);
-			item.Status = DetectStatus::Out;
-			item.Distance = 0.0;
-			items->insert(pair<string, DetectItem>(id, item));
-		}
-		itemIndex += 1;
-	}
-}
-
-void ChannelDetector::GetRecognItems(vector<RecognItem>* items, const JsonDeserialization& jd, const string& key)
-{
-	int itemIndex = 0;
-	while (true)
-	{
-		string id = jd.Get<string>(StringEx::Combine("FilterResults", ":0:", key, ":", itemIndex, ":GUID"));
-		if (id.empty())
-		{
-			break;
-		}
-		vector<int> rect = jd.GetArray<int>(StringEx::Combine("FilterResults", ":0:", key, ":", itemIndex, ":Detect:Body:Rect"));
-		if (rect.size() >= 4)
-		{
-			RecognItem item;
-			item.ChannelIndex = _channelIndex;
-			item.Guid = id;
-			item.Type= jd.Get<int>(StringEx::Combine("FilterResults", ":0:", key, ":", itemIndex, ":Type"));
-			item.Width = jd.Get<int>(StringEx::Combine("FilterResults", ":0:", key, ":", itemIndex, ":Detect:Body:Width"));
-			item.Height = jd.Get<int>(StringEx::Combine("FilterResults", ":0:", key, ":", itemIndex, ":Detect:Body:Height"));
-			item.Region = Rectangle(Point(rect[0], rect[1]), rect[2], rect[3]);
-			items->push_back(item);
-		}
-		itemIndex += 1;
-	}
-}
-
-void ChannelDetector::IveToBgr(const unsigned char* iveBuffer, int width, int height,unsigned char* bgrBuffer)
-{
-	const unsigned char* b = iveBuffer;
-	const unsigned char* g = b + width *height;
-	const unsigned char* r = g + width * height;
-	for (int j = 0; j < height; j++) {
-		for (int i = 0; i < width; i++) {
-			bgrBuffer[(j * width + i) * 3 + 0] = b[j * width + i];
-			bgrBuffer[(j * width + i) * 3 + 1] = g[j * width + i];
-			bgrBuffer[(j * width + i) * 3 + 2] = r[j * width + i];
-		}
-	}
-}
-
-void ChannelDetector::CollectFlow(string* flowJson, long long timeStamp)
+void FlowChannelDetector::CollectFlow(string* flowJson, long long timeStamp)
 {
 	lock_guard<mutex> lck(_laneMutex);
 	for (unsigned int laneIndex = 0; laneIndex < _lanes.size(); ++laneIndex)
 	{
 		LaneDetector* detector = _lanes[laneIndex];
-		FlowItem item = detector->Collect(timeStamp);
+		FlowResult item = detector->Collect(timeStamp);
 
 		string laneJson;
 		JsonSerialization::Serialize(&laneJson, "channelUrl", _channelUrl);
@@ -174,26 +102,13 @@ void ChannelDetector::CollectFlow(string* flowJson, long long timeStamp)
 	}
 }
 
-vector<RecognItem> ChannelDetector::HandleDetect(const string& detectJson, string* param, const unsigned char* iveBuffer, long long packetIndex)
+void FlowChannelDetector::HandleDetectCore(std::map<std::string, DetectItem> detectItems, long long timeStamp, const unsigned char* iveBuffer, long long packetIndex)
 {
-	if (!_setParam)
-	{
-		param->assign(_param);
-		_setParam = true;
-	}
-
-	long long timeStamp = DateTime::UtcNowTimeStamp();
-	JsonDeserialization detectJd(detectJson);
-	map<string, DetectItem> detectItems;
-	GetDetecItems(&detectItems, detectJd, "Vehicles");
-	GetDetecItems(&detectItems, detectJd, "Bikes");
-	GetDetecItems(&detectItems, detectJd, "Pedestrains");
-
 	string lanesJson;
 	unique_lock<mutex> lck(_laneMutex);
 	for (unsigned int laneIndex = 0; laneIndex < _lanes.size(); ++laneIndex)
 	{
-		IOItem item = _lanes[laneIndex]->Detect(&detectItems, timeStamp);
+		IOResult item = _lanes[laneIndex]->Detect(&detectItems, timeStamp);
 		if (item.Changed)
 		{
 			string laneJson;
@@ -216,14 +131,9 @@ vector<RecognItem> ChannelDetector::HandleDetect(const string& detectJson, strin
 		}
 	}
 	DrawDetect(detectItems, iveBuffer, packetIndex);
-	vector<RecognItem> items;
-	GetRecognItems(&items, detectJd, "Vehicles");
-	GetRecognItems(&items, detectJd, "Bikes");
-	GetRecognItems(&items, detectJd, "Pedestrains");
-	return items;
 }
 
-void ChannelDetector::HandleRecognize(const RecognItem& recognItem, const unsigned char* iveBuffer, const string& recognJson)
+void FlowChannelDetector::HandleRecognize(const RecognItem& recognItem, const unsigned char* iveBuffer, const string& recognJson)
 {
 	long long timeStamp = DateTime::UtcNowTimeStamp();
 
@@ -358,14 +268,15 @@ void ChannelDetector::HandleRecognize(const RecognItem& recognItem, const unsign
 	}
 }
 
-void ChannelDetector::DrawDetect(const map<string, DetectItem>& detectItems, const unsigned char* iveBuffer, long long packetIndex)
+void FlowChannelDetector::DrawDetect(const map<string, DetectItem>& detectItems, const unsigned char* iveBuffer, long long packetIndex)
 {
 	if (!_debug)
 	{
 		return;
 	}
 	IveToBgr(iveBuffer,_width,_height,_debugBgrBuffer);
-	cv::Mat image(_height, _width, CV_8UC3,_bgrBuffer);
+	//_bgrHandler.HandleFrame(_debugBgrBuffer, _width, _height, packetIndex);
+	cv::Mat image(_height, _width, CV_8UC3, _debugBgrBuffer);
 
 	vector<vector<cv::Point>> lanesPoints;
 	unique_lock<mutex> lck(_laneMutex);

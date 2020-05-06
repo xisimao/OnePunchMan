@@ -1,71 +1,81 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Traffic">
-      <UniqueIdentifier>{6f2d6901-9f1a-40e4-a1cd-1f65cf0bfbb4}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Video">
       <UniqueIdentifier>{b3a923ed-eada-4a0a-b328-41057c054f38}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Event">
+      <UniqueIdentifier>{b78f9762-1585-4b36-a879-2482ad94d8cf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Flow">
+      <UniqueIdentifier>{6f2d6901-9f1a-40e4-a1cd-1f65cf0bfbb4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Traffic\DataChannel.cpp">
-      <Filter>Traffic</Filter>
-    </ClCompile>
     <ClCompile Include="TerribleTornado.cpp" />
-    <ClCompile Include="Video\SeemmoSDK.cpp">
-      <Filter>Video</Filter>
-    </ClCompile>
-    <ClCompile Include="Video\RecognChannel.cpp">
+    <ClCompile Include="Video\DecodeChannel.cpp">
       <Filter>Video</Filter>
     </ClCompile>
     <ClCompile Include="Video\DetectChannel.cpp">
       <Filter>Video</Filter>
     </ClCompile>
-    <ClCompile Include="Traffic\FlowChannel.cpp">
-      <Filter>Traffic</Filter>
-    </ClCompile>
-    <ClCompile Include="Video\DecodeChannel.cpp">
+    <ClCompile Include="Video\RecognChannel.cpp">
       <Filter>Video</Filter>
     </ClCompile>
-    <ClCompile Include="Traffic\ChannelDetector.cpp">
-      <Filter>Traffic</Filter>
+    <ClCompile Include="Video\SeemmoSDK.cpp">
+      <Filter>Video</Filter>
     </ClCompile>
-    <ClCompile Include="Traffic\LaneDetector.cpp">
-      <Filter>Traffic</Filter>
+    <ClCompile Include="Flow\LaneDetector.cpp">
+      <Filter>Flow</Filter>
+    </ClCompile>
+    <ClCompile Include="Flow\FlowData.cpp">
+      <Filter>Flow</Filter>
+    </ClCompile>
+    <ClCompile Include="Flow\FlowStartup.cpp">
+      <Filter>Flow</Filter>
+    </ClCompile>
+    <ClCompile Include="Flow\FlowChannelDetector.cpp">
+      <Filter>Flow</Filter>
+    </ClCompile>
+    <ClCompile Include="Video\ChannelDetector.cpp">
+      <Filter>Video</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Traffic\DataChannel.h">
-      <Filter>Traffic</Filter>
-    </ClInclude>
-    <ClInclude Include="Video\SeemmoSDK.h">
-      <Filter>Video</Filter>
-    </ClInclude>
-    <ClInclude Include="Video\RecognChannel.h">
+    <ClInclude Include="Video\DecodeChannel.h">
       <Filter>Video</Filter>
     </ClInclude>
     <ClInclude Include="Video\DetectChannel.h">
       <Filter>Video</Filter>
     </ClInclude>
-    <ClInclude Include="Traffic\FlowDevice.h">
-      <Filter>Traffic</Filter>
-    </ClInclude>
-    <ClInclude Include="Traffic\FlowChannel.h">
-      <Filter>Traffic</Filter>
-    </ClInclude>
-    <ClInclude Include="Video\DecodeChannel.h">
+    <ClInclude Include="Video\RecognChannel.h">
       <Filter>Video</Filter>
     </ClInclude>
-    <ClInclude Include="Traffic\ChannelDetector.h">
-      <Filter>Traffic</Filter>
+    <ClInclude Include="Video\SeemmoSDK.h">
+      <Filter>Video</Filter>
     </ClInclude>
-    <ClInclude Include="Traffic\LaneDetector.h">
-      <Filter>Traffic</Filter>
+    <ClInclude Include="Flow\LaneDetector.h">
+      <Filter>Flow</Filter>
+    </ClInclude>
+    <ClInclude Include="Flow\FlowData.h">
+      <Filter>Flow</Filter>
+    </ClInclude>
+    <ClInclude Include="Video\TrafficData.h">
+      <Filter>Video</Filter>
+    </ClInclude>
+    <ClInclude Include="Flow\FlowStartup.h">
+      <Filter>Flow</Filter>
+    </ClInclude>
+    <ClInclude Include="Flow\FlowChannelDetector.h">
+      <Filter>Flow</Filter>
+    </ClInclude>
+    <ClInclude Include="Video\ChannelDetector.h">
+      <Filter>Video</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="traffic.db" />
     <None Include="appsettings.json" />
+    <None Include="flow.db" />
+    <None Include="event.db" />
   </ItemGroup>
 </Project>

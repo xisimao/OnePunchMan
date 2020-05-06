@@ -153,6 +153,10 @@ namespace OnePunchMan
 		AVDictionary* _options;
 		//当前视频状态
 		ChannelStatus _channelStatus;
+		//视频源宽度
+		int _sourceWidth;
+		//视频源高度
+		int _sourceHeight;
 
 		//debug
 		//解码相关

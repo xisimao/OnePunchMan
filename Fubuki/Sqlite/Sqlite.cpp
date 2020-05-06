@@ -3,10 +3,10 @@
 using namespace std;
 using namespace OnePunchMan;
 
-SqliteReader::SqliteReader()
+SqliteReader::SqliteReader(const string& filePath)
 	:_stmt(NULL)
 {
-	if (sqlite3_open_v2("traffic.db", &_db, SQLITE_OPEN_READONLY | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL) != 0)
+	if (sqlite3_open_v2(filePath.c_str(), &_db, SQLITE_OPEN_READONLY | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL) != 0)
 	{
 		LogError();
 	}
@@ -101,9 +101,9 @@ void SqliteReader::EndQuery()
 	}
 }
 
-SqliteWriter::SqliteWriter()
+SqliteWriter::SqliteWriter(const string& filePath)
 {
-	if (sqlite3_open_v2("traffic.db", &_db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL) != 0)
+	if (sqlite3_open_v2(filePath.c_str(), &_db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL) != 0)
 	{
 		LogError();
 	}

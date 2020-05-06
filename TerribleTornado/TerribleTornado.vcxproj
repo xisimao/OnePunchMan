@@ -89,7 +89,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_WINSOCK_DEPRECATED_NO_WARNINGS;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>../Fubuki/include/jpeg-turbo;../Fubuki/include/opencv;../Fubuki/include/ffmpeg;../Fubuki/include/sqlite;../Fubuki/include/mqtt;../Fubuki/Mqtt;../Fubuki/Sqlite;../Fubuki/FFmpeg;../Fubuki/OpenCV;./Video;./Traffic;./Sqlite;./Mqtt;../Saitama/Text;../Saitama/Net;../Saitama/Logger;../Saitama/Core;../Saitama/Convert;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../Fubuki/include/jpeg-turbo;../Fubuki/include/opencv;../Fubuki/include/ffmpeg;../Fubuki/include/sqlite;../Fubuki/include/mqtt;../Fubuki/Mqtt;../Fubuki/Sqlite;../Fubuki/FFmpeg;../Fubuki/OpenCV;./Video;./Event;./Flow;./Sqlite;./Mqtt;../Saitama/Text;../Saitama/Net;../Saitama/Logger;../Saitama/Core;../Saitama/Convert;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4819</DisableSpecificWarnings>
     </ClCompile>
     <Link>
@@ -141,7 +141,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>../Fubuki/include/jpeg-turbo;../Fubuki/include/opencv;../Fubuki/include/ffmpeg;../Fubuki/include/sqlite;../Fubuki/include/mqtt;../Fubuki/Mqtt;../Fubuki/Sqlite;../Fubuki/FFmpeg;../Fubuki/OpenCV;./Video;./Traffic;./Sqlite;./Mqtt;../Saitama/Text;../Saitama/Net;../Saitama/Logger;../Saitama/Core;../Saitama/Convert;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../Fubuki/include/jpeg-turbo;../Fubuki/include/opencv;../Fubuki/include/ffmpeg;../Fubuki/include/sqlite;../Fubuki/include/mqtt;../Fubuki/Mqtt;../Fubuki/Sqlite;../Fubuki/FFmpeg;../Fubuki/OpenCV;./Video;./Event;./Flow;./Sqlite;./Mqtt;../Saitama/Text;../Saitama/Net;../Saitama/Logger;../Saitama/Core;../Saitama/Convert;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -154,30 +154,33 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Traffic\ChannelDetector.cpp" />
+    <ClCompile Include="Video\ChannelDetector.cpp" />
+    <ClCompile Include="Flow\FlowChannelDetector.cpp" />
     <ClCompile Include="Video\DecodeChannel.cpp" />
     <ClCompile Include="TerribleTornado.cpp" />
-    <ClCompile Include="Traffic\DataChannel.cpp" />
-    <ClCompile Include="Traffic\FlowChannel.cpp" />
-    <ClCompile Include="Traffic\LaneDetector.cpp" />
+    <ClCompile Include="Flow\FlowStartup.cpp" />
+    <ClCompile Include="Flow\FlowData.cpp" />
+    <ClCompile Include="Flow\LaneDetector.cpp" />
     <ClCompile Include="Video\DetectChannel.cpp" />
     <ClCompile Include="Video\RecognChannel.cpp" />
     <ClCompile Include="Video\SeemmoSDK.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Traffic\ChannelDetector.h" />
-    <ClInclude Include="Traffic\FlowDevice.h" />
+    <ClInclude Include="Video\ChannelDetector.h" />
+    <ClInclude Include="Flow\FlowChannelDetector.h" />
+    <ClInclude Include="Video\TrafficData.h" />
     <ClInclude Include="Video\DecodeChannel.h" />
-    <ClInclude Include="Traffic\DataChannel.h" />
-    <ClInclude Include="Traffic\FlowChannel.h" />
-    <ClInclude Include="Traffic\LaneDetector.h" />
+    <ClInclude Include="Flow\FlowStartup.h" />
+    <ClInclude Include="Flow\FlowData.h" />
+    <ClInclude Include="Flow\LaneDetector.h" />
     <ClInclude Include="Video\DetectChannel.h" />
     <ClInclude Include="Video\RecognChannel.h" />
     <ClInclude Include="Video\SeemmoSDK.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="appsettings.json" />
-    <None Include="traffic.db" />
+    <None Include="event.db" />
+    <None Include="flow.db" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

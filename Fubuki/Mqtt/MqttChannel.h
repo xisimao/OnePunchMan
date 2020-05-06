@@ -88,6 +88,12 @@ namespace OnePunchMan
         Observable<MqttReceivedEventArgs> MqttReceived;
 
         /**
+         * @brief: 获取mqtt是否连接成功
+         * @return: mqtt是否连接成功
+         */
+        bool Connected();
+
+        /**
          * @brief: mqtt发送消息
          * @param: topic 主题
          * @param: message 发送的消息
@@ -97,7 +103,15 @@ namespace OnePunchMan
          */
         bool Send(const std::string& topic,const std::string& message, int qos = 0, bool lock =true);
 
-
+        /**
+         * @brief: mqtt发送消息
+         * @param: topic 主题
+         * @param: message 发送消息的字节流
+         * @param: message 发送消息的字节流长度
+         * @param: qos 服务质量
+         * @param: lock 是否加同步锁
+         * @return: 返回true表示发送成功
+         */
         bool Send(const std::string& topic, const unsigned char* message,unsigned int size,int qos =0, bool lock = true);
 
     protected:
@@ -126,7 +140,7 @@ namespace OnePunchMan
         std::vector<std::string> _topics;
 
         //连接状态
-        int _status = -1;
+        bool _connected;
     };
 }
 

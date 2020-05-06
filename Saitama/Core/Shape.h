@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <math.h>
 #include "StringEx.h"
+#include "JsonFormatter.h"
 
 namespace OnePunchMan
 {
@@ -105,7 +106,6 @@ namespace OnePunchMan
 			return Point1.Empty() && Point2.Empty();
 		}
 
-	
 		/**
 		* @brief: 计算和另外一条线的相交点
 		* @param: line 另外一条线
@@ -141,6 +141,33 @@ namespace OnePunchMan
 		Point Middle()
 		{
 			return Point((Point1.X + Point2.X) / 2, (Point1.Y + Point2.Y) / 2);
+		}
+
+		/**
+		* @brief: json转线段
+		* @param: json 线段json数据[[1,1],[2,2]]
+		* @return: 转换成功返回线段，否则返回空线段
+		*/
+		static Line FromJson(const std::string& json)
+		{
+			std::vector<Point> points;
+			std::vector<std::string> pointJsons = JsonDeserialization::ConvertToItems(json);
+			for (unsigned int j = 0; j < pointJsons.size(); ++j)
+			{
+				std::vector<int> coordinates = JsonDeserialization::ConvertToArray<int>(pointJsons[j]);
+				if (coordinates.size() == 2)
+				{
+					points.push_back(Point(coordinates[0], coordinates[1]));
+				}
+			}
+			if (points.size() == 2)
+			{
+				return Line(points[0],points[1]);
+			}
+			else
+			{
+				return Line();
+			}
 		}
 
 	};
@@ -268,6 +295,15 @@ namespace OnePunchMan
 		}
 
 		/**
+		* @brief: 是否为空值
+		* @return: 返回ture表示空值
+		*/
+		bool Empty()
+		{
+			return _points.empty();
+		}
+
+		/**
 		* @brief: 测试点是否包含在多边形
 		* @param: point 点
 		* @return: 点在多边形内返回true，否则返回false
@@ -325,6 +361,42 @@ namespace OnePunchMan
 				json[json.size() - 1] = ']';
 			}
 			return json;
+		}
+
+		/**
+		* @brief: json转多边形
+		* @param: json 多边形json数据[[1,1],[2,2],[3,3],[4,4],[5,5]]
+		* @return: 转换成功返回多边形，否则返回空
+		*/
+		static Polygon FromJson(const std::string& json)
+		{
+			std::vector<Point> points;
+			std::vector<std::string> pointJsons = JsonDeserialization::ConvertToItems(json);
+			for (unsigned int j = 0; j < pointJsons.size(); ++j)
+			{
+				std::vector<int> coordinates = JsonDeserialization::ConvertToArray<int>(pointJsons[j]);
+				if (coordinates.size() == 2)
+				{
+					points.push_back(Point(coordinates[0], coordinates[1]));
+				}
+			}
+			return Polygon(points);
+		}
+
+		/**
+		* @brief: json转多边形集合
+		* @param: json 多边形json数据[[[1,1],[2,2],[3,3],[4,4],[5,5]],[[1,1],[2,2],[3,3],[4,4],[5,5]]]
+		* @return: 转换成功返回多边形集合，否则返回空集合
+		*/
+		static std::vector<Polygon> FromJsonArray(const std::string& json)
+		{
+			std::vector<Polygon> polygons;
+			std::vector<std::string> polygonJsons = JsonDeserialization::ConvertToItems(json);
+			for (unsigned int i = 0; i < polygonJsons.size(); ++i)
+			{
+				polygons.push_back(FromJson(polygonJsons[i]));
+			}
+			return polygons;
 		}
 
 	private:

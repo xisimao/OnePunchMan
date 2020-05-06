@@ -64,10 +64,10 @@
     <ClCompile Include="..\Saitama\Net\SocketMaid.cpp" />
     <ClCompile Include="..\Saitama\Text\Path.cpp" />
     <ClCompile Include="..\Saitama\Text\StringEx.cpp" />
-    <ClCompile Include="..\TerribleTornado\Traffic\ChannelDetector.cpp" />
-    <ClCompile Include="..\TerribleTornado\Traffic\DataChannel.cpp" />
-    <ClCompile Include="..\TerribleTornado\Traffic\FlowChannel.cpp" />
-    <ClCompile Include="..\TerribleTornado\Traffic\LaneDetector.cpp" />
+    <ClCompile Include="..\TerribleTornado\Flow\ChannelDetector.cpp" />
+    <ClCompile Include="..\TerribleTornado\Flow\FlowData.cpp" />
+    <ClCompile Include="..\TerribleTornado\Flow\FlowStartup.cpp" />
+    <ClCompile Include="..\TerribleTornado\Flow\LaneDetector.cpp" />
     <ClCompile Include="..\TerribleTornado\Video\DecodeChannel.cpp" />
     <ClCompile Include="..\TerribleTornado\Video\DetectChannel.cpp" />
     <ClCompile Include="..\TerribleTornado\Video\RecognChannel.cpp" />
@@ -108,15 +108,15 @@
     <ClInclude Include="..\Saitama\Net\SocketMaid.h" />
     <ClInclude Include="..\Saitama\Text\Path.h" />
     <ClInclude Include="..\Saitama\Text\StringEx.h" />
-    <ClInclude Include="..\TerribleTornado\Traffic\ChannelDetector.h" />
-    <ClInclude Include="..\TerribleTornado\Traffic\DataChannel.h" />
-    <ClInclude Include="..\TerribleTornado\Traffic\FlowChannel.h" />
-    <ClInclude Include="..\TerribleTornado\Traffic\FlowDevice.h" />
-    <ClInclude Include="..\TerribleTornado\Traffic\LaneDetector.h" />
+    <ClInclude Include="..\TerribleTornado\Flow\ChannelDetector.h" />
+    <ClInclude Include="..\TerribleTornado\Flow\FlowData.h" />
+    <ClInclude Include="..\TerribleTornado\Flow\FlowStartup.h" />
+    <ClInclude Include="..\TerribleTornado\Flow\LaneDetector.h" />
     <ClInclude Include="..\TerribleTornado\Video\DecodeChannel.h" />
     <ClInclude Include="..\TerribleTornado\Video\DetectChannel.h" />
     <ClInclude Include="..\TerribleTornado\Video\RecognChannel.h" />
     <ClInclude Include="..\TerribleTornado\Video\SeemmoSDK.h" />
+    <ClInclude Include="..\TerribleTornado\Video\TrafficData.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{b90a649e-d7e5-44f5-a211-2b92dbfa4440}</ProjectGuid>
@@ -171,12 +171,12 @@
       <LibraryDependencies>opencv_gpu;opencv_highgui;opencv_imgproc;opencv_legacy;opencv_ml;opencv_nonfree;opencv_objdetect;opencv_ocl;opencv_photo;opencv_stitching;opencv_superres;opencv_ts;opencv_video;opencv_videostab;dsp;isp;ive;hdmi;mpi;nnie;sns_imx277_slvs;sns_imx290;sns_imx334;sns_imx334_slave;sns_imx477;dnvqe;upvqe;VoiceEngine;securec;_hiae;_hiawb;_hidehaze;_hidrc;_hildci;dl;avcodec;avdevice;avfilter;avformat;avutil;swresample;swscale;postproc;mosquitto;sqlite3;pthread;%(LibraryDependencies)</LibraryDependencies>
     </Link>
     <ClCompile>
-      <AdditionalIncludeDirectories>../TerribleTornado/Video;../TerribleTornado/Traffic;../TerribleTornado/Hisi;../Fubuki/Mqtt;../Fubuki/Sqlite;../Fubuki/FFmpeg;../Fubuki/OpenCV;../Saitama/Text;../Saitama/Net;../Saitama/Logger;../Saitama/Core;../Saitama/Convert;./Genos;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>/usr/local/include;../TerribleTornado/Video;../TerribleTornado/Flow;../Fubuki/Mqtt;../Fubuki/Sqlite;../Fubuki/FFmpeg;../Saitama/Text;../Saitama/Net;../Saitama/Logger;../Saitama/Core;../Saitama/Convert;./Genos;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>/usr/local/include;../TerribleTornado/Video;../TerribleTornado/Traffic;../Fubuki/Mqtt;../Fubuki/Sqlite;../Fubuki/FFmpeg;../Saitama/Text;../Saitama/Net;../Saitama/Logger;../Saitama/Core;../Saitama/Convert;./Genos;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>/usr/local/include;../TerribleTornado/Video;../TerribleTornado/Flow;../Fubuki/Mqtt;../Fubuki/Sqlite;../Fubuki/FFmpeg;../Saitama/Text;../Saitama/Net;../Saitama/Logger;../Saitama/Core;../Saitama/Convert;./Genos;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link />
     <Link>

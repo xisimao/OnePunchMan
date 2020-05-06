@@ -1,69 +1,17 @@
-#include "DataChannel.h"
+#include "FlowStartup.h"
 
 using namespace std;
 using namespace OnePunchMan;
 
-const string DataChannel::FlowTopic("Flow");
+const string FlowStartup::FlowTopic("Flow");
 
-DataChannel::DataChannel()
+FlowStartup::FlowStartup()
     :ThreadObject("data"), _socketMaid(NULL), _mqtt(NULL)
 {
-    DecodeChannel::InitFFmpeg();
-    DecodeChannel::UninitHisi(FlowChannelData::ChannelCount);
-    if (!DecodeChannel::InitHisi(FlowChannelData::ChannelCount))
-    {
-        _inited = false;
-        return;
-    }
-    if (!SeemmoSDK::Init())
-    {
-        _inited = false;
-        return;
-    }
-
-    _socketMaid = new SocketMaid(2);
-    _handler.HttpReceived.Subscribe(this);
-    if (_socketMaid->AddListenEndPoint(EndPoint(7772), &_handler) == -1)
-    {
-        _inited = false;
-        return;
-    }
-    _inited = true;
-    _mqtt = new MqttChannel("127.0.0.1", 1883);
-    _mqtt->Start();
-
-    for (int i = 0; i < FlowChannelData::ChannelCount; ++i)
-    {
-        _decodes.push_back(NULL);
-        ChannelDetector* detector = new ChannelDetector(FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, _mqtt);
-        _detectors.push_back(detector);
-    }
-
-    for (int i = 0; i < FlowChannelData::ChannelCount; ++i)
-    {
-        if (i % RecognChannel::ItemCount == 0)
-        {
-            RecognChannel* recogn = new RecognChannel(i / RecognChannel::ItemCount, FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, _detectors);
-            _recogns.push_back(recogn);
-            recogn->Start();
-        }
-        DetectChannel* detect = new DetectChannel(i + 1, FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, _recogns[i / RecognChannel::ItemCount], _detectors[i]);
-        _detects.push_back(detect);
-        detect->Start();
-    }
-
-    FlowChannelData data;
-    vector<FlowChannel> channels = data.GetList();
-    for (unsigned int i = 0; i < channels.size(); ++i)
-    {
-        SetChannel(channels[i]);
-    }
-    _socketMaid->Start();
-    _startTime = DateTime::Now();
-    _lastMinute = _startTime.Minute();
+    
 }
 
-DataChannel::~DataChannel()
+FlowStartup::~FlowStartup()
 {
     if (_socketMaid != NULL)
     {
@@ -102,7 +50,60 @@ DataChannel::~DataChannel()
     DecodeChannel::UninitFFmpeg();
 }
 
-void DataChannel::Update(HttpReceivedEventArgs* e)
+bool FlowStartup::Init()
+{
+    DecodeChannel::InitFFmpeg();
+    DecodeChannel::UninitHisi(FlowChannelData::ChannelCount);
+    if (!DecodeChannel::InitHisi(FlowChannelData::ChannelCount))
+    {
+        return false;
+    }
+
+    _socketMaid = new SocketMaid(2);
+    _handler.HttpReceived.Subscribe(this);
+    if (_socketMaid->AddListenEndPoint(EndPoint(7772), &_handler) == -1)
+    {
+        return false;
+    }
+    _sdkInited = SeemmoSDK::Init();
+    _mqtt = new MqttChannel("127.0.0.1", 1883);
+    _mqtt->Start();
+
+    vector<ChannelDetector*> detectors;
+    for (int i = 0; i < FlowChannelData::ChannelCount; ++i)
+    {
+        _decodes.push_back(NULL);
+        FlowChannelDetector* detector = new FlowChannelDetector(FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, _mqtt);
+        _detectors.push_back(detector);
+        detectors.push_back(detector);
+    }
+
+    for (int i = 0; i < FlowChannelData::ChannelCount; ++i)
+    {
+        if (i % RecognChannel::ItemCount == 0)
+        {
+            RecognChannel* recogn = new RecognChannel(i / RecognChannel::ItemCount, FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, detectors);
+            _recogns.push_back(recogn);
+            recogn->Start();
+        }
+        DetectChannel* detect = new DetectChannel(i + 1, FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, _recogns[i / RecognChannel::ItemCount], _detectors[i]);
+        _detects.push_back(detect);
+        detect->Start();
+    }
+
+    FlowChannelData data;
+    vector<FlowChannel> channels = data.GetList();
+    for (unsigned int i = 0; i < channels.size(); ++i)
+    {
+        SetChannel(channels[i]);
+    }
+    _socketMaid->Start();
+    _startTime = DateTime::Now();
+    _lastMinute = _startTime.Minute();
+    return true;
+}
+
+void FlowStartup::Update(HttpReceivedEventArgs* e)
 {
     if (UrlStartWith(e->Url, "/api/device"))
     {
@@ -138,13 +139,13 @@ void DataChannel::Update(HttpReceivedEventArgs* e)
     }
 }
 
-void DataChannel::GetDevice(HttpReceivedEventArgs* e)
+void FlowStartup::GetDevice(HttpReceivedEventArgs* e)
 {
-    FlowDevice device;
-    device.LicenceStatus = SeemmoSDK::Inited;
-    device.SoftwareVersion = "1.0.0";
-    device.SN = StringEx::Trim(Command::Execute("cat /mtd/basesys/data/devsn"));
+    string softwareVersion = "1.0.0";
+    string sn = StringEx::Trim(Command::Execute("cat /mtd/basesys/data/devsn"));
     string df = Command::Execute("df");
+    string diskUsed;
+    string diskTotal;
     vector<string> rows = StringEx::Split(df, "\n", true);
     for (unsigned int i = 0; i < rows.size(); ++i)
     {
@@ -153,8 +154,8 @@ void DataChannel::GetDevice(HttpReceivedEventArgs* e)
         {
             long long used = StringEx::Convert<long long>(columns[2]);
             long long total = used + StringEx::Convert<long long>(columns[3]);
-            device.DiskUsed = StringEx::ToString(StringEx::Rounding(static_cast<double>(used) / 1024.0 / 1024.0, 2));
-            device.DiskTotal = StringEx::ToString(StringEx::Rounding(static_cast<double>(total) / 1024.0 / 1024.0, 2));
+            diskUsed = StringEx::ToString(StringEx::Rounding(static_cast<double>(used) / 1024.0 / 1024.0, 2));
+            diskTotal = StringEx::ToString(StringEx::Rounding(static_cast<double>(total) / 1024.0 / 1024.0, 2));
             break;
         }
     }
@@ -172,20 +173,21 @@ void DataChannel::GetDevice(HttpReceivedEventArgs* e)
     JsonSerialization::Serialize(&deviceJson, "deviceTime", now.UtcTimeStamp());
     JsonSerialization::Serialize(&deviceJson, "deviceTime_Desc", now.ToString());
     JsonSerialization::Serialize(&deviceJson, "startTime", _startTime.ToString());
-    JsonSerialization::Serialize(&deviceJson, "diskUsed", device.DiskUsed);
-    JsonSerialization::Serialize(&deviceJson, "diskTotal", device.DiskTotal);
-    JsonSerialization::Serialize(&deviceJson, "licenceStatus", device.LicenceStatus);
-    JsonSerialization::Serialize(&deviceJson, "sn", device.SN);
-    JsonSerialization::Serialize(&deviceJson, "softwareVersion", device.SoftwareVersion);
+    JsonSerialization::Serialize(&deviceJson, "diskUsed", diskUsed);
+    JsonSerialization::Serialize(&deviceJson, "diskTotal", diskTotal);
+    JsonSerialization::Serialize(&deviceJson, "licenceStatus", _sdkInited);
+    JsonSerialization::Serialize(&deviceJson, "sn", sn);
+    JsonSerialization::Serialize(&deviceJson, "softwareVersion", softwareVersion);
     JsonSerialization::Serialize(&deviceJson, "destinationWidth", FFmpegChannel::DestinationWidth);
     JsonSerialization::Serialize(&deviceJson, "destinationHeight", FFmpegChannel::DestinationHeight);
+    JsonSerialization::Serialize(&deviceJson, "mqttConnected", _mqtt->Connected());
     JsonSerialization::SerializeJson(&deviceJson, "channels", channelsJson);
 
     e->Code = HttpCode::OK;
     e->ResponseJson = deviceJson;
 }
 
-void DataChannel::SetDevice(HttpReceivedEventArgs* e)
+void FlowStartup::SetDevice(HttpReceivedEventArgs* e)
 {
     JsonDeserialization jd(e->RequestJson);
     int channelIndex = 0;
@@ -205,7 +207,7 @@ void DataChannel::SetDevice(HttpReceivedEventArgs* e)
         int laneIndex = 0;
         while (true)
         {
-            Lane lane;
+            FlowLane lane;
             lane.LaneId = jd.Get<string>(StringEx::Combine("channels:", channelIndex, ":lanes:", laneIndex, ":laneId"));
             if (lane.LaneId.empty())
             {
@@ -263,7 +265,7 @@ void DataChannel::SetDevice(HttpReceivedEventArgs* e)
     }
 }
 
-void DataChannel::GetChannel(HttpReceivedEventArgs* e)
+void FlowStartup::GetChannel(HttpReceivedEventArgs* e)
 {
     string id = GetId(e->Url, "/api/channels");
     int channelIndex = StringEx::Convert<int>(id);
@@ -280,7 +282,7 @@ void DataChannel::GetChannel(HttpReceivedEventArgs* e)
     }
 }
 
-void DataChannel::SetChannel(HttpReceivedEventArgs* e)
+void FlowStartup::SetChannel(HttpReceivedEventArgs* e)
 {
     JsonDeserialization jd(e->RequestJson);
 
@@ -292,7 +294,7 @@ void DataChannel::SetChannel(HttpReceivedEventArgs* e)
     int laneIndex = 0;
     while (true)
     {
-        Lane lane;
+        FlowLane lane;
         lane.LaneId = jd.Get<string>(StringEx::Combine("lanes:", laneIndex, ":laneId"));
         if (lane.LaneId.empty())
         {
@@ -307,7 +309,7 @@ void DataChannel::SetChannel(HttpReceivedEventArgs* e)
         lane.Length = jd.Get<int>(StringEx::Combine("lanes:", laneIndex, ":length"));
         lane.IOIp = jd.Get<string>(StringEx::Combine("lanes:", laneIndex, ":ioIp"));
         lane.IOPort = jd.Get<int>(StringEx::Combine("lanes:", laneIndex, ":ioPort"));
-        lane.IOIndex = jd.Get<int>(StringEx::Combine("clanes:", laneIndex, ":ioIndex"));
+        lane.IOIndex = jd.Get<int>(StringEx::Combine("lanes:", laneIndex, ":ioIndex"));
         lane.DetectLine = jd.Get<string>(StringEx::Combine("lanes:", laneIndex, ":detectLine"));
         lane.StopLine = jd.Get<string>(StringEx::Combine("lanes:", laneIndex, ":stopLine"));
         lane.LaneLine1 = jd.Get<string>(StringEx::Combine("lanes:", laneIndex, ":laneLine1"));
@@ -336,7 +338,7 @@ void DataChannel::SetChannel(HttpReceivedEventArgs* e)
     }
 }
 
-void DataChannel::DeleteChannel(HttpReceivedEventArgs* e)
+void FlowStartup::DeleteChannel(HttpReceivedEventArgs* e)
 {
     string id = GetId(e->Url, "/api/channels");
     int channelIndex = StringEx::Convert<int>(id);
@@ -353,7 +355,7 @@ void DataChannel::DeleteChannel(HttpReceivedEventArgs* e)
 
 }
 
-void DataChannel::SetChannel(const FlowChannel& channel)
+void FlowStartup::SetChannel(const FlowChannel& channel)
 {
     lock_guard<mutex> lck(_decodeMutex);
     if (ChannelIndexEnable(channel.ChannelIndex))
@@ -387,7 +389,7 @@ void DataChannel::SetChannel(const FlowChannel& channel)
     }
 }
 
-void DataChannel::DeleteChannel(int channelIndex)
+void FlowStartup::DeleteChannel(int channelIndex)
 {
     lock_guard<mutex> lck(_decodeMutex);
     if (ChannelIndexEnable(channelIndex))
@@ -402,7 +404,7 @@ void DataChannel::DeleteChannel(int channelIndex)
     }
 }
 
-string DataChannel::CheckChannel(const FlowChannel& channel)
+string FlowStartup::CheckChannel(const FlowChannel& channel)
 {
     if (ChannelIndexEnable(channel.ChannelIndex))
     {
@@ -414,7 +416,7 @@ string DataChannel::CheckChannel(const FlowChannel& channel)
     }
 }
 
-string DataChannel::GetChannelJson(HttpReceivedEventArgs* e, const FlowChannel& channel)
+string FlowStartup::GetChannelJson(HttpReceivedEventArgs* e, const FlowChannel& channel)
 {
     string channelJson;
     JsonSerialization::Serialize(&channelJson, "channelIndex", channel.ChannelIndex);
@@ -432,7 +434,7 @@ string DataChannel::GetChannelJson(HttpReceivedEventArgs* e, const FlowChannel& 
         JsonSerialization::Serialize(&channelJson, "lanesInited", _detectors[channel.ChannelIndex - 1]->LanesInited());
     }
     string lanesJson;
-    for (vector<Lane>::const_iterator lit = channel.Lanes.begin(); lit != channel.Lanes.end(); ++lit)
+    for (vector<FlowLane>::const_iterator lit = channel.Lanes.begin(); lit != channel.Lanes.end(); ++lit)
     {
         string laneJson;
         JsonSerialization::Serialize(&laneJson, "channelIndex", lit->ChannelIndex);
@@ -459,12 +461,12 @@ string DataChannel::GetChannelJson(HttpReceivedEventArgs* e, const FlowChannel& 
 
 }
 
-bool DataChannel::ChannelIndexEnable(int channelIndex)
+bool FlowStartup::ChannelIndexEnable(int channelIndex)
 {
     return channelIndex >= 1 && channelIndex <= FlowChannelData::ChannelCount;
 }
 
-bool DataChannel::UrlStartWith(const string& url, const string& key)
+bool FlowStartup::UrlStartWith(const string& url, const string& key)
 {
     if (url.size() == key.size())
     {
@@ -481,23 +483,18 @@ bool DataChannel::UrlStartWith(const string& url, const string& key)
     }
 }
 
-string DataChannel::GetId(const std::string& url, const std::string& key)
+string FlowStartup::GetId(const std::string& url, const std::string& key)
 {
     return url.size() >= key.size() ? url.substr(key.size() + 1, url.size() - key.size() - 1) : string();
 }
 
-string DataChannel::GetErrorJson(const string& field, const string& message)
+string FlowStartup::GetErrorJson(const string& field, const string& message)
 {
     return StringEx::Combine("{\"", field, "\":[\"", message, "\"]}");
 }
 
-void DataChannel::StartCore()
+void FlowStartup::StartCore()
 {
-    if (!_inited)
-    {
-        LogPool::Information(LogEvent::Flow, "init flow system failed exit");
-        return;
-    }
     while (!_cancelled)
     {
         this_thread::sleep_for(chrono::seconds(1));

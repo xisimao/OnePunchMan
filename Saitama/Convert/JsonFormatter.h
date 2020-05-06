@@ -237,15 +237,7 @@ namespace OnePunchMan
 			std::string value;
 			if (_values.find(key) != _values.end())
 			{
-				value = _values.at(key);
-				if (value.size() >= 2)
-				{
-					return ConvertToArray<T>(value.substr(1, value.size() - 2));
-				}
-				else
-				{
-					return std::vector<T>();
-				}
+				return ConvertToArray<T>(_values.at(key));
 			}
 			else
 			{
@@ -262,24 +254,61 @@ namespace OnePunchMan
 		static std::vector<T> ConvertToArray(const std::string& json)
 		{
 			std::vector<T> v;
-			size_t startIndex = 0;
-			while (startIndex < json.size())
+			if (json.size() > 2)
 			{
-				T t;
-				size_t result = FindItem(json, &t, startIndex);
-				if (result == 0)
+				size_t startIndex = 1;
+				while (startIndex < json.size())
 				{
-					break;
+					T t;
+					size_t result = FindItem(json, &t, startIndex);
+					if (result == 0)
+					{
+						break;
+					}
+					else
+					{
+						startIndex += result;
+						v.push_back(t);
+					}
 				}
-				else
+			}
+			
+			return v;
+		}
+
+		/**
+		* @brief: 将json字符串转换为json集合类型
+		* @param: json json字符串
+		* @return: 转换成功返回转换结果否则返回空集合
+		*/
+		static std::vector<std::string> ConvertToItems(const std::string& json)
+		{
+			std::vector<std::string> v;
+			if (json.size() > 2)
+			{
+				size_t startIndex = 1;
+				std::tuple<size_t, std::string> valueTuple;
+				while (startIndex < json.size())
 				{
-					startIndex += result;
-					v.push_back(t);
+					if (json[startIndex] == '{')
+					{
+						valueTuple = CutByTag(json, startIndex, '{', '}');
+					}
+					else if (json[startIndex] == '[')
+					{
+						valueTuple = CutByTag(json, startIndex, '[', ']');
+					}
+					else
+					{
+						break;
+					}
+					startIndex += std::get<0>(valueTuple);
+					v.push_back(std::get<1>(valueTuple));
 				}
 			}
 			return v;
 		}
-
+	
 	private:
 
 		/**
@@ -306,7 +335,7 @@ namespace OnePunchMan
 		* @param: tail 结束标记
 		* @return: 第一个参数表示搜索的长度，第二个参数表示截取结果，成功返回字段的值，如果搜索失败返回空字符串
 		*/
-		std::tuple<size_t, std::string> CutByTag(const std::string& json, size_t offset, char head, char tail);
+		static std::tuple<size_t, std::string> CutByTag(const std::string& json, size_t offset, char head, char tail);
 
 		/**
 		* @brief: 反序列化数组。
@@ -316,7 +345,7 @@ namespace OnePunchMan
 		void DeserializeArray(const std::string& json, const std::string& prefix = "");
 
 		/**
-		* @brief: 从字符串中截取数组或布尔数组中的一项。
+		* @brief: 从字符串中截取数字数组或布尔数组中的一项。
 		* @param: json json字符串
 		* @param: t 字段值的指针
 		* @param: offset 从开头略过的字符数
@@ -349,7 +378,7 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 从字符串中截取字符串数组中的一项。。
+		* @brief: 从字符串中截取字符串数组中的一项。
 		* @param: json json字符串
 		* @param: t 字段值的指针
 		* @param: offset 从开头略过的字符数

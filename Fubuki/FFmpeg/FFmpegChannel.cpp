@@ -10,7 +10,7 @@ FFmpegChannel::FFmpegChannel(const string& inputUrl, const string& outputUrl, bo
 	:ThreadObject("decode"),
 	_inputUrl(inputUrl), _inputFormat(NULL), _inputStream(NULL), _inputVideoIndex(-1)
 	, _outputUrl(outputUrl), _outputFormat(NULL), _outputStream(NULL), _outputCodec(NULL)
-	, _debug(debug), _options(NULL), _channelStatus(ChannelStatus::None)
+	, _debug(debug), _options(NULL), _channelStatus(ChannelStatus::None), _sourceWidth(0), _sourceHeight(0)
 	, _decodeContext(NULL), _yuvFrame(NULL), _bgrFrame(NULL), _bgrBuffer(NULL), _bgrSwsContext(NULL)
 	, _lastPacketIndex(0), _packetSpan(0)
 {
@@ -49,12 +49,12 @@ ChannelStatus FFmpegChannel::Status()
 
 int FFmpegChannel::SourceWidth() const
 {
-	return _inputStream == NULL ? 0 : _inputStream->codecpar->width;
+	return _sourceWidth;
 }
 
 int FFmpegChannel::SourceHeight() const
 {
-	return _inputStream == NULL ? 0 : _inputStream->codecpar->height;
+	return _sourceHeight;
 }
 
 int FFmpegChannel::PacketSpan()
@@ -90,7 +90,8 @@ ChannelStatus FFmpegChannel::Init()
 	}
 
 	_inputStream = _inputFormat->streams[_inputVideoIndex];
-	
+	_sourceWidth = _inputStream->codecpar->width;
+	_sourceHeight = _inputStream->codecpar->height;
 	if (!_outputUrl.empty())
 	{
 		avformat_alloc_output_context2(&_outputFormat, NULL, "flv", _outputUrl.c_str());
@@ -201,7 +202,6 @@ bool FFmpegChannel::InitDecoder()
 
 	//³õÊ¼»¯Ö¡
 	_yuvFrame = av_frame_alloc();
-
 
 	//yuv×ªrgb
 	_bgrFrame = av_frame_alloc();

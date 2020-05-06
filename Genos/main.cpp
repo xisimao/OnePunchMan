@@ -1,4 +1,4 @@
-#include "DataChannel.h"
+#include "FlowStartup.h"
 
 using namespace std;
 using namespace OnePunchMan;
@@ -60,9 +60,16 @@ int main(int argc, char* argv[])
     }
     else
     {
-        DataChannel channel;
-        channel.Start();
-        channel.Join();
+        FlowStartup channel;
+        if (channel.Init())
+        {
+            channel.Start();
+            channel.Join();
+        }
+        else
+        {
+            LogPool::Information("init flow system failed");
+        }
     }
 
     return 0;
