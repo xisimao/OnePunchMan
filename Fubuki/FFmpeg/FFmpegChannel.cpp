@@ -148,8 +148,9 @@ ChannelStatus FFmpegChannel::Init()
 		}
 	}
 
-	if (InitDecoder()) {
-		LogPool::Information(LogEvent::Decode, "init frame channel success", _inputUrl, _outputUrl, _debug);
+	if (InitDecoder()) 
+	{
+		LogPool::Information(LogEvent::Decode, "init frame channel success", _inputUrl, _outputUrl);
 		_channelStatus = ChannelStatus::Normal;
 	}
 	else
@@ -266,7 +267,7 @@ DecodeResult FFmpegChannel::Decode(const AVPacket* packet, int packetIndex)
 					_yuvFrame->linesize, 0, _decodeContext->height,
 					_bgrFrame->data, _bgrFrame->linesize) != 0)
 				{
-					//_bgrHandler.HandleFrame(_bgrFrame->data[0], _decodeContext->width, _decodeContext->height, packetIndex);
+					_bgrHandler.HandleFrame(_bgrFrame->data[0], DestinationWidth, DestinationHeight, packetIndex);
 				}
 			}
 		}

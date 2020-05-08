@@ -3,6 +3,7 @@
 #include <bitset>
 
 #include "Thread.h"
+#include "BGR24Handler.h"
 
 extern "C"
 {
@@ -173,6 +174,8 @@ namespace OnePunchMan
 		int _lastPacketIndex;
 		//两次处理帧的间隔
 		int _packetSpan;
+		//bgr写bmp
+		BGR24Handler _bgrHandler;
 	};
 
 }

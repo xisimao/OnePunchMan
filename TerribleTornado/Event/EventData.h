@@ -8,12 +8,21 @@
 
 namespace OnePunchMan
 {
+	//事件类型
+	enum class EventLaneType
+	{
+		None = 0,
+		Pedestrain = 1,
+		Park = 2,
+		Lane = 3
+	};
+
 	//事件车道
 	class EventLane:public TrafficLane
 	{
 	public:
-		std::string PedestrainRegion;
-		std::string ParkRegions;
+		//车道类型
+		int LaneType;
 	};
 
 	//事件视频通道
@@ -83,9 +92,6 @@ namespace OnePunchMan
 		* @return: 最后一个错误信息
 		*/
 		std::string LastError();
-
-		//通道总数
-		static const int ChannelCount;
 
 	private:
 

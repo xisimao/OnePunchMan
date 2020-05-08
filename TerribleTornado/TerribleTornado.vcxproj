@@ -89,7 +89,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_WINSOCK_DEPRECATED_NO_WARNINGS;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>../Fubuki/include/jpeg-turbo;../Fubuki/include/opencv;../Fubuki/include/ffmpeg;../Fubuki/include/sqlite;../Fubuki/include/mqtt;../Fubuki/Mqtt;../Fubuki/Sqlite;../Fubuki/FFmpeg;../Fubuki/OpenCV;./Video;./Event;./Flow;./Sqlite;./Mqtt;../Saitama/Text;../Saitama/Net;../Saitama/Logger;../Saitama/Core;../Saitama/Convert;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../Fubuki/include/jpeg-turbo;../Fubuki/include/opencv;../Fubuki/include/ffmpeg;../Fubuki/include/sqlite;../Fubuki/include/mqtt;../Fubuki/Mqtt;../Fubuki/Sqlite;../Fubuki/FFmpeg;../Fubuki/OpenCV;./Traffic;./Event;./Flow;../Saitama/Text;../Saitama/Net;../Saitama/Logger;../Saitama/Core;../Saitama/Convert;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4819</DisableSpecificWarnings>
     </ClCompile>
     <Link>
@@ -154,28 +154,34 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Video\ChannelDetector.cpp" />
-    <ClCompile Include="Flow\FlowChannelDetector.cpp" />
-    <ClCompile Include="Video\DecodeChannel.cpp" />
+    <ClCompile Include="Event\EventData.cpp" />
+    <ClCompile Include="Event\EventDetector.cpp" />
+    <ClCompile Include="Event\EventStartup.cpp" />
+    <ClCompile Include="Traffic\TrafficStartup.cpp" />
+    <ClCompile Include="Traffic\TrafficDetector.cpp" />
+    <ClCompile Include="Flow\FlowDetector.cpp" />
+    <ClCompile Include="Traffic\DecodeChannel.cpp" />
     <ClCompile Include="TerribleTornado.cpp" />
     <ClCompile Include="Flow\FlowStartup.cpp" />
     <ClCompile Include="Flow\FlowData.cpp" />
-    <ClCompile Include="Flow\LaneDetector.cpp" />
-    <ClCompile Include="Video\DetectChannel.cpp" />
-    <ClCompile Include="Video\RecognChannel.cpp" />
-    <ClCompile Include="Video\SeemmoSDK.cpp" />
+    <ClCompile Include="Traffic\DetectChannel.cpp" />
+    <ClCompile Include="Traffic\RecognChannel.cpp" />
+    <ClCompile Include="Traffic\SeemmoSDK.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Video\ChannelDetector.h" />
-    <ClInclude Include="Flow\FlowChannelDetector.h" />
-    <ClInclude Include="Video\TrafficData.h" />
-    <ClInclude Include="Video\DecodeChannel.h" />
+    <ClInclude Include="Event\EventData.h" />
+    <ClInclude Include="Event\EventDetector.h" />
+    <ClInclude Include="Event\EventStartup.h" />
+    <ClInclude Include="Traffic\TrafficStartup.h" />
+    <ClInclude Include="Traffic\TrafficDetector.h" />
+    <ClInclude Include="Flow\FlowDetector.h" />
+    <ClInclude Include="Traffic\TrafficData.h" />
+    <ClInclude Include="Traffic\DecodeChannel.h" />
     <ClInclude Include="Flow\FlowStartup.h" />
     <ClInclude Include="Flow\FlowData.h" />
-    <ClInclude Include="Flow\LaneDetector.h" />
-    <ClInclude Include="Video\DetectChannel.h" />
-    <ClInclude Include="Video\RecognChannel.h" />
-    <ClInclude Include="Video\SeemmoSDK.h" />
+    <ClInclude Include="Traffic\DetectChannel.h" />
+    <ClInclude Include="Traffic\RecognChannel.h" />
+    <ClInclude Include="Traffic\SeemmoSDK.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="appsettings.json" />

@@ -1,4 +1,5 @@
 ﻿#include "FlowStartup.h"
+#include "EventStartup.h"
 
 using namespace std;
 using namespace OnePunchMan;
@@ -23,9 +24,9 @@ int main(int argc, char* argv[])
         }
         else if (arg.compare("debug") == 0)
         {
-            DecodeChannel::InitFFmpeg();
-            DecodeChannel::UninitHisi(FlowChannelData::ChannelCount);
-            if (!DecodeChannel::InitHisi(FlowChannelData::ChannelCount))
+            FFmpegChannel::InitFFmpeg();
+            DecodeChannel::UninitHisi(FlowStartup::ChannelCount);
+            if (!DecodeChannel::InitHisi(FlowStartup::ChannelCount))
             {
                 return -1;
             }
@@ -38,11 +39,11 @@ int main(int argc, char* argv[])
             {
                 channelIndex = StringEx::Convert<int>(argv[2]);
             }
-            FlowChannelDetector detector(FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, NULL,true);
+            FlowDetector detector(FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, NULL,true);
             FlowChannelData data;
             FlowChannel channel = data.Get(channelIndex);
             detector.UpdateChannel(channel);
-            vector<ChannelDetector*> detectors;
+            vector<TrafficDetector*> detectors;
             detectors.push_back(&detector);
             RecognChannel recogn(0, FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, detectors);
             DetectChannel detect(1, FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, &recogn, &detector);
@@ -54,13 +55,13 @@ int main(int argc, char* argv[])
             detect.Stop();
             recogn.Stop();
             SeemmoSDK::Uninit();
-            DecodeChannel::UninitHisi(FlowChannelData::ChannelCount);
+            DecodeChannel::UninitHisi(FlowStartup::ChannelCount);
             DecodeChannel::UninitFFmpeg();
         }
     }
     else
     {
-        FlowStartup channel;
+        EventStartup channel;
         if (channel.Init())
         {
             channel.Start();

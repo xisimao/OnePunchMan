@@ -6,185 +6,87 @@ using namespace OnePunchMan;
 const string FlowStartup::FlowTopic("Flow");
 
 FlowStartup::FlowStartup()
-    :ThreadObject("data"), _socketMaid(NULL), _mqtt(NULL)
+    :TrafficStartup(), _lastMinute(DateTime::Time().Minute())
 {
     
 }
 
 FlowStartup::~FlowStartup()
 {
-    if (_socketMaid != NULL)
-    {
-        _socketMaid->Stop();
-    }
-
-    for (unsigned int i = 0; i < _decodes.size(); ++i)
-    {
-        if (_decodes[i] != NULL)
-        {
-            _decodes[i]->Stop();
-            delete _decodes[i];
-        }
-    }
-
-    for (unsigned int i = 0; i < _detects.size(); ++i)
-    {
-        _detects[i]->Stop();
-        delete _detects[i];
-    }
-    for (unsigned int i = 0; i < _recogns.size(); ++i)
-    {
-        _recogns[i]->Stop();
-        delete _recogns[i];
-    }
     for (unsigned int i = 0; i < _detectors.size(); ++i)
     {
         delete _detectors[i];
     }
-    if (_mqtt != NULL)
-    {
-        _mqtt->Stop();
-    }
-    SeemmoSDK::Uninit();
-    DecodeChannel::UninitHisi(FlowChannelData::ChannelCount);
-    DecodeChannel::UninitFFmpeg();
 }
 
-bool FlowStartup::Init()
+vector<TrafficDetector*> FlowStartup::InitDetectors()
 {
-    DecodeChannel::InitFFmpeg();
-    DecodeChannel::UninitHisi(FlowChannelData::ChannelCount);
-    if (!DecodeChannel::InitHisi(FlowChannelData::ChannelCount))
+    vector<TrafficDetector*> detectors;
+    for (int i = 0; i < ChannelCount; ++i)
     {
-        return false;
-    }
-
-    _socketMaid = new SocketMaid(2);
-    _handler.HttpReceived.Subscribe(this);
-    if (_socketMaid->AddListenEndPoint(EndPoint(7772), &_handler) == -1)
-    {
-        return false;
-    }
-    _sdkInited = SeemmoSDK::Init();
-    _mqtt = new MqttChannel("127.0.0.1", 1883);
-    _mqtt->Start();
-
-    vector<ChannelDetector*> detectors;
-    for (int i = 0; i < FlowChannelData::ChannelCount; ++i)
-    {
-        _decodes.push_back(NULL);
-        FlowChannelDetector* detector = new FlowChannelDetector(FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, _mqtt);
+        FlowDetector* detector = new FlowDetector(FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, _mqtt, false);
         _detectors.push_back(detector);
         detectors.push_back(detector);
     }
-
-    for (int i = 0; i < FlowChannelData::ChannelCount; ++i)
-    {
-        if (i % RecognChannel::ItemCount == 0)
-        {
-            RecognChannel* recogn = new RecognChannel(i / RecognChannel::ItemCount, FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, detectors);
-            _recogns.push_back(recogn);
-            recogn->Start();
-        }
-        DetectChannel* detect = new DetectChannel(i + 1, FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, _recogns[i / RecognChannel::ItemCount], _detectors[i]);
-        _detects.push_back(detect);
-        detect->Start();
-    }
-
-    FlowChannelData data;
-    vector<FlowChannel> channels = data.GetList();
-    for (unsigned int i = 0; i < channels.size(); ++i)
-    {
-        SetChannel(channels[i]);
-    }
-    _socketMaid->Start();
-    _startTime = DateTime::Now();
-    _lastMinute = _startTime.Minute();
-    return true;
+    return detectors;
 }
 
-void FlowStartup::Update(HttpReceivedEventArgs* e)
+void FlowStartup::InitChannels()
 {
-    if (UrlStartWith(e->Url, "/api/device"))
+    for (int i = 0; i < ChannelCount; ++i)
     {
-        if (e->Function.compare(HttpFunction::Get) == 0)
+        FlowChannelData data;
+        FlowChannel channel = data.Get(i + 1);
+        if (!channel.ChannelUrl.empty())
         {
-            GetDevice(e);
+            SetDecode(channel.ChannelIndex, channel.ChannelUrl, channel.RtmpUrl("127.0.0.1"));
+            _detectors[i]->UpdateChannel(channel);
         }
-        else if (e->Function.compare(HttpFunction::Post) == 0)
-        {
-            SetDevice(e);
-        }
-    }
-    else if (UrlStartWith(e->Url, "/api/channels"))
-    {
-        if (e->Function.compare(HttpFunction::Get) == 0)
-        {
-            GetChannel(e);
-        }
-        else if (e->Function.compare(HttpFunction::Post) == 0)
-        {
-            SetChannel(e);
-        }
-        else if (e->Function.compare(HttpFunction::Delete) == 0)
-        {
-            DeleteChannel(e);
-        }
-    }
-    else if (UrlStartWith(e->Url, "/api/system"))
-    {
-        Stop();
-        LogPool::Information(LogEvent::Flow, "exit system");
-        e->Code = HttpCode::OK;
     }
 }
 
-void FlowStartup::GetDevice(HttpReceivedEventArgs* e)
+string FlowStartup::GetChannelJson(const string& host,int channelIndex)
 {
-    string softwareVersion = "1.0.0";
-    string sn = StringEx::Trim(Command::Execute("cat /mtd/basesys/data/devsn"));
-    string df = Command::Execute("df");
-    string diskUsed;
-    string diskTotal;
-    vector<string> rows = StringEx::Split(df, "\n", true);
-    for (unsigned int i = 0; i < rows.size(); ++i)
-    {
-        vector<string> columns = StringEx::Split(rows[i], " ", true);
-        if (columns.size() >= 6 && columns[columns.size() - 1].compare("/") == 0)
-        {
-            long long used = StringEx::Convert<long long>(columns[2]);
-            long long total = used + StringEx::Convert<long long>(columns[3]);
-            diskUsed = StringEx::ToString(StringEx::Rounding(static_cast<double>(used) / 1024.0 / 1024.0, 2));
-            diskTotal = StringEx::ToString(StringEx::Rounding(static_cast<double>(total) / 1024.0 / 1024.0, 2));
-            break;
-        }
-    }
+    string channelJson;
     FlowChannelData data;
-    vector<FlowChannel> channels = data.GetList();
-    string channelsJson;
-    for (unsigned int i = 0; i < channels.size(); ++i)
+    FlowChannel channel=data.Get(channelIndex);
+    if (!channel.ChannelUrl.empty())
     {
-        string channelJson = GetChannelJson(e, channels[i]);
-        JsonSerialization::SerializeItem(&channelsJson, channelJson);
+        JsonSerialization::Serialize(&channelJson, "channelIndex", channel.ChannelIndex);
+        JsonSerialization::Serialize(&channelJson, "channelName", channel.ChannelName);
+        JsonSerialization::Serialize(&channelJson, "channelUrl", channel.ChannelUrl);
+        JsonSerialization::Serialize(&channelJson, "rtmpUrl", channel.RtmpUrl(host));
+        JsonSerialization::Serialize(&channelJson, "channelType", channel.ChannelType);
+        if (ChannelIndexEnable(channel.ChannelIndex))
+        {
+            JsonSerialization::Serialize(&channelJson, "lanesInited", _detectors[channel.ChannelIndex - 1]->LanesInited());
+        }
+
+        string lanesJson;
+        for (vector<FlowLane>::const_iterator lit = channel.Lanes.begin(); lit != channel.Lanes.end(); ++lit)
+        {
+            string laneJson;
+            JsonSerialization::Serialize(&laneJson, "channelIndex", lit->ChannelIndex);
+            JsonSerialization::Serialize(&laneJson, "laneId", lit->LaneId);
+            JsonSerialization::Serialize(&laneJson, "laneName", lit->LaneName);
+            JsonSerialization::Serialize(&laneJson, "laneIndex", lit->LaneIndex);
+            JsonSerialization::Serialize(&laneJson, "laneType", lit->LaneType);
+            JsonSerialization::Serialize(&laneJson, "direction", lit->Direction);
+            JsonSerialization::Serialize(&laneJson, "flowDirection", lit->FlowDirection);
+            JsonSerialization::Serialize(&laneJson, "length", lit->Length);
+            JsonSerialization::Serialize(&laneJson, "ioIp", lit->IOIp);
+            JsonSerialization::Serialize(&laneJson, "ioPort", lit->IOPort);
+            JsonSerialization::Serialize(&laneJson, "ioIndex", lit->IOIndex);
+            JsonSerialization::Serialize(&laneJson, "detectLine", lit->DetectLine);
+            JsonSerialization::Serialize(&laneJson, "stopLine", lit->StopLine);
+            JsonSerialization::Serialize(&laneJson, "laneLine1", lit->LaneLine1);
+            JsonSerialization::Serialize(&laneJson, "laneLine2", lit->LaneLine2);
+            JsonSerialization::Serialize(&laneJson, "region", lit->Region);
+            JsonSerialization::SerializeItem(&lanesJson, laneJson);
+        }
+        JsonSerialization::SerializeJsons(&channelJson, "lanes", lanesJson);
     }
-
-    string deviceJson;
-    DateTime now = DateTime::Now();
-    JsonSerialization::Serialize(&deviceJson, "deviceTime", now.UtcTimeStamp());
-    JsonSerialization::Serialize(&deviceJson, "deviceTime_Desc", now.ToString());
-    JsonSerialization::Serialize(&deviceJson, "startTime", _startTime.ToString());
-    JsonSerialization::Serialize(&deviceJson, "diskUsed", diskUsed);
-    JsonSerialization::Serialize(&deviceJson, "diskTotal", diskTotal);
-    JsonSerialization::Serialize(&deviceJson, "licenceStatus", _sdkInited);
-    JsonSerialization::Serialize(&deviceJson, "sn", sn);
-    JsonSerialization::Serialize(&deviceJson, "softwareVersion", softwareVersion);
-    JsonSerialization::Serialize(&deviceJson, "destinationWidth", FFmpegChannel::DestinationWidth);
-    JsonSerialization::Serialize(&deviceJson, "destinationHeight", FFmpegChannel::DestinationHeight);
-    JsonSerialization::Serialize(&deviceJson, "mqttConnected", _mqtt->Connected());
-    JsonSerialization::SerializeJson(&deviceJson, "channels", channelsJson);
-
-    e->Code = HttpCode::OK;
-    e->ResponseJson = deviceJson;
+    return channelJson;
 }
 
 void FlowStartup::SetDevice(HttpReceivedEventArgs* e)
@@ -231,7 +133,7 @@ void FlowStartup::SetDevice(HttpReceivedEventArgs* e)
             channel.Lanes.push_back(lane);
             laneIndex += 1;
         }
-        string error = CheckChannel(channel);
+        string error = CheckChannel(channel.ChannelIndex);
         if (!error.empty())
         {
             e->Code = HttpCode::BadRequest;
@@ -245,15 +147,18 @@ void FlowStartup::SetDevice(HttpReceivedEventArgs* e)
     FlowChannelData data;
     if (data.SetList(channels))
     {
-        for (int i = 0; i < FlowChannelData::ChannelCount; ++i)
+        for (int i = 0; i < ChannelCount; ++i)
         {
-            if (tempChannels.find(i + 1) == tempChannels.end())
+            map<int, FlowChannel>::iterator it = tempChannels.find(i + 1);
+            if (it == tempChannels.end())
             {
-                DeleteChannel(i + 1);
+                DeleteDecode(channelIndex);
+                _detectors[i]->ClearChannel();
             }
             else
             {
-                SetChannel(tempChannels[i + 1]);
+                SetDecode(it->second.ChannelIndex, it->second.ChannelUrl, it->second.RtmpUrl("127.0.0.1"));
+                _detectors[i]->UpdateChannel(it->second);
             }
         }
         e->Code = HttpCode::OK;
@@ -262,23 +167,6 @@ void FlowStartup::SetDevice(HttpReceivedEventArgs* e)
     {
         e->Code = HttpCode::BadRequest;
         e->ResponseJson = GetErrorJson("db", data.LastError());
-    }
-}
-
-void FlowStartup::GetChannel(HttpReceivedEventArgs* e)
-{
-    string id = GetId(e->Url, "/api/channels");
-    int channelIndex = StringEx::Convert<int>(id);
-    FlowChannelData data;
-    FlowChannel channel = data.Get(channelIndex);
-    if (channel.ChannelIndex == 0)
-    {
-        e->Code = HttpCode::NotFound;
-    }
-    else
-    {
-        e->ResponseJson = GetChannelJson(e, channel);
-        e->Code = HttpCode::OK;
     }
 }
 
@@ -318,7 +206,7 @@ void FlowStartup::SetChannel(HttpReceivedEventArgs* e)
         channel.Lanes.push_back(lane);
         laneIndex += 1;
     }
-    string error = CheckChannel(channel);
+    string error = CheckChannel(channel.ChannelIndex);
     if (!error.empty())
     {
         e->Code = HttpCode::BadRequest;
@@ -328,7 +216,8 @@ void FlowStartup::SetChannel(HttpReceivedEventArgs* e)
     FlowChannelData data;
     if (data.Set(channel))
     {
-        SetChannel(channel);
+        SetDecode(channel.ChannelIndex, channel.ChannelUrl, channel.RtmpUrl("127.0.0.1"));
+        _detectors[channel.ChannelIndex - 1]->UpdateChannel(channel);
         e->Code = HttpCode::OK;
     }
     else
@@ -338,144 +227,14 @@ void FlowStartup::SetChannel(HttpReceivedEventArgs* e)
     }
 }
 
-void FlowStartup::DeleteChannel(HttpReceivedEventArgs* e)
+bool FlowStartup::DeleteChannel(int channelIndex)
 {
-    string id = GetId(e->Url, "/api/channels");
-    int channelIndex = StringEx::Convert<int>(id);
     FlowChannelData data;
     if (data.Delete(channelIndex))
     {
-        DeleteChannel(channelIndex);
-        e->Code = HttpCode::OK;
-    }
-    else
-    {
-        e->Code = HttpCode::NotFound;
-    }
-
-}
-
-void FlowStartup::SetChannel(const FlowChannel& channel)
-{
-    lock_guard<mutex> lck(_decodeMutex);
-    if (ChannelIndexEnable(channel.ChannelIndex))
-    {
-        //如果地址不一致
-        if (_detectors[channel.ChannelIndex - 1]->ChannelUrl().compare(channel.ChannelUrl) != 0)
-        {
-            if (_decodes[channel.ChannelIndex - 1] != NULL)
-            {
-                _decodes[channel.ChannelIndex - 1]->Stop();
-                delete _decodes[channel.ChannelIndex - 1];
-            }
-            if (channel.ChannelType == static_cast<int>(ChannelType::RTSP))
-            {
-                DecodeChannel* decode = new DecodeChannel(channel.ChannelUrl, channel.RtmpUrl("127.0.0.1"), channel.ChannelIndex, _detects[channel.ChannelIndex - 1]);
-                decode->Start();
-                _decodes[channel.ChannelIndex - 1] = decode;
-            }
-            else if (channel.ChannelType == static_cast<int>(ChannelType::File))
-            {
-                DecodeChannel* decode = new DecodeChannel(channel.ChannelUrl, channel.RtmpUrl("127.0.0.1"), channel.ChannelIndex, _detects[channel.ChannelIndex - 1]);
-                decode->Start();
-                _decodes[channel.ChannelIndex - 1] = decode;
-            }
-            else
-            {
-                _decodes[channel.ChannelIndex - 1] = NULL;
-            }
-        }
-        _detectors[channel.ChannelIndex - 1]->UpdateChannel(channel);
-    }
-}
-
-void FlowStartup::DeleteChannel(int channelIndex)
-{
-    lock_guard<mutex> lck(_decodeMutex);
-    if (ChannelIndexEnable(channelIndex))
-    {
-        if (_decodes[channelIndex - 1] != NULL)
-        {
-            _decodes[channelIndex - 1]->Stop();
-            delete _decodes[channelIndex - 1];
-            _decodes[channelIndex - 1] = NULL;
-        }
+        DeleteDecode(channelIndex);
         _detectors[channelIndex - 1]->ClearChannel();
-    }
-}
-
-string FlowStartup::CheckChannel(const FlowChannel& channel)
-{
-    if (ChannelIndexEnable(channel.ChannelIndex))
-    {
-        return string();
-    }
-    else
-    {
-        return GetErrorJson("channelIndex", StringEx::Combine("channelIndex is limited to 1-", FlowChannelData::ChannelCount));
-    }
-}
-
-string FlowStartup::GetChannelJson(HttpReceivedEventArgs* e, const FlowChannel& channel)
-{
-    string channelJson;
-    JsonSerialization::Serialize(&channelJson, "channelIndex", channel.ChannelIndex);
-    JsonSerialization::Serialize(&channelJson, "channelName", channel.ChannelName);
-    JsonSerialization::Serialize(&channelJson, "channelUrl", channel.ChannelUrl);
-    JsonSerialization::Serialize(&channelJson, "rtmpUrl", channel.RtmpUrl(e->Host));
-    JsonSerialization::Serialize(&channelJson, "channelType", channel.ChannelType);
-    if (ChannelIndexEnable(channel.ChannelIndex))
-    {
-        lock_guard<mutex> lck(_decodeMutex);
-        JsonSerialization::Serialize(&channelJson, "channelStatus", _decodes[channel.ChannelIndex - 1] == NULL ? 0 : static_cast<int>(_decodes[channel.ChannelIndex - 1]->Status()));
-        JsonSerialization::Serialize(&channelJson, "packetSpan", _decodes[channel.ChannelIndex - 1] == NULL ? 0 : _decodes[channel.ChannelIndex - 1]->PacketSpan());
-        JsonSerialization::Serialize(&channelJson, "sourceWidth", _decodes[channel.ChannelIndex - 1] == NULL ? 0 : _decodes[channel.ChannelIndex - 1]->SourceWidth());
-        JsonSerialization::Serialize(&channelJson, "sourceHeight", _decodes[channel.ChannelIndex - 1] == NULL ? 0 : _decodes[channel.ChannelIndex - 1]->SourceHeight());
-        JsonSerialization::Serialize(&channelJson, "lanesInited", _detectors[channel.ChannelIndex - 1]->LanesInited());
-    }
-    string lanesJson;
-    for (vector<FlowLane>::const_iterator lit = channel.Lanes.begin(); lit != channel.Lanes.end(); ++lit)
-    {
-        string laneJson;
-        JsonSerialization::Serialize(&laneJson, "channelIndex", lit->ChannelIndex);
-        JsonSerialization::Serialize(&laneJson, "laneId", lit->LaneId);
-        JsonSerialization::Serialize(&laneJson, "laneName", lit->LaneName);
-        JsonSerialization::Serialize(&laneJson, "laneIndex", lit->LaneIndex);
-        JsonSerialization::Serialize(&laneJson, "laneType", lit->LaneType);
-        JsonSerialization::Serialize(&laneJson, "direction", lit->Direction);
-        JsonSerialization::Serialize(&laneJson, "flowDirection", lit->FlowDirection);
-        JsonSerialization::Serialize(&laneJson, "length", lit->Length);
-        JsonSerialization::Serialize(&laneJson, "ioIp", lit->IOIp);
-        JsonSerialization::Serialize(&laneJson, "ioPort", lit->IOPort);
-        JsonSerialization::Serialize(&laneJson, "ioIndex", lit->IOIndex);
-        JsonSerialization::Serialize(&laneJson, "detectLine", lit->DetectLine);
-        JsonSerialization::Serialize(&laneJson, "stopLine", lit->StopLine);
-        JsonSerialization::Serialize(&laneJson, "laneLine1", lit->LaneLine1);
-        JsonSerialization::Serialize(&laneJson, "laneLine2", lit->LaneLine2);
-        JsonSerialization::Serialize(&laneJson, "region", lit->Region);
-        JsonSerialization::SerializeItem(&lanesJson, laneJson);
-    }
-    JsonSerialization::SerializeJsons(&channelJson, "lanes", lanesJson);
-
-    return channelJson;
-
-}
-
-bool FlowStartup::ChannelIndexEnable(int channelIndex)
-{
-    return channelIndex >= 1 && channelIndex <= FlowChannelData::ChannelCount;
-}
-
-bool FlowStartup::UrlStartWith(const string& url, const string& key)
-{
-    if (url.size() == key.size())
-    {
-        return url.compare(key) == 0;
-    }
-    else if (url.size() >= key.size())
-    {
-        return url.substr(0, key.size()).compare(key) == 0
-            && url[key.size()] == '/';
+        return true;
     }
     else
     {
@@ -483,38 +242,23 @@ bool FlowStartup::UrlStartWith(const string& url, const string& key)
     }
 }
 
-string FlowStartup::GetId(const std::string& url, const std::string& key)
+void FlowStartup::PollCore()
 {
-    return url.size() >= key.size() ? url.substr(key.size() + 1, url.size() - key.size() - 1) : string();
-}
-
-string FlowStartup::GetErrorJson(const string& field, const string& message)
-{
-    return StringEx::Combine("{\"", field, "\":[\"", message, "\"]}");
-}
-
-void FlowStartup::StartCore()
-{
-    while (!_cancelled)
+    //收集流量
+    DateTime now = DateTime::Now();
+    int currentMinute = now.Minute();
+    if (currentMinute != _lastMinute)
     {
-        this_thread::sleep_for(chrono::seconds(1));
-
-        //收集流量
-        DateTime now = DateTime::Now();
-        int currentMinute = now.Minute();
-        if (currentMinute != _lastMinute)
+        _lastMinute = currentMinute;
+        long long timeStamp = DateTime(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), 0).UtcTimeStamp();
+        string json;
+        for (unsigned int i = 0; i < _detectors.size(); ++i)
         {
-            _lastMinute = currentMinute;
-            long long timeStamp = DateTime(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), 0).UtcTimeStamp();
-            string json;
-            for (unsigned int i = 0; i < _detectors.size(); ++i)
-            {
-                _detectors[i]->CollectFlow(&json, timeStamp);
-            }
-            if (!json.empty())
-            {
-                _mqtt->Send(FlowTopic, json);
-            }
+            _detectors[i]->CollectFlow(&json, timeStamp);
+        }
+        if (!json.empty())
+        {
+            _mqtt->Send(FlowTopic, json);
         }
     }
 }

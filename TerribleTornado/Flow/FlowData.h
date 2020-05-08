@@ -8,6 +8,24 @@
 
 namespace OnePunchMan
 {
+	//检测类型
+	enum class VideoStructType
+	{
+		Vehicle = 1,
+		Bike = 2,
+		Pedestrain = 3
+	};
+
+	//交通状态
+	enum class TrafficStatus
+	{
+		Good = 1,
+		Normal = 2,
+		Warning = 3,
+		Bad = 4,
+		Dead = 5
+	};
+
 	//流量车道
 	class FlowLane:public TrafficLane
 	{
@@ -24,16 +42,6 @@ namespace OnePunchMan
 		int IOPort;
 		//io检测器输出口
 		int IOIndex;	
-		//检测线
-		std::string DetectLine;
-		//停止线
-		std::string StopLine;
-		//车道线1
-		std::string LaneLine1;
-		//车道线2
-		std::string LaneLine2;
-		//检测区域
-		std::string Region;
 	};
 
 	//流量视频通道
@@ -102,9 +110,6 @@ namespace OnePunchMan
 		* @return: 最后一个错误信息
 		*/
 		std::string LastError();
-
-		//通道总数
-		static const int ChannelCount;
 
 	private:
 

@@ -3,8 +3,6 @@
 using namespace std;
 using namespace OnePunchMan;
 
-const int FlowChannelData::ChannelCount = 8;
-
 const string FlowChannelData::DbName("flow.db");
 
 FlowChannelData::FlowChannelData()

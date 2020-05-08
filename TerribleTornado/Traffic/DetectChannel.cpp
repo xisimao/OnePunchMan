@@ -5,7 +5,7 @@ using namespace OnePunchMan;
 
 const int DetectChannel::SleepTime=10;
 
-DetectChannel::DetectChannel(int channelIndex, int width, int height, RecognChannel* recogn, ChannelDetector* detector)
+DetectChannel::DetectChannel(int channelIndex, int width, int height, RecognChannel* recogn, TrafficDetector* detector)
 	:ThreadObject("detect"), _inited(false), _channelIndex(channelIndex), _width(width), _height(height), _recogn(recogn),_detector(detector)
 {
 #ifndef _WIN32
@@ -62,7 +62,7 @@ void DetectChannel::HandleYUV(unsigned char* yuv, int width, int height, int pac
 	_item.HasValue = true;
 }
 
-bool DetectChannel::YuvToBgr()
+bool DetectChannel::YuvToIve()
 {
 #ifndef _WIN32
 	IVE_IMAGE_S yuv_image_list;
@@ -118,6 +118,56 @@ bool DetectChannel::YuvToBgr()
 	return true;
 }
 
+void DetectChannel::GetDetecItems(map<string, DetectItem>* items, const JsonDeserialization& jd, const string& key)
+{
+	int itemIndex = 0;
+	while (true)
+	{
+		string id = jd.Get<string>(StringEx::Combine("ImageResults:0:", key, ":", itemIndex, ":GUID"));
+		if (id.empty())
+		{
+			break;
+		}
+		int type = jd.Get<int>(StringEx::Combine("ImageResults:0:", key, ":", itemIndex, ":Type"));
+		vector<int> rect = jd.GetArray<int>(StringEx::Combine("ImageResults:0:", key, ":", itemIndex, ":Detect:Body:Rect"));
+		if (rect.size() >= 4)
+		{
+			DetectItem item;
+			item.Region = Rectangle(Point(rect[0], rect[1]), rect[2], rect[3]);
+			item.Type = static_cast<DetectType>(type);
+			items->insert(pair<string, DetectItem>(id, item));
+		}
+		itemIndex += 1;
+	}
+}
+
+void DetectChannel::GetRecognItems(vector<RecognItem>* items, const JsonDeserialization& jd, const string& key)
+{
+	int itemIndex = 0;
+	while (true)
+	{
+		string id = jd.Get<string>(StringEx::Combine("FilterResults", ":0:", key, ":", itemIndex, ":GUID"));
+		if (id.empty())
+		{
+			break;
+		}
+		vector<int> rect = jd.GetArray<int>(StringEx::Combine("FilterResults", ":0:", key, ":", itemIndex, ":Detect:Body:Rect"));
+		if (rect.size() >= 4)
+		{
+			RecognItem item;
+			item.ChannelIndex = _channelIndex;
+			item.Guid = id;
+			item.Type = jd.Get<int>(StringEx::Combine("FilterResults", ":0:", key, ":", itemIndex, ":Type"));
+			item.Width = jd.Get<int>(StringEx::Combine("FilterResults", ":0:", key, ":", itemIndex, ":Detect:Body:Width"));
+			item.Height = jd.Get<int>(StringEx::Combine("FilterResults", ":0:", key, ":", itemIndex, ":Detect:Body:Height"));
+			item.Region = Rectangle(Point(rect[0], rect[1]), rect[2], rect[3]);
+			items->push_back(item);
+		}
+		itemIndex += 1;
+	}
+}
+
+
 void DetectChannel::StartCore()
 {
 	if (SeemmoSDK::seemmo_thread_init == NULL || SeemmoSDK::seemmo_video_pvc == NULL || SeemmoSDK::seemmo_video_pvc_recog == NULL)
@@ -147,7 +197,7 @@ void DetectChannel::StartCore()
 			_params[0] = _param.c_str();
 			_timeStamps[0] = _item.PacketIndex;
 			_item.HasValue = false;
-			if (YuvToBgr())
+			if (YuvToIve())
 			{
 				int32_t size = static_cast<int32_t>(_result.size());
 				int result = SeemmoSDK::seemmo_video_pvc(1,
@@ -162,13 +212,24 @@ void DetectChannel::StartCore()
 					0);
 				if (result == 0)
 				{
-					vector<RecognItem> recognItems = _detector->HandleDetect(_result.data(), &_param, _ives[0], _timeStamps[0]);
+					JsonDeserialization detectJd(_result.data());
+					map<string, DetectItem> detectItems;
+					GetDetecItems(&detectItems, detectJd, "Vehicles");
+					GetDetecItems(&detectItems, detectJd, "Bikes");
+					GetDetecItems(&detectItems, detectJd, "Pedestrains");
+
+					_detector->HandleDetect(&detectItems, detectTimeStamp,&_param, _ives[0], _timeStamps[0]);
+
+					vector<RecognItem> recognItems;
+					GetRecognItems(&recognItems, detectJd, "Vehicles");
+					GetRecognItems(&recognItems, detectJd, "Bikes");
+					GetRecognItems(&recognItems, detectJd, "Pedestrains");
 					if (!recognItems.empty())
 					{
 						_recogn->PushItems(recognItems);
 					}
 				}
-				LogPool::Debug("detect span", _indexes[0], DateTime::UtcNowTimeStamp() - detectTimeStamp);
+				//LogPool::Debug("detect", _indexes[0], _timeStamps[0],DateTime::UtcNowTimeStamp() - detectTimeStamp);
 			}
 		}
 		else

@@ -2,7 +2,8 @@
 /Release
 /x64
 /.vs
-/log
+/logs
+/images
 /*/Debug
 /*/Release
 /*/x64
@@ -11,6 +12,7 @@
 /*/readme
 /*/lib
 /*/*.mp4
+/*/*.avi
 /*/*.yuv
 /*/*.bmp
 /*/*.jpg

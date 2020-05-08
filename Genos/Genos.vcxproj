@@ -64,14 +64,18 @@
     <ClCompile Include="..\Saitama\Net\SocketMaid.cpp" />
     <ClCompile Include="..\Saitama\Text\Path.cpp" />
     <ClCompile Include="..\Saitama\Text\StringEx.cpp" />
-    <ClCompile Include="..\TerribleTornado\Flow\ChannelDetector.cpp" />
+    <ClCompile Include="..\TerribleTornado\Event\EventData.cpp" />
+    <ClCompile Include="..\TerribleTornado\Event\EventDetector.cpp" />
+    <ClCompile Include="..\TerribleTornado\Event\EventStartup.cpp" />
     <ClCompile Include="..\TerribleTornado\Flow\FlowData.cpp" />
+    <ClCompile Include="..\TerribleTornado\Flow\FlowDetector.cpp" />
     <ClCompile Include="..\TerribleTornado\Flow\FlowStartup.cpp" />
-    <ClCompile Include="..\TerribleTornado\Flow\LaneDetector.cpp" />
-    <ClCompile Include="..\TerribleTornado\Video\DecodeChannel.cpp" />
-    <ClCompile Include="..\TerribleTornado\Video\DetectChannel.cpp" />
-    <ClCompile Include="..\TerribleTornado\Video\RecognChannel.cpp" />
-    <ClCompile Include="..\TerribleTornado\Video\SeemmoSDK.cpp" />
+    <ClCompile Include="..\TerribleTornado\Traffic\DecodeChannel.cpp" />
+    <ClCompile Include="..\TerribleTornado\Traffic\DetectChannel.cpp" />
+    <ClCompile Include="..\TerribleTornado\Traffic\RecognChannel.cpp" />
+    <ClCompile Include="..\TerribleTornado\Traffic\SeemmoSDK.cpp" />
+    <ClCompile Include="..\TerribleTornado\Traffic\TrafficDetector.cpp" />
+    <ClCompile Include="..\TerribleTornado\Traffic\TrafficStartup.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -108,15 +112,19 @@
     <ClInclude Include="..\Saitama\Net\SocketMaid.h" />
     <ClInclude Include="..\Saitama\Text\Path.h" />
     <ClInclude Include="..\Saitama\Text\StringEx.h" />
-    <ClInclude Include="..\TerribleTornado\Flow\ChannelDetector.h" />
+    <ClInclude Include="..\TerribleTornado\Event\EventData.h" />
+    <ClInclude Include="..\TerribleTornado\Event\EventDetector.h" />
+    <ClInclude Include="..\TerribleTornado\Event\EventStartup.h" />
     <ClInclude Include="..\TerribleTornado\Flow\FlowData.h" />
+    <ClInclude Include="..\TerribleTornado\Flow\FlowDetector.h" />
     <ClInclude Include="..\TerribleTornado\Flow\FlowStartup.h" />
-    <ClInclude Include="..\TerribleTornado\Flow\LaneDetector.h" />
-    <ClInclude Include="..\TerribleTornado\Video\DecodeChannel.h" />
-    <ClInclude Include="..\TerribleTornado\Video\DetectChannel.h" />
-    <ClInclude Include="..\TerribleTornado\Video\RecognChannel.h" />
-    <ClInclude Include="..\TerribleTornado\Video\SeemmoSDK.h" />
-    <ClInclude Include="..\TerribleTornado\Video\TrafficData.h" />
+    <ClInclude Include="..\TerribleTornado\Traffic\DecodeChannel.h" />
+    <ClInclude Include="..\TerribleTornado\Traffic\DetectChannel.h" />
+    <ClInclude Include="..\TerribleTornado\Traffic\RecognChannel.h" />
+    <ClInclude Include="..\TerribleTornado\Traffic\SeemmoSDK.h" />
+    <ClInclude Include="..\TerribleTornado\Traffic\TrafficData.h" />
+    <ClInclude Include="..\TerribleTornado\Traffic\TrafficDetector.h" />
+    <ClInclude Include="..\TerribleTornado\Traffic\TrafficStartup.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{b90a649e-d7e5-44f5-a211-2b92dbfa4440}</ProjectGuid>
@@ -176,7 +184,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>/usr/local/include;../TerribleTornado/Video;../TerribleTornado/Flow;../Fubuki/Mqtt;../Fubuki/Sqlite;../Fubuki/FFmpeg;../Saitama/Text;../Saitama/Net;../Saitama/Logger;../Saitama/Core;../Saitama/Convert;./Genos;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>/usr/local/include;../TerribleTornado/Event;../TerribleTornado/Traffic;../TerribleTornado/Flow;../Fubuki/Mqtt;../Fubuki/Sqlite;../Fubuki/FFmpeg;../Saitama/Text;../Saitama/Net;../Saitama/Logger;../Saitama/Core;../Saitama/Convert;./Genos;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link />
     <Link>

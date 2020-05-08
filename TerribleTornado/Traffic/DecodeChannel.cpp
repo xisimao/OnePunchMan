@@ -436,10 +436,6 @@ bool DecodeChannel::InitHisi(int videoCount)
 	stLayerAttr.stImageSize.u32Width = stLayerAttr.stDispRect.u32Width;
 	stLayerAttr.stImageSize.u32Height = stLayerAttr.stDispRect.u32Height;
 
-	stLayerAttr.stImageSize.u32Width = stLayerAttr.stDispRect.u32Width;
-	stLayerAttr.stImageSize.u32Height = stLayerAttr.stDispRect.u32Height;
-
-
 	stLayerAttr.stImageSize = stDefImageSize;
 	stLayerAttr.enDstDynamicRange = DYNAMIC_RANGE_SDR8;
 

@@ -7,15 +7,13 @@ const int RecognChannel::ItemCount = 4;
 const int RecognChannel::MaxCacheCount = 100;
 const int RecognChannel::SleepTime = 50;
 
-RecognChannel::RecognChannel(int recognIndex,int width, int height, const vector<ChannelDetector*>& detectors)
+RecognChannel::RecognChannel(int recognIndex,int width, int height, const vector<TrafficDetector*>& detectors)
 	:ThreadObject("recogn"), _inited(false), _recognIndex(recognIndex),_detectors(detectors)
 {
 	_bgrs.push_back(new uint8_t[width * height * 3]);
 	_guids.resize(1);
 	_param = "{\"Detect\":{\"DetectRegion\":[],\"IsDet\":true,\"MaxCarWidth\":0,\"MinCarWidth\":0,\"Mode\":0,\"Threshold\":20,\"Version\":1001},\"Recognize\":{\"Person\":{\"IsRec\":true},\"Feature\":{\"IsRec\":true},\"Vehicle\":{\"Brand\":{\"IsRec\":true},\"Plate\":{\"IsRec\":true},\"Color\":{\"IsRec\":true},\"Marker\":{\"IsRec\":true},\"Sunroof\":{\"IsRec\":true},\"SpareTire\":{\"IsRec\":true},\"Slag\":{\"IsRec\":true},\"Rack\":{\"IsRec\":true},\"Danger\":{\"IsRec\":true},\"Crash\":{\"IsRec\":true},\"Call\":{\"IsRec\":true},\"Belt\":{\"IsRec\":true},\"Convertible\":{\"IsRec\":true},\"Manned\":{\"IsRec\":true}}}}";
 	_result.resize(4 * 1024 * 1024);
-	_jpgParams.push_back(cv::IMWRITE_JPEG_QUALITY);
-	_jpgParams.push_back(10);
 }
 
 RecognChannel::~RecognChannel()
@@ -75,6 +73,7 @@ void RecognChannel::StartCore()
 		}
 		else
 		{
+			long long recognTimeStamp = DateTime::UtcNowTimeStamp();
 			unique_lock<mutex> lck(_mutex);
 			RecognItem item = _items.front();
 			_items.pop();
@@ -92,6 +91,7 @@ void RecognChannel::StartCore()
 			{
 				_detectors[item.ChannelIndex-1]->HandleRecognize(item,_bgrs[0],_result.data());
 			}
+			//LogPool::Debug("recogn", item.ChannelIndex, DateTime::UtcNowTimeStamp() - recognTimeStamp);
 		}
 	}
 

@@ -2,7 +2,7 @@
 #include "SeemmoSDK.h"
 #include "MqttChannel.h"
 #include "RecognChannel.h"
-#include "ChannelDetector.h"
+#include "TrafficDetector.h"
 
 extern "C"
 {
@@ -70,7 +70,7 @@ namespace OnePunchMan
 		* @param: recogn 视频线程
 		* @param: detector 通道检测
 		*/
-		DetectChannel(int channelIndex,int width, int height,RecognChannel* recogn, ChannelDetector* detector);
+		DetectChannel(int channelIndex,int width, int height,RecognChannel* recogn, TrafficDetector* detector);
 		
 		/**
 		* @brief: 析构函数
@@ -118,14 +118,31 @@ namespace OnePunchMan
 			bool HasValue;
 		};
 
-		//轮询中睡眠时间(毫秒)
-		static const int SleepTime;
+	private:
+		/**
+		* @brief: 从json数据中获取检测项集合
+		* @param: items 检测项集合
+		* @param: jd json解析
+		* @param: key 检测类型，机动车，非机动和和行人
+		*/
+		void GetDetecItems(std::map<std::string, DetectItem>* items, const JsonDeserialization& jd, const std::string& key);
+
+		/**
+		* @brief: 从json数据中获取识别项集合
+		* @param: items 识别项集合
+		* @param: jd json解析
+		* @param: key 检测类型，机动车，非机动和和行人
+		*/
+		void GetRecognItems(std::vector<RecognItem>* items, const JsonDeserialization& jd, const std::string& key);
 
 		/**
 		* @brief: yuv转8uc3
 		* @return: 转换成功返回true，否则返回false
 		*/
-		bool YuvToBgr();
+		bool YuvToIve();
+
+		//轮询中睡眠时间(毫秒)
+		static const int SleepTime;
 
 		//线程是否初始化完成
 		bool _inited;
@@ -138,7 +155,7 @@ namespace OnePunchMan
 		//检测线程
 		RecognChannel* _recogn;
 		//通道检测
-		ChannelDetector* _detector;
+		TrafficDetector* _detector;
 
 		//视频帧数据
 		FrameItem _item;

@@ -12,8 +12,7 @@ const char Path::Separator = '/';
 string Path::GetCurrentPath()
 {
 	char buffer[1024] = { 0 };
-	getcwd(buffer, 1024);
-	return string(buffer);
+	return string(getcwd(buffer, 1024));
 }
 
 string Path::GetExtension(const string& path)
@@ -46,7 +45,6 @@ string Path::GetFileName(const string& path)
 
 void Path::CreateDirectory(const string& directory)
 {
-
 #ifdef _WIN32 
 	_mkdir(directory.c_str());
 #else

@@ -1,8 +1,6 @@
 #pragma once
 #include <string>
 
-#include "Shape.h"
-
 namespace OnePunchMan
 {
 	//通道类型
@@ -35,6 +33,16 @@ namespace OnePunchMan
 		int LaneIndex;
 		//车道方向
 		int Direction;
+		//检测线
+		std::string DetectLine;
+		//停止线
+		std::string StopLine;
+		//车道线1
+		std::string LaneLine1;
+		//车道线2
+		std::string LaneLine2;
+		//区域
+		std::string Region;
 	};
 
 	//视频通道
@@ -62,65 +70,6 @@ namespace OnePunchMan
 		}
 	};
 
-	//检测元素状态
-	enum class DetectStatus
-	{
-		//首次进入
-		New,
-		//在区域内
-		In,
-		//在区域外
-		Out
-	};
-
-	//检测元素类型
-	enum class DetectType
-	{
-		None = 0,
-		Pedestrain = 1,
-		Bike = 2,
-		Motobike = 3,
-		Car = 4,
-		Tricycle = 5,
-		Bus = 6,
-		Van = 7,
-		Truck = 8
-	};
-
-	//检测项
-	class DetectItem
-	{
-	public:
-		//输入
-		//检测区域
-		Rectangle Region;
-		//检测元素类型
-		DetectType Type;
-
-		//输出
-		//检测元素状态
-		DetectStatus Status;
-		//移动距离
-		double Distance;
-	};
-
-	//识别项
-	class RecognItem
-	{
-	public:
-		//通道序号
-		int ChannelIndex;
-		//guid
-		std::string Guid;
-		//检测项类型
-		int Type;
-		//检测区域
-		Rectangle Region;
-		//宽度
-		int Width;
-		//高度
-		int Height;
-	};
 }
 
 
