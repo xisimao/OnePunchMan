@@ -41,7 +41,12 @@ int main(int argc, char* argv[])
                     }
                     FlowDetector detector(FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, NULL, true);
                     FlowChannelData data;
-                    FlowChannel channel = data.Get(1);
+                    int channelIndex = 1;
+                    if (argc >= 4)
+                    {
+                        channelIndex = StringEx::Convert<int>(argv[3]);
+                    }
+                    FlowChannel channel = data.Get(channelIndex);
                     detector.UpdateChannel(channel);
                     vector<TrafficDetector*> detectors;
                     detectors.push_back(&detector);
@@ -92,7 +97,12 @@ int main(int argc, char* argv[])
                     }
                     EventDetector detector(FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, NULL, true);
                     EventChannelData data;
-                    EventChannel channel = data.Get(1);
+                    int channelIndex = 1;
+                    if (argc >= 4)
+                    {
+                        channelIndex = StringEx::Convert<int>(argv[3]);
+                    }
+                    EventChannel channel = data.Get(channelIndex);
                     detector.UpdateChannel(channel);
                     vector<TrafficDetector*> detectors;
                     detectors.push_back(&detector);

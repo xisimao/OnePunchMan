@@ -11,7 +11,7 @@ IVE_8UC3Handler::IVE_8UC3Handler(int count)
 
 }
 
-void IVE_8UC3Handler::HandleFrame(unsigned char* ive, int width, int height, long long packetIndex)
+void IVE_8UC3Handler::HandleFrame(unsigned char* ive, int width, int height, int packetIndex)
 {
 	if (_index >= _count)
 	{

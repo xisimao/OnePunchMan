@@ -150,18 +150,6 @@ namespace OnePunchMan
 		static LogLevel ReadLevel(const FileConfig& config, const std::string& key);
 
 		/**
-		* @brief: 添加日志写入器
-		* @param: logger 日志写入器
-		*/
-		static void AddLogger(Logger* logger);
-
-		/**
-		* @brief: 移除日志写入器
-		* @param: logger 日志写入器
-		*/
-		static void RemoveLogger(Logger* logger);
-
-		/**
 		* @brief: 写日志
 		* @param: level 日志级别
 		* @param: t  日志的内容
@@ -179,7 +167,6 @@ namespace OnePunchMan
 			ss << "[" << (int)logLevel << "]";
 			ss << "[" << (int)logEvent << "] ";
 			ContentFormat(&ss, t, u...);
-			std::lock_guard<std::mutex> lck(_mutex);
 			for (std::set<Logger*>::iterator it = _loggers.begin(); it != _loggers.end(); ++it)
 			{
 				(*it)->Log(logLevel, ss.str());
@@ -218,8 +205,6 @@ namespace OnePunchMan
 		//默认接收的最小日志级别
 		LogLevel _defaultLevel;
 
-		//写日志同步锁
-		std::mutex _mutex;
 		//日志集合
 		std::set<Logger*> _loggers;
 	};

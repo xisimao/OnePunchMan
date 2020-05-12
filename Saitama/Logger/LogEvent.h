@@ -11,5 +11,6 @@ enum class LogEvent :int
 	Decode =5,
 	Detect=6,
 	Recogn=7,
-	Flow=8
+	Flow=8,
+	Event=9
 };

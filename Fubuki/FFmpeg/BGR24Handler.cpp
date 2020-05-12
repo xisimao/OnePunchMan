@@ -8,7 +8,7 @@ BGR24Handler::BGR24Handler(int count)
 
 }
 
-void BGR24Handler::HandleFrame(unsigned char* bgr24, int width, int height, long long packetIndex)
+void BGR24Handler::HandleFrame(unsigned char* bgr24, int width, int height, int packetIndex)
 {
 	if (_count>0&&_index >= _count)
 	{

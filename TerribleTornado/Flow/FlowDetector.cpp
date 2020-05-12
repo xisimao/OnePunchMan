@@ -26,14 +26,14 @@ void FlowDetector::UpdateChannel(const FlowChannel& channel)
 		Line stopLine = Line::FromJson(lit->StopLine);
 		Line laneLine1 = Line::FromJson(lit->LaneLine1);
 		Line laneLine2 = Line::FromJson(lit->LaneLine2);
-		if (detectLine.Empty() ||
-			stopLine.Empty() ||
-			laneLine1.Empty() ||
-			laneLine2.Empty())
+		cache.Region = Polygon::FromJson(lit->Region);
+		if (detectLine.Empty() 
+			|| stopLine.Empty() 
+			|| laneLine1.Empty()
+			|| laneLine2.Empty()
+			|| cache.Region.Empty())
 		{
-			cache.Region = Polygon();
-			cache.MeterPerPixel = 0;
-			LogPool::Warning(LogEvent::Detect, "line empty channel", lit->ChannelIndex, "lane", lit->LaneId);
+			LogPool::Warning(LogEvent::Detect, "line empty channel:", lit->ChannelIndex, "lane:", lit->LaneId);
 		}
 		else
 		{
@@ -46,16 +46,14 @@ void FlowDetector::UpdateChannel(const FlowChannel& channel)
 				point3.Empty() ||
 				point4.Empty())
 			{
-				cache.Region = Polygon();
-				cache.MeterPerPixel = 0;
-				LogPool::Warning(LogEvent::Detect, "intersect point empty");
+				LogPool::Warning(LogEvent::Detect, "intersect point empty channel:", lit->ChannelIndex, "lane:", lit->LaneId);
 			}
 			else
 			{
-				cache.Region = Polygon::FromJson(lit->Region);
 				Line line1(point1, point2);
 				Line line2(point3, point4);
 				double pixels = line1.Middle().Distance(line2.Middle());
+				cache.LaneId = lit->LaneId;
 				cache.MeterPerPixel = lit->Length / pixels;
 				_lanes.push_back(cache);
 				regionsParam.append(lit->Region);
@@ -92,15 +90,20 @@ void FlowDetector::ClearChannel()
 	_lanesInited = false;
 }
 
-void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long timeStamp, string* param, const unsigned char* iveBuffer, long long packetIndex)
+void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long timeStamp, string* param, const unsigned char* iveBuffer, int packetIndex, int frameSpan)
 {
+	if (_debug)
+	{
+		timeStamp = packetIndex * frameSpan;
+	}
+	unique_lock<mutex> lck(_laneMutex);
+	string lanesJson;
+	string channelUrl = _channelUrl;
 	if (!_setParam)
 	{
 		param->assign(_param);
 		_setParam = true;
 	}
-	string lanesJson;
-	unique_lock<mutex> lck(_laneMutex);
 	for (unsigned int i = 0; i < _lanes.size(); ++i)
 	{
 		FlowLaneCache& cache = _lanes[i];
@@ -206,12 +209,13 @@ void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long 
 		}
 	}
 	_lastTimeStamp = timeStamp;
+
 	lck.unlock();
 	if (!lanesJson.empty())
 	{
 		string channelJson;
 		JsonSerialization::SerializeJson(&channelJson, "lanes", lanesJson);
-		JsonSerialization::Serialize(&channelJson, "channelUrl", _channelUrl);
+		JsonSerialization::Serialize(&channelJson, "channelUrl", channelUrl);
 		JsonSerialization::Serialize(&channelJson, "timeStamp", timeStamp);
 		if (_mqtt != NULL)
 		{
@@ -239,16 +243,15 @@ void FlowDetector::HandleRecognize(const RecognItem& recognItem, const unsigned 
 			{
 				if (_lanes[i].Region.Contains(recognItem.Region.HitPoint()))
 				{
+					string channelUrl = _channelUrl;
 					string laneId = _lanes[i].LaneId;
 					lck.unlock();
-
 					int sex = jd.Get<int>(StringEx::Combine("ImageResults:0:Pedestrains:0:Recognize:Sex:TopList:0:Code"));
 					int age = jd.Get<int>(StringEx::Combine("ImageResults:0:Pedestrains:0:Recognize:Age:TopList:0:Code"));
 					int upperColor = jd.Get<int>(StringEx::Combine("ImageResults:0:Pedestrains:0:Recognize:UpperColor:TopList:0:Code"));
 					//pedestrain.Feature = jd.Get<string>(StringEx::Combine("ImageResults:", imageIndex, ":Pedestrains:0:Recognize:Feature:Feature"));
-					
 					string videoStructJson;
-					JsonSerialization::Serialize(&videoStructJson, "channelUrl", _channelUrl);
+					JsonSerialization::Serialize(&videoStructJson, "channelUrl", channelUrl);
 					JsonSerialization::Serialize(&videoStructJson, "laneId", laneId);
 					JsonSerialization::Serialize(&videoStructJson, "timeStamp", timeStamp);
 					//JsonSerialization::Serialize(&videoStructJson, "feature", pedestrain.Feature);
@@ -279,10 +282,11 @@ void FlowDetector::HandleRecognize(const RecognItem& recognItem, const unsigned 
 				if (_lanes[i].Region.Contains(recognItem.Region.HitPoint()))
 				{
 					string laneId = _lanes[i].LaneId;
+					string channelUrl = _channelUrl;
 					lck.unlock();
 					//bike.Feature = jd.Get<string>(StringEx::Combine("ImageResults:", imageIndex, ":Bikes:0:Recognize:Feature:Feature"));
 					string videoStructJson;
-					JsonSerialization::Serialize(&videoStructJson, "channelUrl", _channelUrl);
+					JsonSerialization::Serialize(&videoStructJson, "channelUrl", channelUrl);
 					JsonSerialization::Serialize(&videoStructJson, "laneId", laneId);
 					JsonSerialization::Serialize(&videoStructJson, "timeStamp", timeStamp);
 					JsonSerialization::Serialize(&videoStructJson, "videoStructType", (int)VideoStructType::Bike);
@@ -310,6 +314,7 @@ void FlowDetector::HandleRecognize(const RecognItem& recognItem, const unsigned 
 				if (_lanes[i].Region.Contains(recognItem.Region.HitPoint()))
 				{
 					string laneId = _lanes[i].LaneId;
+					string channelUrl = _channelUrl;
 					lck.unlock();
 					int carType = jd.Get<int>(StringEx::Combine("ImageResults:0:Vehicles:0:Recognize:Type:TopList:0:Code"));
 					int carColor = jd.Get<int>(StringEx::Combine("ImageResults:0:Vehicles:0:Recognize:Color:TopList:0:Code"));
@@ -318,7 +323,7 @@ void FlowDetector::HandleRecognize(const RecognItem& recognItem, const unsigned 
 					string plateNumber = jd.Get<string>(StringEx::Combine("ImageResults:0:Vehicles:0:Recognize:Plate:Licence"));
 					//vehicle.Feature = jd.Get<string>(StringEx::Combine("ImageResults:", imageIndex, ":Vehicles:0:Recognize:Feature:Feature"));
 					string videoStructJson;
-					JsonSerialization::Serialize(&videoStructJson, "channelUrl", _channelUrl);
+					JsonSerialization::Serialize(&videoStructJson, "channelUrl", channelUrl);
 					JsonSerialization::Serialize(&videoStructJson, "laneId", laneId);
 					JsonSerialization::Serialize(&videoStructJson, "timeStamp", timeStamp);
 					JsonSerialization::Serialize(&videoStructJson, "videoStructType", (int)VideoStructType::Vehicle);
@@ -416,7 +421,7 @@ void FlowDetector::CollectFlow(string* flowJson, long long timeStamp)
 	_lastTimeStamp = timeStamp;
 }
 
-void FlowDetector::DrawDetect(const map<string, DetectItem>& detectItems, const unsigned char* iveBuffer, long long packetIndex)
+void FlowDetector::DrawDetect(const map<string, DetectItem>& detectItems, const unsigned char* iveBuffer, int packetIndex)
 {
 	if (!_debug)
 	{
@@ -428,7 +433,7 @@ void FlowDetector::DrawDetect(const map<string, DetectItem>& detectItems, const 
 	for (unsigned int i = 0; i < _lanes.size(); ++i)
 	{
 		FlowLaneCache& cache = _lanes[i];
-		DrawPolygon(&image, cache.Region);
+		DrawPolygon(&image, cache.Region, cv::Scalar(0, 0, 255));
 	}
 	lck.unlock();
 	for (map<string, DetectItem>::const_iterator it = detectItems.begin(); it != detectItems.end(); ++it)

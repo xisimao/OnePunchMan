@@ -120,9 +120,10 @@ namespace OnePunchMan
 		* @brief: 解码
 		* @param: packet 视频帧
 		* @param: packetIndex 视频帧序号
+		* @param: frameSpan 两帧的间隔时间(毫秒)
 		* @return: 解码成功返回Handle，略过返回Ski，否则返回Error，解码失败会结束线程
 		*/
-		virtual DecodeResult Decode(const AVPacket* packet, int packetIndex);
+		virtual DecodeResult Decode(const AVPacket* packet, int packetIndex,int frameSpan);
 
 		//视频输入相关
 		std::string _inputUrl;
@@ -144,6 +145,13 @@ namespace OnePunchMan
 		* @return: 视频状态
 		*/
 		ChannelStatus Init();
+
+
+		/**
+		* @brief: 初始化视频读取
+		* @return: 视频状态
+		*/
+		ChannelStatus Reset();
 
 		/**
 		* @brief: 卸载视频读取

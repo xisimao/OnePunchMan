@@ -58,6 +58,7 @@ bool TrafficStartup::Init()
     }
 
     _sdkInited = SeemmoSDK::Init();
+
     _mqtt = new MqttChannel("127.0.0.1", 1883);
 
     for (int i = 0; i < ChannelCount; ++i)
@@ -105,7 +106,7 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
             {
                 lock_guard<mutex> lck(_decodeMutex);
                 JsonSerialization::Serialize(&channelJson, "channelStatus", _decodes[channelIndex-1] == NULL ? 0 : static_cast<int>(_decodes[channelIndex - 1]->Status()));
-                JsonSerialization::Serialize(&channelJson, "packetSpan", _decodes[channelIndex - 1] == NULL ? 0 : _decodes[channelIndex - 1]->PacketSpan());
+                JsonSerialization::Serialize(&channelJson, "frameSpan", _decodes[channelIndex - 1] == NULL ? 0 : _decodes[channelIndex - 1]->PacketSpan());
                 JsonSerialization::Serialize(&channelJson, "sourceWidth", _decodes[channelIndex - 1] == NULL ? 0 : _decodes[channelIndex - 1]->SourceWidth());
                 JsonSerialization::Serialize(&channelJson, "sourceHeight", _decodes[channelIndex - 1] == NULL ? 0 : _decodes[channelIndex - 1]->SourceHeight());
                 e->Code = HttpCode::NotFound;
@@ -140,12 +141,26 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
         LogPool::Information(LogEvent::Flow, "exit system");
         e->Code = HttpCode::OK;
     }
+    else if (UrlStartWith(e->Url, "/api/upload"))
+    {
+        vector<string> requestLines = StringEx::Split(e->RequestJson, "\r\n");
+        if (requestLines.size() >= 5)
+        {
+            FILE* file = fopen("/mtd/seemmo/programs/aisdk/data/licence","wb");
+            if (file != NULL)
+            {
+                fwrite(requestLines[4].c_str(), 1, requestLines[4].size(), file);
+                fclose(file);
+            }
+        }
+        e->Code = HttpCode::OK;
+    }
 }
 
 void TrafficStartup::GetDevice(HttpReceivedEventArgs* e)
 {
     string softwareVersion = "1.0.0";
-    string sn = StringEx::Trim(Command::Execute("cat /mtd/basesys/data/devsn"));
+    string sn = StringEx::Trim(Command::Execute("cat /mtd/basesys/data/devguid"));
     string df = Command::Execute("df");
     string diskUsed;
     string diskTotal;
@@ -171,7 +186,7 @@ void TrafficStartup::GetDevice(HttpReceivedEventArgs* e)
         {
             lock_guard<mutex> lck(_decodeMutex);
             JsonSerialization::Serialize(&channelJson, "channelStatus", _decodes[i] == NULL ? 0 : static_cast<int>(_decodes[i]->Status()));
-            JsonSerialization::Serialize(&channelJson, "packetSpan", _decodes[i] == NULL ? 0 : _decodes[i]->PacketSpan());
+            JsonSerialization::Serialize(&channelJson, "frameSpan", _decodes[i] == NULL ? 0 : _decodes[i]->PacketSpan());
             JsonSerialization::Serialize(&channelJson, "sourceWidth", _decodes[i] == NULL ? 0 : _decodes[i]->SourceWidth());
             JsonSerialization::Serialize(&channelJson, "sourceHeight", _decodes[i] == NULL ? 0 : _decodes[i]->SourceHeight());
             JsonSerialization::SerializeItem(&channelsJson, channelJson);
@@ -284,37 +299,48 @@ string TrafficStartup::GetErrorJson(const string& field, const string& message)
 
 void TrafficStartup::StartCore()
 {
-    for (unsigned int i = 0; i < _detects.size(); ++i)
+    if (_sdkInited)
     {
-        _detects[i]->Start();
+        for (unsigned int i = 0; i < _detects.size(); ++i)
+        {
+            _detects[i]->Start();
+        }
+        for (unsigned int i = 0; i < _recogns.size(); ++i)
+        {
+            _recogns[i]->Start();
+        }
     }
-    for (unsigned int i = 0; i < _recogns.size(); ++i)
+    //sdk未授权只启动网络上传功能
+    else
     {
-        _recogns[i]->Start();
+        if (_socketMaid != NULL)
+        {
+            _socketMaid->Start();
+        }
     }
 
-    bool inited = false;
+    bool sdkReady = false;
     while (!_cancelled)
     {
         this_thread::sleep_for(chrono::seconds(1));
-        if (inited)
+        if (sdkReady)
         {
            PollCore();
         }
         else
         {
-            inited = true;
+            sdkReady = true;
 #ifndef _WIN32
             for (unsigned int i = 0; i < _detects.size(); ++i)
             {
                 if (_detects[i]->IsBusy())
                 {
-                    inited = false;
+                    sdkReady = false;
                 }
             }
 #endif // !_WIN32
 
-            if (inited)
+            if (sdkReady)
             {
                 InitChannels();
                 if (_mqtt != NULL)

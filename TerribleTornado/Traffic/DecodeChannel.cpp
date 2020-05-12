@@ -849,15 +849,15 @@ void DecodeChannel::UninitDecoder()
 	}
 }
 
-DecodeResult DecodeChannel::Decode(const AVPacket* packet, int packetIndex)
+DecodeResult DecodeChannel::Decode(const AVPacket* packet, int packetIndex, int frameSpan)
 {
 	if (_useFFmpeg)
 	{
-		return DecodeByFFmpeg(packet, packetIndex);
+		return DecodeByFFmpeg(packet, packetIndex,frameSpan);
 	}
 	else
 	{
-		DecodeResult result = DecodeByHisi(packet, packetIndex);
+		DecodeResult result = DecodeByHisi(packet, packetIndex, frameSpan);
 		if (result == DecodeResult::Error)
 		{
 			LogPool::Warning(LogEvent::Decode, "decode downgrade", _inputUrl);
@@ -871,7 +871,7 @@ DecodeResult DecodeChannel::Decode(const AVPacket* packet, int packetIndex)
 	}
 }
 
-DecodeResult DecodeChannel::DecodeByHisi(const AVPacket* packet, int packetIndex)
+DecodeResult DecodeChannel::DecodeByHisi(const AVPacket* packet, int packetIndex, int frameSpan)
 {
 	bool handled = false;
 #ifndef _WIN32
@@ -915,7 +915,7 @@ DecodeResult DecodeChannel::DecodeByHisi(const AVPacket* packet, int packetIndex
 				{
 					handled = true;
 					unsigned char* yuv = reinterpret_cast<unsigned char*>(HI_MPI_SYS_Mmap(frame.stVFrame.u64PhyAddr[0], _yuv420spSize));
-					_detectChannel->HandleYUV(yuv, DestinationWidth, DestinationHeight, static_cast<int>(frame.stVFrame.u64PTS));
+					_detectChannel->HandleYUV(yuv, DestinationWidth, DestinationHeight, static_cast<int>(frame.stVFrame.u64PTS),frameSpan);
 					HI_MPI_SYS_Munmap(reinterpret_cast<HI_VOID*>(yuv), _yuv420spSize);
 					break;
 					//	hi_s32_ret = HI_MPI_VENC_SendFrame(_channelIndex, &frame, 0);
@@ -985,7 +985,7 @@ DecodeResult DecodeChannel::DecodeByHisi(const AVPacket* packet, int packetIndex
 	return handled ? DecodeResult::Handle : DecodeResult::Skip;
 }
 
-DecodeResult DecodeChannel::DecodeByFFmpeg(const AVPacket* packet, int packetIndex)
+DecodeResult DecodeChannel::DecodeByFFmpeg(const AVPacket* packet, int packetIndex, int frameSpan)
 {
 	bool handled = false;
 	if (avcodec_send_packet(_decodeContext, packet) == 0)
@@ -1013,7 +1013,7 @@ DecodeResult DecodeChannel::DecodeByFFmpeg(const AVPacket* packet, int packetInd
 					if (!_detectChannel->IsBusy())
 					{
 						handled = true;
-						_detectChannel->HandleYUV(_yuv420spBuffer, DestinationWidth, DestinationHeight, packetIndex);
+						_detectChannel->HandleYUV(_yuv420spBuffer, DestinationWidth, DestinationHeight, packetIndex, frameSpan);
 					}
 				}
 			}

@@ -60,18 +60,6 @@ int LogPool::HoldDays()
 	return _instance._holdDays;
 }
 
-void LogPool::AddLogger(Logger* logger)
-{
-	lock_guard<mutex> lck(_instance._mutex);
-	_instance._loggers.insert(logger);
-}
-
-void LogPool::RemoveLogger(Logger* logger)
-{
-	lock_guard<mutex> lck(_instance._mutex);
-	_instance._loggers.erase(logger);
-}
-
 LogType LogPool::ReadType(const FileConfig& config, const string& key)
 {
 	string value = config.Get<string>(key);

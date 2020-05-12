@@ -23,7 +23,7 @@ namespace OnePunchMan
 		* @param: height 图片高度
 		* @param: packetIndex 视频帧序号
 		*/
-		void HandleFrame(unsigned char* yuv, int width,int height,int packetIndex);
+		void HandleFrame(unsigned char* yuv, int width,int height, int packetIndex);
 
 	private:
 		//当前写入数量

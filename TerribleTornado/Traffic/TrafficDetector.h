@@ -107,8 +107,9 @@ namespace OnePunchMan
 		* @param: param 检测参数
 		* @param: iveBuffer 图片字节流
 		* @param: packetIndex 帧序号
+		* @param: frameSpan 帧间隔时间(毫秒)
 		*/
-		virtual void HandleDetect(std::map<std::string, DetectItem>* detectItems, long long timeStamp, std::string* param, const unsigned char* iveBuffer, long long packetIndex) = 0;
+		virtual void HandleDetect(std::map<std::string, DetectItem>* detectItems, long long timeStamp, std::string* param, const unsigned char* iveBuffer, int packetIndex,int frameSpan) = 0;
 
 		/**
 		* @brief: 处理识别数据
@@ -150,14 +151,14 @@ namespace OnePunchMan
 		* @param: image 绘制的图片
 		* @param: polygon 多边形
 		*/
-		static void DrawPolygon(cv::Mat* image,const Polygon& polygon);
+		static void DrawPolygon(cv::Mat* image,const Polygon& polygon, const cv::Scalar& scalar);
 
 		/**
 		* @brief: 绘制检测点
 		* @param: image 绘制的图片
 		* @param: point 点
 		*/
-		static void DrawPoint(cv::Mat* image, const Point& point);
+		static void DrawPoint(cv::Mat* image, const Point& point,const cv::Scalar& scalar);
 
 	protected:
 		//通道信息

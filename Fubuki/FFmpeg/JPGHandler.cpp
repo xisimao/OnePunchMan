@@ -8,7 +8,7 @@ JPGHandler::JPGHandler(int count)
 
 }
 
-void JPGHandler::HandleFrame(unsigned char* jpgBuffer, int jpgSize, long long packetIndex)
+void JPGHandler::HandleFrame(unsigned char* jpgBuffer, int jpgSize, int packetIndex)
 {
 	if (_count > 0 && _index >= _count)
 	{

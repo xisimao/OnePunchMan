@@ -22,7 +22,7 @@ namespace OnePunchMan
 		* @param: jpgSize jgp字节流长度
 		* @param: packetIndex 帧序号
 		*/
-		void HandleFrame(unsigned char* jpgBuffer, int jpgSize, long long packetIndex);
+		void HandleFrame(unsigned char* jpgBuffer, int jpgSize, int packetIndex);
 
 	private:
 		//当前写入数量

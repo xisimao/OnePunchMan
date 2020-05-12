@@ -61,7 +61,7 @@ int main(int argc, char* argv[])
     }
     else
     {
-        EventStartup channel;
+        FlowStartup channel;
         if (channel.Init())
         {
             channel.Start();

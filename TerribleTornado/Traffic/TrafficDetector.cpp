@@ -56,7 +56,7 @@ void TrafficDetector::JpgToBase64(string* base64,const unsigned char* jpgBuffer,
 	StringEx::ToBase64String(jpgBuffer, jpgSize, base64);
 }
 
-void TrafficDetector::DrawPolygon(cv::Mat* image, const Polygon& polygon)
+void TrafficDetector::DrawPolygon(cv::Mat* image, const Polygon& polygon, const cv::Scalar& scalar)
 {
 	vector<vector<cv::Point>> polygons;
 	vector<cv::Point> points;
@@ -65,10 +65,10 @@ void TrafficDetector::DrawPolygon(cv::Mat* image, const Polygon& polygon)
 		points.push_back(cv::Point(polygon.Points()[j].X, polygon.Points()[j].Y));
 	}
 	polygons.push_back(points);
-	cv::polylines(*image, polygons, true, cv::Scalar(0, 0, 255), 3);
+	cv::polylines(*image, polygons, true, scalar, 3);
 }
 
-void TrafficDetector::DrawPoint(cv::Mat* image, const Point& point)
+void TrafficDetector::DrawPoint(cv::Mat* image, const Point& point,const cv::Scalar& scalar)
 {
-	cv::circle(*image, cv::Point(point.X, point.Y), 10, cv::Scalar(255, 0, 0), -1);
+	cv::circle(*image, cv::Point(point.X, point.Y), 10, scalar, -1);
 }

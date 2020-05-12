@@ -58,7 +58,7 @@ namespace OnePunchMan
 		//通道检测集合
 		std::vector<TrafficDetector*> _detectors;
 		//guid数据项集合同步锁
-		std::mutex _mutex;
+		std::mutex _queueMutex;
 		//guid数据项集合
 		std::queue<RecognItem> _items;
 

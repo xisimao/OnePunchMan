@@ -3,7 +3,7 @@
 using namespace std;
 using namespace OnePunchMan;
 
-const int DetectChannel::SleepTime=10;
+const int DetectChannel::SleepTime=50;
 
 DetectChannel::DetectChannel(int channelIndex, int width, int height, RecognChannel* recogn, TrafficDetector* detector)
 	:ThreadObject("detect"), _inited(false), _channelIndex(channelIndex), _width(width), _height(height), _recogn(recogn),_detector(detector)
@@ -55,10 +55,11 @@ bool DetectChannel::IsBusy()
 	return _item.HasValue||!_inited || !_recogn->Inited();
 }
 
-void DetectChannel::HandleYUV(unsigned char* yuv, int width, int height, int packetIndex)
+void DetectChannel::HandleYUV(unsigned char* yuv, int width, int height, int packetIndex, int frameSpan)
 {
 	memcpy(_item.YuvTempBuffer, yuv, _item.YuvSize);
 	_item.PacketIndex = packetIndex;
+	_item.frameSpan = frameSpan;
 	_item.HasValue = true;
 }
 
@@ -199,6 +200,8 @@ void DetectChannel::StartCore()
 			_item.HasValue = false;
 			if (YuvToIve())
 			{
+				long long detectTimeStamp1 = DateTime::UtcNowTimeStamp();
+
 				int32_t size = static_cast<int32_t>(_result.size());
 				int result = SeemmoSDK::seemmo_video_pvc(1,
 					_indexes.data(),
@@ -210,6 +213,8 @@ void DetectChannel::StartCore()
 					_result.data(),
 					&size,
 					0);
+				long long detectTimeStamp2 = DateTime::UtcNowTimeStamp();
+
 				if (result == 0)
 				{
 					JsonDeserialization detectJd(_result.data());
@@ -218,7 +223,7 @@ void DetectChannel::StartCore()
 					GetDetecItems(&detectItems, detectJd, "Bikes");
 					GetDetecItems(&detectItems, detectJd, "Pedestrains");
 
-					_detector->HandleDetect(&detectItems, detectTimeStamp,&_param, _ives[0], _timeStamps[0]);
+					_detector->HandleDetect(&detectItems, detectTimeStamp,&_param, _ives[0], static_cast<int>(_timeStamps[0]), _item.frameSpan);
 
 					vector<RecognItem> recognItems;
 					GetRecognItems(&recognItems, detectJd, "Vehicles");
@@ -229,7 +234,9 @@ void DetectChannel::StartCore()
 						_recogn->PushItems(recognItems);
 					}
 				}
-				//LogPool::Debug("detect", _indexes[0], _timeStamps[0],DateTime::UtcNowTimeStamp() - detectTimeStamp);
+				long long detectTimeStamp3 = DateTime::UtcNowTimeStamp();
+
+				LogPool::Debug("detect", _indexes[0], _timeStamps[0], detectTimeStamp3 - detectTimeStamp, detectTimeStamp3- detectTimeStamp2, detectTimeStamp2- detectTimeStamp1, detectTimeStamp1- detectTimeStamp);
 			}
 		}
 		else

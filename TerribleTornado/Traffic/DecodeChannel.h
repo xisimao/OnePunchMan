@@ -87,7 +87,7 @@ namespace OnePunchMan
 
 		void UninitDecoder();
 
-		DecodeResult Decode(const AVPacket* packet, int packetIndex);
+		DecodeResult Decode(const AVPacket* packet, int packetIndex,int frameSpan);
 
 	private:
 
@@ -97,7 +97,7 @@ namespace OnePunchMan
 		* @param: packetIndex 视频帧序号
 		* @return: 解码成功返回Handle,略过返回Skip,否则返回Error
 		*/
-		DecodeResult DecodeByHisi(const AVPacket* packet, int packetIndex);
+		DecodeResult DecodeByHisi(const AVPacket* packet, int packetIndex, int frameSpan);
 		
 		/**
 		* @brief: 使用ffmpeg解码
@@ -105,7 +105,7 @@ namespace OnePunchMan
 		* @param: packetIndex 视频帧序号
 		* @return: 解码成功返回Handle,略过返回Skip,否则返回Error
 		*/
-		DecodeResult DecodeByFFmpeg(const AVPacket* packet, int packetIndex);
+		DecodeResult DecodeByFFmpeg(const AVPacket* packet, int packetIndex, int frameSpan);
 
 		//通道序号
 		int _channelIndex;

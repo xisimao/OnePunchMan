@@ -36,7 +36,7 @@ namespace OnePunchMan
 		*/
 		void CollectFlow(std::string* flowJson, long long timeStamp);
 
-		void HandleDetect(std::map<std::string, DetectItem>* detectItems, long long timeStamp, std::string* param, const unsigned char* iveBuffer, long long packetIndex);
+		void HandleDetect(std::map<std::string, DetectItem>* detectItems, long long timeStamp, std::string* param, const unsigned char* iveBuffer, int packetIndex,int frameSpan);
 
 		void HandleRecognize(const RecognItem& item, const unsigned char* iveBuffer, const std::string& recognJson);
 
@@ -72,10 +72,8 @@ namespace OnePunchMan
 
 			//车道编号
 			std::string LaneId;
-
 			//当前检测区域
 			Polygon Region;
-
 			//每个像素代表的米数
 			double MeterPerPixel;
 
@@ -156,7 +154,7 @@ namespace OnePunchMan
 		* @param: iveBuffer ive字节流
 		* @param: packetIndex 帧序号
 		*/
-		void DrawDetect(const std::map<std::string, DetectItem>& detectItems, const unsigned char* iveBuffer, long long packetIndex);
+		void DrawDetect(const std::map<std::string, DetectItem>& detectItems, const unsigned char* iveBuffer, int packetIndex);
 
 		//IO mqtt主题
 		static const std::string IOTopic;

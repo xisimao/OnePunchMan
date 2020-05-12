@@ -8,7 +8,7 @@
 
 namespace OnePunchMan
 {
-	//事件类型
+	//事件车道类型
 	enum class EventLaneType
 	{
 		None = 0,

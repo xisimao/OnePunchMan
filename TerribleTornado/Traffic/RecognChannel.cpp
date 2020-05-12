@@ -5,7 +5,7 @@ using namespace OnePunchMan;
 
 const int RecognChannel::ItemCount = 4;
 const int RecognChannel::MaxCacheCount = 100;
-const int RecognChannel::SleepTime = 50;
+const int RecognChannel::SleepTime = 100;
 
 RecognChannel::RecognChannel(int recognIndex,int width, int height, const vector<TrafficDetector*>& detectors)
 	:ThreadObject("recogn"), _inited(false), _recognIndex(recognIndex),_detectors(detectors)
@@ -32,7 +32,7 @@ void RecognChannel::PushItems(const vector<RecognItem> items)
 	{
 		if (_items.size() < MaxCacheCount)
 		{
-			lock_guard<mutex> lck(_mutex);
+			lock_guard<mutex> lck(_queueMutex);
 			for (vector<RecognItem>::const_iterator it = items.begin(); it != items.end(); ++it)
 			{
 				_items.push(*it);
@@ -73,8 +73,8 @@ void RecognChannel::StartCore()
 		}
 		else
 		{
-			long long recognTimeStamp = DateTime::UtcNowTimeStamp();
-			unique_lock<mutex> lck(_mutex);
+			long long recognTimeStamp1 = DateTime::UtcNowTimeStamp();
+			unique_lock<mutex> lck(_queueMutex);
 			RecognItem item = _items.front();
 			_items.pop();
 			lck.unlock();
@@ -87,11 +87,15 @@ void RecognChannel::StartCore()
 				, &size
 				, _bgrs.data()
 				, 0);
+			long long recognTimeStamp2= DateTime::UtcNowTimeStamp();
+
 			if (result == 0)
 			{
 				_detectors[item.ChannelIndex-1]->HandleRecognize(item,_bgrs[0],_result.data());
 			}
-			//LogPool::Debug("recogn", item.ChannelIndex, DateTime::UtcNowTimeStamp() - recognTimeStamp);
+			long long recognTimeStamp3 = DateTime::UtcNowTimeStamp();
+
+			LogPool::Debug("recogn", item.ChannelIndex, recognTimeStamp3 - recognTimeStamp1, recognTimeStamp3 - recognTimeStamp2, recognTimeStamp2 - recognTimeStamp1);
 		}
 	}
 

@@ -24,7 +24,7 @@ namespace OnePunchMan
 		* @param: height Õº∆¨∏ﬂ∂»
 		* @param: packetIndex  ”∆µ÷°–Ú∫≈
 		*/
-		void HandleFrame(unsigned char* ive, int width, int height, long long packetIndex);
+		void HandleFrame(unsigned char* ive, int width, int height, int packetIndex);
 		
 	private:
 
