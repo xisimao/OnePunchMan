@@ -24,41 +24,21 @@ void FlowDetector::UpdateChannel(const FlowChannel& channel)
 		FlowLaneCache cache;
 		Line detectLine = Line::FromJson(lit->DetectLine);
 		Line stopLine = Line::FromJson(lit->StopLine);
-		Line laneLine1 = Line::FromJson(lit->LaneLine1);
-		Line laneLine2 = Line::FromJson(lit->LaneLine2);
 		cache.Region = Polygon::FromJson(lit->Region);
 		if (detectLine.Empty() 
 			|| stopLine.Empty() 
-			|| laneLine1.Empty()
-			|| laneLine2.Empty()
 			|| cache.Region.Empty())
 		{
 			LogPool::Warning(LogEvent::Detect, "line empty channel:", lit->ChannelIndex, "lane:", lit->LaneId);
 		}
 		else
 		{
-			Point point1 = detectLine.Intersect(laneLine1);
-			Point point2 = detectLine.Intersect(laneLine2);
-			Point point3 = stopLine.Intersect(laneLine1);
-			Point point4 = stopLine.Intersect(laneLine2);
-			if (point1.Empty() ||
-				point2.Empty() ||
-				point3.Empty() ||
-				point4.Empty())
-			{
-				LogPool::Warning(LogEvent::Detect, "intersect point empty channel:", lit->ChannelIndex, "lane:", lit->LaneId);
-			}
-			else
-			{
-				Line line1(point1, point2);
-				Line line2(point3, point4);
-				double pixels = line1.Middle().Distance(line2.Middle());
-				cache.LaneId = lit->LaneId;
-				cache.MeterPerPixel = lit->Length / pixels;
-				_lanes.push_back(cache);
-				regionsParam.append(lit->Region);
-				regionsParam.append(",");
-			}
+			double pixels = detectLine.Middle().Distance(stopLine.Middle());
+			cache.LaneId = lit->LaneId;
+			cache.MeterPerPixel = lit->Length / pixels;
+			_lanes.push_back(cache);
+			regionsParam.append(lit->Region);
+			regionsParam.append(",");
 		}	
 	}
 	_lanesInited = _lanes.size() == channel.Lanes.size();
