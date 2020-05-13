@@ -67,7 +67,7 @@ namespace OnePunchMan
 		* @param: detectChannel 检测线程
 		* @param: debug 是否处于调试模式,处于调试模式同步调用算法
 		*/
-		DecodeChannel(const std::string& inputUrl,const std::string& outputUrl,int channelIndex, DetectChannel* detectChannel, bool debug=false);
+		DecodeChannel(const std::string& inputUrl,const std::string& outputUrl,int channelIndex, DetectChannel* detectChannel, bool debug);
 		
 		/**
 		* @brief: 初始化hisi sdk
