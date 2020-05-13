@@ -41,7 +41,7 @@ void FlowDetector::UpdateChannel(const FlowChannel& channel)
 			regionsParam.append(",");
 		}	
 	}
-	_lanesInited = _lanes.size() == channel.Lanes.size();
+	_lanesInited = !_lanes.empty() && _lanes.size() == channel.Lanes.size();
 	if (!_lanesInited)
 	{
 		LogPool::Warning("lane init failed", channel.ChannelIndex);

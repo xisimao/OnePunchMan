@@ -44,6 +44,7 @@ void EventDetector::UpdateChannel(const EventChannel& channel)
 					cache.XTrend = point2.X > point1.X;
 					cache.YTrend = point2.Y > point1.Y;
 					_lanes.push_back(cache);
+					LogPool::Information("init lane", channel.ChannelIndex, lit->LaneId, cache.XTrend, cache.XTrend);
 					regionsParam.append(lit->Region);
 					regionsParam.append(",");
 				}
@@ -56,7 +57,7 @@ void EventDetector::UpdateChannel(const EventChannel& channel)
 			}
 		}
 	}
-	_lanesInited = _lanes.size()==channel.Lanes.size();
+	_lanesInited = !_lanes.empty()&& _lanes.size()==channel.Lanes.size();
 	if (!_lanesInited)
 	{
 		LogPool::Warning("lane init failed", channel.ChannelIndex);
@@ -197,7 +198,6 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 					++carsInLane;
 					if (carsInLane == CarCount)
 					{
-						cache.Congestion = true;
 						if (timeStamp - cache.LastReportTimeStamp > ReportSpan)
 						{
 							string laneJson;
@@ -264,6 +264,7 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 				}
 			}	
 		}
+		cache.Congestion = carsInLane >= CarCount;
 	}
 	lck.unlock();
 	if (!lanesJson.empty())
