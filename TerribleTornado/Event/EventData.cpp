@@ -52,7 +52,7 @@ EventChannel EventChannelData::FillChannel(const SqliteReader& sqlite)
 	channel.ChannelType = sqlite.GetInt(3);
 
 	SqliteReader laneSqlite(DbName);
-	string laneSql(StringEx::Combine("Select * From Event_Lane Where ChannelIndex=", channel.ChannelIndex));
+	string laneSql(StringEx::Combine("Select * From Event_Lane Where ChannelIndex=", channel.ChannelIndex," Order By LaneIndex"));
 	if (laneSqlite.BeginQuery(laneSql))
 	{
 		while (laneSqlite.HasRow())
