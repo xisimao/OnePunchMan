@@ -59,6 +59,7 @@ namespace OnePunchMan
 		static seemmo_thread_uninit_t seemmo_thread_uninit;
 		static seemmo_video_pvc_t seemmo_video_pvc;
 		static seemmo_video_pvc_recog_t seemmo_video_pvc_recog;
+		static seemmo_version_t seemmo_version;
 
 	private:
 

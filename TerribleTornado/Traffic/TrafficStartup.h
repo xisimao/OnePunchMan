@@ -156,6 +156,8 @@ namespace OnePunchMan
         DateTime _startTime;
         //算法是否初始化成功
         bool _sdkInited;
+        //算法版本
+        std::string _sdkVersion;
 
         //socket连接
         SocketMaid* _socketMaid;

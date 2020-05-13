@@ -58,7 +58,10 @@ bool TrafficStartup::Init()
     }
 
     _sdkInited = SeemmoSDK::Init();
-
+    if (SeemmoSDK::seemmo_version != NULL)
+    {
+        _sdkVersion = SeemmoSDK::seemmo_version();
+    }
     _mqtt = new MqttChannel("127.0.0.1", 1883);
 
     for (int i = 0; i < ChannelCount; ++i)
@@ -203,6 +206,7 @@ void TrafficStartup::GetDevice(HttpReceivedEventArgs* e)
     JsonSerialization::Serialize(&deviceJson, "licenceStatus", _sdkInited);
     JsonSerialization::Serialize(&deviceJson, "sn", sn);
     JsonSerialization::Serialize(&deviceJson, "softwareVersion", softwareVersion);
+    JsonSerialization::Serialize(&deviceJson, "sdkVersion", _sdkVersion);
     JsonSerialization::Serialize(&deviceJson, "destinationWidth", FFmpegChannel::DestinationWidth);
     JsonSerialization::Serialize(&deviceJson, "destinationHeight", FFmpegChannel::DestinationHeight);
     JsonSerialization::Serialize(&deviceJson, "mqttConnected", _mqtt->Connected());
@@ -220,7 +224,7 @@ void TrafficStartup::SetDecode(int channelIndex, const string& inputUrl, const s
     {
         if (_decodes[channelIndex - 1] == NULL)
         {
-            DecodeChannel* decode = new DecodeChannel(inputUrl, outputUrl, channelIndex, _detects[channelIndex - 1]);
+            DecodeChannel* decode = new DecodeChannel(inputUrl, outputUrl, channelIndex, _detects[channelIndex - 1],false);
             decode->Start();
             _decodes[channelIndex - 1] = decode;
         }
@@ -231,7 +235,7 @@ void TrafficStartup::SetDecode(int channelIndex, const string& inputUrl, const s
             {
                 _decodes[channelIndex - 1]->Stop();
                 delete _decodes[channelIndex - 1];
-                DecodeChannel* decode = new DecodeChannel(inputUrl, outputUrl, channelIndex, _detects[channelIndex - 1]);
+                DecodeChannel* decode = new DecodeChannel(inputUrl, outputUrl, channelIndex, _detects[channelIndex - 1],false);
                 decode->Start();
                 _decodes[channelIndex - 1] = decode;
             }

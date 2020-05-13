@@ -9,6 +9,7 @@ seemmo_thread_init_t SeemmoSDK::seemmo_thread_init = NULL;
 seemmo_thread_uninit_t SeemmoSDK::seemmo_thread_uninit = NULL;
 seemmo_video_pvc_t SeemmoSDK::seemmo_video_pvc = NULL;
 seemmo_video_pvc_recog_t SeemmoSDK::seemmo_video_pvc_recog = NULL;
+seemmo_version_t SeemmoSDK::seemmo_version = NULL;
 
 void* SeemmoSDK::Handle = NULL;
 
@@ -27,6 +28,7 @@ bool SeemmoSDK::Init()
 	seemmo_thread_uninit = (seemmo_thread_uninit_t)dlsym(Handle, "seemmo_thread_uninit");
 	seemmo_video_pvc = (seemmo_video_pvc_t)dlsym(Handle, "seemmo_video_pvc");
 	seemmo_video_pvc_recog = (seemmo_video_pvc_recog_t)dlsym(Handle, "seemmo_video_pvc_recog");
+	seemmo_version = (seemmo_version_t)dlsym(Handle, "seemmo_version");
 
 	if (seemmo_process_init == NULL
 		|| seemmo_uninit == NULL
@@ -34,6 +36,7 @@ bool SeemmoSDK::Init()
 		|| seemmo_thread_uninit == NULL
 		|| seemmo_video_pvc == NULL
 		|| seemmo_video_pvc_recog == NULL
+		|| seemmo_version == NULL
 		)
 	{
 		LogPool::Error(LogEvent::Detect, "init func failed");
