@@ -168,7 +168,7 @@ namespace OnePunchMan
         //识别线程集合，等于视频总数/RecognChannel::ItemCount
         std::vector<RecognChannel*> _recogns;
         //解码线程同步锁
-        std::mutex _decodeMutex;
+        std::timed_mutex _decodeMutex;
         //解码线程集合，等于视频总数，如果视频清空则为NULL
         std::vector<DecodeChannel*> _decodes;
 

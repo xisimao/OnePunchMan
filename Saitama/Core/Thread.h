@@ -43,6 +43,9 @@ namespace OnePunchMan
 		*/
 		void Stop();
 
+		//轮询中睡眠时间(秒)
+		static const int LockTime;
+
 	protected:
 
 		/**

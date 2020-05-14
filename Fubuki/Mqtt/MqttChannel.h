@@ -58,7 +58,7 @@ namespace OnePunchMan
         static const int PollTime;
 
         //Í¬²½Ëø
-        std::mutex _mutex;
+        std::timed_mutex _mutex;
         //mosqÊµÀý
         struct mosquitto* _mosq;
 

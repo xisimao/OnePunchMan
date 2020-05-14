@@ -107,15 +107,22 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
             string channelJson = GetChannelJson(e->Host,channelIndex);
             if (channelJson.empty())
             {
-                lock_guard<mutex> lck(_decodeMutex);
-                JsonSerialization::Serialize(&channelJson, "channelStatus", _decodes[channelIndex-1] == NULL ? 0 : static_cast<int>(_decodes[channelIndex - 1]->Status()));
-                JsonSerialization::Serialize(&channelJson, "frameSpan", _decodes[channelIndex - 1] == NULL ? 0 : _decodes[channelIndex - 1]->PacketSpan());
-                JsonSerialization::Serialize(&channelJson, "sourceWidth", _decodes[channelIndex - 1] == NULL ? 0 : _decodes[channelIndex - 1]->SourceWidth());
-                JsonSerialization::Serialize(&channelJson, "sourceHeight", _decodes[channelIndex - 1] == NULL ? 0 : _decodes[channelIndex - 1]->SourceHeight());
                 e->Code = HttpCode::NotFound;
             }
             else
             {
+                unique_lock<timed_mutex> lck(_decodeMutex, std::defer_lock);
+                if (lck.try_lock_for(chrono::seconds(ThreadObject::LockTime)))
+                {
+                    JsonSerialization::Serialize(&channelJson, "channelStatus", _decodes[channelIndex - 1] == NULL ? 0 : static_cast<int>(_decodes[channelIndex - 1]->Status()));
+                    JsonSerialization::Serialize(&channelJson, "frameSpan", _decodes[channelIndex - 1] == NULL ? 0 : _decodes[channelIndex - 1]->PacketSpan());
+                    JsonSerialization::Serialize(&channelJson, "sourceWidth", _decodes[channelIndex - 1] == NULL ? 0 : _decodes[channelIndex - 1]->SourceWidth());
+                    JsonSerialization::Serialize(&channelJson, "sourceHeight", _decodes[channelIndex - 1] == NULL ? 0 : _decodes[channelIndex - 1]->SourceHeight());
+                }
+                else
+                {
+                    LogPool::Error(LogEvent::Thread, "get channel lock timeout");
+                }
                 e->ResponseJson = channelJson;
                 e->Code = HttpCode::OK;
             }
@@ -187,12 +194,19 @@ void TrafficStartup::GetDevice(HttpReceivedEventArgs* e)
         string channelJson = GetChannelJson(e->Host,i+1);
         if (!channelJson.empty()) 
         {
-            lock_guard<mutex> lck(_decodeMutex);
-            JsonSerialization::Serialize(&channelJson, "channelStatus", _decodes[i] == NULL ? 0 : static_cast<int>(_decodes[i]->Status()));
-            JsonSerialization::Serialize(&channelJson, "frameSpan", _decodes[i] == NULL ? 0 : _decodes[i]->PacketSpan());
-            JsonSerialization::Serialize(&channelJson, "sourceWidth", _decodes[i] == NULL ? 0 : _decodes[i]->SourceWidth());
-            JsonSerialization::Serialize(&channelJson, "sourceHeight", _decodes[i] == NULL ? 0 : _decodes[i]->SourceHeight());
-            JsonSerialization::SerializeItem(&channelsJson, channelJson);
+            unique_lock<timed_mutex> lck(_decodeMutex, std::defer_lock);
+            if (lck.try_lock_for(chrono::seconds(ThreadObject::LockTime)))
+            {
+                JsonSerialization::Serialize(&channelJson, "channelStatus", _decodes[i] == NULL ? 0 : static_cast<int>(_decodes[i]->Status()));
+                JsonSerialization::Serialize(&channelJson, "frameSpan", _decodes[i] == NULL ? 0 : _decodes[i]->PacketSpan());
+                JsonSerialization::Serialize(&channelJson, "sourceWidth", _decodes[i] == NULL ? 0 : _decodes[i]->SourceWidth());
+                JsonSerialization::Serialize(&channelJson, "sourceHeight", _decodes[i] == NULL ? 0 : _decodes[i]->SourceHeight());
+                JsonSerialization::SerializeItem(&channelsJson, channelJson);
+            }
+            else
+            {
+                LogPool::Error(LogEvent::Thread, "get device lock timeout");
+            }  
         }
     }
  
@@ -219,41 +233,56 @@ void TrafficStartup::GetDevice(HttpReceivedEventArgs* e)
 
 void TrafficStartup::SetDecode(int channelIndex, const string& inputUrl, const string& outputUrl)
 {
-    lock_guard<mutex> lck(_decodeMutex);
-    if (ChannelIndexEnable(channelIndex))
+    unique_lock<timed_mutex> lck(_decodeMutex, std::defer_lock);
+    if (lck.try_lock_for(chrono::seconds(ThreadObject::LockTime)))
     {
-        if (_decodes[channelIndex - 1] == NULL)
+        if (ChannelIndexEnable(channelIndex))
         {
-            DecodeChannel* decode = new DecodeChannel(inputUrl, outputUrl, channelIndex, _detects[channelIndex - 1],false);
-            decode->Start();
-            _decodes[channelIndex - 1] = decode;
-        }
-        else
-        {
-            //如果地址不一致
-            if (_decodes[channelIndex - 1]->InputUrl().compare(inputUrl) != 0)
+            if (_decodes[channelIndex - 1] == NULL)
             {
-                _decodes[channelIndex - 1]->Stop();
-                delete _decodes[channelIndex - 1];
-                DecodeChannel* decode = new DecodeChannel(inputUrl, outputUrl, channelIndex, _detects[channelIndex - 1],false);
+                DecodeChannel* decode = new DecodeChannel(inputUrl, outputUrl, channelIndex, _detects[channelIndex - 1], false);
                 decode->Start();
                 _decodes[channelIndex - 1] = decode;
             }
+            else
+            {
+                //如果地址不一致
+                if (_decodes[channelIndex - 1]->InputUrl().compare(inputUrl) != 0)
+                {
+                    _decodes[channelIndex - 1]->Stop();
+                    delete _decodes[channelIndex - 1];
+                    DecodeChannel* decode = new DecodeChannel(inputUrl, outputUrl, channelIndex, _detects[channelIndex - 1], false);
+                    decode->Start();
+                    _decodes[channelIndex - 1] = decode;
+                }
+            }
         }
     }
+    else
+    {
+        LogPool::Error(LogEvent::Thread, "set decode timeout");
+    }
+
 }
 
 void TrafficStartup::DeleteDecode(int channelIndex)
 {
-    lock_guard<mutex> lck(_decodeMutex);
-    if (ChannelIndexEnable(channelIndex))
+    unique_lock<timed_mutex> lck(_decodeMutex, std::defer_lock);
+    if (lck.try_lock_for(chrono::seconds(ThreadObject::LockTime)))
     {
-        if (_decodes[channelIndex - 1] != NULL)
+        if (ChannelIndexEnable(channelIndex))
         {
-            _decodes[channelIndex - 1]->Stop();
-            delete _decodes[channelIndex - 1];
-            _decodes[channelIndex - 1] = NULL;
+            if (_decodes[channelIndex - 1] != NULL)
+            {
+                _decodes[channelIndex - 1]->Stop();
+                delete _decodes[channelIndex - 1];
+                _decodes[channelIndex - 1] = NULL;
+            }
         }
+    }
+    else
+    {
+        LogPool::Error(LogEvent::Thread, "delete decode timeout");
     }
 }
 

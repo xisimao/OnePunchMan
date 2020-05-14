@@ -656,7 +656,7 @@ bool DecodeChannel::InitHisi(int videoCount)
 	//	}
 	//}
 #endif
-	LogPool::Error("init hisi sdk");
+	LogPool::Information(LogEvent::Decode,"init hisi sdk");
 	return true;
 }
 
@@ -776,7 +776,7 @@ void DecodeChannel::UninitHisi(int videoCount)
 	HI_MPI_SYS_Exit();
 	HI_MPI_VB_Exit();
 #endif // !_WIN32
-	LogPool::Error("uninit hisi sdk");
+	LogPool::Information(LogEvent::Decode, "uninit hisi sdk");
 }
 
 bool DecodeChannel::InitDecoder()

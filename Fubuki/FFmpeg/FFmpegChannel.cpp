@@ -394,11 +394,11 @@ void FFmpegChannel::StartCore()
 				}
 				long long end = DateTime::UtcNowTimeStamp();
 				long long sleepTime = frameSpan - (end - start);
-				if (sleepTime > 0)
+				if (sleepTime > 0&&sleepTime<=frameSpan)
 				{
 					this_thread::sleep_for(chrono::milliseconds(sleepTime));
 				}
-				//LogPool::Debug(LogEvent::Decode, "get packet", packetIndex, sleepTime,static_cast<int>(result));
+				LogPool::Debug(LogEvent::Decode, "get packet", _inputUrl, packetIndex, sleepTime,static_cast<int>(result));
 			}
 			av_packet_unref(&packet);
 		}

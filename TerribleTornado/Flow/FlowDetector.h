@@ -165,7 +165,7 @@ namespace OnePunchMan
 		long long _lastTimeStamp;
 
 		//车道集合同步锁
-		std::mutex _laneMutex;
+		std::timed_mutex _laneMutex;
 		//车道集合
 		std::vector<FlowLaneCache> _lanes;
 	};

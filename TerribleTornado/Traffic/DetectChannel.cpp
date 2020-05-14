@@ -168,7 +168,6 @@ void DetectChannel::GetRecognItems(vector<RecognItem>* items, const JsonDeserial
 	}
 }
 
-
 void DetectChannel::StartCore()
 {
 	if (SeemmoSDK::seemmo_thread_init == NULL || SeemmoSDK::seemmo_video_pvc == NULL || SeemmoSDK::seemmo_video_pvc_recog == NULL)
@@ -235,7 +234,6 @@ void DetectChannel::StartCore()
 					}
 				}
 				long long detectTimeStamp3 = DateTime::UtcNowTimeStamp();
-
 				LogPool::Debug("detect", _indexes[0], _timeStamps[0], detectTimeStamp3 - detectTimeStamp, detectTimeStamp3- detectTimeStamp2, detectTimeStamp2- detectTimeStamp1, detectTimeStamp1- detectTimeStamp);
 			}
 		}

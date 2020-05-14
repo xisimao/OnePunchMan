@@ -3,6 +3,7 @@
 using namespace std;
 using namespace OnePunchMan;
 
+const int ThreadObject::LockTime = 3;
 const int ThreadObject::SleepTime = 100;
 
 ThreadObject::ThreadObject(const string& name)

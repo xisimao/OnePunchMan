@@ -152,7 +152,7 @@ namespace OnePunchMan
 		static const int PointCount;
 
 		//车道集合同步锁
-		std::mutex _laneMutex;
+		std::timed_mutex _laneMutex;
 		//车道集合
 		std::vector<EventLaneCache> _lanes;
 

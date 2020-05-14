@@ -12,7 +12,7 @@ RecognChannel::RecognChannel(int recognIndex,int width, int height, const vector
 {
 	_bgrs.push_back(new uint8_t[width * height * 3]);
 	_guids.resize(1);
-	_param = "{\"Detect\":{\"DetectRegion\":[],\"IsDet\":true,\"MaxCarWidth\":0,\"MinCarWidth\":0,\"Mode\":0,\"Threshold\":20,\"Version\":1001},\"Recognize\":{\"Person\":{\"IsRec\":true},\"Feature\":{\"IsRec\":true},\"Vehicle\":{\"Brand\":{\"IsRec\":true},\"Plate\":{\"IsRec\":true},\"Color\":{\"IsRec\":true},\"Marker\":{\"IsRec\":true},\"Sunroof\":{\"IsRec\":true},\"SpareTire\":{\"IsRec\":true},\"Slag\":{\"IsRec\":true},\"Rack\":{\"IsRec\":true},\"Danger\":{\"IsRec\":true},\"Crash\":{\"IsRec\":true},\"Call\":{\"IsRec\":true},\"Belt\":{\"IsRec\":true},\"Convertible\":{\"IsRec\":true},\"Manned\":{\"IsRec\":true}}}}";
+	_param = "{\"Detect\":{\"IsDet\":true,\"Mode\":0,\"Threshold\":20},\"Recognize\":{\"Person\":{\"IsRec\":true},\"Vehicle\":{\"Brand\":{\"IsRec\":true},\"Plate\":{\"IsRec\":true},\"Color\":{\"IsRec\":true}}}}";
 	_result.resize(4 * 1024 * 1024);
 }
 
@@ -32,10 +32,17 @@ void RecognChannel::PushItems(const vector<RecognItem> items)
 	{
 		if (_items.size() < MaxCacheCount)
 		{
-			lock_guard<mutex> lck(_queueMutex);
-			for (vector<RecognItem>::const_iterator it = items.begin(); it != items.end(); ++it)
+			unique_lock<timed_mutex> lck(_queueMutex, std::defer_lock);
+			if (lck.try_lock_for(chrono::seconds(ThreadObject::LockTime)))
 			{
-				_items.push(*it);
+				for (vector<RecognItem>::const_iterator it = items.begin(); it != items.end(); ++it)
+				{
+					_items.push(*it);
+				}
+			}
+			else
+			{
+				LogPool::Error(LogEvent::Thread, "recogn push lock timeout");
 			}
 		}
 		else
@@ -74,28 +81,33 @@ void RecognChannel::StartCore()
 		else
 		{
 			long long recognTimeStamp1 = DateTime::UtcNowTimeStamp();
-			unique_lock<mutex> lck(_queueMutex);
-			RecognItem item = _items.front();
-			_items.pop();
-			lck.unlock();
-			_guids[0] = item.Guid.c_str();
-			int32_t size = static_cast<int32_t>(_result.size());
-			int result=SeemmoSDK::seemmo_video_pvc_recog(1
-				, _guids.data()
-				, _param.c_str()
-				, _result.data()
-				, &size
-				, _bgrs.data()
-				, 0);
-			long long recognTimeStamp2= DateTime::UtcNowTimeStamp();
-
-			if (result == 0)
+			unique_lock<timed_mutex> lck(_queueMutex, std::defer_lock);
+			if (lck.try_lock_for(chrono::seconds(ThreadObject::LockTime)))
 			{
-				_detectors[item.ChannelIndex-1]->HandleRecognize(item,_bgrs[0],_result.data());
+				RecognItem item = _items.front();
+				_items.pop();
+				lck.unlock();
+				_guids[0] = item.Guid.c_str();
+				int32_t size = static_cast<int32_t>(_result.size());
+				int result = SeemmoSDK::seemmo_video_pvc_recog(1
+					, _guids.data()
+					, _param.c_str()
+					, _result.data()
+					, &size
+					, _bgrs.data()
+					, 0);
+				long long recognTimeStamp2 = DateTime::UtcNowTimeStamp();
+				if (result == 0)
+				{
+					_detectors[item.ChannelIndex - 1]->HandleRecognize(item, _bgrs[0], _result.data());
+				}
+				long long recognTimeStamp3 = DateTime::UtcNowTimeStamp();
+				LogPool::Debug("recogn", item.ChannelIndex, recognTimeStamp3 - recognTimeStamp1, recognTimeStamp3 - recognTimeStamp2, recognTimeStamp2 - recognTimeStamp1);
 			}
-			long long recognTimeStamp3 = DateTime::UtcNowTimeStamp();
-
-			LogPool::Debug("recogn", item.ChannelIndex, recognTimeStamp3 - recognTimeStamp1, recognTimeStamp3 - recognTimeStamp2, recognTimeStamp2 - recognTimeStamp1);
+			else
+			{
+				LogPool::Error(LogEvent::Thread,"recogn pop lock timeout");
+			}		
 		}
 	}
 
