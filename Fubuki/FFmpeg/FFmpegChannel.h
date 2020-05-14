@@ -83,7 +83,7 @@ namespace OnePunchMan
 		* @brief: 获取处理帧间隔
 		* @return: 处理帧间隔
 		*/
-		int PacketSpan();
+		int FrameSpan();
 
 		/**
 		* @brief: 获取输出视频输入宽度
@@ -119,11 +119,11 @@ namespace OnePunchMan
 		/**
 		* @brief: 解码
 		* @param: packet 视频帧
-		* @param: packetIndex 视频帧序号
+		* @param: frameIndex 视频帧序号
 		* @param: frameSpan 两帧的间隔时间(毫秒)
 		* @return: 解码成功返回Handle，略过返回Ski，否则返回Error，解码失败会结束线程
 		*/
-		virtual DecodeResult Decode(const AVPacket* packet, int packetIndex,int frameSpan);
+		virtual DecodeResult Decode(const AVPacket* packet, int frameIndex,int frameSpan);
 
 		//视频输入相关
 		std::string _inputUrl;
@@ -179,9 +179,9 @@ namespace OnePunchMan
 		//yuv转bgr
 		SwsContext* _bgrSwsContext;
 		//上一次处理帧的序号
-		int _lastPacketIndex;
+		int _lastframeIndex;
 		//两次处理帧的间隔
-		int _packetSpan;
+		int _frameSpan;
 		//bgr写bmp
 		BGR24Handler _bgrHandler;
 	};

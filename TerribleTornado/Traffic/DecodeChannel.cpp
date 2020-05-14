@@ -849,15 +849,15 @@ void DecodeChannel::UninitDecoder()
 	}
 }
 
-DecodeResult DecodeChannel::Decode(const AVPacket* packet, int packetIndex, int frameSpan)
+DecodeResult DecodeChannel::Decode(const AVPacket* packet, int frameIndex, int frameSpan)
 {
 	if (_useFFmpeg)
 	{
-		return DecodeByFFmpeg(packet, packetIndex,frameSpan);
+		return DecodeByFFmpeg(packet, frameIndex,frameSpan);
 	}
 	else
 	{
-		DecodeResult result = DecodeByHisi(packet, packetIndex, frameSpan);
+		DecodeResult result = DecodeByHisi(packet, frameIndex, frameSpan);
 		if (result == DecodeResult::Error)
 		{
 			LogPool::Warning(LogEvent::Decode, "decode downgrade", _inputUrl);
@@ -871,7 +871,7 @@ DecodeResult DecodeChannel::Decode(const AVPacket* packet, int packetIndex, int 
 	}
 }
 
-DecodeResult DecodeChannel::DecodeByHisi(const AVPacket* packet, int packetIndex, int frameSpan)
+DecodeResult DecodeChannel::DecodeByHisi(const AVPacket* packet, int frameIndex, int frameSpan)
 {
 	bool handled = false;
 #ifndef _WIN32
@@ -879,7 +879,7 @@ DecodeResult DecodeChannel::DecodeByHisi(const AVPacket* packet, int packetIndex
 	if (packet != NULL)
 	{
 		VDEC_STREAM_S stStream;
-		stStream.u64PTS = packetIndex;
+		stStream.u64PTS = frameIndex;
 		stStream.pu8Addr = packet->data;
 		stStream.u32Len = packet->size;
 		stStream.bEndOfFrame = HI_TRUE;
@@ -985,7 +985,7 @@ DecodeResult DecodeChannel::DecodeByHisi(const AVPacket* packet, int packetIndex
 	return handled ? DecodeResult::Handle : DecodeResult::Skip;
 }
 
-DecodeResult DecodeChannel::DecodeByFFmpeg(const AVPacket* packet, int packetIndex, int frameSpan)
+DecodeResult DecodeChannel::DecodeByFFmpeg(const AVPacket* packet, int frameIndex, int frameSpan)
 {
 	bool handled = false;
 	if (avcodec_send_packet(_decodeContext, packet) == 0)
@@ -1008,12 +1008,12 @@ DecodeResult DecodeChannel::DecodeByFFmpeg(const AVPacket* packet, int packetInd
 					_yuvFrame->linesize, 0, _decodeContext->height,
 					_yuv420spFrame->data, _yuv420spFrame->linesize) != 0)
 				{
-					//_yuvHandler->HandleFrame(_yuv420spBuffer, DestinationWidth, DestinationHeight, packetIndex);
+					//_yuvHandler->HandleFrame(_yuv420spBuffer, DestinationWidth, DestinationHeight, frameIndex);
 
 					if (!_detectChannel->IsBusy())
 					{
 						handled = true;
-						_detectChannel->HandleYUV(_yuv420spBuffer, DestinationWidth, DestinationHeight, packetIndex, frameSpan);
+						_detectChannel->HandleYUV(_yuv420spBuffer, DestinationWidth, DestinationHeight, frameIndex, frameSpan);
 					}
 				}
 			}

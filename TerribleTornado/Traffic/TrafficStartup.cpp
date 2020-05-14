@@ -115,7 +115,7 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
                 if (lck.try_lock_for(chrono::seconds(ThreadObject::LockTime)))
                 {
                     JsonSerialization::Serialize(&channelJson, "channelStatus", _decodes[channelIndex - 1] == NULL ? 0 : static_cast<int>(_decodes[channelIndex - 1]->Status()));
-                    JsonSerialization::Serialize(&channelJson, "frameSpan", _decodes[channelIndex - 1] == NULL ? 0 : _decodes[channelIndex - 1]->PacketSpan());
+                    JsonSerialization::Serialize(&channelJson, "frameSpan", _decodes[channelIndex - 1] == NULL ? 0 : _decodes[channelIndex - 1]->FrameSpan());
                     JsonSerialization::Serialize(&channelJson, "sourceWidth", _decodes[channelIndex - 1] == NULL ? 0 : _decodes[channelIndex - 1]->SourceWidth());
                     JsonSerialization::Serialize(&channelJson, "sourceHeight", _decodes[channelIndex - 1] == NULL ? 0 : _decodes[channelIndex - 1]->SourceHeight());
                 }
@@ -169,7 +169,6 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
 
 void TrafficStartup::GetDevice(HttpReceivedEventArgs* e)
 {
-    string softwareVersion = "1.0.0";
     string sn = StringEx::Trim(Command::Execute("cat /mtd/basesys/data/devguid"));
     string df = Command::Execute("df");
     string diskUsed;
@@ -198,7 +197,7 @@ void TrafficStartup::GetDevice(HttpReceivedEventArgs* e)
             if (lck.try_lock_for(chrono::seconds(ThreadObject::LockTime)))
             {
                 JsonSerialization::Serialize(&channelJson, "channelStatus", _decodes[i] == NULL ? 0 : static_cast<int>(_decodes[i]->Status()));
-                JsonSerialization::Serialize(&channelJson, "frameSpan", _decodes[i] == NULL ? 0 : _decodes[i]->PacketSpan());
+                JsonSerialization::Serialize(&channelJson, "frameSpan", _decodes[i] == NULL ? 0 : _decodes[i]->FrameSpan());
                 JsonSerialization::Serialize(&channelJson, "sourceWidth", _decodes[i] == NULL ? 0 : _decodes[i]->SourceWidth());
                 JsonSerialization::Serialize(&channelJson, "sourceHeight", _decodes[i] == NULL ? 0 : _decodes[i]->SourceHeight());
                 JsonSerialization::SerializeItem(&channelsJson, channelJson);
@@ -219,7 +218,7 @@ void TrafficStartup::GetDevice(HttpReceivedEventArgs* e)
     JsonSerialization::Serialize(&deviceJson, "diskTotal", diskTotal);
     JsonSerialization::Serialize(&deviceJson, "licenceStatus", _sdkInited);
     JsonSerialization::Serialize(&deviceJson, "sn", sn);
-    JsonSerialization::Serialize(&deviceJson, "softwareVersion", softwareVersion);
+    JsonSerialization::Serialize(&deviceJson, "softwareVersion", _softwareVersion);
     JsonSerialization::Serialize(&deviceJson, "sdkVersion", _sdkVersion);
     JsonSerialization::Serialize(&deviceJson, "destinationWidth", FFmpegChannel::DestinationWidth);
     JsonSerialization::Serialize(&deviceJson, "destinationHeight", FFmpegChannel::DestinationHeight);

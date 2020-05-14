@@ -55,10 +55,10 @@ bool DetectChannel::IsBusy()
 	return _item.HasValue||!_inited || !_recogn->Inited();
 }
 
-void DetectChannel::HandleYUV(unsigned char* yuv, int width, int height, int packetIndex, int frameSpan)
+void DetectChannel::HandleYUV(unsigned char* yuv, int width, int height, int frameIndex, int frameSpan)
 {
 	memcpy(_item.YuvTempBuffer, yuv, _item.YuvSize);
-	_item.PacketIndex = packetIndex;
+	_item.frameIndex = frameIndex;
 	_item.frameSpan = frameSpan;
 	_item.HasValue = true;
 }
@@ -112,8 +112,8 @@ bool DetectChannel::YuvToIve()
 		LogPool::Information("HI_MPI_IVE_Query", hi_s32_ret);
 		return false;
 	}
-	//_yuvHandler->HandleFrame(_item.YuvBuffer, 1920, 1080, _item.PacketIndex);
-	//_bgrHandler->HandleFrame(_item.IveBuffer, 1920, 1080, _item.PacketIndex);
+	//_yuvHandler->HandleFrame(_item.YuvBuffer, 1920, 1080, _item.frameIndex);
+	//_bgrHandler->HandleFrame(_item.IveBuffer, 1920, 1080, _item.frameIndex);
 
 #endif // !_WIN32
 	return true;
@@ -195,7 +195,7 @@ void DetectChannel::StartCore()
 			long long detectTimeStamp = DateTime::UtcNowTimeStamp();
 			memcpy(_item.YuvBuffer, _item.YuvTempBuffer, _item.YuvSize);
 			_params[0] = _param.c_str();
-			_timeStamps[0] = _item.PacketIndex;
+			_timeStamps[0] = _item.frameIndex;
 			_item.HasValue = false;
 			if (YuvToIve())
 			{

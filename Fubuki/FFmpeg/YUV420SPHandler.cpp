@@ -8,12 +8,12 @@ YUV420SPHandler::YUV420SPHandler(int count)
 
 }
 
-void YUV420SPHandler::HandleFrame(unsigned char* yuv,int width, int height,int packetIndex)
+void YUV420SPHandler::HandleFrame(unsigned char* yuv,int width, int height,int frameIndex)
 {
 	if (_index < _count)
 	{
 		Path::CreateDirectory("../images");
-		FILE* file = fopen(StringEx::Combine("../images/yuv420sp_", packetIndex, ".yuv").c_str(), "wb");
+		FILE* file = fopen(StringEx::Combine("../images/yuv420sp_", frameIndex, ".yuv").c_str(), "wb");
 		if (file  == NULL) {
 			return;
 		}

@@ -34,6 +34,10 @@ void EventStartup::InitChannels()
             SetDecode(channel.ChannelIndex, channel.ChannelUrl, channel.RtmpUrl("127.0.0.1"));
             _detectors[i]->UpdateChannel(channel);
         }
+        if (_softwareVersion.empty())
+        {
+            _softwareVersion = data.Version();
+        }
     }
 }
 

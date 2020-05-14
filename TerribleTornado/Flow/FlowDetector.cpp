@@ -84,11 +84,11 @@ void FlowDetector::ClearChannel()
 	}
 }
 
-void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long timeStamp, string* param, const unsigned char* iveBuffer, int packetIndex, int frameSpan)
+void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long timeStamp, string* param, const unsigned char* iveBuffer, int frameIndex, int frameSpan)
 {
 	if (_debug)
 	{
-		timeStamp = packetIndex * frameSpan;
+		timeStamp = frameIndex * frameSpan;
 	}
 	string lanesJson;
 	string channelUrl;
@@ -225,7 +225,7 @@ void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long 
 			_mqtt->Send(IOTopic, channelJson);
 		}
 	}
-	DrawDetect(*detectItems, iveBuffer, packetIndex);
+	DrawDetect(*detectItems, iveBuffer, frameIndex);
 }
 
 void FlowDetector::HandleRecognize(const RecognItem& recognItem, const unsigned char* iveBuffer, const string& recognJson)
@@ -452,7 +452,7 @@ void FlowDetector::CollectFlow(string* flowJson, long long timeStamp)
 	}
 }
 
-void FlowDetector::DrawDetect(const map<string, DetectItem>& detectItems, const unsigned char* iveBuffer, int packetIndex)
+void FlowDetector::DrawDetect(const map<string, DetectItem>& detectItems, const unsigned char* iveBuffer, int frameIndex)
 {
 	if (!_debug)
 	{
@@ -498,6 +498,6 @@ void FlowDetector::DrawDetect(const map<string, DetectItem>& detectItems, const 
 	}
 
 	int jpgSize = BgrToJpg(image.data, _width, _height,&_jpgBuffer);
-	_jpgHandler.HandleFrame(_jpgBuffer, jpgSize, packetIndex);
+	_jpgHandler.HandleFrame(_jpgBuffer, jpgSize, frameIndex);
 }
 

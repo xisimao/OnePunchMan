@@ -21,9 +21,9 @@ namespace OnePunchMan
 		* @param: yuv yuv字节流
 		* @param: width 图片宽度
 		* @param: height 图片高度
-		* @param: packetIndex 视频帧序号
+		* @param: frameIndex 视频帧序号
 		*/
-		void HandleFrame(unsigned char* yuv, int width,int height, int packetIndex);
+		void HandleFrame(unsigned char* yuv, int width,int height, int frameIndex);
 
 	private:
 		//当前写入数量

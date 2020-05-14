@@ -155,3 +155,19 @@ string EventChannelData::LastError()
 {
 	return _sqlite.LastError();
 }
+
+string EventChannelData::Version()
+{
+	string sql(StringEx::Combine("Select Version From Event_Version"));
+	SqliteReader sqlite(DbName);
+	string version;
+	if (sqlite.BeginQuery(sql))
+	{
+		if (sqlite.HasRow())
+		{
+			version = sqlite.GetString(0);
+		}
+		sqlite.EndQuery();
+	}
+	return version;
+}

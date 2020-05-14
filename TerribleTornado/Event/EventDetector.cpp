@@ -101,11 +101,11 @@ void EventDetector::ClearChannel()
 	}
 }
 
-void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long timeStamp, string* param, const unsigned char* iveBuffer, int packetIndex,int frameSpan)
+void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long timeStamp, string* param, const unsigned char* iveBuffer, int frameIndex,int frameSpan)
 {
 	if (_debug)
 	{
-		timeStamp = packetIndex * frameSpan;
+		timeStamp = frameIndex * frameSpan;
 	}
 	string lanesJson;
 	string channelUrl;
@@ -153,7 +153,7 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 						JsonSerialization::Serialize(&laneJson, "laneId", cache.LaneId);
 						JsonSerialization::Serialize(&laneJson, "type", (int)EventType::Pedestrain);
 						string jpgBase64;
-						DrawPedestrain(&jpgBase64, iveBuffer, it->second.Region.HitPoint(), packetIndex);
+						DrawPedestrain(&jpgBase64, iveBuffer, it->second.Region.HitPoint(), frameIndex);
 						JsonSerialization::Serialize(&laneJson, "image1", jpgBase64);
 						JsonSerialization::SerializeItem(&lanesJson, laneJson);
 						LogPool::Debug(LogEvent::Event, _channelIndex, "pedestrain event");
@@ -193,7 +193,7 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 									JsonSerialization::Serialize(&laneJson, "type", (int)EventType::Park);
 									JsonSerialization::Serialize(&laneJson, "image1", mit->second.StartParkImage);
 									string jpgBase64;
-									DrawPark(&jpgBase64, iveBuffer, it->second.Region.HitPoint(), packetIndex);
+									DrawPark(&jpgBase64, iveBuffer, it->second.Region.HitPoint(), frameIndex);
 									JsonSerialization::Serialize(&laneJson, "image2", jpgBase64);
 									JsonSerialization::SerializeItem(&lanesJson, laneJson);
 									LogPool::Debug(LogEvent::Event, _channelIndex, "park event");
@@ -206,7 +206,7 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 								if (mit->second.LastTimeStamp - mit->second.FirstTimeStamp > ParkStartSpan)
 								{
 									mit->second.StartPark = true;
-									DrawPark(&mit->second.StartParkImage, iveBuffer, it->second.Region.HitPoint(), packetIndex);
+									DrawPark(&mit->second.StartParkImage, iveBuffer, it->second.Region.HitPoint(), frameIndex);
 								}
 							}
 						}
@@ -222,7 +222,7 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 								JsonSerialization::Serialize(&laneJson, "laneId", cache.LaneId);
 								JsonSerialization::Serialize(&laneJson, "type", (int)EventType::Congestion);
 								string jpgBase64;
-								DrawCongestion(&jpgBase64, iveBuffer, packetIndex);
+								DrawCongestion(&jpgBase64, iveBuffer, frameIndex);
 								JsonSerialization::Serialize(&laneJson, "image1", jpgBase64);
 								JsonSerialization::SerializeItem(&lanesJson, laneJson);
 								cache.LastReportTimeStamp = timeStamp;
@@ -271,7 +271,7 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 										JsonSerialization::Serialize(&laneJson, "laneId", cache.LaneId);
 										JsonSerialization::Serialize(&laneJson, "type", (int)EventType::Retrograde);
 										string jpgBase64;
-										DrawRetrograde(&jpgBase64, iveBuffer, mit->second.RetrogradePoints, packetIndex);
+										DrawRetrograde(&jpgBase64, iveBuffer, mit->second.RetrogradePoints, frameIndex);
 										JsonSerialization::Serialize(&laneJson, "image1", jpgBase64);
 										JsonSerialization::SerializeItem(&lanesJson, laneJson);
 										LogPool::Debug(LogEvent::Event, _channelIndex, "retrograde event");
@@ -312,7 +312,7 @@ void EventDetector::HandleRecognize(const RecognItem& recognItem, const unsigned
 
 }
 
-void EventDetector::DrawPedestrain(std::string* jpgBase64, const unsigned char* iveBuffer, const Point& point, int packetIndex)
+void EventDetector::DrawPedestrain(std::string* jpgBase64, const unsigned char* iveBuffer, const Point& point, int frameIndex)
 {
 	IveToBgr(iveBuffer, _width, _height, _bgrBuffer);
 	cv::Mat image(_height, _width, CV_8UC3, _bgrBuffer);
@@ -331,11 +331,11 @@ void EventDetector::DrawPedestrain(std::string* jpgBase64, const unsigned char* 
 	JpgToBase64(jpgBase64, _jpgBuffer, jpgSize);
 	if (_debug)
 	{
-		_jpgHandler.HandleFrame(_jpgBuffer, jpgSize, packetIndex);
+		_jpgHandler.HandleFrame(_jpgBuffer, jpgSize, frameIndex);
 	}
 }
 
-void EventDetector::DrawPark(std::string* jpgBase64, const unsigned char* iveBuffer, const Point& point, int packetIndex)
+void EventDetector::DrawPark(std::string* jpgBase64, const unsigned char* iveBuffer, const Point& point, int frameIndex)
 {
 	IveToBgr(iveBuffer, _width, _height, _bgrBuffer);
 	cv::Mat image(_height, _width, CV_8UC3, _bgrBuffer);
@@ -354,11 +354,11 @@ void EventDetector::DrawPark(std::string* jpgBase64, const unsigned char* iveBuf
 	JpgToBase64(jpgBase64, _jpgBuffer, jpgSize);	
 	if (_debug)
 	{
-		_jpgHandler.HandleFrame(_jpgBuffer, jpgSize, packetIndex);
+		_jpgHandler.HandleFrame(_jpgBuffer, jpgSize, frameIndex);
 	}
 }
 
-void EventDetector::DrawCongestion(string* jpgBase64, const unsigned char* iveBuffer, int packetIndex)
+void EventDetector::DrawCongestion(string* jpgBase64, const unsigned char* iveBuffer, int frameIndex)
 {
 	IveToBgr(iveBuffer, _width, _height, _bgrBuffer);
 	cv::Mat image(_height, _width, CV_8UC3, _bgrBuffer);
@@ -372,11 +372,11 @@ void EventDetector::DrawCongestion(string* jpgBase64, const unsigned char* iveBu
 	JpgToBase64(jpgBase64, _jpgBuffer, jpgSize);
 	if (_debug)
 	{
-		_jpgHandler.HandleFrame(_jpgBuffer, jpgSize, packetIndex);
+		_jpgHandler.HandleFrame(_jpgBuffer, jpgSize, frameIndex);
 	}
 }
 
-void EventDetector::DrawRetrograde(string* jpgBase64, const unsigned char* iveBuffer, const vector<Point>& points, int packetIndex)
+void EventDetector::DrawRetrograde(string* jpgBase64, const unsigned char* iveBuffer, const vector<Point>& points, int frameIndex)
 {
 	IveToBgr(iveBuffer, _width, _height, _bgrBuffer);
 	cv::Mat image(_height, _width, CV_8UC3, _bgrBuffer);
@@ -400,6 +400,6 @@ void EventDetector::DrawRetrograde(string* jpgBase64, const unsigned char* iveBu
 	JpgToBase64(jpgBase64, _jpgBuffer, jpgSize);
 	if (_debug)
 	{
-		_jpgHandler.HandleFrame(_jpgBuffer, jpgSize, packetIndex);
+		_jpgHandler.HandleFrame(_jpgBuffer, jpgSize, frameIndex);
 	}
 }

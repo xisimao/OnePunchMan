@@ -111,6 +111,12 @@ namespace OnePunchMan
 		*/
 		std::string LastError();
 
+		/**
+		* @brief: 获取软件版本号
+		* @return: 软件版本号
+		*/
+		std::string Version();
+
 	private:
 
 		//数据库名称

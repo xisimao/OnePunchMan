@@ -8,7 +8,7 @@ BGR24Handler::BGR24Handler(int count)
 
 }
 
-void BGR24Handler::HandleFrame(unsigned char* bgr24, int width, int height, int packetIndex)
+void BGR24Handler::HandleFrame(unsigned char* bgr24, int width, int height, int frameIndex)
 {
 	if (_count>0&&_index >= _count)
 	{
@@ -16,7 +16,7 @@ void BGR24Handler::HandleFrame(unsigned char* bgr24, int width, int height, int 
 	}
 	Path::CreateDirectory("../images");
 	FILE* fw = NULL;
-	if ((fw = fopen(StringEx::Combine("../images/bgr24_", packetIndex, ".bmp").c_str(), "wb")) == NULL) {
+	if ((fw = fopen(StringEx::Combine("../images/bgr24_", frameIndex, ".bmp").c_str(), "wb")) == NULL) {
 		return;
 	}
 	

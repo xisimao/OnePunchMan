@@ -8,7 +8,7 @@ JPGHandler::JPGHandler(int count)
 
 }
 
-void JPGHandler::HandleFrame(unsigned char* jpgBuffer, int jpgSize, int packetIndex)
+void JPGHandler::HandleFrame(unsigned char* jpgBuffer, int jpgSize, int frameIndex)
 {
 	if (_count > 0 && _index >= _count)
 	{
@@ -16,7 +16,7 @@ void JPGHandler::HandleFrame(unsigned char* jpgBuffer, int jpgSize, int packetIn
 	}
 	Path::CreateDirectory("../images");
 	FILE* fw = NULL;
-	if ((fw = fopen(StringEx::Combine("../images/jpg_", packetIndex, ".jpg").c_str(), "wb")) == NULL) {
+	if ((fw = fopen(StringEx::Combine("../images/jpg_", frameIndex, ".jpg").c_str(), "wb")) == NULL) {
 		return;
 	}
 

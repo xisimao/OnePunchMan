@@ -38,7 +38,7 @@ namespace OnePunchMan
 		*/
 		void ClearChannel();
 
-		void HandleDetect(std::map<std::string, DetectItem>* detectItems, long long timeStamp, std::string* param, const unsigned char* iveBuffer,int packetIndex,int frameSpan);
+		void HandleDetect(std::map<std::string, DetectItem>* detectItems, long long timeStamp, std::string* param, const unsigned char* iveBuffer,int frameIndex,int frameSpan);
 
 		void HandleRecognize(const RecognItem& item, const unsigned char* iveBuffer, const std::string& recognJson);
 
@@ -104,35 +104,35 @@ namespace OnePunchMan
 		* @param: jpgBase64 用于写入的字符串
 		* @param: iveBuffer ive字节流
 		* @param: points 检测点集合
-		* @param: packetIndex 帧序号
+		* @param: frameIndex 帧序号
 		*/
-		void DrawRetrograde(std::string* jpgBase64, const unsigned char* iveBuffer, const std::vector<Point>& points, int packetIndex);
+		void DrawRetrograde(std::string* jpgBase64, const unsigned char* iveBuffer, const std::vector<Point>& points, int frameIndex);
 		
 		/**
 		* @brief: 绘制逆行事件图片
 		* @param: jpgBase64 用于写入的字符串
 		* @param: iveBuffer ive字节流
 		* @param: point 行人点
-		* @param: packetIndex 帧序号
+		* @param: frameIndex 帧序号
 		*/
-		void DrawPedestrain(std::string* jpgBase64, const unsigned char* iveBuffer, const Point& point, int packetIndex);
+		void DrawPedestrain(std::string* jpgBase64, const unsigned char* iveBuffer, const Point& point, int frameIndex);
 		
 		/**
 		* @brief: 绘制逆行事件图片
 		* @param: jpgBase64 用于写入的字符串
 		* @param: iveBuffer ive字节流
 		* @param: point 停车点
-		* @param: packetIndex 帧序号
+		* @param: frameIndex 帧序号
 		*/
-		void DrawPark(std::string* jpgBase64, const unsigned char* iveBuffer, const Point& point, int packetIndex);
+		void DrawPark(std::string* jpgBase64, const unsigned char* iveBuffer, const Point& point, int frameIndex);
 		
 		/**
 		* @brief: 绘制拥堵区域
 		* @param: jpgBase64 用于写入的字符串
 		* @param: iveBuffer ive字节流
-		* @param: packetIndex 帧序号
+		* @param: frameIndex 帧序号
 		*/
-		void DrawCongestion(std::string* jpgBase64, const unsigned char* iveBuffer, int packetIndex);
+		void DrawCongestion(std::string* jpgBase64, const unsigned char* iveBuffer, int frameIndex);
 
 		//IO mqtt主题
 		static const std::string EventTopic;

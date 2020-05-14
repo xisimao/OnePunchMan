@@ -36,7 +36,7 @@ namespace OnePunchMan
 		*/
 		void CollectFlow(std::string* flowJson, long long timeStamp);
 
-		void HandleDetect(std::map<std::string, DetectItem>* detectItems, long long timeStamp, std::string* param, const unsigned char* iveBuffer, int packetIndex,int frameSpan);
+		void HandleDetect(std::map<std::string, DetectItem>* detectItems, long long timeStamp, std::string* param, const unsigned char* iveBuffer, int frameIndex,int frameSpan);
 
 		void HandleRecognize(const RecognItem& item, const unsigned char* iveBuffer, const std::string& recognJson);
 
@@ -152,9 +152,9 @@ namespace OnePunchMan
 		* @brief: 绘制检测区域
 		* @param: detectItems 检测项集合
 		* @param: iveBuffer ive字节流
-		* @param: packetIndex 帧序号
+		* @param: frameIndex 帧序号
 		*/
-		void DrawDetect(const std::map<std::string, DetectItem>& detectItems, const unsigned char* iveBuffer, int packetIndex);
+		void DrawDetect(const std::map<std::string, DetectItem>& detectItems, const unsigned char* iveBuffer, int frameIndex);
 
 		//IO mqtt主题
 		static const std::string IOTopic;

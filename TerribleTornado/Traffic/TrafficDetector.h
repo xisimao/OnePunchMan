@@ -106,10 +106,10 @@ namespace OnePunchMan
 		* @param: timeStamp 时间戳
 		* @param: param 检测参数
 		* @param: iveBuffer 图片字节流
-		* @param: packetIndex 帧序号
+		* @param: frameIndex 帧序号
 		* @param: frameSpan 帧间隔时间(毫秒)
 		*/
-		virtual void HandleDetect(std::map<std::string, DetectItem>* detectItems, long long timeStamp, std::string* param, const unsigned char* iveBuffer, int packetIndex,int frameSpan) = 0;
+		virtual void HandleDetect(std::map<std::string, DetectItem>* detectItems, long long timeStamp, std::string* param, const unsigned char* iveBuffer, int frameIndex,int frameSpan) = 0;
 
 		/**
 		* @brief: 处理识别数据

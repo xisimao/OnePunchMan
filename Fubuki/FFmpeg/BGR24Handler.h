@@ -21,9 +21,9 @@ namespace OnePunchMan
 		* @param: bgr24 bgr24格式的字节流
 		* @param: width 图片宽度
 		* @param: height 图片高度
-		* @param: packetIndex 帧序号
+		* @param: frameIndex 帧序号
 		*/
-		void HandleFrame(unsigned char* bgr24, int width, int height, int packetIndex);
+		void HandleFrame(unsigned char* bgr24, int width, int height, int frameIndex);
 
 	private:
 		//当前写入数量

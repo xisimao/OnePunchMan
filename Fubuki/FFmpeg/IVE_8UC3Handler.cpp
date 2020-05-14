@@ -11,14 +11,14 @@ IVE_8UC3Handler::IVE_8UC3Handler(int count)
 
 }
 
-void IVE_8UC3Handler::HandleFrame(unsigned char* ive, int width, int height, int packetIndex)
+void IVE_8UC3Handler::HandleFrame(unsigned char* ive, int width, int height, int frameIndex)
 {
 	if (_index >= _count)
 	{
 		return;
 	}
 	Path::CreateDirectory("../images");
-	FILE* fw = fopen(StringEx::Combine("../images/ive_", packetIndex, ".bmp").c_str(), "wb");
+	FILE* fw = fopen(StringEx::Combine("../images/ive_", frameIndex, ".bmp").c_str(), "wb");
 	if (fw ==NULL) {
 		return;
 	}

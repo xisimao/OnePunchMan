@@ -88,10 +88,10 @@ namespace OnePunchMan
 		* @param: yuv yuv字节流
 		* @param: width 图片宽度
 		* @param: height 图片高度
-		* @param: packetIndex 视频帧序号
+		* @param: frameIndex 视频帧序号
 		* @param: frameSpan 视频帧间隔时间(毫秒)
 		*/
-		void HandleYUV(unsigned char* yuv, int width, int height, int packetIndex,int frameSpan);
+		void HandleYUV(unsigned char* yuv, int width, int height, int frameIndex,int frameSpan);
 
 	protected:
 		void StartCore();
@@ -114,7 +114,7 @@ namespace OnePunchMan
 			int IveSize;
 
 			//视频帧序号
-			int PacketIndex;
+			int frameIndex;
 			//视频帧间隔时间(毫秒)
 			int frameSpan;
 			//当前数据项是否已经有了yuv数据

@@ -22,9 +22,9 @@ namespace OnePunchMan
 		* @param: ive 8uc3×Ö½ÚÁ÷
 		* @param: width Í¼Æ¬¿í¶È
 		* @param: height Í¼Æ¬¸ß¶È
-		* @param: packetIndex ÊÓÆµÖ¡ÐòºÅ
+		* @param: frameIndex ÊÓÆµÖ¡ÐòºÅ
 		*/
-		void HandleFrame(unsigned char* ive, int width, int height, int packetIndex);
+		void HandleFrame(unsigned char* ive, int width, int height, int frameIndex);
 		
 	private:
 

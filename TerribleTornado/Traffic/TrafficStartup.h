@@ -129,6 +129,9 @@ namespace OnePunchMan
         //mqtt
         MqttChannel* _mqtt;
 
+        //软件版本
+        std::string _softwareVersion;
+
     private:
         /**
         * @brief: 查询设备

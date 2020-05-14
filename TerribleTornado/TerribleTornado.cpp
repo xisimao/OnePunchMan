@@ -4,70 +4,7 @@
 using namespace std;
 using namespace OnePunchMan;
 
-class Test:public ThreadObject
-{
-public:
-
-    Test()
-        :ThreadObject("1")
-    {
-
-    }
-
-    void Fun()
-    {
-        
-        unique_lock<timed_mutex> ll(_mutex, std::defer_lock);
-        if (ll.try_lock_for(chrono::seconds(3)))
-        {
-            cout << "ok" << endl;
-            ll.unlock();
-        }
-        else
-        {
-            cout << "fuck" << endl;
-
-        }
-     
-    }
-protected:
-
-    void StartCore()
-    {
-        while (!_cancelled)
-        {
-            unique_lock<timed_mutex> ll(_mutex, std::defer_lock);
-            if (ll.try_lock_for(chrono::seconds(3)))
-            {
-                cout << "1" << endl;
-                this_thread::sleep_for(chrono::seconds(10));
-                cout << "2" << endl;
-            }
-            else
-            {
-                cout << "fuck" << endl;
-
-            }
-            ll.unlock();
-            this_thread::sleep_for(chrono::seconds(3));
-        }
-    }
-private:
-    timed_mutex _mutex;
-};
-
-int main()
-{
-    Test s;
-    s.Start();
-    system("pause");
-    s.Fun();
-    s.Stop();
-
-
-    return 0;
-}
-int main1(int argc, char* argv[])
+int main(int argc, char* argv[])
 {
     if (argc >= 2)
     {

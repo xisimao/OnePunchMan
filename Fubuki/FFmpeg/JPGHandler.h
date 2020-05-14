@@ -20,9 +20,9 @@ namespace OnePunchMan
 		* @brief: 写入jpg文件
 		* @param: jpgBuffer jpg格式的字节流
 		* @param: jpgSize jgp字节流长度
-		* @param: packetIndex 帧序号
+		* @param: frameIndex 帧序号
 		*/
-		void HandleFrame(unsigned char* jpgBuffer, int jpgSize, int packetIndex);
+		void HandleFrame(unsigned char* jpgBuffer, int jpgSize, int frameIndex);
 
 	private:
 		//当前写入数量
