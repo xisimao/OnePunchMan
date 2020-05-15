@@ -44,7 +44,7 @@ bool SeemmoSDK::Init()
 	}
 	else
 	{
-		int32_t result = seemmo_process_init("/mtd/seemmo/programs/aisdk", 8, 8, "192.168.201.66:12821", 1, 0);
+		int32_t result = seemmo_process_init("/mtd/seemmo/programs/aisdk", 8, 8, "", 1, false);
 		if (result != 0)
 		{
 			LogPool::Error(LogEvent::Detect, "init process failed", result);

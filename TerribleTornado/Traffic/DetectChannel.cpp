@@ -234,7 +234,11 @@ void DetectChannel::StartCore()
 					}
 				}
 				long long detectTimeStamp3 = DateTime::UtcNowTimeStamp();
-				LogPool::Debug("detect", _indexes[0], _timeStamps[0], detectTimeStamp3 - detectTimeStamp, detectTimeStamp3- detectTimeStamp2, detectTimeStamp2- detectTimeStamp1, detectTimeStamp1- detectTimeStamp);
+				LogPool::Debug("detect", _indexes[0], _timeStamps[0], result, detectTimeStamp3 - detectTimeStamp, detectTimeStamp1- detectTimeStamp, detectTimeStamp2- detectTimeStamp1, detectTimeStamp3- detectTimeStamp2);
+			}
+			else
+			{
+				LogPool::Warning(LogEvent::Detect, "yuv to bgr failed");
 			}
 		}
 		else

@@ -17,6 +17,7 @@ void FlowDetector::UpdateChannel(const FlowChannel& channel)
 	unique_lock<timed_mutex> lck(_laneMutex, std::defer_lock);
 	if (lck.try_lock_for(chrono::seconds(ThreadObject::LockTime)))
 	{
+		LogPool::Debug("update lock");
 		_lanes.clear();
 		string regionsParam;
 		regionsParam.append("[");
@@ -64,7 +65,7 @@ void FlowDetector::UpdateChannel(const FlowChannel& channel)
 	}
 	else
 	{
-		LogPool::Error(LogEvent::Thread, "update channel lock timeout");
+		LogPool::Error(LogEvent::Thread, "update lock timeout");
 	}	
 }
 
@@ -73,6 +74,8 @@ void FlowDetector::ClearChannel()
 	unique_lock<timed_mutex> lck(_laneMutex, std::defer_lock);
 	if (lck.try_lock_for(chrono::seconds(ThreadObject::LockTime)))
 	{
+		LogPool::Debug("clear lock");
+
 		_lanes.clear();
 		_channelUrl = string();
 		_channelIndex = 0;
@@ -80,7 +83,7 @@ void FlowDetector::ClearChannel()
 	}
 	else
 	{
-		LogPool::Error(LogEvent::Thread, "clear channel lock timeout");
+		LogPool::Error(LogEvent::Thread, "clear lock timeout");
 	}
 }
 
@@ -95,6 +98,8 @@ void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long 
 	unique_lock<timed_mutex> lck(_laneMutex, std::defer_lock);
 	if (lck.try_lock_for(chrono::seconds(ThreadObject::LockTime)))
 	{
+		LogPool::Debug("detect lock");
+
 		channelUrl = _channelUrl;
 		if (!_setParam)
 		{
@@ -211,7 +216,7 @@ void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long 
 	}
 	else
 	{
-		LogPool::Error(LogEvent::Thread, "flow detect lock timeout");
+		LogPool::Error(LogEvent::Thread, "detect lock timeout");
 	}
 	
 	if (!lanesJson.empty())
@@ -244,6 +249,8 @@ void FlowDetector::HandleRecognize(const RecognItem& recognItem, const unsigned 
 			unique_lock<timed_mutex> lck(_laneMutex, std::defer_lock);
 			if (lck.try_lock_for(chrono::seconds(ThreadObject::LockTime)))
 			{
+				LogPool::Debug("recogn channel lock");
+
 				for (unsigned int i = 0; i < _lanes.size(); ++i)
 				{
 					if (_lanes[i].Region.Contains(recognItem.Region.HitPoint()))
@@ -276,7 +283,7 @@ void FlowDetector::HandleRecognize(const RecognItem& recognItem, const unsigned 
 			}
 			else
 			{
-				LogPool::Error(LogEvent::Thread, "flow recogn lock timeout");
+				LogPool::Error(LogEvent::Thread, "recogn lock timeout");
 			}
 		}
 	}
@@ -289,6 +296,7 @@ void FlowDetector::HandleRecognize(const RecognItem& recognItem, const unsigned 
 			unique_lock<timed_mutex> lck(_laneMutex, std::defer_lock);
 			if (lck.try_lock_for(chrono::seconds(ThreadObject::LockTime)))
 			{
+				LogPool::Debug("recogn lock");
 				for (unsigned int i = 0; i < _lanes.size(); ++i)
 				{
 					if (_lanes[i].Region.Contains(recognItem.Region.HitPoint()))
@@ -316,7 +324,7 @@ void FlowDetector::HandleRecognize(const RecognItem& recognItem, const unsigned 
 			}
 			else
 			{
-				LogPool::Error(LogEvent::Thread, "flow recogn lock timeout");
+				LogPool::Error(LogEvent::Thread, "recogn lock timeout");
 			}		
 		}
 	}
@@ -328,6 +336,7 @@ void FlowDetector::HandleRecognize(const RecognItem& recognItem, const unsigned 
 			unique_lock<timed_mutex> lck(_laneMutex, std::defer_lock);
 			if (lck.try_lock_for(chrono::seconds(ThreadObject::LockTime)))
 			{
+				LogPool::Debug("recogn lock");
 				for (unsigned int i = 0; i < _lanes.size(); ++i)
 				{
 					if (_lanes[i].Region.Contains(recognItem.Region.HitPoint()))
@@ -364,7 +373,7 @@ void FlowDetector::HandleRecognize(const RecognItem& recognItem, const unsigned 
 			}
 			else
 			{
-				LogPool::Error(LogEvent::Thread, "flow recogn lock timeout");
+				LogPool::Error(LogEvent::Thread, "recogn lock timeout");
 			}
 		}
 	}
@@ -375,6 +384,7 @@ void FlowDetector::CollectFlow(string* flowJson, long long timeStamp)
 	unique_lock<timed_mutex> lck(_laneMutex, std::defer_lock);
 	if (lck.try_lock_for(chrono::seconds(ThreadObject::LockTime)))
 	{
+		LogPool::Debug("collect lock");
 		for (unsigned int i = 0; i < _lanes.size(); ++i)
 		{
 			FlowLaneCache& cache = _lanes[i];
@@ -448,7 +458,7 @@ void FlowDetector::CollectFlow(string* flowJson, long long timeStamp)
 	}
 	else
 	{
-		LogPool::Error(LogEvent::Thread, "flow collect lock timeout");
+		LogPool::Error(LogEvent::Thread, "collect lock timeout");
 	}
 }
 

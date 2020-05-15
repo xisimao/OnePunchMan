@@ -4,7 +4,7 @@ using namespace std;
 using namespace OnePunchMan;
 
 DecodeChannel::DecodeChannel(const string& inputUrl, const string& outputUrl, int channelIndex, DetectChannel* detectChannel, bool debug)
-	:FFmpegChannel(inputUrl, outputUrl, debug), _channelIndex(channelIndex), _useFFmpeg(false), _decodeContext(NULL), _yuvFrame(NULL), _yuv420spBuffer(NULL), _yuv420spSize(static_cast<int>(DestinationWidth* DestinationHeight * 1.5)), _yuv420spFrame(NULL), _yuv420spSwsContext(NULL), _detectChannel(detectChannel)
+	:FFmpegChannel(inputUrl, outputUrl, debug), _channelIndex(channelIndex), _yuv420spSize(static_cast<int>(DestinationWidth* DestinationHeight * 1.5)),_detectChannel(detectChannel)
 {
 
 }
@@ -781,97 +781,14 @@ void DecodeChannel::UninitHisi(int videoCount)
 
 bool DecodeChannel::InitDecoder()
 {
-	if (!_useFFmpeg)
-	{
-		return true;
-	}
-	if (_inputStream->codecpar->codec_id != AVCodecID::AV_CODEC_ID_H264)
-	{
-		LogPool::Error(LogEvent::Decode, "codec is not h264", _inputUrl);
-		return false;
-	}
-
-	AVCodec* decode = avcodec_find_decoder(_inputStream->codecpar->codec_id);
-	if (decode == NULL) {
-		LogPool::Error(LogEvent::Decode, "avcodec_find_decoder error", _inputUrl);
-		return false;
-	}
-	_decodeContext = avcodec_alloc_context3(decode);
-	if (avcodec_parameters_to_context(_decodeContext, _inputStream->codecpar) < 0) {
-		LogPool::Error(LogEvent::Decode, "avcodec_parameters_to_context error", _inputUrl);
-		return false;
-	}
-	_decodeContext->thread_count = 4;
-	_decodeContext->thread_type = FF_THREAD_FRAME;
-	if (avcodec_open2(_decodeContext, decode, NULL) < 0) {//打开解码器
-		LogPool::Error(LogEvent::Decode, "avcodec_open2 error", _inputUrl);
-		return false;
-	}
-
-	//初始化帧
-	_yuvFrame = av_frame_alloc();
-
-	//yuv转rgb
-	_yuv420spFrame = av_frame_alloc();
-
-	_yuv420spBuffer = (uint8_t*)av_malloc(av_image_get_buffer_size(AV_PIX_FMT_NV21, DestinationWidth, DestinationHeight, 1) * sizeof(uint8_t));
-	if (av_image_fill_arrays(_yuv420spFrame->data, _yuv420spFrame->linesize, _yuv420spBuffer, AV_PIX_FMT_NV21, DestinationWidth, DestinationHeight, 1) < 0)
-	{
-		LogPool::Error(LogEvent::Decode, "av_image_fill_arrays error");
-		return false;
-	}
-	_yuv420spSwsContext = sws_getContext(_decodeContext->width, _decodeContext->height, _decodeContext->pix_fmt, DestinationWidth, DestinationHeight, AV_PIX_FMT_NV21,
-		SWS_FAST_BILINEAR, NULL, NULL, NULL);
-	if (_yuv420spSwsContext == NULL)
-	{
-		LogPool::Error(LogEvent::Decode, "sws_getContext error", _inputUrl);
-		return false;
-	}
 	return true;
 }
 
 void DecodeChannel::UninitDecoder()
 {
-	if (_yuv420spSwsContext != NULL)
-	{
-		sws_freeContext(_yuv420spSwsContext);
-	}
-	if (_decodeContext != NULL) {
-		avcodec_free_context(&_decodeContext);
-	}
-	if (_yuv420spFrame != NULL)
-	{
-		av_frame_free(&_yuv420spFrame);
-	}
-	if (_yuvFrame != NULL)
-	{
-		av_frame_free(&_yuvFrame);
-	}
 }
 
 DecodeResult DecodeChannel::Decode(const AVPacket* packet, int frameIndex, int frameSpan)
-{
-	if (_useFFmpeg)
-	{
-		return DecodeByFFmpeg(packet, frameIndex,frameSpan);
-	}
-	else
-	{
-		DecodeResult result = DecodeByHisi(packet, frameIndex, frameSpan);
-		if (result == DecodeResult::Error)
-		{
-			LogPool::Warning(LogEvent::Decode, "decode downgrade", _inputUrl);
-			_useFFmpeg = true;
-			if (InitDecoder() == 0)
-			{
-				return DecodeResult::Skip;
-			}
-		}
-		return result;
-	}
-}
-
-DecodeResult DecodeChannel::DecodeByHisi(const AVPacket* packet, int frameIndex, int frameSpan)
 {
 	bool handled = false;
 #ifndef _WIN32
@@ -915,7 +832,7 @@ DecodeResult DecodeChannel::DecodeByHisi(const AVPacket* packet, int frameIndex,
 				{
 					handled = true;
 					unsigned char* yuv = reinterpret_cast<unsigned char*>(HI_MPI_SYS_Mmap(frame.stVFrame.u64PhyAddr[0], _yuv420spSize));
-					_detectChannel->HandleYUV(yuv, DestinationWidth, DestinationHeight, static_cast<int>(frame.stVFrame.u64PTS),frameSpan);
+					_detectChannel->HandleYUV(yuv, DestinationWidth, DestinationHeight, static_cast<int>(frame.stVFrame.u64PTS), frameSpan);
 					HI_MPI_SYS_Munmap(reinterpret_cast<HI_VOID*>(yuv), _yuv420spSize);
 					break;
 					//	hi_s32_ret = HI_MPI_VENC_SendFrame(_channelIndex, &frame, 0);
@@ -982,47 +899,5 @@ DecodeResult DecodeChannel::DecodeByHisi(const AVPacket* packet, int frameIndex,
 		}
 	}
 #endif // !_WIN32
-	return handled ? DecodeResult::Handle : DecodeResult::Skip;
-}
-
-DecodeResult DecodeChannel::DecodeByFFmpeg(const AVPacket* packet, int frameIndex, int frameSpan)
-{
-	bool handled = false;
-	if (avcodec_send_packet(_decodeContext, packet) == 0)
-	{
-		while (true)
-		{
-			int resultReceive = avcodec_receive_frame(_decodeContext, _yuvFrame);
-			if (resultReceive == AVERROR(EAGAIN) || resultReceive == AVERROR_EOF)
-			{
-				break;
-			}
-			else if (resultReceive < 0)
-			{
-				LogPool::Error(LogEvent::Decode, "receive error", _inputUrl);
-				return DecodeResult::Error;
-			}
-			else if (resultReceive >= 0)
-			{
-				if (sws_scale(_yuv420spSwsContext, _yuvFrame->data,
-					_yuvFrame->linesize, 0, _decodeContext->height,
-					_yuv420spFrame->data, _yuv420spFrame->linesize) != 0)
-				{
-					//_yuvHandler->HandleFrame(_yuv420spBuffer, DestinationWidth, DestinationHeight, frameIndex);
-
-					if (!_detectChannel->IsBusy())
-					{
-						handled = true;
-						_detectChannel->HandleYUV(_yuv420spBuffer, DestinationWidth, DestinationHeight, frameIndex, frameSpan);
-					}
-				}
-			}
-		}
-	}
-	else
-	{
-		LogPool::Error(LogEvent::Decode, "send error", _inputUrl);
-		return DecodeResult::Error;
-	}
 	return handled ? DecodeResult::Handle : DecodeResult::Skip;
 }

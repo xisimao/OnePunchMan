@@ -90,41 +90,12 @@ namespace OnePunchMan
 		DecodeResult Decode(const AVPacket* packet, int frameIndex,int frameSpan);
 
 	private:
-
-		/**
-		* @brief: 使用hisi解码
-		* @param: packet 视频帧
-		* @param: frameIndex 视频帧序号
-		* @return: 解码成功返回Handle,略过返回Skip,否则返回Error
-		*/
-		DecodeResult DecodeByHisi(const AVPacket* packet, int frameIndex, int frameSpan);
-		
-		/**
-		* @brief: 使用ffmpeg解码
-		* @param: packet 视频帧
-		* @param: frameIndex 视频帧序号
-		* @return: 解码成功返回Handle,略过返回Skip,否则返回Error
-		*/
-		DecodeResult DecodeByFFmpeg(const AVPacket* packet, int frameIndex, int frameSpan);
-
 		//通道序号
 		int _channelIndex;
 
-		//是否使用ffmpeg解码，优先使用hisi
-		bool _useFFmpeg;
-
-		//ffmpeg解码相关
-		AVCodecContext* _decodeContext;
-		//解码后的yuv数据
-		AVFrame* _yuvFrame;
-		//yuv420sp数据字节流
-		uint8_t* _yuv420spBuffer;
-		//yuv420sp数据字节流长度
+		//yuv字节流长度
 		int _yuv420spSize;
-		//yuv420sp帧数据
-		AVFrame* _yuv420spFrame;
-		//yuv420sp转换
-		SwsContext* _yuv420spSwsContext;
+
 		//检测线程
 		DetectChannel* _detectChannel;
 	};

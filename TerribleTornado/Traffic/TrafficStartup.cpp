@@ -222,7 +222,7 @@ void TrafficStartup::GetDevice(HttpReceivedEventArgs* e)
     JsonSerialization::Serialize(&deviceJson, "sdkVersion", _sdkVersion);
     JsonSerialization::Serialize(&deviceJson, "destinationWidth", FFmpegChannel::DestinationWidth);
     JsonSerialization::Serialize(&deviceJson, "destinationHeight", FFmpegChannel::DestinationHeight);
-    JsonSerialization::Serialize(&deviceJson, "mqttConnected", _mqtt->Connected());
+    JsonSerialization::Serialize(&deviceJson, "mqttConnected", _mqtt==NULL?false: _mqtt->Connected());
     JsonSerialization::SerializeJson(&deviceJson, "channels", channelsJson);
 
     e->Code = HttpCode::OK;
@@ -239,7 +239,12 @@ void TrafficStartup::SetDecode(int channelIndex, const string& inputUrl, const s
         {
             if (_decodes[channelIndex - 1] == NULL)
             {
+#ifdef _WIN32
+                DecodeChannel* decode = new DecodeChannel(inputUrl, string(), channelIndex, _detects[channelIndex - 1], false);
+#else
                 DecodeChannel* decode = new DecodeChannel(inputUrl, outputUrl, channelIndex, _detects[channelIndex - 1], false);
+#endif // _WIN32
+              
                 decode->Start();
                 _decodes[channelIndex - 1] = decode;
             }
@@ -250,7 +255,11 @@ void TrafficStartup::SetDecode(int channelIndex, const string& inputUrl, const s
                 {
                     _decodes[channelIndex - 1]->Stop();
                     delete _decodes[channelIndex - 1];
+#ifdef _WIN32
+                    DecodeChannel* decode = new DecodeChannel(inputUrl, string(), channelIndex, _detects[channelIndex - 1], false);
+#else
                     DecodeChannel* decode = new DecodeChannel(inputUrl, outputUrl, channelIndex, _detects[channelIndex - 1], false);
+#endif // _WIN32
                     decode->Start();
                     _decodes[channelIndex - 1] = decode;
                 }

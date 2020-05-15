@@ -4,6 +4,16 @@
 using namespace std;
 using namespace OnePunchMan;
 
+int main0()
+{
+    FFmpegChannel::InitFFmpeg();
+    FFmpegChannel channel("rtsp://192.168.201.107:6554/stream/ncdj1.mp4", string(), false);
+    channel.Start();
+    system("pause");
+    channel.Stop();
+    return 0;
+}
+
 int main(int argc, char* argv[])
 {
     if (argc >= 2)

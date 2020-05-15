@@ -262,7 +262,10 @@ void FlowStartup::PollCore()
         }
         if (!json.empty())
         {
-            _mqtt->Send(FlowTopic, json);
+            if (_mqtt != NULL)
+            {
+                _mqtt->Send(FlowTopic, json);
+            }
         }
     }
 }

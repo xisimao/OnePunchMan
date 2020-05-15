@@ -102,7 +102,7 @@ void RecognChannel::StartCore()
 					_detectors[item.ChannelIndex - 1]->HandleRecognize(item, _bgrs[0], _result.data());
 				}
 				long long recognTimeStamp3 = DateTime::UtcNowTimeStamp();
-				LogPool::Debug("recogn", item.ChannelIndex, recognTimeStamp3 - recognTimeStamp1, recognTimeStamp3 - recognTimeStamp2, recognTimeStamp2 - recognTimeStamp1);
+				LogPool::Debug("recogn", item.ChannelIndex, result, recognTimeStamp3 - recognTimeStamp1, recognTimeStamp2 - recognTimeStamp1, recognTimeStamp3 - recognTimeStamp2);
 			}
 			else
 			{
