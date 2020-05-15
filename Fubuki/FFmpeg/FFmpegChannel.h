@@ -107,7 +107,7 @@ namespace OnePunchMan
 
 		/**
 		* @brief: 初始化解码器
-		* @return: 初始化成功返回ture，否则返回false，初始化失败会结束线程
+		* @return: 初始化成功返回true
 		*/
 		virtual bool InitDecoder();
 
@@ -141,22 +141,29 @@ namespace OnePunchMan
 
 	private:
 		/**
-		* @brief: 初始化视频读取
-		* @return: 视频状态
+		* @brief: 初始化视频输入
+		* @return: 初始化成功返回true
 		*/
-		ChannelStatus Init();
-
-
-		/**
-		* @brief: 初始化视频读取
-		* @return: 视频状态
-		*/
-		ChannelStatus Reset();
+		bool InitInput();
 
 		/**
-		* @brief: 卸载视频读取
+		* @brief: 初始化视频输出
+		* @return: 初始化成功返回true
 		*/
-		void Uninit();
+		bool InitOutput();
+
+		/**
+		* @brief: 卸载视频输入
+		*/
+		void UninitInput();
+
+		/**
+		* @brief: 卸载视频输出
+		*/
+		void UninitOutput();
+
+		//重连时间(秒)
+		static const int ConnectSpan;
 
 		//输入视频初始化参数
 		AVDictionary* _options;
