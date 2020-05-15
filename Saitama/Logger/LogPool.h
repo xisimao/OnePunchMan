@@ -167,6 +167,7 @@ namespace OnePunchMan
 			ss << "[" << (int)logLevel << "]";
 			ss << "[" << (int)logEvent << "] ";
 			ContentFormat(&ss, t, u...);
+			std::lock_guard<std::mutex> lck(_mutex);
 			for (std::set<Logger*>::iterator it = _loggers.begin(); it != _loggers.end(); ++it)
 			{
 				(*it)->Log(logLevel, ss.str());
@@ -204,7 +205,7 @@ namespace OnePunchMan
 		unsigned int _holdDays;
 		//默认接收的最小日志级别
 		LogLevel _defaultLevel;
-
+		std::mutex _mutex;
 		//日志集合
 		std::set<Logger*> _loggers;
 	};
