@@ -39,6 +39,12 @@ namespace OnePunchMan
 		*/
 		bool Inited();
 
+		/**
+		* @brief: 获取当前队列中的数据数量
+		* @return: 当前队列中的数据数量
+		*/
+		int Size();
+
 		//表示一个识别线程可以接收的通道数量
 		static const int ItemCount;
 

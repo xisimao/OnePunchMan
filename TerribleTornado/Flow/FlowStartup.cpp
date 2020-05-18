@@ -3,14 +3,6 @@
 using namespace std;
 using namespace OnePunchMan;
 
-const string FlowStartup::FlowTopic("Flow");
-
-FlowStartup::FlowStartup()
-    :TrafficStartup(), _lastMinute(DateTime::Time().Minute())
-{
-    
-}
-
 FlowStartup::~FlowStartup()
 {
     for (unsigned int i = 0; i < _detectors.size(); ++i)
@@ -243,29 +235,5 @@ bool FlowStartup::DeleteChannel(int channelIndex)
     else
     {
         return false;
-    }
-}
-
-void FlowStartup::PollCore()
-{
-    //收集流量
-    DateTime now = DateTime::Now();
-    int currentMinute = now.Minute();
-    if (currentMinute != _lastMinute)
-    {
-        _lastMinute = currentMinute;
-        long long timeStamp = DateTime(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), 0).UtcTimeStamp();
-        string json;
-        for (unsigned int i = 0; i < _detectors.size(); ++i)
-        {
-            _detectors[i]->CollectFlow(&json, timeStamp);
-        }
-        if (!json.empty())
-        {
-            if (_mqtt != NULL)
-            {
-                _mqtt->Send(FlowTopic, json);
-            }
-        }
     }
 }

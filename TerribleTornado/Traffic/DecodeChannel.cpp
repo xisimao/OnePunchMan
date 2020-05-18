@@ -791,7 +791,9 @@ void DecodeChannel::UninitDecoder()
 DecodeResult DecodeChannel::Decode(const AVPacket* packet, int frameIndex, int frameSpan)
 {
 	bool handled = false;
+
 #ifndef _WIN32
+	long long timeStamp1 = DateTime::UtcNowTimeStamp();
 	int hi_s32_ret = HI_SUCCESS;
 	if (packet != NULL)
 	{
@@ -808,6 +810,9 @@ DecodeResult DecodeChannel::Decode(const AVPacket* packet, int frameIndex, int f
 			return DecodeResult::Error;
 		}
 	}
+	long long timeStamp2 = DateTime::UtcNowTimeStamp();
+	long long timeStamp3 = 0;
+	long long timeStamp4 = 0;
 	VIDEO_FRAME_INFO_S frame;
 	while (true)
 	{
@@ -830,10 +835,12 @@ DecodeResult DecodeChannel::Decode(const AVPacket* packet, int frameIndex, int f
 				}
 				else
 				{
+					timeStamp3 = DateTime::UtcNowTimeStamp();
 					handled = true;
 					unsigned char* yuv = reinterpret_cast<unsigned char*>(HI_MPI_SYS_Mmap(frame.stVFrame.u64PhyAddr[0], _yuv420spSize));
 					_detectChannel->HandleYUV(yuv, DestinationWidth, DestinationHeight, static_cast<int>(frame.stVFrame.u64PTS), frameSpan);
 					HI_MPI_SYS_Munmap(reinterpret_cast<HI_VOID*>(yuv), _yuv420spSize);
+					timeStamp4 = DateTime::UtcNowTimeStamp();
 					break;
 					//	hi_s32_ret = HI_MPI_VENC_SendFrame(_channelIndex, &frame, 0);
 					//	if (HI_SUCCESS != hi_s32_ret) {
@@ -898,6 +905,8 @@ DecodeResult DecodeChannel::Decode(const AVPacket* packet, int frameIndex, int f
 			break;
 		}
 	}
+	long long timeStamp5 = DateTime::UtcNowTimeStamp();
+	LogPool::Debug("decode", _channelIndex, timeStamp2 - timeStamp1, timeStamp4 - timeStamp3, timeStamp5 - timeStamp2);
 #endif // !_WIN32
 	return handled ? DecodeResult::Handle : DecodeResult::Skip;
 }

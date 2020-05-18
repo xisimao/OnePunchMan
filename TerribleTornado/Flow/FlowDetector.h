@@ -28,14 +28,6 @@ namespace OnePunchMan
 		*/
 		void ClearChannel();
 
-		/**
-		* @brief: 收集流量
-		* @param: flowJson 流量json数据
-		* @param: timeStamp 时间戳
-		* @return: 流量json数据
-		*/
-		void CollectFlow(std::string* flowJson, long long timeStamp);
-
 		void HandleDetect(std::map<std::string, DetectItem>* detectItems, long long timeStamp, std::string* param, const unsigned char* iveBuffer, int frameIndex,int frameSpan);
 
 		void HandleRecognize(const RecognItem& item, const unsigned char* iveBuffer, const std::string& recognJson);
@@ -156,13 +148,33 @@ namespace OnePunchMan
 		*/
 		void DrawDetect(const std::map<std::string, DetectItem>& detectItems, const unsigned char* iveBuffer, int frameIndex);
 
+		/**
+		* @brief: 获取通道地址和车道缓存集合
+		* @param: channelUrl 用于存储通道地址的字符串
+		* @param: lanes 用于存储车道的集合
+		*/
+		void GetCache(std::string* channelUrl, std::vector<FlowLaneCache>* lanes);
+
+		/**
+		* @brief: 设置车道缓存集合
+		* @param: lanes 车道集合
+		*/
+		void SetCache(const std::vector<FlowLaneCache>& lanes);
+
 		//IO mqtt主题
 		static const std::string IOTopic;
+		//流量mqtt主题
+		static const std::string FlowTopic;
 		//视频结构化mqtt主题
 		static const std::string VideoStructTopic;
 
 		//上一帧的时间戳
-		long long _lastTimeStamp;
+		long long _lastFrameTimeStamp;
+
+		//当前分钟的时间戳
+		long long _currentMinuteTimeStamp;
+		//下一分钟的时间戳
+		long long _nextMinuteTimeStamp;
 
 		//车道集合同步锁
 		std::timed_mutex _laneMutex;

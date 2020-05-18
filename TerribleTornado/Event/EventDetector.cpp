@@ -26,7 +26,6 @@ void EventDetector::UpdateChannel(const EventChannel& channel)
 		_lanes.clear();
 		string regionsParam;
 		regionsParam.append("[");
-
 		for (vector<EventLane>::const_iterator lit = channel.Lanes.begin(); lit != channel.Lanes.end(); ++lit)
 		{
 			EventLaneCache cache;
@@ -59,11 +58,6 @@ void EventDetector::UpdateChannel(const EventChannel& channel)
 				}
 			}
 		}
-		_lanesInited = !_lanes.empty() && _lanes.size() == channel.Lanes.size();
-		if (!_lanesInited)
-		{
-			LogPool::Warning("lane init failed", channel.ChannelIndex);
-		}
 		if (regionsParam.size() == 1)
 		{
 			regionsParam.append("]");
@@ -72,11 +66,15 @@ void EventDetector::UpdateChannel(const EventChannel& channel)
 		{
 			regionsParam[regionsParam.size() - 1] = ']';
 		}
-
-		_param = StringEx::Combine("{\"Detect\":{\"DetectRegion\":", regionsParam, ",\"IsDet\":true,\"MaxCarWidth\":10,\"MinCarWidth\":10,\"Mode\":0,\"Threshold\":20,\"Version\":1001}}");
-		_setParam = false;
+		_lanesInited = !_lanes.empty() && _lanes.size() == channel.Lanes.size();
+		if (!_lanesInited)
+		{
+			LogPool::Warning("lane init failed", channel.ChannelIndex);
+		}
 		_channelIndex = channel.ChannelIndex;
 		_channelUrl = channel.ChannelUrl;
+		_param = StringEx::Combine("{\"Detect\":{\"DetectRegion\":", regionsParam, ",\"IsDet\":true,\"MaxCarWidth\":10,\"MinCarWidth\":10,\"Mode\":0,\"Threshold\":20,\"Version\":1001}}");
+		_setParam = false;
 	}
 	else
 	{
@@ -91,9 +89,9 @@ void EventDetector::ClearChannel()
 	if (lck.try_lock_for(chrono::seconds(ThreadObject::LockTime)))
 	{
 		_lanes.clear();
-		_channelUrl = string();
-		_channelIndex = 0;
 		_lanesInited = false;
+		_channelIndex = 0;
+		_channelUrl = string();
 	}
 	else
 	{
@@ -150,7 +148,9 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 						eventItem.LastTimeStamp = timeStamp;
 						cache.Items.insert(pair<string, EventDetectCache>(it->first, eventItem));
 						string laneJson;
+						JsonSerialization::Serialize(&laneJson, "channelUrl", channelUrl);
 						JsonSerialization::Serialize(&laneJson, "laneId", cache.LaneId);
+						JsonSerialization::Serialize(&laneJson, "timeStamp", timeStamp);
 						JsonSerialization::Serialize(&laneJson, "type", (int)EventType::Pedestrain);
 						string jpgBase64;
 						DrawPedestrain(&jpgBase64, iveBuffer, it->second.Region.HitPoint(), frameIndex);
@@ -189,7 +189,9 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 								{
 									mit->second.StopPark = true;
 									string laneJson;
+									JsonSerialization::Serialize(&laneJson, "channelUrl", channelUrl);
 									JsonSerialization::Serialize(&laneJson, "laneId", cache.LaneId);
+									JsonSerialization::Serialize(&laneJson, "timeStamp", timeStamp);
 									JsonSerialization::Serialize(&laneJson, "type", (int)EventType::Park);
 									JsonSerialization::Serialize(&laneJson, "image1", mit->second.StartParkImage);
 									string jpgBase64;
@@ -219,7 +221,9 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 							if (timeStamp - cache.LastReportTimeStamp > ReportSpan)
 							{
 								string laneJson;
+								JsonSerialization::Serialize(&laneJson, "channelUrl", channelUrl);
 								JsonSerialization::Serialize(&laneJson, "laneId", cache.LaneId);
+								JsonSerialization::Serialize(&laneJson, "timeStamp", timeStamp);
 								JsonSerialization::Serialize(&laneJson, "type", (int)EventType::Congestion);
 								string jpgBase64;
 								DrawCongestion(&jpgBase64, iveBuffer, frameIndex);
@@ -268,7 +272,9 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 									{
 										mit->second.RetrogradePoints.push_back(it->second.Region.HitPoint());
 										string laneJson;
+										JsonSerialization::Serialize(&laneJson, "channelUrl", channelUrl);
 										JsonSerialization::Serialize(&laneJson, "laneId", cache.LaneId);
+										JsonSerialization::Serialize(&laneJson, "timeStamp", timeStamp);
 										JsonSerialization::Serialize(&laneJson, "type", (int)EventType::Retrograde);
 										string jpgBase64;
 										DrawRetrograde(&jpgBase64, iveBuffer, mit->second.RetrogradePoints, frameIndex);
@@ -294,14 +300,9 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 
 	if (!lanesJson.empty())
 	{
-		string channelJson;
-		JsonSerialization::SerializeJson(&channelJson, "lanes", lanesJson);
-		JsonSerialization::Serialize(&channelJson, "channelUrl", channelUrl);
-		JsonSerialization::Serialize(&channelJson, "timeStamp", timeStamp);
-
 		if (_mqtt != NULL)
 		{
-			_mqtt->Send(EventTopic, channelJson);
+			_mqtt->Send(EventTopic, lanesJson);
 		}
 	}
 

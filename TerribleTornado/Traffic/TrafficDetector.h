@@ -89,12 +89,6 @@ namespace OnePunchMan
 		virtual ~TrafficDetector();
 
 		/**
-		* @brief: 获取通道地址
-		* @return 通道地址
-		*/
-		std::string ChannelUrl() const;
-
-		/**
 		* @brief: 获取车道是否初始化成功
 		* @return 车道是否初始化成功
 		*/
@@ -186,8 +180,6 @@ namespace OnePunchMan
 		//调试相关
 		//是否处于调试模式
 		bool _debug;
-		//调试用bgr字节流
-		unsigned char* _debugBgrBuffer;
 		//调试时写jpg
 		JPGHandler _jpgHandler;
 

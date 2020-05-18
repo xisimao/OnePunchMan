@@ -223,6 +223,10 @@ void TrafficStartup::GetDevice(HttpReceivedEventArgs* e)
     JsonSerialization::Serialize(&deviceJson, "destinationWidth", FFmpegChannel::DestinationWidth);
     JsonSerialization::Serialize(&deviceJson, "destinationHeight", FFmpegChannel::DestinationHeight);
     JsonSerialization::Serialize(&deviceJson, "mqttConnected", _mqtt==NULL?false: _mqtt->Connected());
+    for (unsigned int i = 0; i < _recogns.size(); ++i)
+    {
+        JsonSerialization::Serialize(&deviceJson, StringEx::Combine("recognQueue",i+1), _recogns[i]->Size());
+    }
     JsonSerialization::SerializeJson(&deviceJson, "channels", channelsJson);
 
     e->Code = HttpCode::OK;

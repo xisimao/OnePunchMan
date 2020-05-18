@@ -306,8 +306,9 @@ void FFmpegChannel::StartCore()
 			{
 				frameSpan = 1000 / _inputStream->avg_frame_rate.num;
 			}
+			long long timeStamp1 = DateTime::UtcNowTimeStamp();
 			int readResult = av_read_frame(_inputFormat, &packet);
-			LogPool::Debug(LogEvent::Decode, "frame", _inputUrl, frameIndex, readResult);
+
 			if (readResult == AVERROR_EOF)
 			{
 				Decode(NULL, 0, frameSpan);
@@ -327,8 +328,9 @@ void FFmpegChannel::StartCore()
 			{
 				if (packet.stream_index == _inputVideoIndex)
 				{
-					long long start = DateTime::UtcNowTimeStamp();
+					long long timeStamp2 = DateTime::UtcNowTimeStamp();
 					DecodeResult decodeResult = Decode(&packet, frameIndex, frameSpan);
+					long long timeStamp3 = DateTime::UtcNowTimeStamp();
 					if (decodeResult == DecodeResult::Error)
 					{
 						LogPool::Error(LogEvent::Decode, "decode error", _inputUrl, frameIndex);
@@ -350,13 +352,14 @@ void FFmpegChannel::StartCore()
 						packet.pos = -1;
 						av_write_frame(_outputFormat, &packet);
 					}
-					long long end = DateTime::UtcNowTimeStamp();
-					long long sleepTime = frameSpan - (end - start);
+					long long timeStamp4 = DateTime::UtcNowTimeStamp();
+					long long sleepTime = frameSpan - (timeStamp4 - timeStamp2);
 					if (sleepTime > 0 && sleepTime <= frameSpan)
 					{
 						this_thread::sleep_for(chrono::milliseconds(sleepTime));
 					}
 					frameIndex += 1;
+					LogPool::Debug(LogEvent::Decode, "frame", _inputUrl, frameIndex, readResult,timeStamp4-timeStamp1,timeStamp2-timeStamp1,timeStamp3-timeStamp2,timeStamp4-timeStamp3);
 				}
 				av_packet_unref(&packet);
 			}
@@ -366,6 +369,8 @@ void FFmpegChannel::StartCore()
 				_channelStatus = ChannelStatus::ReadError;
 				break;
 			}
+
+		
 		}
 		else
 		{

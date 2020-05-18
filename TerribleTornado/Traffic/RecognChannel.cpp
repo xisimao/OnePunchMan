@@ -26,6 +26,11 @@ bool RecognChannel::Inited()
 	return _inited;
 }
 
+int RecognChannel::Size()
+{
+	return static_cast<int>(_items.size());
+}
+
 void RecognChannel::PushItems(const vector<RecognItem> items)
 {
 	if (!items.empty())

@@ -4,12 +4,49 @@ using namespace std;
 using namespace OnePunchMan;
 
 const string FlowDetector::IOTopic("IO");
+const string FlowDetector::FlowTopic("Flow");
 const string FlowDetector::VideoStructTopic("VideoStruct");
 
 FlowDetector::FlowDetector(int width, int height, MqttChannel* mqtt,bool debug)
-	:TrafficDetector(width,height,mqtt,debug), _lastTimeStamp(0)
+	:TrafficDetector(width,height,mqtt,debug), _lastFrameTimeStamp(0)
 	
 {
+	DateTime now = DateTime::Now();
+	_currentMinuteTimeStamp = DateTime(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), 0).UtcTimeStamp();
+	_nextMinuteTimeStamp = _currentMinuteTimeStamp + 60 * 1000;
+}
+
+void FlowDetector::GetCache(string* channelUrl, vector<FlowDetector::FlowLaneCache>* lanes)
+{
+	unique_lock<timed_mutex> lck(_laneMutex, std::defer_lock);
+	if (lck.try_lock_for(chrono::seconds(ThreadObject::LockTime)))
+	{
+		LogPool::Debug("get lock", _channelIndex);
+		channelUrl->assign(_channelUrl);
+		lanes->assign(_lanes.begin(), _lanes.end());
+		lck.unlock();
+		LogPool::Debug("get unlock", _channelIndex);
+	}
+	else
+	{
+		LogPool::Error(LogEvent::Thread, "get lock timeout", _channelIndex);
+	}
+}
+
+void FlowDetector::SetCache(const std::vector<FlowDetector::FlowLaneCache>& lanes)
+{
+	unique_lock<timed_mutex> lck(_laneMutex, std::defer_lock);
+	if (lck.try_lock_for(chrono::seconds(ThreadObject::LockTime)))
+	{
+		LogPool::Debug("set lock", _channelIndex);
+		_lanes.assign(lanes.begin(), lanes.end());
+		lck.unlock();
+		LogPool::Debug("set unlock", _channelIndex);
+	}
+	else
+	{
+		LogPool::Error(LogEvent::Thread, "set lock timeout", _channelIndex);
+	}
 }
 
 void FlowDetector::UpdateChannel(const FlowChannel& channel)
@@ -17,11 +54,10 @@ void FlowDetector::UpdateChannel(const FlowChannel& channel)
 	unique_lock<timed_mutex> lck(_laneMutex, std::defer_lock);
 	if (lck.try_lock_for(chrono::seconds(ThreadObject::LockTime)))
 	{
-		LogPool::Debug("update lock");
+		LogPool::Debug("update lock", _channelIndex);
 		_lanes.clear();
 		string regionsParam;
 		regionsParam.append("[");
-		_lanesInited = true;
 		for (vector<FlowLane>::const_iterator lit = channel.Lanes.begin(); lit != channel.Lanes.end(); ++lit)
 		{
 			FlowLaneCache cache;
@@ -44,11 +80,6 @@ void FlowDetector::UpdateChannel(const FlowChannel& channel)
 				regionsParam.append(",");
 			}
 		}
-		_lanesInited = !_lanes.empty() && _lanes.size() == channel.Lanes.size();
-		if (!_lanesInited)
-		{
-			LogPool::Warning("lane init failed", channel.ChannelIndex);
-		}
 		if (regionsParam.size() == 1)
 		{
 			regionsParam.append("]");
@@ -57,15 +88,19 @@ void FlowDetector::UpdateChannel(const FlowChannel& channel)
 		{
 			regionsParam[regionsParam.size() - 1] = ']';
 		}
-
-		_param = StringEx::Combine("{\"Detect\":{\"DetectRegion\":", regionsParam, ",\"IsDet\":true,\"MaxCarWidth\":10,\"MinCarWidth\":10,\"Mode\":0,\"Threshold\":20,\"Version\":1001}}");
-		_setParam = false;
+		_lanesInited = !_lanes.empty() && _lanes.size() == channel.Lanes.size();
+		if (!_lanesInited)
+		{
+			LogPool::Warning("lane init failed", channel.ChannelIndex);
+		}
 		_channelIndex = channel.ChannelIndex;
 		_channelUrl = channel.ChannelUrl;
+		_param = StringEx::Combine("{\"Detect\":{\"DetectRegion\":", regionsParam, ",\"IsDet\":true,\"MaxCarWidth\":10,\"MinCarWidth\":10,\"Mode\":0,\"Threshold\":20,\"Version\":1001}}");
+		_setParam = false;
 	}
 	else
 	{
-		LogPool::Error(LogEvent::Thread, "update lock timeout");
+		LogPool::Error(LogEvent::Thread, "update lock timeout", _channelIndex);
 	}	
 }
 
@@ -74,16 +109,15 @@ void FlowDetector::ClearChannel()
 	unique_lock<timed_mutex> lck(_laneMutex, std::defer_lock);
 	if (lck.try_lock_for(chrono::seconds(ThreadObject::LockTime)))
 	{
-		LogPool::Debug("clear lock");
-
+		LogPool::Debug("clear lock", _channelIndex);
 		_lanes.clear();
+		_lanesInited = false;
 		_channelUrl = string();
 		_channelIndex = 0;
-		_lanesInited = false;
 	}
 	else
 	{
-		LogPool::Error(LogEvent::Thread, "clear lock timeout");
+		LogPool::Error(LogEvent::Thread, "clear lock timeout", _channelIndex);
 	}
 }
 
@@ -93,305 +127,39 @@ void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long 
 	{
 		timeStamp = frameIndex * frameSpan;
 	}
-	string lanesJson;
-	string channelUrl;
-	unique_lock<timed_mutex> lck(_laneMutex, std::defer_lock);
-	if (lck.try_lock_for(chrono::seconds(ThreadObject::LockTime)))
+	if (!_setParam)
 	{
-		LogPool::Debug("detect lock");
-
-		channelUrl = _channelUrl;
-		if (!_setParam)
+		unique_lock<timed_mutex> lck(_laneMutex, std::defer_lock);
+		if (lck.try_lock_for(chrono::seconds(ThreadObject::LockTime)))
 		{
+			LogPool::Debug("param lock", _channelIndex);
 			param->assign(_param);
 			_setParam = true;
 		}
-		for (unsigned int i = 0; i < _lanes.size(); ++i)
+		else
 		{
-			FlowLaneCache& cache = _lanes[i];
-			cache.CurrentItems()->clear();
-
-			bool ioStatus = false;
-			DetectType type = DetectType::None;
-			for (map<string, DetectItem>::iterator it = detectItems->begin(); it != detectItems->end(); ++it)
-			{
-				if (it->second.Status != DetectStatus::Out)
-				{
-					continue;
-				}
-				if (cache.Region.Contains(it->second.Region.HitPoint()))
-				{
-					ioStatus = true;
-					type = it->second.Type;
-					map<string, FlowDetectCache>::const_iterator mit = cache.LastItems()->find(it->first);
-					//如果是新车则计算流量和车头时距
-					//流量=车数量
-					//车头时距=所有进入区域的时间差的平均值
-					if (mit == cache.LastItems()->end())
-					{
-						it->second.Status = DetectStatus::New;
-						if (it->second.Type == DetectType::Car)
-						{
-							cache.Cars += 1;
-							cache.Vehicles += 1;
-						}
-						else if (it->second.Type == DetectType::Tricycle)
-						{
-							cache.Tricycles += 1;
-							cache.Vehicles += 1;
-						}
-						else if (it->second.Type == DetectType::Bus)
-						{
-							cache.Buss += 1;
-							cache.Vehicles += 1;
-						}
-						else if (it->second.Type == DetectType::Van)
-						{
-							cache.Vans += 1;
-							cache.Vehicles += 1;
-						}
-						else if (it->second.Type == DetectType::Truck)
-						{
-							cache.Trucks += 1;
-							cache.Vehicles += 1;
-						}
-						else if (it->second.Type == DetectType::Bike)
-						{
-							cache.Bikes += 1;
-						}
-						else if (it->second.Type == DetectType::Motobike)
-						{
-							cache.Motorcycles += 1;
-						}
-						else if (it->second.Type == DetectType::Pedestrain)
-						{
-							cache.Persons += 1;
-						}
-						if (cache.LastInRegion != 0)
-						{
-							cache.TotalSpan += timeStamp - cache.LastInRegion;
-						}
-						cache.LastInRegion = timeStamp;
-					}
-					//如果是已经记录的车则计算平均速度
-					//平均速度=总距离/总时间
-					//总距离=两次检测到的点的距离*每个像素代表的米数
-					//总时间=两次检测到的时间戳时长
-					else
-					{
-						it->second.Status = DetectStatus::In;
-						double distance = it->second.Region.HitPoint().Distance(mit->second.HitPoint);
-						cache.TotalDistance += distance;
-						cache.TotalTime += timeStamp - _lastTimeStamp;
-					}
-					FlowDetectCache detectCache;
-					detectCache.HitPoint = it->second.Region.HitPoint();
-					cache.CurrentItems()->insert(pair<string, FlowDetectCache>(it->first, detectCache));
-				}
-			}
-
-			//如果上一次有车，则认为到这次检测为止都有车
-			//时间占有率=总时间/一分钟
-			if (!cache.LastItems()->empty())
-			{
-				cache.TotalInTime += timeStamp - _lastTimeStamp;
-			}
-
-			cache.SwitchFlag();
-
-			if (ioStatus != cache.IoStatus)
-			{
-				cache.IoStatus = ioStatus;
-				string laneJson;
-				JsonSerialization::Serialize(&laneJson, "laneId", cache.LaneId);
-				JsonSerialization::Serialize(&laneJson, "status", (int)ioStatus);
-				JsonSerialization::Serialize(&laneJson, "type", (int)type);
-				JsonSerialization::SerializeItem(&lanesJson, laneJson);
-				LogPool::Debug(LogEvent::Detect, "lane:", cache.LaneId, "io:", ioStatus);
-			}
-		}
-		_lastTimeStamp = timeStamp;
-
-		lck.unlock();
-	}
-	else
-	{
-		LogPool::Error(LogEvent::Thread, "detect lock timeout");
-	}
-	
-	if (!lanesJson.empty())
-	{
-		string channelJson;
-		JsonSerialization::SerializeJson(&channelJson, "lanes", lanesJson);
-		JsonSerialization::Serialize(&channelJson, "channelUrl", channelUrl);
-		JsonSerialization::Serialize(&channelJson, "timeStamp", timeStamp);
-		if (_mqtt != NULL)
-		{
-			_mqtt->Send(IOTopic, channelJson);
+			LogPool::Error(LogEvent::Thread, "param lock timeout", _channelIndex);
 		}
 	}
-	DrawDetect(*detectItems, iveBuffer, frameIndex);
-}
 
-void FlowDetector::HandleRecognize(const RecognItem& recognItem, const unsigned char* iveBuffer, const string& recognJson)
-{
-	long long timeStamp = DateTime::UtcNowTimeStamp();
-	IveToBgr(iveBuffer, recognItem.Width, recognItem.Height, _bgrBuffer);
-	int jpgSize=BgrToJpg(_bgrBuffer, recognItem.Width, recognItem.Height,&_jpgBuffer);
-	string image;
-	JpgToBase64(&image, _jpgBuffer, jpgSize);
-	JsonDeserialization jd(recognJson);	
-	if (recognItem.Type == static_cast<int>(DetectType::Pedestrain))
-	{
-		int pedestrainType = jd.Get<int>(StringEx::Combine("ImageResults:0:Pedestrains:0:Type"));
-		if (pedestrainType != 0)
-		{
-			unique_lock<timed_mutex> lck(_laneMutex, std::defer_lock);
-			if (lck.try_lock_for(chrono::seconds(ThreadObject::LockTime)))
-			{
-				LogPool::Debug("recogn channel lock");
+	string channelUrl;
+	vector<FlowLaneCache> lanes;
+	GetCache(&channelUrl, &lanes);
 
-				for (unsigned int i = 0; i < _lanes.size(); ++i)
-				{
-					if (_lanes[i].Region.Contains(recognItem.Region.HitPoint()))
-					{
-						string channelUrl = _channelUrl;
-						string laneId = _lanes[i].LaneId;
-						lck.unlock();
-						int sex = jd.Get<int>(StringEx::Combine("ImageResults:0:Pedestrains:0:Recognize:Sex:TopList:0:Code"));
-						int age = jd.Get<int>(StringEx::Combine("ImageResults:0:Pedestrains:0:Recognize:Age:TopList:0:Code"));
-						int upperColor = jd.Get<int>(StringEx::Combine("ImageResults:0:Pedestrains:0:Recognize:UpperColor:TopList:0:Code"));
-						//pedestrain.Feature = jd.Get<string>(StringEx::Combine("ImageResults:", imageIndex, ":Pedestrains:0:Recognize:Feature:Feature"));
-						string videoStructJson;
-						JsonSerialization::Serialize(&videoStructJson, "channelUrl", channelUrl);
-						JsonSerialization::Serialize(&videoStructJson, "laneId", laneId);
-						JsonSerialization::Serialize(&videoStructJson, "timeStamp", timeStamp);
-						//JsonSerialization::Serialize(&videoStructJson, "feature", pedestrain.Feature);
-						JsonSerialization::Serialize(&videoStructJson, "image", image);
-						JsonSerialization::Serialize(&videoStructJson, "videoStructType", (int)VideoStructType::Pedestrain);
-						JsonSerialization::Serialize(&videoStructJson, "sex", sex);
-						JsonSerialization::Serialize(&videoStructJson, "age", age);
-						JsonSerialization::Serialize(&videoStructJson, "upperColor", upperColor);
-						if (_mqtt != NULL)
-						{
-							_mqtt->Send(VideoStructTopic, videoStructJson);
-						}
-						LogPool::Debug(LogEvent::Detect, "lane:", laneId, "pedestrain");
-						return;
-					}
-				}
-			}
-			else
-			{
-				LogPool::Error(LogEvent::Thread, "recogn lock timeout");
-			}
-		}
-	}
-	else if (recognItem.Type == static_cast<int>(DetectType::Bike)
-		|| recognItem.Type == static_cast<int>(DetectType::Motobike))
+	//结算上一分钟
+	if (timeStamp > _nextMinuteTimeStamp)
 	{
-		int bikeType = jd.Get<int>(StringEx::Combine("ImageResults:0:Bikes:0:Type"));
-		if (bikeType != 0)
+		string flowLanesJson;
+		for (unsigned int i = 0; i < lanes.size(); ++i)
 		{
-			unique_lock<timed_mutex> lck(_laneMutex, std::defer_lock);
-			if (lck.try_lock_for(chrono::seconds(ThreadObject::LockTime)))
-			{
-				LogPool::Debug("recogn lock");
-				for (unsigned int i = 0; i < _lanes.size(); ++i)
-				{
-					if (_lanes[i].Region.Contains(recognItem.Region.HitPoint()))
-					{
-						string laneId = _lanes[i].LaneId;
-						string channelUrl = _channelUrl;
-						lck.unlock();
-						//bike.Feature = jd.Get<string>(StringEx::Combine("ImageResults:", imageIndex, ":Bikes:0:Recognize:Feature:Feature"));
-						string videoStructJson;
-						JsonSerialization::Serialize(&videoStructJson, "channelUrl", channelUrl);
-						JsonSerialization::Serialize(&videoStructJson, "laneId", laneId);
-						JsonSerialization::Serialize(&videoStructJson, "timeStamp", timeStamp);
-						JsonSerialization::Serialize(&videoStructJson, "videoStructType", (int)VideoStructType::Bike);
-						//JsonSerialization::Serialize(&videoStructJson, "feature", bike.Feature);
-						JsonSerialization::Serialize(&videoStructJson, "image", image);
-						JsonSerialization::Serialize(&videoStructJson, "bikeType", bikeType);
-						if (_mqtt != NULL)
-						{
-							_mqtt->Send(VideoStructTopic, videoStructJson);
-						}
-						LogPool::Debug(LogEvent::Detect, "lane:", laneId, "bike:", bikeType);
-						return;
-					}
-				}
-			}
-			else
-			{
-				LogPool::Error(LogEvent::Thread, "recogn lock timeout");
-			}		
-		}
-	}
-	else
-	{
-		int vehicleType = jd.Get<int>(StringEx::Combine("ImageResults:0:Vehicles:0:Type"));
-		if (vehicleType != 0)
-		{
-			unique_lock<timed_mutex> lck(_laneMutex, std::defer_lock);
-			if (lck.try_lock_for(chrono::seconds(ThreadObject::LockTime)))
-			{
-				LogPool::Debug("recogn lock");
-				for (unsigned int i = 0; i < _lanes.size(); ++i)
-				{
-					if (_lanes[i].Region.Contains(recognItem.Region.HitPoint()))
-					{
-						string laneId = _lanes[i].LaneId;
-						string channelUrl = _channelUrl;
-						lck.unlock();
-						int carType = jd.Get<int>(StringEx::Combine("ImageResults:0:Vehicles:0:Recognize:Type:TopList:0:Code"));
-						int carColor = jd.Get<int>(StringEx::Combine("ImageResults:0:Vehicles:0:Recognize:Color:TopList:0:Code"));
-						string carBrand = jd.Get<string>(StringEx::Combine("ImageResults:0:Vehicles:0:Recognize:Brand:TopList:0:Name"));
-						int plateType = jd.Get<int>(StringEx::Combine("ImageResults:0:Vehicles:0:Recognize:Plate:Type"));
-						string plateNumber = jd.Get<string>(StringEx::Combine("ImageResults:0:Vehicles:0:Recognize:Plate:Licence"));
-						//vehicle.Feature = jd.Get<string>(StringEx::Combine("ImageResults:", imageIndex, ":Vehicles:0:Recognize:Feature:Feature"));
-						string videoStructJson;
-						JsonSerialization::Serialize(&videoStructJson, "channelUrl", channelUrl);
-						JsonSerialization::Serialize(&videoStructJson, "laneId", laneId);
-						JsonSerialization::Serialize(&videoStructJson, "timeStamp", timeStamp);
-						JsonSerialization::Serialize(&videoStructJson, "videoStructType", (int)VideoStructType::Vehicle);
-						//JsonSerialization::Serialize(&videoStructJson, "feature", vehicle.Feature);
-						JsonSerialization::Serialize(&videoStructJson, "image", image);
-						JsonSerialization::Serialize(&videoStructJson, "carType", carType);
-						JsonSerialization::Serialize(&videoStructJson, "carColor", carColor);
-						JsonSerialization::Serialize(&videoStructJson, "carBrand", carBrand);
-						JsonSerialization::Serialize(&videoStructJson, "plateType", plateType);
-						JsonSerialization::Serialize(&videoStructJson, "plateNumber", plateNumber);
-						if (_mqtt != NULL)
-						{
-							_mqtt->Send(VideoStructTopic, videoStructJson);
-						}
-						LogPool::Debug(LogEvent::Detect, "lane:", laneId, "vehicle:", carType);
-						return;
-					}
-				}
-			}
-			else
-			{
-				LogPool::Error(LogEvent::Thread, "recogn lock timeout");
-			}
-		}
-	}
-}
-
-void FlowDetector::CollectFlow(string* flowJson, long long timeStamp)
-{
-	unique_lock<timed_mutex> lck(_laneMutex, std::defer_lock);
-	if (lck.try_lock_for(chrono::seconds(ThreadObject::LockTime)))
-	{
-		LogPool::Debug("collect lock");
-		for (unsigned int i = 0; i < _lanes.size(); ++i)
-		{
-			FlowLaneCache& cache = _lanes[i];
-
+			FlowLaneCache& cache = lanes[i];
+			//平均速度(km/h)
 			double speed = cache.TotalTime == 0 ? 0 : (cache.TotalDistance * cache.MeterPerPixel / 1000.0) / (static_cast<double>(cache.TotalTime) / 3600000.0);
+			//车道时距(sec)
 			double headDistance = cache.Vehicles > 1 ? static_cast<double>(cache.TotalSpan) / static_cast<double>(cache.Vehicles - 1) / 1000.0 : 0;
+			//车头间距(m)
 			double headSpace = speed * 1000 * headDistance / 3600.0;
+			//时间占用率(%)
 			double timeOccupancy = static_cast<double>(cache.TotalInTime) / 60000.0 * 100;
 			int trafficStatus = 0;
 			if (speed > 40)
@@ -415,9 +183,9 @@ void FlowDetector::CollectFlow(string* flowJson, long long timeStamp)
 				trafficStatus = static_cast<int>(TrafficStatus::Dead);
 			}
 			string laneJson;
-			JsonSerialization::Serialize(&laneJson, "channelUrl", _channelUrl);
+			JsonSerialization::Serialize(&laneJson, "channelUrl", channelUrl);
 			JsonSerialization::Serialize(&laneJson, "laneId", cache.LaneId);
-			JsonSerialization::Serialize(&laneJson, "timeStamp", timeStamp);
+			JsonSerialization::Serialize(&laneJson, "timeStamp", _currentMinuteTimeStamp);
 			JsonSerialization::Serialize(&laneJson, "persons", cache.Persons);
 			JsonSerialization::Serialize(&laneJson, "bikes", cache.Bikes);
 			JsonSerialization::Serialize(&laneJson, "motorcycles", cache.Motorcycles);
@@ -432,7 +200,7 @@ void FlowDetector::CollectFlow(string* flowJson, long long timeStamp)
 			JsonSerialization::Serialize(&laneJson, "headSpace", headSpace);
 			JsonSerialization::Serialize(&laneJson, "timeOccupancy", static_cast<int>(timeOccupancy));
 			JsonSerialization::Serialize(&laneJson, "trafficStatus", trafficStatus);
-			JsonSerialization::SerializeItem(flowJson, laneJson);
+			JsonSerialization::SerializeItem(&flowLanesJson, laneJson);
 
 			LogPool::Debug(LogEvent::Detect, "lane:", cache.LaneId, "vehicles:", cache.Cars + cache.Tricycles + cache.Buss + cache.Vans + cache.Trucks, "bikes:", cache.Bikes + cache.Motorcycles, "persons:", cache.Persons, speed, "km/h ", headDistance, "sec ", timeOccupancy, "%");
 
@@ -454,11 +222,257 @@ void FlowDetector::CollectFlow(string* flowJson, long long timeStamp)
 			cache.Vehicles = 0;
 			cache.TotalSpan = 0;
 		}
-		_lastTimeStamp = timeStamp;
+		//结算后认为该分钟结束，当前帧收到的数据结算到下一分钟
+		_lastFrameTimeStamp = _nextMinuteTimeStamp;
+		_currentMinuteTimeStamp = _nextMinuteTimeStamp;
+		_nextMinuteTimeStamp += 60 * 1000;
+		if (!flowLanesJson.empty())
+		{
+			if (_mqtt != NULL)
+			{
+				_mqtt->Send(FlowTopic, flowLanesJson);
+			}
+		}
+	}
+
+	//计算当前帧
+	string ioLanesJson;
+	for (unsigned int i = 0; i < lanes.size(); ++i)
+	{
+		FlowLaneCache& cache = lanes[i];
+		cache.CurrentItems()->clear();
+
+		bool ioStatus = false;
+		DetectType type = DetectType::None;
+		for (map<string, DetectItem>::iterator it = detectItems->begin(); it != detectItems->end(); ++it)
+		{
+			if (it->second.Status != DetectStatus::Out)
+			{
+				continue;
+			}
+			if (cache.Region.Contains(it->second.Region.HitPoint()))
+			{
+				ioStatus = true;
+				type = it->second.Type;
+				map<string, FlowDetectCache>::const_iterator mit = cache.LastItems()->find(it->first);
+				//如果是新车则计算流量和车头时距
+				//流量=车数量
+				//车头时距=所有进入区域的时间差的平均值
+				if (mit == cache.LastItems()->end())
+				{
+					it->second.Status = DetectStatus::New;
+					if (it->second.Type == DetectType::Car)
+					{
+						cache.Cars += 1;
+						cache.Vehicles += 1;
+					}
+					else if (it->second.Type == DetectType::Tricycle)
+					{
+						cache.Tricycles += 1;
+						cache.Vehicles += 1;
+					}
+					else if (it->second.Type == DetectType::Bus)
+					{
+						cache.Buss += 1;
+						cache.Vehicles += 1;
+					}
+					else if (it->second.Type == DetectType::Van)
+					{
+						cache.Vans += 1;
+						cache.Vehicles += 1;
+					}
+					else if (it->second.Type == DetectType::Truck)
+					{
+						cache.Trucks += 1;
+						cache.Vehicles += 1;
+					}
+					else if (it->second.Type == DetectType::Bike)
+					{
+						cache.Bikes += 1;
+					}
+					else if (it->second.Type == DetectType::Motobike)
+					{
+						cache.Motorcycles += 1;
+					}
+					else if (it->second.Type == DetectType::Pedestrain)
+					{
+						cache.Persons += 1;
+					}
+					if (cache.LastInRegion != 0)
+					{
+						cache.TotalSpan += timeStamp - cache.LastInRegion;
+					}
+					cache.LastInRegion = timeStamp;
+				}
+				//如果是已经记录的车则计算平均速度
+				//平均速度=总距离/总时间
+				//总距离=两次检测到的点的距离*每个像素代表的米数
+				//总时间=两次检测到的时间戳时长
+				else
+				{
+					it->second.Status = DetectStatus::In;
+					double distance = it->second.Region.HitPoint().Distance(mit->second.HitPoint);
+					cache.TotalDistance += distance;
+					cache.TotalTime += timeStamp - _lastFrameTimeStamp;
+				}
+				FlowDetectCache detectCache;
+				detectCache.HitPoint = it->second.Region.HitPoint();
+				cache.CurrentItems()->insert(pair<string, FlowDetectCache>(it->first, detectCache));
+			}
+		}
+
+		//如果上一次有车，则认为到这次检测为止都有车
+		//时间占有率=总时间/一分钟
+		if (!cache.LastItems()->empty())
+		{
+			cache.TotalInTime += timeStamp - _lastFrameTimeStamp;
+		}
+
+		cache.SwitchFlag();
+
+		if (ioStatus != cache.IoStatus)
+		{
+			cache.IoStatus = ioStatus;
+			string laneJson;
+			JsonSerialization::Serialize(&laneJson, "channelUrl", channelUrl);
+			JsonSerialization::Serialize(&laneJson, "laneId", cache.LaneId);
+			JsonSerialization::Serialize(&laneJson, "timeStamp", timeStamp);
+			JsonSerialization::Serialize(&laneJson, "status", (int)ioStatus);
+			JsonSerialization::Serialize(&laneJson, "type", (int)type);
+			JsonSerialization::SerializeItem(&ioLanesJson, laneJson);
+			LogPool::Debug(LogEvent::Detect, "lane:", cache.LaneId, "io:", ioStatus);
+		}
+	}
+	_lastFrameTimeStamp = timeStamp;
+	if (!ioLanesJson.empty())
+	{
+		if (_mqtt != NULL)
+		{
+			_mqtt->Send(IOTopic, ioLanesJson);
+		}
+	}
+
+	SetCache(lanes);
+	DrawDetect(*detectItems, iveBuffer, frameIndex);
+}
+
+void FlowDetector::HandleRecognize(const RecognItem& recognItem, const unsigned char* iveBuffer, const string& recognJson)
+{
+	if (_debug)
+	{
+		return;
+	}
+	long long timeStamp = DateTime::UtcNowTimeStamp();
+	IveToBgr(iveBuffer, recognItem.Width, recognItem.Height, _bgrBuffer);
+	int jpgSize=BgrToJpg(_bgrBuffer, recognItem.Width, recognItem.Height,&_jpgBuffer);
+	string image;
+	JpgToBase64(&image, _jpgBuffer, jpgSize);
+	JsonDeserialization jd(recognJson);	
+	string channelUrl;
+	vector<FlowLaneCache> lanes;
+	GetCache(&channelUrl, &lanes);
+	if (recognItem.Type == static_cast<int>(DetectType::Pedestrain))
+	{
+		int pedestrainType = jd.Get<int>(StringEx::Combine("ImageResults:0:Pedestrains:0:Type"));
+		if (pedestrainType != 0)
+		{
+			for (unsigned int i = 0; i < lanes.size(); ++i)
+			{
+				if (lanes[i].Region.Contains(recognItem.Region.HitPoint()))
+				{
+					string laneId = lanes[i].LaneId;
+					int sex = jd.Get<int>(StringEx::Combine("ImageResults:0:Pedestrains:0:Recognize:Sex:TopList:0:Code"));
+					int age = jd.Get<int>(StringEx::Combine("ImageResults:0:Pedestrains:0:Recognize:Age:TopList:0:Code"));
+					int upperColor = jd.Get<int>(StringEx::Combine("ImageResults:0:Pedestrains:0:Recognize:UpperColor:TopList:0:Code"));
+					//pedestrain.Feature = jd.Get<string>(StringEx::Combine("ImageResults:", imageIndex, ":Pedestrains:0:Recognize:Feature:Feature"));
+					string videoStructJson;
+					JsonSerialization::Serialize(&videoStructJson, "channelUrl", channelUrl);
+					JsonSerialization::Serialize(&videoStructJson, "laneId", laneId);
+					JsonSerialization::Serialize(&videoStructJson, "timeStamp", timeStamp);
+					//JsonSerialization::Serialize(&videoStructJson, "feature", pedestrain.Feature);
+					JsonSerialization::Serialize(&videoStructJson, "image", image);
+					JsonSerialization::Serialize(&videoStructJson, "videoStructType", (int)VideoStructType::Pedestrain);
+					JsonSerialization::Serialize(&videoStructJson, "sex", sex);
+					JsonSerialization::Serialize(&videoStructJson, "age", age);
+					JsonSerialization::Serialize(&videoStructJson, "upperColor", upperColor);
+					if (_mqtt != NULL)
+					{
+						_mqtt->Send(VideoStructTopic, videoStructJson);
+					}
+					LogPool::Debug(LogEvent::Detect, "lane:", laneId, "pedestrain");
+					return;
+				}
+			}
+		}
+	}
+	else if (recognItem.Type == static_cast<int>(DetectType::Bike)
+		|| recognItem.Type == static_cast<int>(DetectType::Motobike))
+	{
+		int bikeType = jd.Get<int>(StringEx::Combine("ImageResults:0:Bikes:0:Type"));
+		if (bikeType != 0)
+		{
+			for (unsigned int i = 0; i < lanes.size(); ++i)
+			{
+				if (lanes[i].Region.Contains(recognItem.Region.HitPoint()))
+				{
+					string laneId = lanes[i].LaneId;
+					//bike.Feature = jd.Get<string>(StringEx::Combine("ImageResults:", imageIndex, ":Bikes:0:Recognize:Feature:Feature"));
+					string videoStructJson;
+					JsonSerialization::Serialize(&videoStructJson, "channelUrl", channelUrl);
+					JsonSerialization::Serialize(&videoStructJson, "laneId", laneId);
+					JsonSerialization::Serialize(&videoStructJson, "timeStamp", timeStamp);
+					JsonSerialization::Serialize(&videoStructJson, "videoStructType", (int)VideoStructType::Bike);
+					//JsonSerialization::Serialize(&videoStructJson, "feature", bike.Feature);
+					JsonSerialization::Serialize(&videoStructJson, "image", image);
+					JsonSerialization::Serialize(&videoStructJson, "bikeType", bikeType);
+					if (_mqtt != NULL)
+					{
+						_mqtt->Send(VideoStructTopic, videoStructJson);
+					}
+					LogPool::Debug(LogEvent::Detect, "lane:", laneId, "bike:", bikeType);
+					return;
+				}
+			}
+		}
 	}
 	else
 	{
-		LogPool::Error(LogEvent::Thread, "collect lock timeout");
+		int vehicleType = jd.Get<int>(StringEx::Combine("ImageResults:0:Vehicles:0:Type"));
+		if (vehicleType != 0)
+		{
+
+			for (unsigned int i = 0; i < lanes.size(); ++i)
+			{
+				if (lanes[i].Region.Contains(recognItem.Region.HitPoint()))
+				{
+					string laneId = lanes[i].LaneId;
+					int carType = jd.Get<int>(StringEx::Combine("ImageResults:0:Vehicles:0:Recognize:Type:TopList:0:Code"));
+					int carColor = jd.Get<int>(StringEx::Combine("ImageResults:0:Vehicles:0:Recognize:Color:TopList:0:Code"));
+					string carBrand = jd.Get<string>(StringEx::Combine("ImageResults:0:Vehicles:0:Recognize:Brand:TopList:0:Name"));
+					int plateType = jd.Get<int>(StringEx::Combine("ImageResults:0:Vehicles:0:Recognize:Plate:Type"));
+					string plateNumber = jd.Get<string>(StringEx::Combine("ImageResults:0:Vehicles:0:Recognize:Plate:Licence"));
+					//vehicle.Feature = jd.Get<string>(StringEx::Combine("ImageResults:", imageIndex, ":Vehicles:0:Recognize:Feature:Feature"));
+					string videoStructJson;
+					JsonSerialization::Serialize(&videoStructJson, "channelUrl", channelUrl);
+					JsonSerialization::Serialize(&videoStructJson, "laneId", laneId);
+					JsonSerialization::Serialize(&videoStructJson, "timeStamp", timeStamp);
+					JsonSerialization::Serialize(&videoStructJson, "videoStructType", (int)VideoStructType::Vehicle);
+					//JsonSerialization::Serialize(&videoStructJson, "feature", vehicle.Feature);
+					JsonSerialization::Serialize(&videoStructJson, "image", image);
+					JsonSerialization::Serialize(&videoStructJson, "carType", carType);
+					JsonSerialization::Serialize(&videoStructJson, "carColor", carColor);
+					JsonSerialization::Serialize(&videoStructJson, "carBrand", carBrand);
+					JsonSerialization::Serialize(&videoStructJson, "plateType", plateType);
+					JsonSerialization::Serialize(&videoStructJson, "plateNumber", plateNumber);
+					if (_mqtt != NULL)
+					{
+						_mqtt->Send(VideoStructTopic, videoStructJson);
+					}
+					LogPool::Debug(LogEvent::Detect, "lane:", laneId, "vehicle:", carType);
+					return;
+				}
+			}
+		}
 	}
 }
 
@@ -468,8 +482,8 @@ void FlowDetector::DrawDetect(const map<string, DetectItem>& detectItems, const 
 	{
 		return;
 	}
-	IveToBgr(iveBuffer,_width,_height,_debugBgrBuffer);
-	cv::Mat image(_height, _width, CV_8UC3, _debugBgrBuffer);
+	IveToBgr(iveBuffer,_width,_height,_bgrBuffer);
+	cv::Mat image(_height, _width, CV_8UC3, _bgrBuffer);
 	unique_lock<timed_mutex> lck(_laneMutex, std::defer_lock);
 	if (lck.try_lock_for(chrono::seconds(ThreadObject::LockTime)))
 	{

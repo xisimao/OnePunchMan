@@ -6,7 +6,7 @@ using namespace OnePunchMan;
 TrafficDetector::TrafficDetector(int width, int height, MqttChannel* mqtt, bool debug)
 	:_channelIndex(0), _channelUrl(), _width(width), _height(height), _mqtt(mqtt)
 	, _lanesInited(false), _param(), _setParam(true), _bgrBuffer(new unsigned char[width * height * 3]), _jpgBuffer(new unsigned char[width * height])
-	, _debug(debug), _debugBgrBuffer(new unsigned char[width * height * 3]), _jpgHandler(-1)
+	, _debug(debug), _jpgHandler(-1)
 {
 }
 
@@ -14,12 +14,6 @@ TrafficDetector::~TrafficDetector()
 {
 	delete[] _jpgBuffer;
 	delete[] _bgrBuffer;
-	delete[] _debugBgrBuffer;
-}
-
-string TrafficDetector::ChannelUrl() const
-{
-	return _channelUrl;
 }
 
 bool TrafficDetector::LanesInited() const
