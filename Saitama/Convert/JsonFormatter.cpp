@@ -10,7 +10,18 @@ JsonDeserialization::JsonDeserialization()
 
 JsonDeserialization::JsonDeserialization(const string& json)
 {
-	Deserialize(json);
+	if (!json.empty())
+	{
+		if (json[0] =='{')
+		{
+			Deserialize(json);
+		}
+		else if (json[0] == '[')
+		{
+			DeserializeArray(json);
+		}
+	}
+	
 }
 
 tuple<size_t, string> JsonDeserialization::CutString(const string& json, size_t offset)

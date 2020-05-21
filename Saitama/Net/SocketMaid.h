@@ -43,7 +43,7 @@ namespace OnePunchMan
 		* @param: endPoint 连接地址
 		* @param: handler 套接字操作指针
 		*/
-		void AddConnectEndPoint(const EndPoint& endPoint, SocketHandler* handler);
+		void AddConnectEndPoint(const EndPoint& endPoint, SocketHandler* handler=new SocketHandler());
 
 		/**
 		* @brief: 添加Udp套接字
@@ -239,6 +239,11 @@ namespace OnePunchMan
 		* @brief: 开启连接和接收线程
 		*/
 		void Start();
+
+		/**
+		* @brief: 等待连接和接收线程结束
+		*/
+		void Join();
 
 		/**
 		* @brief: 关闭连接和接收线程

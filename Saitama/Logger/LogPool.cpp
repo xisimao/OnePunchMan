@@ -3,17 +3,17 @@
 using namespace std;
 using namespace OnePunchMan;
 
-LogPool LogPool::_instance;
+LogPool* LogPool::_instance=NULL;
 
-LogPool::LogPool()
+LogPool::LogPool(const string& filePath)
 {
 	//读取文件日志参数
-	FileConfig config;
+	FileConfig config(filePath);
 
 	//读取配置文件
 	_directory = config.Get("Logging:Directory", string("logs"));
 	_holdDays = config.Get<unsigned int>("Logging:HoldDays");
-	_defaultLevel=ReadLevel(config, "Logging:Default");
+	_defaultLevel = ReadLevel(config, "Logging:Default");
 	//添加文件日志
 	unsigned int index = 0;
 	while (true)
@@ -45,19 +45,31 @@ LogPool::LogPool()
 LogPool::~LogPool()
 {
 	for_each(_loggers.begin(), _loggers.end(), [](Logger* logger) {
-	
 		delete logger;
 	});
 }
 
+void LogPool::Init(const std::string& filePath)
+{
+	_instance = new LogPool(filePath);
+}
+
+void LogPool::Uninit()
+{
+	if (_instance != NULL)
+	{
+		delete _instance;
+	}
+}
+
 string LogPool::Directory()
 {
-	return _instance._directory;
+	return _instance->_directory;
 }
 
 int LogPool::HoldDays()
 {
-	return _instance._holdDays;
+	return _instance->_holdDays;
 }
 
 LogType LogPool::ReadType(const FileConfig& config, const string& key)

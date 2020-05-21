@@ -11,7 +11,6 @@ SocketMaid::SocketMaid()
 
 SocketMaid::SocketMaid(unsigned int channelCount)
 {
-	Socket::StartUp();
 	_channelIndex = 0;
 	for (unsigned int i = 0; i < channelCount; ++i)
 	{
@@ -32,7 +31,6 @@ SocketMaid::~SocketMaid()
 		//保证所有都停止才可以delete
 		delete _channels[i];
 	}
-	Socket::CleanUp();
 }
 
 void SocketMaid::Update(AcceptedEventArgs* e)
@@ -659,6 +657,11 @@ void SocketMaid::Start()
 		_channels[i]->Start();
 	}
 	_connection.Start();
+}
+
+void SocketMaid::Join()
+{
+	_connection.Join();
 }
 
 void SocketMaid::Stop()

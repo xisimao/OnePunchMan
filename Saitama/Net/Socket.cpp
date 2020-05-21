@@ -3,7 +3,7 @@
 using namespace std;
 using namespace OnePunchMan;
 
-bool Socket::StartUp()
+bool Socket::Init()
 {
 #ifdef _WIN32 
 	WSADATA wsd;
@@ -23,7 +23,7 @@ bool Socket::StartUp()
 	return true;
 }
 
-void Socket::CleanUp()
+void Socket::Uninit()
 {
 #ifdef _WIN32 
 	WSACleanup();

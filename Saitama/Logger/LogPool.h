@@ -23,6 +23,17 @@ namespace OnePunchMan
 		~LogPool();
 
 		/**
+		* @brief: 初始化日志
+		* @param: filePath 配置文件路径
+		*/
+		static void Init(const std::string& filePath);
+
+		/**
+		* @brief: 卸载日志
+		*/
+		static void Uninit();
+
+		/**
 		* @brief: 调试日志
 		* @param: t 日志的内容
 		* @param: ...u 日志的内容
@@ -42,7 +53,7 @@ namespace OnePunchMan
 		template<typename T, typename ...U>
 		static void Debug(LogEvent logEvent, T t, U ...u)
 		{
-			_instance.Log(LogLevel::Debug, logEvent, t, u...);
+			_instance->Log(LogLevel::Debug, logEvent, t, u...);
 		}
 
 		/**
@@ -65,7 +76,7 @@ namespace OnePunchMan
 		template<typename T, typename ...U>
 		static void Information(LogEvent logEvent, T t, U ...u)
 		{
-			_instance.Log(LogLevel::Information, logEvent, t, u...);
+			_instance->Log(LogLevel::Information, logEvent, t, u...);
 		}
 
 		/**
@@ -88,7 +99,7 @@ namespace OnePunchMan
 		template<typename T, typename ...U>
 		static void Warning(LogEvent logEvent, T t, U ...u)
 		{
-			_instance.Log(LogLevel::Warning, logEvent, t, u...);
+			_instance->Log(LogLevel::Warning, logEvent, t, u...);
 		}
 
 		/**
@@ -111,7 +122,7 @@ namespace OnePunchMan
 		template<typename T, typename ...U>
 		static void Error(LogEvent logEvent, T t, U ...u)
 		{
-			_instance.Log(LogLevel::Error, logEvent, t, u...);
+			_instance->Log(LogLevel::Error, logEvent, t, u...);
 		}
 
 		/**
@@ -130,8 +141,9 @@ namespace OnePunchMan
 
 		/**
 		* @brief: 构造函数
+		* @param: filePath 配置文件路径
 		*/
-		LogPool();
+		LogPool(const std::string& filePath);
 
 		/**
 		* @brief: 从配置文件读取日志类型
@@ -139,7 +151,7 @@ namespace OnePunchMan
 		* @param: key 日志级别对应的配置项key
 		* @return: 如果读取成功返回类型，否则返回None
 		*/
-		static LogType ReadType(const FileConfig& config, const std::string& key);
+		LogType ReadType(const FileConfig& config, const std::string& key);
 
 		/**
 		* @brief: 从配置文件读取日志级别
@@ -147,7 +159,7 @@ namespace OnePunchMan
 		* @param: key 日志级别对应的配置项key
 		* @return: 如果读取成功返回级别，否则返回None
 		*/
-		static LogLevel ReadLevel(const FileConfig& config, const std::string& key);
+		LogLevel ReadLevel(const FileConfig& config, const std::string& key);
 
 		/**
 		* @brief: 写日志
@@ -197,7 +209,7 @@ namespace OnePunchMan
 		}
 
 		// 单例引用
-		static LogPool _instance;
+		static LogPool* _instance;
 
 		//文件保存目录 
 		std::string _directory;

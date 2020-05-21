@@ -85,12 +85,12 @@ namespace OnePunchMan
 		* @brief: 启动windows socket
 		* @return: bool 启动成功返回true
 		*/
-		static bool StartUp();
+		static bool Init();
 
 		/**
 		* @brief: 清理windows socket
 		*/
-		static void CleanUp();
+		static void Uninit();
 
 		/**
 		* @brief: 创建一个udp套接字

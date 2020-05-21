@@ -3,12 +3,6 @@
 using namespace std;
 using namespace OnePunchMan;
 
-FileConfig::FileConfig()
-	:FileConfig("appsettings.json")
-{
-
-}
-
 FileConfig::FileConfig(const string& filePath)
 {
 	string json;

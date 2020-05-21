@@ -13,12 +13,6 @@ namespace OnePunchMan
 	class FileConfig
 	{
 	public:
-
-		/**
-		* @brief: 构造函数
-		*/
-		FileConfig();
-
 		/**
 		* @brief: 构造函数
 		* @param: filePath 文件路径

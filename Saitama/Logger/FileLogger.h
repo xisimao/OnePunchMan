@@ -11,8 +11,8 @@
 #include <string.h>
 #endif
 
-#include "FileConfig.h"
 #include "Path.h"
+#include "StringEx.h"
 #include "Logger.h"
 #include "DateTime.h"
 

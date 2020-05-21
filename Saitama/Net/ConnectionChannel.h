@@ -87,6 +87,7 @@ namespace OnePunchMan
 			SocketOperation Operation;
 
 			EndPointItem()
+				:EndPointItem(0,EndPoint(),SocketType::None,NULL,SocketOperation::Error)
 			{
 
 			}
@@ -103,8 +104,8 @@ namespace OnePunchMan
 		*/
 		void MoveTempEndPoints();
 
-		//重连轮询时间间隔
-		static const int ConnectionSpan;
+		//重连轮询时间间隔(毫秒)
+		static const int ConnectSpan;
 
 		//临时添加和删除地址字典
 		std::vector<EndPointItem> _tempEndPoints;

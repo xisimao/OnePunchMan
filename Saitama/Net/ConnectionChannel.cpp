@@ -3,7 +3,7 @@
 using namespace std;
 using namespace OnePunchMan;
 
-const int ConnectionChannel::ConnectionSpan = 3;
+const int ConnectionChannel::ConnectSpan = 5000;
 
 ConnectionChannel::ConnectionChannel()
 	:ThreadObject("socket_connection")
@@ -113,7 +113,7 @@ void ConnectionChannel::StartCore()
 			_condition.wait(lck);
 		}
 		lck.unlock();
-		this_thread::sleep_for(chrono::seconds(ConnectionSpan));
+		this_thread::sleep_for(chrono::milliseconds(ConnectSpan));
 	}
 }
 
