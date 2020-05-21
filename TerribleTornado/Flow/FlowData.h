@@ -56,7 +56,9 @@ namespace OnePunchMan
 	class FlowChannelData
 	{
 	public:
-
+		/**
+		* @brief: ¹¹Ôìº¯Êý
+		*/
 		FlowChannelData();
 
 		/**

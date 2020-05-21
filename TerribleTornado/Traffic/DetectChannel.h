@@ -78,6 +78,12 @@ namespace OnePunchMan
 		~DetectChannel();
 
 		/**
+		* @brief: 当前检测线程是否未初始化
+		* @return: 如果未初始化或者当前线程正在进行检测返回true，否则返回false
+		*/
+		bool Inited();
+
+		/**
 		* @brief: 当前检测线程是否未初始化或正在处理数据
 		* @return: 如果未初始化或者当前线程正在进行检测返回true，否则返回false，表示可以接收新的yuv数据
 		*/
@@ -114,9 +120,9 @@ namespace OnePunchMan
 			int IveSize;
 
 			//视频帧序号
-			int frameIndex;
+			int FrameIndex;
 			//视频帧间隔时间(毫秒)
-			int frameSpan;
+			int FrameSpan;
 			//当前数据项是否已经有了yuv数据
 			bool HasValue;
 		};

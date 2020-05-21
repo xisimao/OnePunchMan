@@ -31,7 +31,7 @@ namespace OnePunchMan
 		* @brief: 推送识别数据项集合
 		* @param: items 识别数据项集合
 		*/
-		void PushItems(const std::vector<RecognItem> items);
+		void PushItems(const std::vector<RecognItem>& items);
 		
 		/**
 		* @brief: 获取是否初始化完成

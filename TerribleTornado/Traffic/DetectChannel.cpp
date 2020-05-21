@@ -3,7 +3,7 @@
 using namespace std;
 using namespace OnePunchMan;
 
-const int DetectChannel::SleepTime=50;
+const int DetectChannel::SleepTime=40;
 
 DetectChannel::DetectChannel(int channelIndex, int width, int height, RecognChannel* recogn, TrafficDetector* detector)
 	:ThreadObject("detect"), _inited(false), _channelIndex(channelIndex), _width(width), _height(height), _recogn(recogn),_detector(detector)
@@ -50,6 +50,11 @@ DetectChannel::~DetectChannel()
 #endif // !_WIN32
 }
 
+bool DetectChannel::Inited()
+{
+	return _inited;
+}
+
 bool DetectChannel::IsBusy() 
 { 
 	return _item.HasValue||!_inited || !_recogn->Inited();
@@ -58,8 +63,8 @@ bool DetectChannel::IsBusy()
 void DetectChannel::HandleYUV(unsigned char* yuv, int width, int height, int frameIndex, int frameSpan)
 {
 	memcpy(_item.YuvTempBuffer, yuv, _item.YuvSize);
-	_item.frameIndex = frameIndex;
-	_item.frameSpan = frameSpan;
+	_item.FrameIndex = frameIndex;
+	_item.FrameSpan = frameSpan;
 	_item.HasValue = true;
 }
 
@@ -195,7 +200,7 @@ void DetectChannel::StartCore()
 			long long detectTimeStamp = DateTime::UtcNowTimeStamp();
 			memcpy(_item.YuvBuffer, _item.YuvTempBuffer, _item.YuvSize);
 			_params[0] = _param.c_str();
-			_timeStamps[0] = _item.frameIndex;
+			_timeStamps[0] = _item.FrameIndex;
 			_item.HasValue = false;
 			if (YuvToIve())
 			{
@@ -222,7 +227,7 @@ void DetectChannel::StartCore()
 					GetDetecItems(&detectItems, detectJd, "Bikes");
 					GetDetecItems(&detectItems, detectJd, "Pedestrains");
 
-					_detector->HandleDetect(&detectItems, detectTimeStamp,&_param, _ives[0], static_cast<int>(_timeStamps[0]), _item.frameSpan);
+					_detector->HandleDetect(&detectItems, detectTimeStamp,&_param, _ives[0], static_cast<int>(_timeStamps[0]), _item.FrameSpan);
 
 					vector<RecognItem> recognItems;
 					GetRecognItems(&recognItems, detectJd, "Vehicles");
@@ -234,7 +239,7 @@ void DetectChannel::StartCore()
 					}
 				}
 				long long detectTimeStamp3 = DateTime::UtcNowTimeStamp();
-				LogPool::Debug("detect", _indexes[0], _timeStamps[0], result, detectTimeStamp3 - detectTimeStamp, detectTimeStamp1- detectTimeStamp, detectTimeStamp2- detectTimeStamp1, detectTimeStamp3- detectTimeStamp2);
+				LogPool::Debug("detect", _indexes[0], _timeStamps[0], result, detectTimeStamp1- detectTimeStamp, detectTimeStamp2- detectTimeStamp1, detectTimeStamp3- detectTimeStamp2);
 			}
 			else
 			{

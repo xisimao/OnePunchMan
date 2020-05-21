@@ -5,7 +5,7 @@ using namespace OnePunchMan;
 
 const int RecognChannel::ItemCount = 4;
 const int RecognChannel::MaxCacheCount = 100;
-const int RecognChannel::SleepTime = 100;
+const int RecognChannel::SleepTime = 500;
 
 RecognChannel::RecognChannel(int recognIndex,int width, int height, const vector<TrafficDetector*>& detectors)
 	:ThreadObject("recogn"), _inited(false), _recognIndex(recognIndex),_detectors(detectors)
@@ -31,7 +31,7 @@ int RecognChannel::Size()
 	return static_cast<int>(_items.size());
 }
 
-void RecognChannel::PushItems(const vector<RecognItem> items)
+void RecognChannel::PushItems(const vector<RecognItem>& items)
 {
 	if (!items.empty())
 	{
@@ -107,7 +107,7 @@ void RecognChannel::StartCore()
 					_detectors[item.ChannelIndex - 1]->HandleRecognize(item, _bgrs[0], _result.data());
 				}
 				long long recognTimeStamp3 = DateTime::UtcNowTimeStamp();
-				LogPool::Debug("recogn", item.ChannelIndex, result, recognTimeStamp3 - recognTimeStamp1, recognTimeStamp2 - recognTimeStamp1, recognTimeStamp3 - recognTimeStamp2);
+				LogPool::Debug("recogn", item.ChannelIndex, result, recognTimeStamp2 - recognTimeStamp1, recognTimeStamp3 - recognTimeStamp2);
 			}
 			else
 			{
