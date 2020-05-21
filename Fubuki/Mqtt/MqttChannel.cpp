@@ -5,36 +5,49 @@ using namespace OnePunchMan;
 
 const int MqttChannel::KeepAlive = 10;
 const int MqttChannel::ConnectSpan = 5000;
-const int MqttChannel::PollTime = 100;
+const int MqttChannel::SleepTime = 500;
 
 MqttChannel::MqttChannel(const string& ip, int port)
-    :ThreadObject("mqtt"), _mosq(NULL), _ip(ip), _port(port), _connected(false)
+    :MqttChannel(ip, port, vector<string>())
 {
 
 }
 
-bool MqttChannel::Connected()
+MqttChannel::MqttChannel(const string& ip, int port, vector<string> topics)
+    : ThreadObject("mqtt"), _mosq(NULL), _ip(ip), _port(port), _topics(topics),_status(MqttStatus::None)
 {
-    return _connected;
+
+}
+
+void MqttChannel::Init()
+{
+    mosquitto_lib_init();
+}
+
+void MqttChannel::Uninit()
+{
+    mosquitto_lib_cleanup();
+}
+
+void MqttChannel::ReceivedEventHandler(struct mosquitto* mosq, void* userdata, const struct mosquitto_message* message)
+{
+    MqttReceivedEventArgs args(message->topic, (const char*)message->payload);
+    static_cast<MqttChannel*>(userdata)->MqttReceived.Notice(&args);
+}
+
+MqttStatus MqttChannel::Status()
+{
+    return _status;
 }
 
 bool MqttChannel::Send(const string& topic, const string& message, int qos)
 {
-    unique_lock<timed_mutex> lck(_mutex, std::defer_lock);
-    if (lck.try_lock_for(chrono::seconds(ThreadObject::LockTime)))
+    if (_status == MqttStatus::Connected)
     {
-        if (_connected)
-        {
-            return mosquitto_publish(_mosq, NULL, topic.c_str(), static_cast<int>(message.size()), message.c_str(), qos, 0) == 0;
-        }
-        else
-        {
-            return false;
-        }
+        return mosquitto_publish(_mosq, NULL, topic.c_str(), static_cast<int>(message.size()), message.c_str(), qos, 0) == 0;
     }
     else
     {
-        LogPool::Error(LogEvent::Thread, "mqtt send lock timeout");
         return false;
     }
 
@@ -42,21 +55,12 @@ bool MqttChannel::Send(const string& topic, const string& message, int qos)
 
 bool MqttChannel::Send(const string& topic, const unsigned char* message, unsigned int size, int qos)
 {
-    unique_lock<timed_mutex> lck(_mutex, std::defer_lock);
-    if (lck.try_lock_for(chrono::seconds(ThreadObject::LockTime)))
+    if (_status == MqttStatus::Connected)
     {
-        if (_connected)
-        {
-            return mosquitto_publish(_mosq, NULL, topic.c_str(), size, message, qos, 0) == 0;
-        }
-        else
-        {
-            return false;
-        }
+        return mosquitto_publish(_mosq, NULL, topic.c_str(), size, message, qos, 0) == 0;
     }
     else
     {
-        LogPool::Error(LogEvent::Thread, "mqtt send lock timeout");
         return false;
     }
   
@@ -64,8 +68,6 @@ bool MqttChannel::Send(const string& topic, const unsigned char* message, unsign
 
 void MqttChannel::StartCore()
 {
-    //libmosquitto 库初始化
-    mosquitto_lib_init();
     //创建mosquitto客户端
     _mosq = mosquitto_new(NULL, true, this);
     if (_mosq==NULL)
@@ -75,55 +77,53 @@ void MqttChannel::StartCore()
         mosquitto_lib_cleanup();
         return;
     }
-    else
+    if (!_topics.empty())
     {
-        LogPool::Information(LogEvent::Mqtt, "init mqtt");
+        mosquitto_message_callback_set(_mosq, ReceivedEventHandler);
     }
-
-    _connected = mosquitto_connect(_mosq, _ip.c_str(), _port, KeepAlive) == 0;
-    if (_connected)
+    _status = mosquitto_connect(_mosq, _ip.c_str(), _port, KeepAlive) == 0
+        ? MqttStatus::Connected
+        : MqttStatus::Disconnected;
+    for (vector<string>::iterator it = _topics.begin(); it != _topics.end(); ++it)
+    {
+        mosquitto_subscribe(_mosq, NULL, it->c_str(), 0);
+    }
+    if (_status == MqttStatus::Connected)
     {
         LogPool::Information(LogEvent::Mqtt, "mqtt connect");
     }
     while (!_cancelled)
     {
-        unique_lock<timed_mutex> lck(_mutex, std::defer_lock);
-        if (lck.try_lock_for(chrono::seconds(ThreadObject::LockTime)))
+        if (_status == MqttStatus::Connected)
         {
-            if (_connected)
+            int i = mosquitto_loop(_mosq, -1, 1);
+            if (i == MOSQ_ERR_NO_CONN)
             {
-                int i = mosquitto_loop(_mosq, 0, 1);
-                if (i == MOSQ_ERR_NO_CONN)
+                _status = MqttStatus::Disconnected;
+                LogPool::Information(LogEvent::Mqtt, "mqtt disconnect");
+            }
+        }
+        else
+        {
+            _status = mosquitto_reconnect(_mosq) == 0
+                ? MqttStatus::Connected
+                : MqttStatus::Disconnected;
+            if (_status == MqttStatus::Connected)
+            {
+                for (vector<string>::iterator it = _topics.begin(); it != _topics.end(); ++it)
                 {
-                    _connected = false;
-                    LogPool::Information(LogEvent::Mqtt, "mqtt disconnect");
+                    mosquitto_subscribe(_mosq, NULL, it->c_str(), 0);
                 }
+                LogPool::Information(LogEvent::Mqtt, "mqtt reconnect");
             }
             else
             {
-                _connected = mosquitto_reconnect(_mosq) == 0;
-                if (_connected)
-                {
-                    LogPool::Information(LogEvent::Mqtt, "mqtt reconnect");
-                }
+                this_thread::sleep_for(chrono::milliseconds(ConnectSpan));
             }
-            lck.unlock();
-        }
-        else
-        {
-            LogPool::Error(LogEvent::Thread, "mqtt receive lock timeout");
         }
 
-        if (_connected)
-        {
-            this_thread::sleep_for(chrono::milliseconds(PollTime));
-        }
-        else
-        {
-            this_thread::sleep_for(chrono::milliseconds(ConnectSpan));
-        }
     }
     mosquitto_disconnect(_mosq);
     mosquitto_destroy(_mosq);
-    mosquitto_lib_cleanup();
+    _status = MqttStatus::Disconnected;
 }

@@ -3,7 +3,7 @@
 using namespace std;
 using namespace OnePunchMan;
 
-const int FFmpegChannel::ConnectSpan = 5;
+const int FFmpegChannel::ConnectSpan = 5000;
 const int FFmpegChannel::DestinationWidth = 1920;
 const int FFmpegChannel::DestinationHeight = 1080;
 
@@ -18,7 +18,7 @@ FFmpegChannel::FFmpegChannel(const string& inputUrl, const string& outputUrl, bo
 	if (inputUrl.size() >= 4 && inputUrl.substr(0,4).compare("rtsp") == 0)
 	{
 		av_dict_set(&_options, "rtsp_transport", "tcp", 0);
-		av_dict_set(&_options, "stimeout", StringEx::ToString(ConnectSpan*1000*1000).c_str(), 0);
+		av_dict_set(&_options, "stimeout", StringEx::ToString(ConnectSpan*1000).c_str(), 0);
 	}
 }
 
@@ -295,23 +295,22 @@ void FFmpegChannel::StartCore()
 	av_init_packet(&packet);
 	packet.data = NULL;
 	packet.size = 0;
-	int frameSpan = 0;
+	int frameTimeSpan = 0;
 	long long duration = 0;
 	int frameIndex = 1;
 	while (!_cancelled)
 	{
 		if (_channelStatus == ChannelStatus::Normal)
 		{
-			if (frameSpan == 0)
+			if (frameTimeSpan == 0)
 			{
-				frameSpan = 1000 / _inputStream->avg_frame_rate.num;
+				frameTimeSpan = 1000 /(_inputStream->avg_frame_rate.num/ _inputStream->avg_frame_rate.den);
 			}
 			long long timeStamp1 = DateTime::UtcNowTimeStamp();
 			int readResult = av_read_frame(_inputFormat, &packet);
-
 			if (readResult == AVERROR_EOF)
 			{
-				Decode(NULL, 0, frameSpan);
+				Decode(NULL, 0, frameTimeSpan);
 				if (_debug)
 				{
 					LogPool::Information(LogEvent::Decode, "read eof", _inputUrl);
@@ -319,7 +318,7 @@ void FFmpegChannel::StartCore()
 				}
 				else
 				{
-					duration += (frameIndex-1) * frameSpan;
+					duration += (frameIndex-1) * frameTimeSpan;
 					frameIndex = 1;
 					_channelStatus = ChannelStatus::None;
 				}
@@ -329,7 +328,7 @@ void FFmpegChannel::StartCore()
 				if (packet.stream_index == _inputVideoIndex)
 				{
 					long long timeStamp2 = DateTime::UtcNowTimeStamp();
-					DecodeResult decodeResult = Decode(&packet, frameIndex, frameSpan);
+					DecodeResult decodeResult = Decode(&packet, frameIndex, frameTimeSpan);
 					long long timeStamp3 = DateTime::UtcNowTimeStamp();
 					if (decodeResult == DecodeResult::Error)
 					{
@@ -346,20 +345,20 @@ void FFmpegChannel::StartCore()
 
 					if (_outputFormat != NULL)
 					{
-						packet.pts = packet.pts == AV_NOPTS_VALUE ? duration + frameIndex * frameSpan : duration + av_rescale_q_rnd(packet.pts, _inputStream->time_base, _outputStream->time_base, (AVRounding)(AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
+						packet.pts = packet.pts == AV_NOPTS_VALUE ? duration + frameIndex * frameTimeSpan : duration + av_rescale_q_rnd(packet.pts, _inputStream->time_base, _outputStream->time_base, (AVRounding)(AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
 						packet.dts = duration + av_rescale_q_rnd(packet.dts, _inputStream->time_base, _outputStream->time_base, (AVRounding)(AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
 						packet.duration = av_rescale_q(packet.duration, _inputStream->time_base, _outputStream->time_base);
 						packet.pos = -1;
 						av_write_frame(_outputFormat, &packet);
 					}
 					long long timeStamp4 = DateTime::UtcNowTimeStamp();
-					long long sleepTime = frameSpan - (timeStamp4 - timeStamp2);
-					if (sleepTime > 0 && sleepTime <= frameSpan)
+					long long sleepTime = frameTimeSpan - (timeStamp4 - timeStamp2);
+					if (sleepTime > 0 && sleepTime <= frameTimeSpan)
 					{
 						this_thread::sleep_for(chrono::milliseconds(sleepTime));
 					}
+					LogPool::Debug(LogEvent::Decode, "frame", _inputUrl, frameIndex, static_cast<int>(decodeResult),timeStamp2-timeStamp1,timeStamp3-timeStamp2,timeStamp4-timeStamp3);
 					frameIndex += 1;
-					LogPool::Debug(LogEvent::Decode, "frame", _inputUrl, frameIndex, readResult,timeStamp4-timeStamp1,timeStamp2-timeStamp1,timeStamp3-timeStamp2,timeStamp4-timeStamp3);
 				}
 				av_packet_unref(&packet);
 			}
@@ -369,8 +368,6 @@ void FFmpegChannel::StartCore()
 				_channelStatus = ChannelStatus::ReadError;
 				break;
 			}
-
-		
 		}
 		else
 		{
@@ -402,7 +399,7 @@ void FFmpegChannel::StartCore()
 			}
 			if (_channelStatus != ChannelStatus::Normal)
 			{
-				this_thread::sleep_for(chrono::seconds(ConnectSpan));
+				this_thread::sleep_for(chrono::milliseconds(ConnectSpan));
 			}
 		}
 	}
