@@ -8,6 +8,7 @@ TrafficDetector::TrafficDetector(int width, int height, MqttChannel* mqtt, bool 
 	, _lanesInited(false), _param(), _setParam(true), _bgrBuffer(new unsigned char[width * height * 3]), _jpgBuffer(new unsigned char[width * height])
 	, _debug(debug), _jpgHandler(-1)
 {
+
 }
 
 TrafficDetector::~TrafficDetector()
@@ -37,10 +38,11 @@ void TrafficDetector::IveToBgr(const unsigned char* iveBuffer, int width, int he
 
 int TrafficDetector::BgrToJpg(const unsigned char* bgrBuffer, int width, int height, unsigned char** jpgBuffer)
 {
-	tjhandle handle = tjInitCompress();
+	//jpg×ª»»
+	tjhandle jpgHandle = tjInitCompress();
 	unsigned long jpgSize=0;
-	tjCompress2(handle, bgrBuffer, width, 0, height, TJPF_BGR, jpgBuffer, &jpgSize, TJSAMP_422, 10, 0);
-	tjDestroy(handle);
+	tjCompress2(jpgHandle, bgrBuffer, width, 0, height, TJPF_BGR, jpgBuffer, &jpgSize, TJSAMP_422, 10, 0);
+	tjDestroy(jpgHandle);
 	return static_cast<int>(jpgSize);
 }
 

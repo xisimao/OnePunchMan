@@ -57,7 +57,7 @@ bool DetectChannel::Inited()
 
 bool DetectChannel::IsBusy() 
 { 
-	return _item.HasValue||!_inited || !_recogn->Inited();
+	return _item.HasValue||!_inited || (_recogn!=NULL&&!_recogn->Inited());
 }
 
 void DetectChannel::HandleYUV(unsigned char* yuv, int width, int height, int frameIndex, int frameSpan)
@@ -222,21 +222,23 @@ void DetectChannel::StartCore()
 				if (result == 0)
 				{
 					JsonDeserialization detectJd(_result.data());
+					if (_recogn != NULL)
+					{
+						vector<RecognItem> recognItems;
+						GetRecognItems(&recognItems, detectJd, "Vehicles");
+						GetRecognItems(&recognItems, detectJd, "Bikes");
+						GetRecognItems(&recognItems, detectJd, "Pedestrains");
+						if (!recognItems.empty())
+						{
+							_recogn->PushItems(recognItems);
+						}
+					}
 					map<string, DetectItem> detectItems;
 					GetDetecItems(&detectItems, detectJd, "Vehicles");
 					GetDetecItems(&detectItems, detectJd, "Bikes");
 					GetDetecItems(&detectItems, detectJd, "Pedestrains");
-
 					_detector->HandleDetect(&detectItems, detectTimeStamp,&_param, _ives[0], static_cast<int>(_timeStamps[0]), _item.FrameSpan);
-
-					vector<RecognItem> recognItems;
-					GetRecognItems(&recognItems, detectJd, "Vehicles");
-					GetRecognItems(&recognItems, detectJd, "Bikes");
-					GetRecognItems(&recognItems, detectJd, "Pedestrains");
-					if (!recognItems.empty())
-					{
-						_recogn->PushItems(recognItems);
-					}
+			
 				}
 				long long detectTimeStamp3 = DateTime::UtcNowTimeStamp();
 				LogPool::Debug("detect", _indexes[0], _timeStamps[0], result, detectTimeStamp1- detectTimeStamp, detectTimeStamp2- detectTimeStamp1, detectTimeStamp3- detectTimeStamp2);

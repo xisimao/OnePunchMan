@@ -58,7 +58,7 @@ void SocketChannel::MoveTempSockets()
 			event.events = EPOLLIN;
 			if (epoll_ctl(_epollfd, EPOLL_CTL_ADD, data.Socket, &event) == -1)
 			{
-				LogPool::Error(LogEvent::Socket, "epoll_ctl", WSAErrorCode);
+				LogPool::Error(LogEvent::Socket, "epoll_ctl", data.Socket, WSAErrorCode);
 				return;
 			}
 #endif 

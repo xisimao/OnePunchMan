@@ -11,19 +11,28 @@ FlowStartup::~FlowStartup()
     }
 }
 
-vector<TrafficDetector*> FlowStartup::InitDetectors()
+void FlowStartup::InitDetectors(MqttChannel* mqtt, vector<DetectChannel*>* detects, vector<RecognChannel*>* recogns)
 {
     vector<TrafficDetector*> detectors;
     for (int i = 0; i < ChannelCount; ++i)
     {
-        FlowDetector* detector = new FlowDetector(FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, _mqtt, false);
+        FlowDetector* detector = new FlowDetector(FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, mqtt, false);
         _detectors.push_back(detector);
         detectors.push_back(detector);
     }
-    return detectors;
+    for (int i = 0; i < ChannelCount; ++i)
+    {
+        if (i % RecognChannel::ItemCount == 0)
+        {
+            RecognChannel* recogn = new RecognChannel(i / RecognChannel::ItemCount, FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, detectors);
+            recogns->push_back(recogn);
+        }
+        DetectChannel* detect = new DetectChannel(i + 1, FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, recogns->at(i / RecognChannel::ItemCount), detectors[i]);
+        detects->push_back(detect);
+    }
 }
 
-void FlowStartup::InitChannels()
+void FlowStartup::InitDecodes()
 {
     for (int i = 0; i < ChannelCount; ++i)
     {
@@ -148,12 +157,12 @@ void FlowStartup::SetDevice(HttpReceivedEventArgs* e)
             map<int, FlowChannel>::iterator it = tempChannels.find(i + 1);
             if (it == tempChannels.end())
             {
-                DeleteDecode(channelIndex);
+                DeleteDecode(i+1);
                 _detectors[i]->ClearChannel();
             }
             else
             {
-                SetDecode(it->second.ChannelIndex, it->second.ChannelUrl, it->second.RtmpUrl("127.0.0.1"));
+                SetDecode(i + 1, it->second.ChannelUrl, it->second.RtmpUrl("127.0.0.1"));
                 _detectors[i]->UpdateChannel(it->second);
             }
         }

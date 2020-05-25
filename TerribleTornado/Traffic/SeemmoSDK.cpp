@@ -15,7 +15,9 @@ void* SeemmoSDK::Handle = NULL;
 
 bool SeemmoSDK::Init()
 {
-#ifndef _WIN32
+#ifdef _WIN32
+	return false;
+#else 
 	Handle = dlopen("/mtd/seemmo/programs/aisdk/3559a/lib/libexport_sdk.so", RTLD_LAZY);
 	if (Handle == NULL)
 	{
@@ -51,9 +53,10 @@ bool SeemmoSDK::Init()
 			return false;
 		}
 	}
-#endif // !_WIN32
 	LogPool::Information("init seemmo sdk");
 	return true;
+#endif // !_WIN32
+
 
 }
 

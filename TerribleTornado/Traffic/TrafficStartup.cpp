@@ -3,86 +3,18 @@
 using namespace std;
 using namespace OnePunchMan;
 
-const int TrafficStartup::ChannelCount = 8;
+const int TrafficStartup::ChannelCount = 4;
+const int TrafficStartup::SleepTime = 1000;
 
 TrafficStartup::TrafficStartup()
-    :ThreadObject("data"),_mqtt(NULL), _startTime(DateTime::Now()), _sdkInited(false), _socketMaid(NULL)
+    :_startTime(DateTime::Now()), _sdkInited(false), _socketMaid(NULL), _mqtt(NULL)
 {
 
 }
 
-TrafficStartup::~TrafficStartup()
+void TrafficStartup::Update(MqttDisconnectedEventArgs* e)
 {
-    if (_socketMaid != NULL)
-    {
-        delete _socketMaid;
-    }
-    for (unsigned int i = 0; i < _decodes.size(); ++i)
-    {
-        if (_decodes[i] != NULL)
-        {
-            delete _decodes[i];
-        }
-    }
-    for (unsigned int i = 0; i < _detects.size(); ++i)
-    {
-        delete _detects[i];
-    }
-    for (unsigned int i = 0; i < _recogns.size(); ++i)
-    {
-        delete _recogns[i];
-    }
-    if (_mqtt != NULL)
-    {
-        delete _mqtt;
-    }
-    SeemmoSDK::Uninit();
-    DecodeChannel::UninitHisi(ChannelCount);
-    FFmpegChannel::UninitFFmpeg();
-}
-
-bool TrafficStartup::Init()
-{
-    FFmpegChannel::InitFFmpeg();
-    DecodeChannel::UninitHisi(ChannelCount);
-    if (!DecodeChannel::InitHisi(ChannelCount))
-    {
-        return false;
-    }
-
-    _socketMaid = new SocketMaid(2);
-    _handler.HttpReceived.Subscribe(this);
-    if (_socketMaid->AddListenEndPoint(EndPoint(7772), &_handler) == -1)
-    {
-        return false;
-    }
-
-    _sdkInited = SeemmoSDK::Init();
-    if (SeemmoSDK::seemmo_version != NULL)
-    {
-        _sdkVersion = SeemmoSDK::seemmo_version();
-    }
-    _mqtt = new MqttChannel("127.0.0.1", 1883);
-
-    for (int i = 0; i < ChannelCount; ++i)
-    {
-        _decodes.push_back(NULL);
-    }
-
-    vector<TrafficDetector*> detectors= InitDetectors();
-
-    for (int i = 0; i < ChannelCount; ++i)
-    {
-        if (i % RecognChannel::ItemCount == 0)
-        {
-            RecognChannel* recogn = new RecognChannel(i / RecognChannel::ItemCount, FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, detectors);
-            _recogns.push_back(recogn);
-        }
-        DetectChannel* detect = new DetectChannel(i + 1, FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, _recogns[i / RecognChannel::ItemCount], detectors[i]);
-        _detects.push_back(detect);
-    }
-
-    return true;
+    exit(1);
 }
 
 void TrafficStartup::Update(HttpReceivedEventArgs* e)
@@ -104,7 +36,7 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
         {
             string id = GetId(e->Url, "/api/channels");
             int channelIndex = StringEx::Convert<int>(id);
-            string channelJson = GetChannelJson(e->Host,channelIndex);
+            string channelJson = GetChannelJson(e->Host, channelIndex);
             if (channelJson.empty())
             {
                 e->Code = HttpCode::NotFound;
@@ -145,18 +77,12 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
             }
         }
     }
-    else if (UrlStartWith(e->Url, "/api/system"))
-    {
-        Stop();
-        LogPool::Information(LogEvent::Flow, "exit system");
-        e->Code = HttpCode::OK;
-    }
     else if (UrlStartWith(e->Url, "/api/upload"))
     {
         vector<string> requestLines = StringEx::Split(e->RequestJson, "\r\n");
         if (requestLines.size() >= 5)
         {
-            FILE* file = fopen("/mtd/seemmo/programs/aisdk/data/licence","wb");
+            FILE* file = fopen("/mtd/seemmo/programs/aisdk/data/licence", "wb");
             if (file != NULL)
             {
                 fwrite(requestLines[4].c_str(), 1, requestLines[4].size(), file);
@@ -173,6 +99,7 @@ void TrafficStartup::GetDevice(HttpReceivedEventArgs* e)
     string df = Command::Execute("df");
     string diskUsed;
     string diskTotal;
+    string mqtt = Command::Execute("netstat -apn|grep 1883");
     vector<string> rows = StringEx::Split(df, "\n", true);
     for (unsigned int i = 0; i < rows.size(); ++i)
     {
@@ -190,8 +117,8 @@ void TrafficStartup::GetDevice(HttpReceivedEventArgs* e)
     string channelsJson;
     for (unsigned int i = 0; i < ChannelCount; ++i)
     {
-        string channelJson = GetChannelJson(e->Host,i+1);
-        if (!channelJson.empty()) 
+        string channelJson = GetChannelJson(e->Host, i + 1);
+        if (!channelJson.empty())
         {
             unique_lock<timed_mutex> lck(_decodeMutex, std::defer_lock);
             if (lck.try_lock_for(chrono::seconds(ThreadObject::LockTime)))
@@ -205,10 +132,10 @@ void TrafficStartup::GetDevice(HttpReceivedEventArgs* e)
             else
             {
                 LogPool::Error(LogEvent::Thread, "get device lock timeout");
-            }  
+            }
         }
     }
- 
+
     string deviceJson;
     DateTime now = DateTime::Now();
     JsonSerialization::Serialize(&deviceJson, "deviceTime", now.UtcTimeStamp());
@@ -222,10 +149,10 @@ void TrafficStartup::GetDevice(HttpReceivedEventArgs* e)
     JsonSerialization::Serialize(&deviceJson, "sdkVersion", _sdkVersion);
     JsonSerialization::Serialize(&deviceJson, "destinationWidth", FFmpegChannel::DestinationWidth);
     JsonSerialization::Serialize(&deviceJson, "destinationHeight", FFmpegChannel::DestinationHeight);
-    JsonSerialization::Serialize(&deviceJson, "mqttConnected", _mqtt==NULL?false: _mqtt->Connected());
+    JsonSerialization::Serialize(&deviceJson, "mqttConnected", !mqtt.empty());
     for (unsigned int i = 0; i < _recogns.size(); ++i)
     {
-        JsonSerialization::Serialize(&deviceJson, StringEx::Combine("recognQueue",i+1), _recogns[i]->Size());
+        JsonSerialization::Serialize(&deviceJson, StringEx::Combine("recognQueue", i + 1), _recogns[i]->Size());
     }
     JsonSerialization::SerializeJson(&deviceJson, "channels", channelsJson);
 
@@ -248,7 +175,7 @@ void TrafficStartup::SetDecode(int channelIndex, const string& inputUrl, const s
 #else
                 DecodeChannel* decode = new DecodeChannel(inputUrl, outputUrl, channelIndex, _detects[channelIndex - 1], false);
 #endif // _WIN32
-              
+
                 decode->Start();
                 _decodes[channelIndex - 1] = decode;
             }
@@ -342,88 +269,113 @@ string TrafficStartup::GetErrorJson(const string& field, const string& message)
     return StringEx::Combine("{\"", field, "\":[\"", message, "\"]}");
 }
 
-void TrafficStartup::StartCore()
+void TrafficStartup::Startup()
 {
+    Socket::Init();
+    MqttChannel::Init();
+    FFmpegChannel::InitFFmpeg();
+    DecodeChannel::UninitHisi(ChannelCount);
+    if (!DecodeChannel::InitHisi(ChannelCount))
+    {
+        exit(2);
+    }
+
+    _socketMaid = new SocketMaid(2,false);
+    _handler.HttpReceived.Subscribe(this);
+    if (_socketMaid->AddListenEndPoint(EndPoint(7772), &_handler) == -1)
+    {
+        exit(2);
+    }
+    _sdkInited = SeemmoSDK::Init();
+    if (SeemmoSDK::seemmo_version != NULL)
+    {
+        _sdkVersion = SeemmoSDK::seemmo_version();
+    }
+
+    for (int i = 0; i < ChannelCount; ++i)
+    {
+        _decodes.push_back(NULL);
+    }
+    InitDetectors(_mqtt, &_detects, &_recogns);
+
     if (_sdkInited)
     {
-        for (unsigned int i = 0; i < _detects.size(); ++i)
-        {
-            _detects[i]->Start();
-        }
+        _mqtt = new MqttChannel("127.0.0.1", 1883);
+        _mqtt->MqttDisconnected.Subscribe(this);
+        _mqtt->Start();
         for (unsigned int i = 0; i < _recogns.size(); ++i)
         {
             _recogns[i]->Start();
         }
-    }
-    //sdk未授权只启动网络上传功能
-    else
-    {
-        if (_socketMaid != NULL)
+        for (unsigned int i = 0; i < _detects.size(); ++i)
         {
-            _socketMaid->Start();
+            _detects[i]->Start();
         }
-    }
-
-    bool sdkReady = false;
-    while (!_cancelled)
-    {
-        this_thread::sleep_for(chrono::seconds(1));
-        if (sdkReady)
+        while (true)
         {
-           PollCore();
-        }
-        else
-        {
-            sdkReady = true;
+            bool sdkReady = true;
 #ifndef _WIN32
             for (unsigned int i = 0; i < _detects.size(); ++i)
             {
-                if (_detects[i]->IsBusy())
+                if (!_detects[i]->Inited())
                 {
                     sdkReady = false;
+                    break;
+                }
+            }
+            for (unsigned int i = 0; i < _recogns.size(); ++i)
+            {
+                if (!_recogns[i]->Inited())
+                {
+                    sdkReady = false;
+                    break;
                 }
             }
 #endif // !_WIN32
-
             if (sdkReady)
             {
-                InitChannels();
-                if (_mqtt != NULL)
-                {
-                    _mqtt->Start();
-                }
-                if (_socketMaid != NULL)
-                {
-                    _socketMaid->Start();
-                }
+                break;
             }
-        }   
+            else
+            {
+                this_thread::sleep_for(chrono::milliseconds(SleepTime));
+            }
+        }
     }
-
-    if (_socketMaid != NULL)
-    {
-        _socketMaid->Stop();
-    }
+    InitDecodes();
+    _socketMaid->Start();
+    _socketMaid->Join();
+    _socketMaid->Stop();
+    delete _socketMaid;
 
     for (unsigned int i = 0; i < _decodes.size(); ++i)
     {
         if (_decodes[i] != NULL)
         {
             _decodes[i]->Stop();
+            delete _decodes[i];
         }
     }
 
     for (unsigned int i = 0; i < _detects.size(); ++i)
     {
         _detects[i]->Stop();
+        delete _detects[i];
     }
     for (unsigned int i = 0; i < _recogns.size(); ++i)
     {
         _recogns[i]->Stop();
+        delete _recogns[i];
     }
-
     if (_mqtt != NULL)
     {
         _mqtt->Stop();
+        delete _mqtt;
     }
+
+    SeemmoSDK::Uninit();
+    DecodeChannel::UninitHisi(ChannelCount);
+    FFmpegChannel::UninitFFmpeg();
+    MqttChannel::Uninit();
+    Socket::Uninit();
 }

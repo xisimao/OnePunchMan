@@ -3,9 +3,10 @@
 using namespace std;
 using namespace OnePunchMan;
 
-const int RecognChannel::ItemCount = 4;
+const int RecognChannel::ItemCount = 2;
 const int RecognChannel::MaxCacheCount = 100;
 const int RecognChannel::SleepTime = 500;
+const string RecognChannel::RecognTopic("Recogn");
 
 RecognChannel::RecognChannel(int recognIndex,int width, int height, const vector<TrafficDetector*>& detectors)
 	:ThreadObject("recogn"), _inited(false), _recognIndex(recognIndex),_detectors(detectors)

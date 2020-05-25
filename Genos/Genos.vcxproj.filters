@@ -43,6 +43,7 @@
     <ClCompile Include="..\TerribleTornado\Event\EventData.cpp" />
     <ClCompile Include="..\TerribleTornado\Event\EventDetector.cpp" />
     <ClCompile Include="..\TerribleTornado\Event\EventStartup.cpp" />
+    <ClCompile Include="..\TerribleTornado\Adapter\IoAdapter.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Saitama\Convert\JsonFormatter.h" />
@@ -91,5 +92,6 @@
     <ClInclude Include="..\TerribleTornado\Event\EventData.h" />
     <ClInclude Include="..\TerribleTornado\Event\EventDetector.h" />
     <ClInclude Include="..\TerribleTornado\Event\EventStartup.h" />
+    <ClInclude Include="..\TerribleTornado\Adapter\IoAdapter.h" />
   </ItemGroup>
 </Project>

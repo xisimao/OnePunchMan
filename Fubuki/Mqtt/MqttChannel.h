@@ -48,6 +48,12 @@ namespace OnePunchMan
         std::string Message;
     };
 
+    //mqtt断开事件参数
+    class MqttDisconnectedEventArgs
+    {
+
+    };
+
     //mqtt客户端线程
     class MqttChannel:public ThreadObject
     {
@@ -78,6 +84,9 @@ namespace OnePunchMan
 
         //mqtt接收消息事件
         Observable<MqttReceivedEventArgs> MqttReceived;
+
+        //mqtt断开事件
+        Observable<MqttDisconnectedEventArgs> MqttDisconnected;
 
         /**
         * @brief: 初始化mqtt sdk

@@ -1,5 +1,6 @@
 #include "FlowStartup.h"
 #include "EventStartup.h"
+#include "IoAdapter.h"
 
 using namespace std;
 using namespace OnePunchMan;
@@ -9,21 +10,9 @@ int main(int argc, char* argv[])
     if (argc >= 2)
     {
         string arg(argv[1]);
-        if (arg.compare("stop") == 0)
+        if (arg.compare("flow") == 0)
         {
-            SocketMaid maid(2);
-            SocketHandler handler;
-            maid.AddConnectEndPoint(EndPoint("127.0.0.1", 7772), &handler);
-            maid.Start();
-            this_thread::sleep_for(chrono::seconds(3));
-            stringstream ss;
-            ss << "GET /api/system HTTP/1.1\r\n"
-                << "\r\n"
-                << "\r\n";
-            maid.SendTcp(EndPoint("127.0.0.1", 7772), ss.str());
-        }
-        else if (arg.compare("flow") == 0)
-        {
+            LogPool::Init("appsettings.json");
             if (argc >= 3)
             {
                 string mode(argv[2]);
@@ -39,7 +28,7 @@ int main(int argc, char* argv[])
                     {
                         return -1;
                     }
-                    FlowDetector detector(FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, NULL, true);
+                    FlowDetector detector(FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight,NULL, true);
                     FlowChannelData data;
                     int channelIndex = 1;
                     if (argc >= 4)
@@ -48,38 +37,27 @@ int main(int argc, char* argv[])
                     }
                     FlowChannel channel = data.Get(channelIndex);
                     detector.UpdateChannel(channel);
-                    vector<TrafficDetector*> detectors;
-                    detectors.push_back(&detector);
-                    RecognChannel recogn(0, FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, detectors);
-                    DetectChannel detect(1, FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, &recogn, &detector);
+                    DetectChannel detect(1, FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, NULL, &detector);
                     DecodeChannel decode(channel.ChannelUrl, string(), channel.ChannelIndex, &detect, true);
-                    recogn.Start();
                     detect.Start();
                     decode.Start();
                     decode.Join();
                     detect.Stop();
-                    recogn.Stop();
                     SeemmoSDK::Uninit();
                     DecodeChannel::UninitHisi(FlowStartup::ChannelCount);
                     DecodeChannel::UninitFFmpeg();
+                    LogPool::Uninit();
                 }
             }
             else
             {
                 FlowStartup channel;
-                if (channel.Init())
-                {
-                    channel.Start();
-                    channel.Join();
-                }
-                else
-                {
-                    LogPool::Information("init flow system failed");
-                }
+                channel.Startup();
             }
         }
         else if (arg.compare("event") == 0)
         {
+            LogPool::Init("appsettings.json");
             if (argc >= 3)
             {
                 string mode(argv[2]);
@@ -95,7 +73,7 @@ int main(int argc, char* argv[])
                     {
                         return -1;
                     }
-                    EventDetector detector(FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, NULL, true);
+                    EventDetector detector(FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight,NULL, true);
                     EventChannelData data;
                     int channelIndex = 1;
                     if (argc >= 4)
@@ -104,35 +82,30 @@ int main(int argc, char* argv[])
                     }
                     EventChannel channel = data.Get(channelIndex);
                     detector.UpdateChannel(channel);
-                    vector<TrafficDetector*> detectors;
-                    detectors.push_back(&detector);
-                    RecognChannel recogn(0, FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, detectors);
-                    DetectChannel detect(1, FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, &recogn, &detector);
+                    DetectChannel detect(1, FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, NULL, &detector);
                     DecodeChannel decode(channel.ChannelUrl, string(), channel.ChannelIndex, &detect, true);
-                    recogn.Start();
                     detect.Start();
                     decode.Start();
                     decode.Join();
                     detect.Stop();
-                    recogn.Stop();
                     SeemmoSDK::Uninit();
                     DecodeChannel::UninitHisi(FlowStartup::ChannelCount);
                     DecodeChannel::UninitFFmpeg();
+                    LogPool::Uninit();
                 }
             }
             else
             {
                 EventStartup channel;
-                if (channel.Init())
-                {
-                    channel.Start();
-                    channel.Join();
-                }
-                else
-                {
-                    LogPool::Information("init event system failed");
-                }
+                channel.Startup();
             }
+        }
+        else if (arg.compare("io") == 0)
+        {
+            LogPool::Init("io.json");
+            IoAdapter adapter;
+            adapter.Start();
+            adapter.Join();
         }
     }
     return 0;

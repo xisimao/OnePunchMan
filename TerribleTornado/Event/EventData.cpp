@@ -59,16 +59,11 @@ EventChannel EventChannelData::FillChannel(const SqliteReader& sqlite)
 		{
 			EventLane lane;
 			lane.ChannelIndex = laneSqlite.GetInt(0);
-			lane.LaneId = laneSqlite.GetString(1);
+			lane.LaneIndex = laneSqlite.GetInt(1);
 			lane.LaneName = laneSqlite.GetString(2);
-			lane.LaneIndex = laneSqlite.GetInt(3);
-			lane.Direction = laneSqlite.GetInt(4);
-			lane.LaneType = laneSqlite.GetInt(5);
-			lane.Region = laneSqlite.GetString(6);
-			lane.DetectLine = laneSqlite.GetString(7);
-			lane.StopLine = laneSqlite.GetString(8);
-			lane.LaneLine1 = laneSqlite.GetString(9);
-			lane.LaneLine2 = laneSqlite.GetString(10);
+			lane.LaneType = laneSqlite.GetInt(3);
+			lane.Region = laneSqlite.GetString(4);
+			lane.Line = laneSqlite.GetString(5);
 			channel.Lanes.push_back(lane);
 		}
 		laneSqlite.EndQuery();
@@ -88,18 +83,13 @@ bool EventChannelData::Insert(const EventChannel& channel)
 	{
 		for (vector<EventLane>::const_iterator it = channel.Lanes.begin(); it != channel.Lanes.end(); ++it)
 		{
-			string laneSql(StringEx::Combine("Insert Into Event_Lane (ChannelIndex,LaneId,LaneName,LaneIndex,Direction,LaneType,Region,DetectLine,StopLine,LaneLine1,Laneline2) Values ("
+			string laneSql(StringEx::Combine("Insert Into Event_Lane (ChannelIndex,LaneIndex,LaneName,LaneType,Region,Line) Values ("
 				, it->ChannelIndex, ","
-				, "'", it->LaneId, "',"
-				, "'", it->LaneName, "',"
 				, it->LaneIndex, ","
-				, it->Direction, ","
+				, "'", it->LaneName, "',"
 				, it->LaneType, ","
 				, "'", it->Region, "',"
-				, "'", it->DetectLine, "',"
-				, "'", it->StopLine, "',"
-				, "'", it->LaneLine1, "',"
-				, "'", it->LaneLine2, "'"
+				, "'", it->Line, "'"
 				, ")"));
 			if (_sqlite.ExecuteRowCount(laneSql) != 1)
 			{

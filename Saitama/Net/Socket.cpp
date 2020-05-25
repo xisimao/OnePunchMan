@@ -128,6 +128,7 @@ int Socket::Listen(const EndPoint& endPoint)
 	if (setsockopt(tcpSocket, SOL_SOCKET, SO_REUSEADDR, (const char*)&flag, sizeof(flag)) < 0)
 	{
 		LogPool::Error(LogEvent::Socket, "setsockopt", WSAErrorCode);
+		Close(tcpSocket);
 		return -1;
 	}
 	sockaddr_in address;

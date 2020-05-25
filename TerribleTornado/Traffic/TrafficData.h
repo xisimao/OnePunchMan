@@ -25,22 +25,10 @@ namespace OnePunchMan
 	public:
 		//通道序号
 		int ChannelIndex;
-		//车道编号
-		std::string LaneId;
-		//车道名称
-		std::string LaneName;
 		//车道序号
 		int LaneIndex;
-		//车道方向
-		int Direction;
-		//检测线
-		std::string DetectLine;
-		//停止线
-		std::string StopLine;
-		//车道线1
-		std::string LaneLine1;
-		//车道线2
-		std::string LaneLine2;
+		//车道名称
+		std::string LaneName;
 		//区域
 		std::string Region;
 	};

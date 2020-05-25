@@ -101,6 +101,8 @@ void MqttChannel::StartCore()
             {
                 _status = MqttStatus::Disconnected;
                 LogPool::Information(LogEvent::Mqtt, "mqtt disconnect");
+                MqttDisconnectedEventArgs e;
+                MqttDisconnected.Notice(&e);
             }
         }
         else

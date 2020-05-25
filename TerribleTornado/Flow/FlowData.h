@@ -30,6 +30,18 @@ namespace OnePunchMan
 	class FlowLane:public TrafficLane
 	{
 	public:
+		//车道编号
+		std::string LaneId;
+		//车道方向
+		int Direction;
+		//检测线
+		std::string DetectLine;
+		//停止线
+		std::string StopLine;
+		//车道线1
+		std::string LaneLine1;
+		//车道线2
+		std::string LaneLine2;
 		//车道类型
 		int LaneType;
 		//车道流向

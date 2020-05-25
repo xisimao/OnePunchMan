@@ -89,7 +89,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_WINSOCK_DEPRECATED_NO_WARNINGS;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>../Fubuki/include/jpeg-turbo;../Fubuki/include/opencv;../Fubuki/include/ffmpeg;../Fubuki/include/sqlite;../Fubuki/include/mqtt;../Fubuki/Mqtt;../Fubuki/Sqlite;../Fubuki/FFmpeg;../Fubuki/OpenCV;./Traffic;./Event;./Flow;../Saitama/Text;../Saitama/Net;../Saitama/Logger;../Saitama/Core;../Saitama/Convert;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../Fubuki/include/jpeg-turbo;../Fubuki/include/opencv;../Fubuki/include/ffmpeg;../Fubuki/include/sqlite;../Fubuki/include/mqtt;../Fubuki/Mqtt;../Fubuki/Sqlite;../Fubuki/FFmpeg;../Fubuki/OpenCV;./Adapter;./Traffic;./Event;./Flow;../Saitama/Text;../Saitama/Net;../Saitama/Logger;../Saitama/Core;../Saitama/Convert;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4819</DisableSpecificWarnings>
     </ClCompile>
     <Link>
@@ -157,6 +157,7 @@
     <ClCompile Include="Event\EventData.cpp" />
     <ClCompile Include="Event\EventDetector.cpp" />
     <ClCompile Include="Event\EventStartup.cpp" />
+    <ClCompile Include="Adapter\IoAdapter.cpp" />
     <ClCompile Include="Traffic\TrafficStartup.cpp" />
     <ClCompile Include="Traffic\TrafficDetector.cpp" />
     <ClCompile Include="Flow\FlowDetector.cpp" />
@@ -172,6 +173,7 @@
     <ClInclude Include="Event\EventData.h" />
     <ClInclude Include="Event\EventDetector.h" />
     <ClInclude Include="Event\EventStartup.h" />
+    <ClInclude Include="Adapter\IoAdapter.h" />
     <ClInclude Include="Traffic\TrafficStartup.h" />
     <ClInclude Include="Traffic\TrafficDetector.h" />
     <ClInclude Include="Flow\FlowDetector.h" />
@@ -187,6 +189,7 @@
     <None Include="appsettings.json" />
     <None Include="event.db" />
     <None Include="flow.db" />
+    <None Include="io.json" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

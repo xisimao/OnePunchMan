@@ -4,14 +4,14 @@ using namespace std;
 using namespace OnePunchMan;
 
 SocketMaid::SocketMaid()
-	:SocketMaid(4)
+	:SocketMaid(4,true)
 {
 
 }
 
-SocketMaid::SocketMaid(unsigned int channelCount)
+SocketMaid::SocketMaid(unsigned int channelCount,bool useClient)
+	:_channelIndex(0), _useClient(useClient)
 {
-	_channelIndex = 0;
 	for (unsigned int i = 0; i < channelCount; ++i)
 	{
 		SocketChannel* channel = new SocketChannel();
@@ -39,69 +39,59 @@ void SocketMaid::Update(AcceptedEventArgs* e)
 	LogPool::Debug(LogEvent::Socket,"accept", e->TcpSocket, localEndPoint.ToString(), EndPoint::GetRemoteEndPoint(e->TcpSocket).ToString());
 	EndPoint remoteEndPoint = EndPoint::GetRemoteEndPoint(e->TcpSocket);
 	SocketChannel* channel = Select();
-	if (channel == NULL)
+	if (channel != NULL)
 	{
-		LogPool::Warning(LogEvent::Socket, "channel is null", e->TcpSocket);
+		channel->AddSocket(e->TcpSocket, SocketType::Accept, e->Handler);
+	}
+	SocketItem item;
+	item.Channel = channel;
+	if (e->Handler == NULL)
+	{
+		item.Handler = new SocketHandler();
 	}
 	else
 	{
-		channel->AddSocket(e->TcpSocket, SocketType::Accept, e->Handler);
-
-		if (e->Handler == NULL)
-		{
-			LogPool::Warning(LogEvent::Socket, "handler is null", e->TcpSocket);
-		}
-		else
-		{
-			SocketItem item;
-			item.Channel = channel;
-			item.Handler = e->Handler;
-			item.Data.Socket = e->TcpSocket;
-			item.Data.StartTime = DateTime::Now();
-			item.Data.Tag = 0;
-			item.Data.Type = SocketType::Accept;
-			item.Data.Local = EndPoint::GetLocalEndPoint(e->ListenSocket);
-			item.Data.Remote = remoteEndPoint;
-			item.Operation = SocketOperation::Add;
-			lock_guard<mutex> lck(_socketMutex);
-			_sockets.insert(pair<int, SocketItem>(e->TcpSocket, item));
-		}
+		item.Handler = e->Handler;
 	}
+	item.Data.Socket = e->TcpSocket;
+	item.Data.StartTime = DateTime::Now();
+	item.Data.Tag = 0;
+	item.Data.Type = SocketType::Accept;
+	item.Data.Local = EndPoint::GetLocalEndPoint(e->ListenSocket);
+	item.Data.Remote = remoteEndPoint;
+	item.Operation = SocketOperation::Add;
+	lock_guard<mutex> lck(_socketMutex);
+	_sockets.insert(pair<int, SocketItem>(e->TcpSocket, item));
 }
 
 void SocketMaid::Update(ConnectedEventArgs* e)
 {
-	LogPool::Information(LogEvent::Socket, "connect", e->Socket, e->Ep.ToString());
-	EndPoint remoteEndPoint = EndPoint::GetRemoteEndPoint(e->Socket);
+	LogPool::Debug(LogEvent::Socket, "connect", e->Socket, e->Ep.ToString());
+	EndPoint remoteEndPoint = EndPoint::GetRemoteEndPoint(e->Socket);	
+	SocketItem item;
 	SocketChannel* channel = Select();
-	if (channel == NULL)
+	if (channel != NULL)
 	{
-		LogPool::Warning(LogEvent::Socket, "channel is null", e->Socket);
+		channel->AddSocket(e->Socket, SocketType::Connect, e->Handler);
+	}
+	item.Channel = channel;
+	if (e->Handler == NULL)
+	{
+		item.Handler = new SocketHandler();
 	}
 	else
 	{
-		channel->AddSocket(e->Socket, SocketType::Connect, e->Handler);
-
-		if (e->Handler == NULL)
-		{
-			LogPool::Warning(LogEvent::Socket, "handler is null", e->Socket);
-		}
-		else
-		{
-			SocketItem item;
-			item.Channel = channel;
-			item.Handler = e->Handler;
-			item.Data.Socket = e->Socket;
-			item.Data.StartTime = DateTime::Now();
-			item.Data.Tag = 0;
-			item.Data.Type = SocketType::Connect;
-			item.Data.Local = EndPoint::GetLocalEndPoint(e->Socket);
-			item.Data.Remote = remoteEndPoint;
-			item.Operation = SocketOperation::Add;
-			lock_guard<mutex> lck(_socketMutex);
-			_sockets.insert(pair<int, SocketItem>(e->Socket, item));
-		}
+		item.Handler = e->Handler;
 	}
+	item.Data.Socket = e->Socket;
+	item.Data.StartTime = DateTime::Now();
+	item.Data.Tag = 0;
+	item.Data.Type = SocketType::Connect;
+	item.Data.Local = EndPoint::GetLocalEndPoint(e->Socket);
+	item.Data.Remote = remoteEndPoint;
+	item.Operation = SocketOperation::Add;
+	lock_guard<mutex> lck(_socketMutex);
+	_sockets.insert(pair<int, SocketItem>(e->Socket, item));
 }
 
 void SocketMaid::Update(ClosedEventArgs* e)
@@ -111,24 +101,28 @@ void SocketMaid::Update(ClosedEventArgs* e)
 	_connection.ReportTcpError(e->Socket);
 }
 
-SocketChannel* SocketMaid::Select()
+SocketChannel* SocketMaid::Select(int index)
 {
 	if (_channels.empty())
 	{
 		return NULL;
 	}
-
-	if (_channelIndex >= _channels.size())
+	if (index == -1)
 	{
-		_channelIndex = 0;
+		if (_channelIndex >= _channels.size())
+		{
+			_channelIndex = 0;
+		}
+		return _channels[_channelIndex++];
 	}
-
-	SocketChannel* channel = _channels[_channelIndex++];
-	if (channel == NULL)
+	else if (index >= 0 && static_cast<unsigned int>(index) < _channels.size())
 	{
-		LogPool::Warning(LogEvent::Socket, "not found any socket channel");
+		return _channels[index];
 	}
-	return channel;
+	else
+	{
+		return NULL;
+	}
 }
 
 void SocketMaid::SetTag(int socket, unsigned short tag)
@@ -138,61 +132,52 @@ void SocketMaid::SetTag(int socket, unsigned short tag)
 	{
 		_tags[tag] = socket;
 		_sockets[socket].Data.Tag = tag;
-		LogPool::Information(LogEvent::Socket, "tag", socket, tag);
+		LogPool::Debug(LogEvent::Socket, "tag", socket, tag);
 	}
 	else if(_tags[tag] != socket)
 	{
-		RemoveSocket(_tags[tag]);
+		RemoveSocket(_tags[tag],-2);
 		_tags[tag] = socket;
 		_sockets[socket].Data.Tag = tag;
-		LogPool::Information(LogEvent::Socket, "tag", socket, tag);
+		LogPool::Debug(LogEvent::Socket, "tag", socket, tag);
 	}
 
 }
 
 int SocketMaid::AddListenEndPoint(const EndPoint& endPoint, SocketHandler* handler)
 {
-	int socket = Socket::Listen(endPoint);
-	if (socket == -1)
+	SocketChannel* channel = Select();
+	if (channel == NULL)
 	{
+		LogPool::Warning(LogEvent::Socket, "channel is null");
 		return -1;
 	}
 	else
 	{
-		LogPool::Information(LogEvent::Socket, "listen", socket, endPoint.ToString());
-		SocketChannel* channel = Select();
-		if (channel == NULL)
+		int socket = Socket::Listen(endPoint);
+		if (socket == -1)
 		{
-			LogPool::Warning(LogEvent::Socket, "channel is null", socket);
+			return -1;
 		}
-		else
-		{
-			channel->AddSocket(socket, SocketType::Listen, handler);
-			if (handler == NULL)
-			{
-				LogPool::Warning(LogEvent::Socket, "handler is null", socket);
-			}
-			else
-			{
-				SocketItem item;
-				item.Channel = channel;
-				item.Handler = handler;
-				item.Data.Socket = socket;
-				item.Data.StartTime = DateTime::Now();
-				item.Data.Tag = 0;
-				item.Data.Type = SocketType::Listen;
-				item.Data.Local = EndPoint::GetLocalEndPoint(socket);
-				lock_guard<mutex> lck(_socketMutex);
-				_sockets.insert(pair<int, SocketItem>(socket, item));
-			}
-		}
+		LogPool::Debug(LogEvent::Socket, "listen", socket, endPoint.ToString());
+		channel->AddSocket(socket, SocketType::Listen, handler);
+		SocketItem item;
+		item.Channel = channel;
+		item.Handler = handler;
+		item.Data.Socket = socket;
+		item.Data.StartTime = DateTime::Now();
+		item.Data.Tag = 0;
+		item.Data.Type = SocketType::Listen;
+		item.Data.Local = EndPoint::GetLocalEndPoint(socket);
+		lock_guard<mutex> lck(_socketMutex);
+		_sockets.insert(pair<int, SocketItem>(socket, item));
 		return socket;
 	}
 }
 
 void SocketMaid::AddConnectEndPoint(const EndPoint& endPoint, SocketHandler* handler)
 {
-	LogPool::Information(LogEvent::Socket, "add connect", endPoint.ToString());
+	LogPool::Debug(LogEvent::Socket, "add connect", endPoint.ToString());
 	_connection.AddTcpEndPoint(endPoint,handler);
 }
 
@@ -205,23 +190,70 @@ int SocketMaid::AddUdpSocket(SocketHandler* handler, int channelIndex)
 	}
 	else
 	{
-		LogPool::Information(LogEvent::Socket, "udp client", socket);
-		AddUdpEndPoint(EndPoint(), socket, handler, channelIndex);
+		LogPool::Debug(LogEvent::Socket, "udp client", socket);
+		SocketItem item;
+		SocketChannel* channel = Select(channelIndex);
+		if (channel != NULL)
+		{
+			channel->AddSocket(socket, SocketType::Udp, handler);
+		}
+		item.Channel = channel;
+		if (handler == NULL)
+		{
+			item.Handler = new SocketHandler();
+		}
+		else
+		{
+			item.Handler = handler;
+		}
+		item.Data.Socket = socket;
+		item.Data.StartTime = DateTime::Now();
+		item.Data.Tag = 0;
+		item.Data.Type = SocketType::Udp;
+		item.Data.Local = EndPoint();
+		item.Operation = SocketOperation::Add;
+		lock_guard<mutex> lck(_socketMutex);
+		_sockets.insert(pair<int, SocketItem>(socket, item));
 		return socket;
 	}
 }
 
 int SocketMaid::AddBindEndPoint(const EndPoint& endPoint, SocketHandler* handler, int channelIndex)
 {
-	int socket = Socket::Bind(endPoint);
-	if (socket == -1)
+	SocketChannel* channel = Select(channelIndex);
+	if (channel == NULL)
 	{
+		LogPool::Warning(LogEvent::Socket, "channel is null");
 		return -1;
 	}
 	else
 	{
-		LogPool::Information(LogEvent::Socket, "udp bind", socket, endPoint.ToString());
-		AddUdpEndPoint(endPoint, socket, handler, channelIndex);
+		int socket = Socket::Bind(endPoint);
+		if (socket == -1)
+		{
+			return -1;
+		}
+		LogPool::Debug(LogEvent::Socket, "udp bind", socket, endPoint.ToString());
+		_connection.AddUdpEndPoint(endPoint, socket);
+		channel->AddSocket(socket, SocketType::Udp, handler);
+		SocketItem item;
+		item.Channel = channel;
+		if (handler == NULL)
+		{
+			item.Handler = new SocketHandler();
+		}
+		else
+		{
+			item.Handler = handler;
+		}
+		item.Data.Socket = socket;
+		item.Data.StartTime = DateTime::Now();
+		item.Data.Tag = 0;
+		item.Data.Type = SocketType::Udp;
+		item.Data.Local = endPoint;
+		item.Operation = SocketOperation::Add;
+		lock_guard<mutex> lck(_socketMutex);
+		_sockets.insert(pair<int, SocketItem>(socket, item));
 		return socket;
 	}
 }
@@ -235,72 +267,43 @@ int SocketMaid::AddMultiCastEndPoint(const EndPoint& endPoint, SocketHandler* ha
 	}
 	else
 	{
-		LogPool::Information(LogEvent::Socket, "multicast", socket, endPoint.ToString());
-		AddUdpEndPoint(endPoint, socket, handler, channelIndex);
-		return socket;
-	}
-}
-
-void SocketMaid::AddUdpEndPoint(const EndPoint& endPoint, int socket, SocketHandler* handler, int channelIndex)
-{
-	if (!endPoint.Empty())
-	{
+		LogPool::Debug(LogEvent::Socket, "multicast", socket, endPoint.ToString());
 		_connection.AddUdpEndPoint(endPoint, socket);
-	}
-
-	SocketChannel* channel = NULL;
-	if (channelIndex == -1)
-	{
-		channel = Select();
-	}
-	else
-	{
-		if (!_channels.empty() && static_cast<int>(_channels.size()) > channelIndex)
+		SocketItem item;
+		SocketChannel* channel = Select(channelIndex);
+		if (channel != NULL)
 		{
-			channel = _channels[channelIndex];
+			channel->AddSocket(socket, SocketType::Udp, handler);
 		}
-		else
-		{
-			channel = NULL;
-		}
-	}
-
-	if (channel == NULL)
-	{
-		LogPool::Warning(LogEvent::Socket, "channel is null", socket);
-	}
-	else
-	{
-		channel->AddSocket(socket, SocketType::Udp, handler);
+		item.Channel = channel;
 		if (handler == NULL)
 		{
-			LogPool::Warning(LogEvent::Socket, "handler is null", socket);
+			item.Handler = new SocketHandler();
 		}
 		else
 		{
-			SocketItem item;
-			item.Channel = channel;
 			item.Handler = handler;
-			item.Data.Socket = socket;
-			item.Data.StartTime = DateTime::Now();
-			item.Data.Tag = 0;
-			item.Data.Type = SocketType::Udp;
-			item.Data.Local = endPoint;
-			item.Operation = SocketOperation::Add;
-			lock_guard<mutex> lck(_socketMutex);
-			_sockets.insert(pair<int, SocketItem>(socket, item));
 		}
+		item.Data.Socket = socket;
+		item.Data.StartTime = DateTime::Now();
+		item.Data.Tag = 0;
+		item.Data.Type = SocketType::Udp;
+		item.Data.Local = endPoint;
+		item.Operation = SocketOperation::Add;
+		lock_guard<mutex> lck(_socketMutex);
+		_sockets.insert(pair<int, SocketItem>(socket, item));
+		return socket;
 	}
 }
 
 void SocketMaid::RemoveEndPoint(const EndPoint& endPoint)
 {
 	int socket = _connection.GetSocket(endPoint);
-	LogPool::Information(LogEvent::Socket, "remove connect", endPoint.ToString(), socket);
+	LogPool::Debug(LogEvent::Socket, "remove connect", endPoint.ToString(), socket);
 	_connection.RemoveEndPoint(endPoint);
 	if (socket > 0)
 	{
-		RemoveSocket(socket);
+		RemoveSocket(socket,-1);
 	}
 }
 
@@ -320,7 +323,7 @@ void SocketMaid::RemoveSocket(int socket, int result)
 
 	if (_sockets.find(socket) == _sockets.end())
 	{
-		LogPool::Information(LogEvent::Socket, "close", socket, result);
+		LogPool::Debug(LogEvent::Socket, "close", socket, result);
 		Socket::Close(socket);
 	}
 	else
@@ -354,7 +357,12 @@ SocketResult SocketMaid::SendTcp(int socket, const string& buffer, AsyncHandler*
 	}
 	else
 	{
-		return _sockets[socket].Handler->SendTcp(socket,buffer, handler);
+		SocketResult result= _sockets[socket].Handler->SendTcp(socket,buffer, handler);
+		if (result == SocketResult::SendFailed)
+		{
+			_connection.ReportTcpError(socket);
+		}
+		return result;
 	}
 }
 
@@ -531,6 +539,18 @@ SocketResult SocketMaid::SendTcp(unsigned short tag, const string& buffer, long 
 	}
 }
 
+void SocketMaid::SendTcp(const std::string& buffer)
+{
+	lock_guard<mutex> lck(_socketMutex);
+	for (map<int, SocketItem>::iterator it = _sockets.begin(); it != _sockets.end(); ++it)
+	{
+		if (it->second.Data.Type == SocketType::Accept)
+		{
+			it->second.Handler->SendTcp(it->first, buffer,NULL);
+		}
+	}
+}
+
 SocketResult SocketMaid::SendUdp(int socket, const EndPoint& remoteEndPoint, const string& buffer,AsyncHandler* handler)
 {
 	lock_guard<mutex> lck(_socketMutex);
@@ -656,17 +676,26 @@ void SocketMaid::Start()
 	{
 		_channels[i]->Start();
 	}
-	_connection.Start();
+	if (_useClient)
+	{
+		_connection.Start();
+	}
 }
 
 void SocketMaid::Join()
 {
-	_connection.Join();
+	if (!_channels.empty())
+	{
+		_channels[0]->Join();
+	}
 }
 
 void SocketMaid::Stop()
 {
-	_connection.Stop();
+	if (_useClient)
+	{
+		_connection.Stop();
+	}
 	for (unsigned int i = 0; i < _channels.size(); ++i)
 	{
 		_channels[i]->Stop();

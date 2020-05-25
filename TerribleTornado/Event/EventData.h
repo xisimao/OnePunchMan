@@ -23,6 +23,8 @@ namespace OnePunchMan
 	public:
 		//车道类型
 		int LaneType;
+		//箭头
+		std::string Line;
 	};
 
 	//事件视频通道

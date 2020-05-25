@@ -55,6 +55,12 @@ namespace OnePunchMan
 		DateTime(int year,int month,int day,int hour,int minute,int second,int millisecond);
 
 		/**
+		* @brief: 构造函数
+		* @param: utcTimeStamp utc时间戳
+		*/
+		DateTime(long long utcTimeStamp);
+
+		/**
 		* @brief: 年
 		* @return: 年
 		*/

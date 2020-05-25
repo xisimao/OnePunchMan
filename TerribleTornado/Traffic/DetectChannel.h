@@ -71,7 +71,7 @@ namespace OnePunchMan
 		* @param: detector 通道检测
 		*/
 		DetectChannel(int channelIndex,int width, int height,RecognChannel* recogn, TrafficDetector* detector);
-		
+	
 		/**
 		* @brief: 析构函数
 		*/
@@ -152,6 +152,8 @@ namespace OnePunchMan
 
 		//轮询中睡眠时间(毫秒)
 		static const int SleepTime;
+		//检测主题
+		static const std::string DetectTopic;
 
 		//线程是否初始化完成
 		bool _inited;
@@ -178,6 +180,8 @@ namespace OnePunchMan
 		std::vector<const char*> _params;
 		std::vector<char> _result;
 		std::string _param;
+
+		MqttChannel* _mqtt;
 	};
 
 }

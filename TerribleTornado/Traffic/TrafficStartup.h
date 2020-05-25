@@ -14,8 +14,9 @@
 namespace OnePunchMan
 {
     //流量系统启动线程
-    class TrafficStartup :public ThreadObject
-        , public IObserver<HttpReceivedEventArgs>
+    class TrafficStartup 
+        : public IObserver<HttpReceivedEventArgs>
+        , public IObserver<MqttDisconnectedEventArgs>
     {
     public:
 
@@ -24,15 +25,8 @@ namespace OnePunchMan
         */
         TrafficStartup();
 
-        /**
-        * @brief: 析构函数
-        */
-        virtual ~TrafficStartup();
-
-        /**
-        * @brief: 初始化系统
-        */
-        bool Init();
+        //通道总数
+        static const int ChannelCount;
 
         /**
         * @brief: http消息接收事件函数
@@ -40,28 +34,32 @@ namespace OnePunchMan
         */
         void Update(HttpReceivedEventArgs* e);
 
-        //通道总数
-        static const int ChannelCount;
+        /**
+        * @brief: mqtt断开事件函数
+        * @param: e mqtt断开事件参数
+        */
+        void Update(MqttDisconnectedEventArgs* e);
+
+        /**
+        * @brief: 启动系统
+        */
+        void Startup();
 
     protected:
 
-        void StartCore();
-
-        /**
-        * @brief: 供子类实现的线程轮询方法
-        */
-        virtual void PollCore() {};
-
         /**
         * @brief: 初始化检测逻辑类集合
+        * @param: mqtt mqtt
+        * @param: detects 检测类集合
+        * @param: recogns 识别类集合
         * @return: 检测类集合
         */
-        virtual std::vector<TrafficDetector*> InitDetectors() = 0;
+        virtual void InitDetectors(MqttChannel* mqtt, std::vector<DetectChannel*>* detects, std::vector<RecognChannel*>* recogns) = 0;
 
         /**
         * @brief: 初始化通道集合
         */
-        virtual void InitChannels() = 0;
+        virtual void InitDecodes() = 0;
 
         /**
         * @brief: 获取通道json数据
@@ -126,9 +124,6 @@ namespace OnePunchMan
         */
         std::string GetErrorJson(const std::string& field, const std::string& message);
 
-        //mqtt
-        MqttChannel* _mqtt;
-
         //软件版本
         std::string _softwareVersion;
 
@@ -154,7 +149,10 @@ namespace OnePunchMan
         * @return: id
         */
         std::string GetId(const std::string& url, const std::string& key);
-        
+
+        //线程休眠时间(ms)
+        static const int SleepTime;
+
         //系统启动时间
         DateTime _startTime;
         //算法是否初始化成功
@@ -166,15 +164,16 @@ namespace OnePunchMan
         SocketMaid* _socketMaid;
         //http消息解析
         HttpHandler _handler;
-        //检测线程集合，等于视频总数
-        std::vector<DetectChannel*> _detects;
-        //识别线程集合，等于视频总数/RecognChannel::ItemCount
-        std::vector<RecognChannel*> _recogns;
+        //mqtt
+        MqttChannel* _mqtt;
         //解码线程同步锁
         std::timed_mutex _decodeMutex;
         //解码线程集合，等于视频总数，如果视频清空则为NULL
         std::vector<DecodeChannel*> _decodes;
-
+        //检测线程集合，等于视频总数
+        std::vector<DetectChannel*> _detects;
+        //识别线程集合，等于视频总数/RecognChannel::ItemCount
+        std::vector<RecognChannel*> _recogns;
     };
 }
 

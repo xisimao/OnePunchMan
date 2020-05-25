@@ -16,9 +16,9 @@ namespace OnePunchMan
         ~EventStartup();
 
     protected:
-        std::vector<TrafficDetector*> InitDetectors();
+        void InitDetectors(MqttChannel* mqtt, std::vector<DetectChannel*>* detects, std::vector<RecognChannel*>* recogns);
 
-        void InitChannels();
+        void InitDecodes();
 
         std::string GetChannelJson(const std::string& host, int channelIndex);
 

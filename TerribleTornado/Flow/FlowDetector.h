@@ -15,7 +15,7 @@ namespace OnePunchMan
 		* @param: mqtt mqtt
 		* @param: debug 是否处于调试模式，处于调试模式则输出画线后的bmp
 		*/
-		FlowDetector(int width, int height, MqttChannel* mqtt, bool debug);
+		FlowDetector(int width, int height,MqttChannel* mqtt, bool debug);
 
 		/**
 		* @brief: 更新通道
@@ -148,19 +148,6 @@ namespace OnePunchMan
 		*/
 		void DrawDetect(const std::map<std::string, DetectItem>& detectItems, const unsigned char* iveBuffer, int frameIndex);
 
-		/**
-		* @brief: 获取通道地址和车道缓存集合
-		* @param: channelUrl 用于存储通道地址的字符串
-		* @param: lanes 用于存储车道的集合
-		*/
-		void GetCache(std::string* channelUrl, std::vector<FlowLaneCache>* lanes);
-
-		/**
-		* @brief: 设置车道缓存集合
-		* @param: lanes 车道集合
-		*/
-		void SetCache(const std::vector<FlowLaneCache>& lanes);
-
 		//IO mqtt主题
 		static const std::string IOTopic;
 		//流量mqtt主题
@@ -176,10 +163,16 @@ namespace OnePunchMan
 		//下一分钟的时间戳
 		long long _nextMinuteTimeStamp;
 
-		//车道集合同步锁
-		std::timed_mutex _laneMutex;
-		//车道集合
-		std::vector<FlowLaneCache> _lanes;
+		//检测车道集合同步锁
+		std::mutex _detectLaneMutex;
+		//检测车道集合
+		std::vector<FlowLaneCache> _detectLanes;
+		//识别车道集合同步锁
+		std::mutex _recognLaneMutex;
+		//通道地址
+		std::string _recognChannelUrl;
+		//识别车道集合
+		std::vector<FlowLaneCache> _recognLanes;
 	};
 
 }

@@ -22,8 +22,9 @@ namespace OnePunchMan
 		/**
 		* @brief: 构造函数
 		* @param: channelCount 通道数量
+		* @param: useClient 是否使用客户端
 		*/
-		SocketMaid(unsigned int channnelCount);
+		SocketMaid(unsigned int channnelCount,bool useClient);
 
 		/**
 		* @brief: 析构函数
@@ -43,7 +44,7 @@ namespace OnePunchMan
 		* @param: endPoint 连接地址
 		* @param: handler 套接字操作指针
 		*/
-		void AddConnectEndPoint(const EndPoint& endPoint, SocketHandler* handler=new SocketHandler());
+		void AddConnectEndPoint(const EndPoint& endPoint, SocketHandler* handler);
 
 		/**
 		* @brief: 添加Udp套接字
@@ -82,7 +83,7 @@ namespace OnePunchMan
 		* @param: socket 套接字
 		* @param: result 移除原因
 		*/
-		void RemoveSocket(int socket,int result=0);
+		void RemoveSocket(int socket,int result);
 
 		/**
 		* @brief: 发送字节流
@@ -170,6 +171,12 @@ namespace OnePunchMan
 		* @return: 发送结果
 		*/
 		SocketResult SendTcp(unsigned short tag, const std::string& buffer, long long timeStamp, unsigned int protocolId, std::string* responseBuffer);
+		
+		/**
+		* @brief: 向连入的tcp客户端发出通知
+		* @param: buffer 字节流缓冲
+		*/
+		void SendTcp(const std::string& buffer);
 
 		/**
 		* @brief: 发送字节流
@@ -284,18 +291,10 @@ namespace OnePunchMan
 
 		/**
 		* @brief: 轮询选择通道
+		* @param: index 通道序号，-1表示轮询，否则表示指定序号
 		* @return: 返回Null表示没有可用通道，否则返回通道指针
 		*/
-		SocketChannel* Select();
-
-		/**
-		* @brief: 添加Udp地址
-		* @param: endPoint Udp地址
-		* @param: socket Udp套接字
-		* @param: handler 套接字操作指针
-		* @param: channelIndex 通道编号，-1表示自动适配
-		*/
-		void AddUdpEndPoint(const EndPoint& endPoint, int socket, SocketHandler* handler, int channelIndex = -1);
+		SocketChannel* Select(int index=-1);
 
 		/**
 		* @brief: 发送字节流，实现异步通知功能
@@ -348,7 +347,8 @@ namespace OnePunchMan
 		std::vector<SocketChannel*> _channels;
 		//当前选择的通道序号
 		unsigned int _channelIndex;
-
+		//是否使用客户端
+		bool _useClient;
 		//套接字集合同步锁
 		std::mutex _socketMutex;
 		//套接字数据字典

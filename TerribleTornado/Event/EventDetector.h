@@ -25,7 +25,7 @@ namespace OnePunchMan
 		* @param: mqtt mqtt
 		* @param: debug 是否处于调试模式，处于调试模式则输出画线后的bmp
 		*/
-		EventDetector(int width, int height, MqttChannel* mqtt, bool debug);
+		EventDetector(int width, int height,MqttChannel* mqtt, bool debug);
 
 		/**
 		* @brief: 更新通道
@@ -72,14 +72,14 @@ namespace OnePunchMan
 		{
 		public:
 			EventLaneCache()
-				:LaneId(), LaneType(EventLaneType::None), Region(), XTrend(true), YTrend(true)
+				:LaneIndex(0), LaneType(EventLaneType::None), Region(), XTrend(true), YTrend(true)
 				, Congestion(false),LastReportTimeStamp(0), Items()
 			{
 
 			}
 
-			//车道编号
-			std::string LaneId;
+			//车道序号
+			int LaneIndex;
 			//车道类型
 			EventLaneType LaneType;
 			//当前检测区域
@@ -152,7 +152,9 @@ namespace OnePunchMan
 		static const int PointCount;
 
 		//车道集合同步锁
-		std::timed_mutex _laneMutex;
+		std::mutex _laneMutex;
+		//mqtt
+		MqttChannel* _mqtt;
 		//车道集合
 		std::vector<EventLaneCache> _lanes;
 

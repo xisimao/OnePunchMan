@@ -11,19 +11,23 @@ EventStartup::~EventStartup()
     }
 }
 
-vector<TrafficDetector*> EventStartup::InitDetectors()
+void EventStartup::InitDetectors(MqttChannel* mqtt, vector<DetectChannel*>* detects, vector<RecognChannel*>* recogns)
 {
     vector<TrafficDetector*> detectors;
     for (int i = 0; i < ChannelCount; ++i)
     {
-        EventDetector* detector = new EventDetector(FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, _mqtt,false);
+        EventDetector* detector = new EventDetector(FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight,mqtt,false);
         _detectors.push_back(detector);
         detectors.push_back(detector);
     }
-    return detectors;
+    for (int i = 0; i < ChannelCount; ++i)
+    {
+        DetectChannel* detect = new DetectChannel(i + 1, FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight,NULL, detectors[i]);
+        detects->push_back(detect);
+    }
 }
 
-void EventStartup::InitChannels()
+void EventStartup::InitDecodes()
 {
     for (int i = 0; i < ChannelCount; ++i)
     {
@@ -63,16 +67,11 @@ string EventStartup::GetChannelJson(const string& host,int channelIndex)
         {
             string laneJson;
             JsonSerialization::Serialize(&laneJson, "channelIndex", lit->ChannelIndex);
-            JsonSerialization::Serialize(&laneJson, "laneId", lit->LaneId);
-            JsonSerialization::Serialize(&laneJson, "laneName", lit->LaneName);
             JsonSerialization::Serialize(&laneJson, "laneIndex", lit->LaneIndex);
-            JsonSerialization::Serialize(&laneJson, "direction", lit->Direction);
+            JsonSerialization::Serialize(&laneJson, "laneName", lit->LaneName);
             JsonSerialization::Serialize(&laneJson, "laneType", lit->LaneType);
             JsonSerialization::Serialize(&laneJson, "region", lit->Region);
-            JsonSerialization::Serialize(&laneJson, "detectLine", lit->DetectLine);
-            JsonSerialization::Serialize(&laneJson, "stopLine", lit->StopLine);
-            JsonSerialization::Serialize(&laneJson, "laneLine1", lit->LaneLine1);
-            JsonSerialization::Serialize(&laneJson, "laneLine2", lit->LaneLine2);
+            JsonSerialization::Serialize(&laneJson, "line", lit->Line);
             JsonSerialization::SerializeItem(&lanesJson, laneJson);
         }
         JsonSerialization::SerializeJsons(&channelJson, "lanes", lanesJson);
@@ -102,21 +101,16 @@ void EventStartup::SetDevice(HttpReceivedEventArgs* e)
         while (true)
         {
             EventLane lane;
-            lane.LaneId = jd.Get<string>(StringEx::Combine("channels:", channelIndex, ":lanes:", laneIndex, ":laneId"));
-            if (lane.LaneId.empty())
+            lane.LaneIndex = jd.Get<int>(StringEx::Combine("channels:", channelIndex, ":lanes:", laneIndex, ":laneIndex"));
+            if (lane.LaneIndex==0)
             {
                 break;
             }
             lane.ChannelIndex = channel.ChannelIndex;
             lane.LaneName = jd.Get<string>(StringEx::Combine("channels:", channelIndex, ":lanes:", laneIndex, ":laneName"));
-            lane.LaneIndex = jd.Get<int>(StringEx::Combine("channels:", channelIndex, ":lanes:", laneIndex, ":laneIndex"));
-            lane.Direction = jd.Get<int>(StringEx::Combine("channels:", channelIndex, ":lanes:", laneIndex, ":direction"));
             lane.LaneType = jd.Get<int>(StringEx::Combine("channels:", channelIndex, ":lanes:", laneIndex, ":laneType"));
             lane.Region = jd.Get<string>(StringEx::Combine("channels:", channelIndex, ":lanes:", laneIndex, ":region"));
-            lane.DetectLine = jd.Get<string>(StringEx::Combine("channels:", channelIndex, ":lanes:", laneIndex, ":detectLine"));
-            lane.StopLine = jd.Get<string>(StringEx::Combine("channels:", channelIndex, ":lanes:", laneIndex, ":stopLine"));
-            lane.LaneLine1 = jd.Get<string>(StringEx::Combine("channels:", channelIndex, ":lanes:", laneIndex, ":laneLine1"));
-            lane.LaneLine2 = jd.Get<string>(StringEx::Combine("channels:", channelIndex, ":lanes:", laneIndex, ":laneLine2"));
+            lane.Line = jd.Get<string>(StringEx::Combine("channels:", channelIndex, ":lanes:", laneIndex, ":line"));
             channel.Lanes.push_back(lane);
             laneIndex += 1;
         }
@@ -139,12 +133,12 @@ void EventStartup::SetDevice(HttpReceivedEventArgs* e)
             map<int, EventChannel>::iterator it = tempChannels.find(i + 1);
             if (it == tempChannels.end())
             {
-                DeleteDecode(channelIndex);
+                DeleteDecode(i + 1);
                 _detectors[i]->ClearChannel();
             }
             else
             {
-                SetDecode(it->second.ChannelIndex, it->second.ChannelUrl, it->second.RtmpUrl("127.0.0.1"));
+                SetDecode(i + 1, it->second.ChannelUrl, it->second.RtmpUrl("127.0.0.1"));
                 _detectors[i]->UpdateChannel(it->second);
             }
         }
@@ -170,21 +164,16 @@ void EventStartup::SetChannel(HttpReceivedEventArgs* e)
     while (true)
     {
         EventLane lane;
-        lane.LaneId = jd.Get<string>(StringEx::Combine("lanes:", laneIndex, ":laneId"));
-        if (lane.LaneId.empty())
+        lane.LaneIndex = jd.Get<int>(StringEx::Combine("lanes:", laneIndex, ":laneIndex"));
+        if (lane.LaneIndex==0)
         {
             break;
         }
         lane.ChannelIndex = channel.ChannelIndex;
         lane.LaneName = jd.Get<string>(StringEx::Combine("lanes:", laneIndex, ":laneName"));
-        lane.LaneIndex = jd.Get<int>(StringEx::Combine("lanes:", laneIndex, ":laneIndex"));
-        lane.Direction = jd.Get<int>(StringEx::Combine("lanes:", laneIndex, ":direction"));
         lane.LaneType = jd.Get<int>(StringEx::Combine("lanes:", laneIndex, ":laneType"));
         lane.Region = jd.Get<string>(StringEx::Combine("lanes:", laneIndex, ":region"));
-        lane.DetectLine = jd.Get<string>(StringEx::Combine("lanes:", laneIndex, ":detectLine"));
-        lane.StopLine = jd.Get<string>(StringEx::Combine("lanes:", laneIndex, ":stopLine"));
-        lane.LaneLine1 = jd.Get<string>(StringEx::Combine("lanes:", laneIndex, ":laneLine1"));
-        lane.LaneLine2 = jd.Get<string>(StringEx::Combine("lanes:", laneIndex, ":laneLine2"));
+        lane.Line = jd.Get<string>(StringEx::Combine("lanes:", laneIndex, ":line"));
         channel.Lanes.push_back(lane);
         laneIndex += 1;
     }

@@ -21,12 +21,11 @@ namespace OnePunchMan
 		* @param: detectors 通道检测集合
 		*/
 		RecognChannel(int recognIndex,int width, int height, const std::vector<TrafficDetector*>& detectors);
-	
+
 		/**
 		* @brief: 析构函数
 		*/
 		~RecognChannel();
-
 		/**
 		* @brief: 推送识别数据项集合
 		* @param: items 识别数据项集合
@@ -56,6 +55,8 @@ namespace OnePunchMan
 		static const int MaxCacheCount;
 		//线程休眠时间(ms)
 		static const int SleepTime;
+		//识别主题
+		static const std::string RecognTopic;
 
 		//是否初始化完成
 		int _inited;

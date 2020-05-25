@@ -59,6 +59,22 @@ DateTime::DateTime(int year, int month, int day, int hour, int minute, int secon
 	}
 }
 
+DateTime::DateTime(long long utcTimeStamp)
+{
+	time_t time = utcTimeStamp / 1000;
+	struct tm timeinfo;
+	localtime_s(&timeinfo, &time);
+
+	_year = timeinfo.tm_year + 1900;
+	_month = timeinfo.tm_mon + 1;
+	_day = timeinfo.tm_mday;
+	_hour = timeinfo.tm_hour;
+	_minute = timeinfo.tm_min;
+	_second = timeinfo.tm_sec;
+	_millisecond = static_cast<int>(utcTimeStamp % 1000);
+	_utcTimeStamp = utcTimeStamp;
+}
+
 int DateTime::Year() const
 {
 	return _year;

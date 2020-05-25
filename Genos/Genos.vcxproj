@@ -64,6 +64,7 @@
     <ClCompile Include="..\Saitama\Net\SocketMaid.cpp" />
     <ClCompile Include="..\Saitama\Text\Path.cpp" />
     <ClCompile Include="..\Saitama\Text\StringEx.cpp" />
+    <ClCompile Include="..\TerribleTornado\Adapter\IoAdapter.cpp" />
     <ClCompile Include="..\TerribleTornado\Event\EventData.cpp" />
     <ClCompile Include="..\TerribleTornado\Event\EventDetector.cpp" />
     <ClCompile Include="..\TerribleTornado\Event\EventStartup.cpp" />
@@ -112,6 +113,7 @@
     <ClInclude Include="..\Saitama\Net\SocketMaid.h" />
     <ClInclude Include="..\Saitama\Text\Path.h" />
     <ClInclude Include="..\Saitama\Text\StringEx.h" />
+    <ClInclude Include="..\TerribleTornado\Adapter\IoAdapter.h" />
     <ClInclude Include="..\TerribleTornado\Event\EventData.h" />
     <ClInclude Include="..\TerribleTornado\Event\EventDetector.h" />
     <ClInclude Include="..\TerribleTornado\Event\EventStartup.h" />
@@ -184,7 +186,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>/usr/local/include;../TerribleTornado/Event;../TerribleTornado/Traffic;../TerribleTornado/Flow;../Fubuki/Mqtt;../Fubuki/Sqlite;../Fubuki/FFmpeg;../Saitama/Text;../Saitama/Net;../Saitama/Logger;../Saitama/Core;../Saitama/Convert;./Genos;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>/usr/local/include;../TerribleTornado/Adapter;../TerribleTornado/Event;../TerribleTornado/Traffic;../TerribleTornado/Flow;../Fubuki/Mqtt;../Fubuki/Sqlite;../Fubuki/FFmpeg;../Saitama/Text;../Saitama/Net;../Saitama/Logger;../Saitama/Core;../Saitama/Convert;./Genos;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link />
     <Link>
