@@ -27,6 +27,8 @@ namespace OnePunchMan
 
         //通道总数
         static const int ChannelCount;
+        //识别线程总数
+        static const int RecognCount;
 
         /**
         * @brief: http消息接收事件函数
@@ -149,9 +151,6 @@ namespace OnePunchMan
         * @return: id
         */
         std::string GetId(const std::string& url, const std::string& key);
-
-        //线程休眠时间(ms)
-        static const int SleepTime;
 
         //系统启动时间
         DateTime _startTime;

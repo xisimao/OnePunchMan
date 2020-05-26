@@ -20,14 +20,14 @@ void FlowStartup::InitDetectors(MqttChannel* mqtt, vector<DetectChannel*>* detec
         _detectors.push_back(detector);
         detectors.push_back(detector);
     }
+    for (int i = 0; i < RecognCount; ++i)
+    {
+        RecognChannel* recogn = new RecognChannel(i,ChannelCount/RecognCount, FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, detectors);
+        recogns->push_back(recogn);
+    }
     for (int i = 0; i < ChannelCount; ++i)
     {
-        if (i % RecognChannel::ItemCount == 0)
-        {
-            RecognChannel* recogn = new RecognChannel(i / RecognChannel::ItemCount, FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, detectors);
-            recogns->push_back(recogn);
-        }
-        DetectChannel* detect = new DetectChannel(i + 1, FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, recogns->at(i / RecognChannel::ItemCount), detectors[i]);
+        DetectChannel* detect = new DetectChannel(i + 1, FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, recogns->at(i / (ChannelCount / RecognCount)), detectors[i]);
         detects->push_back(detect);
     }
 }

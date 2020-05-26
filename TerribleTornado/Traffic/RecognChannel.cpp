@@ -3,13 +3,12 @@
 using namespace std;
 using namespace OnePunchMan;
 
-const int RecognChannel::ItemCount = 2;
 const int RecognChannel::MaxCacheCount = 100;
 const int RecognChannel::SleepTime = 500;
 const string RecognChannel::RecognTopic("Recogn");
 
-RecognChannel::RecognChannel(int recognIndex,int width, int height, const vector<TrafficDetector*>& detectors)
-	:ThreadObject("recogn"), _inited(false), _recognIndex(recognIndex),_detectors(detectors)
+RecognChannel::RecognChannel(int recognIndex, int recognCount,int width, int height, const vector<TrafficDetector*>& detectors)
+	:ThreadObject("recogn"), _inited(false), _recognIndex(recognIndex), _recognCount(recognCount),_detectors(detectors)
 {
 	_bgrs.push_back(new uint8_t[width * height * 3]);
 	_guids.resize(1);
@@ -66,7 +65,7 @@ void RecognChannel::StartCore()
 	}
 	else
 	{
-		int result = SeemmoSDK::seemmo_thread_init(2, _recognIndex %2, ItemCount);
+		int result = SeemmoSDK::seemmo_thread_init(2, _recognIndex %2, _recognCount);
 		if (result == 0)
 		{
 			LogPool::Information(LogEvent::Detect, "init recogn thread sucess");

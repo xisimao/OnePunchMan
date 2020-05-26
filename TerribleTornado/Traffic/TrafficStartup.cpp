@@ -3,8 +3,8 @@
 using namespace std;
 using namespace OnePunchMan;
 
-const int TrafficStartup::ChannelCount = 4;
-const int TrafficStartup::SleepTime = 1000;
+const int TrafficStartup::ChannelCount = 8;
+const int TrafficStartup::RecognCount = 2;
 
 TrafficStartup::TrafficStartup()
     :_startTime(DateTime::Now()), _sdkInited(false), _socketMaid(NULL), _mqtt(NULL)
@@ -292,16 +292,11 @@ void TrafficStartup::Startup()
         _sdkVersion = SeemmoSDK::seemmo_version();
     }
 
-    for (int i = 0; i < ChannelCount; ++i)
-    {
-        _decodes.push_back(NULL);
-    }
+    _mqtt = new MqttChannel("127.0.0.1", 1883);
+    _mqtt->MqttDisconnected.Subscribe(this);
     InitDetectors(_mqtt, &_detects, &_recogns);
-
     if (_sdkInited)
     {
-        _mqtt = new MqttChannel("127.0.0.1", 1883);
-        _mqtt->MqttDisconnected.Subscribe(this);
         _mqtt->Start();
         for (unsigned int i = 0; i < _recogns.size(); ++i)
         {
@@ -338,9 +333,13 @@ void TrafficStartup::Startup()
             }
             else
             {
-                this_thread::sleep_for(chrono::milliseconds(SleepTime));
+                this_thread::sleep_for(chrono::milliseconds(100));
             }
         }
+    }
+    for (int i = 0; i < ChannelCount; ++i)
+    {
+        _decodes.push_back(NULL);
     }
     InitDecodes();
     _socketMaid->Start();
@@ -356,7 +355,6 @@ void TrafficStartup::Startup()
             delete _decodes[i];
         }
     }
-
     for (unsigned int i = 0; i < _detects.size(); ++i)
     {
         _detects[i]->Stop();
