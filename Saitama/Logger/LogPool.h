@@ -53,7 +53,10 @@ namespace OnePunchMan
 		template<typename T, typename ...U>
 		static void Debug(LogEvent logEvent, T t, U ...u)
 		{
-			_instance->Log(LogLevel::Debug, logEvent, t, u...);
+			if (_instance != NULL)
+			{
+				_instance->Log(LogLevel::Debug, logEvent, t, u...);
+			}
 		}
 
 		/**
@@ -76,7 +79,10 @@ namespace OnePunchMan
 		template<typename T, typename ...U>
 		static void Information(LogEvent logEvent, T t, U ...u)
 		{
-			_instance->Log(LogLevel::Information, logEvent, t, u...);
+			if (_instance != NULL)
+			{
+				_instance->Log(LogLevel::Information, logEvent, t, u...);
+			}
 		}
 
 		/**
@@ -99,7 +105,10 @@ namespace OnePunchMan
 		template<typename T, typename ...U>
 		static void Warning(LogEvent logEvent, T t, U ...u)
 		{
-			_instance->Log(LogLevel::Warning, logEvent, t, u...);
+			if (_instance != NULL)
+			{
+				_instance->Log(LogLevel::Warning, logEvent, t, u...);
+			}
 		}
 
 		/**
@@ -122,7 +131,10 @@ namespace OnePunchMan
 		template<typename T, typename ...U>
 		static void Error(LogEvent logEvent, T t, U ...u)
 		{
-			_instance->Log(LogLevel::Error, logEvent, t, u...);
+			if (_instance != NULL)
+			{
+				_instance->Log(LogLevel::Error, logEvent, t, u...);
+			}	
 		}
 
 		/**

@@ -64,12 +64,26 @@ void LogPool::Uninit()
 
 string LogPool::Directory()
 {
-	return _instance->_directory;
+	if (_instance == NULL)
+	{
+		return string();
+	}
+	else
+	{
+		return _instance->_directory;
+	}
 }
 
 int LogPool::HoldDays()
 {
-	return _instance->_holdDays;
+	if (_instance == NULL)
+	{
+		return 0;
+	}
+	else
+	{
+		return _instance->_holdDays;
+	}
 }
 
 LogType LogPool::ReadType(const FileConfig& config, const string& key)
