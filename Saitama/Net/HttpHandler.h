@@ -51,6 +51,8 @@ namespace OnePunchMan
 		//接收到http消息事件
 		Observable<HttpReceivedEventArgs> HttpReceived;
 
+		static void WriteFile(const std::string& requestJson,const std::string& filePath);
+
 	protected:
 
 		SocketHandler* CloneCore();

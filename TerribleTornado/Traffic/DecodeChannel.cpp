@@ -4,7 +4,8 @@ using namespace std;
 using namespace OnePunchMan;
 
 DecodeChannel::DecodeChannel(const string& inputUrl, const string& outputUrl, int channelIndex, DetectChannel* detectChannel, bool debug)
-	:FFmpegChannel(inputUrl, outputUrl, debug), _channelIndex(channelIndex), _yuv420spSize(static_cast<int>(DestinationWidth* DestinationHeight * 1.5)),_detectChannel(detectChannel)
+	:FFmpegChannel(inputUrl, outputUrl, debug), _channelIndex(channelIndex)
+	, _yuv420spSize(static_cast<int>(DestinationWidth* DestinationHeight * 1.5)),_detectChannel(detectChannel)
 {
 
 }
@@ -781,6 +782,7 @@ void DecodeChannel::UninitHisi(int videoCount)
 
 bool DecodeChannel::InitDecoder()
 {
+	_detectChannel->WriteBmp();
 	return true;
 }
 

@@ -46,10 +46,10 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
                 unique_lock<timed_mutex> lck(_decodeMutex, std::defer_lock);
                 if (lck.try_lock_for(chrono::seconds(ThreadObject::LockTime)))
                 {
-                    JsonSerialization::Serialize(&channelJson, "channelStatus", _decodes[channelIndex - 1] == NULL ? 0 : static_cast<int>(_decodes[channelIndex - 1]->Status()));
-                    JsonSerialization::Serialize(&channelJson, "frameSpan", _decodes[channelIndex - 1] == NULL ? 0 : _decodes[channelIndex - 1]->FrameSpan());
-                    JsonSerialization::Serialize(&channelJson, "sourceWidth", _decodes[channelIndex - 1] == NULL ? 0 : _decodes[channelIndex - 1]->SourceWidth());
-                    JsonSerialization::Serialize(&channelJson, "sourceHeight", _decodes[channelIndex - 1] == NULL ? 0 : _decodes[channelIndex - 1]->SourceHeight());
+                    JsonSerialization::SerializeValue(&channelJson, "channelStatus", _decodes[channelIndex - 1] == NULL ? 0 : static_cast<int>(_decodes[channelIndex - 1]->Status()));
+                    JsonSerialization::SerializeValue(&channelJson, "frameSpan", _decodes[channelIndex - 1] == NULL ? 0 : _decodes[channelIndex - 1]->FrameSpan());
+                    JsonSerialization::SerializeValue(&channelJson, "sourceWidth", _decodes[channelIndex - 1] == NULL ? 0 : _decodes[channelIndex - 1]->SourceWidth());
+                    JsonSerialization::SerializeValue(&channelJson, "sourceHeight", _decodes[channelIndex - 1] == NULL ? 0 : _decodes[channelIndex - 1]->SourceHeight());
                 }
                 else
                 {
@@ -77,18 +77,39 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
             }
         }
     }
-    else if (UrlStartWith(e->Url, "/api/upload"))
+    else if (UrlStartWith(e->Url, "/api/images"))
     {
-        vector<string> requestLines = StringEx::Split(e->RequestJson, "\r\n");
-        if (requestLines.size() >= 5)
+        string id = GetId(e->Url, "/api/images");
+        int channelIndex = StringEx::Convert<int>(id);
+        if (ChannelIndexEnable(channelIndex))
         {
-            FILE* file = fopen("/mtd/seemmo/programs/aisdk/data/licence", "wb");
-            if (file != NULL)
-            {
-                fwrite(requestLines[4].c_str(), 1, requestLines[4].size(), file);
-                fclose(file);
-            }
+            _detects[channelIndex - 1]->WriteBmp();
+            e->Code = HttpCode::OK;
         }
+        else
+        {
+            e->Code = HttpCode::NotFound;
+        }
+      
+    }
+    else if (UrlStartWith(e->Url, "/api/update/licence"))
+    {
+        string filePath("/mtd/seemmo/programs/aisdk/data/licence");
+        HttpHandler::WriteFile(e->RequestJson, filePath);
+        e->Code = HttpCode::OK;
+    }
+    else if (UrlStartWith(e->Url, "/api/update/system"))
+    {
+        string filePath = Path::Combine(Path::GetCurrentPath(), "service.tar");
+        HttpHandler::WriteFile(e->RequestJson, filePath);
+        Command::Execute("tar xf service.tar -C ../");
+        Command::Execute("rm service.tar");
+        e->Code = HttpCode::OK;
+    }
+    else if (UrlStartWith(e->Url, "/api/logs/export"))
+    {
+        string ls = Command::Execute("cd ../logs;tar cf logs.tar *.log");
+        e->ResponseJson = "logs.tar";
         e->Code = HttpCode::OK;
     }
 }
@@ -96,14 +117,15 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
 void TrafficStartup::GetDevice(HttpReceivedEventArgs* e)
 {
     string sn = StringEx::Trim(Command::Execute("cat /mtd/basesys/data/devguid"));
+
+
     string df = Command::Execute("df");
     string diskUsed;
     string diskTotal;
-    string mqtt = Command::Execute("netstat -apn|grep 1883");
-    vector<string> rows = StringEx::Split(df, "\n", true);
-    for (unsigned int i = 0; i < rows.size(); ++i)
+    vector<string> dfRows = StringEx::Split(df, "\n", true);
+    for (unsigned int i = 0; i < dfRows.size(); ++i)
     {
-        vector<string> columns = StringEx::Split(rows[i], " ", true);
+        vector<string> columns = StringEx::Split(dfRows[i], " ", true);
         if (columns.size() >= 6 && columns[columns.size() - 1].compare("/") == 0)
         {
             long long used = StringEx::Convert<long long>(columns[2]);
@@ -123,11 +145,11 @@ void TrafficStartup::GetDevice(HttpReceivedEventArgs* e)
             unique_lock<timed_mutex> lck(_decodeMutex, std::defer_lock);
             if (lck.try_lock_for(chrono::seconds(ThreadObject::LockTime)))
             {
-                JsonSerialization::Serialize(&channelJson, "channelStatus", _decodes[i] == NULL ? 0 : static_cast<int>(_decodes[i]->Status()));
-                JsonSerialization::Serialize(&channelJson, "frameSpan", _decodes[i] == NULL ? 0 : _decodes[i]->FrameSpan());
-                JsonSerialization::Serialize(&channelJson, "sourceWidth", _decodes[i] == NULL ? 0 : _decodes[i]->SourceWidth());
-                JsonSerialization::Serialize(&channelJson, "sourceHeight", _decodes[i] == NULL ? 0 : _decodes[i]->SourceHeight());
-                JsonSerialization::SerializeItem(&channelsJson, channelJson);
+                JsonSerialization::SerializeValue(&channelJson, "channelStatus", _decodes[i] == NULL ? 0 : static_cast<int>(_decodes[i]->Status()));
+                JsonSerialization::SerializeValue(&channelJson, "frameSpan", _decodes[i] == NULL ? 0 : _decodes[i]->FrameSpan());
+                JsonSerialization::SerializeValue(&channelJson, "sourceWidth", _decodes[i] == NULL ? 0 : _decodes[i]->SourceWidth());
+                JsonSerialization::SerializeValue(&channelJson, "sourceHeight", _decodes[i] == NULL ? 0 : _decodes[i]->SourceHeight());
+                JsonSerialization::AddClassItem(&channelsJson, channelJson);
             }
             else
             {
@@ -138,28 +160,27 @@ void TrafficStartup::GetDevice(HttpReceivedEventArgs* e)
 
     string deviceJson;
     DateTime now = DateTime::Now();
-    JsonSerialization::Serialize(&deviceJson, "deviceTime", now.UtcTimeStamp());
-    JsonSerialization::Serialize(&deviceJson, "deviceTime_Desc", now.ToString());
-    JsonSerialization::Serialize(&deviceJson, "startTime", _startTime.ToString());
-    JsonSerialization::Serialize(&deviceJson, "diskUsed", diskUsed);
-    JsonSerialization::Serialize(&deviceJson, "diskTotal", diskTotal);
-    JsonSerialization::Serialize(&deviceJson, "licenceStatus", _sdkInited);
-    JsonSerialization::Serialize(&deviceJson, "sn", sn);
-    JsonSerialization::Serialize(&deviceJson, "softwareVersion", _softwareVersion);
-    JsonSerialization::Serialize(&deviceJson, "sdkVersion", _sdkVersion);
-    JsonSerialization::Serialize(&deviceJson, "destinationWidth", FFmpegChannel::DestinationWidth);
-    JsonSerialization::Serialize(&deviceJson, "destinationHeight", FFmpegChannel::DestinationHeight);
-    JsonSerialization::Serialize(&deviceJson, "mqttConnected", !mqtt.empty());
+    JsonSerialization::SerializeValue(&deviceJson, "deviceTime", now.UtcTimeStamp());
+    JsonSerialization::SerializeValue(&deviceJson, "deviceTime_Desc", now.ToString());
+    JsonSerialization::SerializeValue(&deviceJson, "startTime", _startTime.ToString());
+    JsonSerialization::SerializeValue(&deviceJson, "diskUsed", diskUsed);
+    JsonSerialization::SerializeValue(&deviceJson, "diskTotal", diskTotal);
+    JsonSerialization::SerializeValue(&deviceJson, "licenceStatus", _sdkInited);
+    JsonSerialization::SerializeValue(&deviceJson, "sn", sn);
+    JsonSerialization::SerializeValue(&deviceJson, "softwareVersion", _softwareVersion);
+    JsonSerialization::SerializeValue(&deviceJson, "webVersion", _webVersion);
+    JsonSerialization::SerializeValue(&deviceJson, "sdkVersion", _sdkVersion);
+    JsonSerialization::SerializeValue(&deviceJson, "destinationWidth", FFmpegChannel::DestinationWidth);
+    JsonSerialization::SerializeValue(&deviceJson, "destinationHeight", FFmpegChannel::DestinationHeight);
+    JsonSerialization::SerializeValue(&deviceJson, "mqttConnected", _mqtt==NULL?0:static_cast<int>(_mqtt->Status()));
     for (unsigned int i = 0; i < _recogns.size(); ++i)
     {
-        JsonSerialization::Serialize(&deviceJson, StringEx::Combine("recognQueue", i + 1), _recogns[i]->Size());
+        JsonSerialization::SerializeValue(&deviceJson, StringEx::Combine("recognQueue", i + 1), _recogns[i]->Size());
     }
-    JsonSerialization::SerializeJson(&deviceJson, "channels", channelsJson);
-
+    JsonSerialization::SerializeClass(&deviceJson, "channels", channelsJson);
     e->Code = HttpCode::OK;
     e->ResponseJson = deviceJson;
 }
-
 
 void TrafficStartup::SetDecode(int channelIndex, const string& inputUrl, const string& outputUrl)
 {
@@ -342,6 +363,23 @@ void TrafficStartup::Startup()
         _decodes.push_back(NULL);
     }
     InitDecodes();
+
+    //ªÒ»°web∞Ê±æ
+    string cat = Command::Execute("cat ../web/static/config/config.js");
+    vector<string> catRows = StringEx::Split(cat, "\n", true);
+    for (unsigned int i = 0; i < catRows.size(); ++i)
+    {
+        if (catRows[i].find("window.WebVersionNumbe") != string::npos)
+        {
+            vector<string> datas = StringEx::Split(catRows[i], " ", true);
+            if (datas.size() >= 3 && datas[2].size() >= 3)
+            {
+                _webVersion = datas[2].substr(1, datas[2].size() - 2);
+                break;
+            }
+        }
+    }
+
     _socketMaid->Start();
     _socketMaid->Join();
     _socketMaid->Stop();

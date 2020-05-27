@@ -47,29 +47,29 @@ string EventStartup::GetChannelJson(const string& host,int channelIndex)
     EventChannel channel=data.Get(channelIndex);
     if (!channel.ChannelUrl.empty())
     {
-        JsonSerialization::Serialize(&channelJson, "channelIndex", channel.ChannelIndex);
-        JsonSerialization::Serialize(&channelJson, "channelName", channel.ChannelName);
-        JsonSerialization::Serialize(&channelJson, "channelUrl", channel.ChannelUrl);
-        JsonSerialization::Serialize(&channelJson, "rtmpUrl", channel.RtmpUrl(host));
-        JsonSerialization::Serialize(&channelJson, "channelType", channel.ChannelType);
+        JsonSerialization::SerializeValue(&channelJson, "channelIndex", channel.ChannelIndex);
+        JsonSerialization::SerializeValue(&channelJson, "channelName", channel.ChannelName);
+        JsonSerialization::SerializeValue(&channelJson, "channelUrl", channel.ChannelUrl);
+        JsonSerialization::SerializeValue(&channelJson, "rtmpUrl", channel.RtmpUrl(host));
+        JsonSerialization::SerializeValue(&channelJson, "channelType", channel.ChannelType);
         if (ChannelIndexEnable(channel.ChannelIndex))
         {
-            JsonSerialization::Serialize(&channelJson, "lanesInited", _detectors[channel.ChannelIndex - 1]->LanesInited());
+            JsonSerialization::SerializeValue(&channelJson, "lanesInited", _detectors[channel.ChannelIndex - 1]->LanesInited());
         }
 
         string lanesJson;
         for (vector<EventLane>::const_iterator lit = channel.Lanes.begin(); lit != channel.Lanes.end(); ++lit)
         {
             string laneJson;
-            JsonSerialization::Serialize(&laneJson, "channelIndex", lit->ChannelIndex);
-            JsonSerialization::Serialize(&laneJson, "laneIndex", lit->LaneIndex);
-            JsonSerialization::Serialize(&laneJson, "laneName", lit->LaneName);
-            JsonSerialization::Serialize(&laneJson, "laneType", lit->LaneType);
-            JsonSerialization::Serialize(&laneJson, "region", lit->Region);
-            JsonSerialization::Serialize(&laneJson, "line", lit->Line);
-            JsonSerialization::SerializeItem(&lanesJson, laneJson);
+            JsonSerialization::SerializeValue(&laneJson, "channelIndex", lit->ChannelIndex);
+            JsonSerialization::SerializeValue(&laneJson, "laneIndex", lit->LaneIndex);
+            JsonSerialization::SerializeValue(&laneJson, "laneName", lit->LaneName);
+            JsonSerialization::SerializeValue(&laneJson, "laneType", lit->LaneType);
+            JsonSerialization::SerializeValue(&laneJson, "region", lit->Region);
+            JsonSerialization::SerializeValue(&laneJson, "line", lit->Line);
+            JsonSerialization::AddClassItem(&lanesJson, laneJson);
         }
-        JsonSerialization::SerializeJsons(&channelJson, "lanes", lanesJson);
+        JsonSerialization::SerializeArray(&channelJson, "lanes", lanesJson);
     }
     return channelJson;
 

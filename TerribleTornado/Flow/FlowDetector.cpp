@@ -134,24 +134,24 @@ void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long 
 				trafficStatus = static_cast<int>(TrafficStatus::Dead);
 			}
 			string laneJson;
-			JsonSerialization::Serialize(&laneJson, "channelUrl", _channelUrl);
-			JsonSerialization::Serialize(&laneJson, "laneId", cache.LaneId);
-			JsonSerialization::Serialize(&laneJson, "timeStamp", _currentMinuteTimeStamp);
-			JsonSerialization::Serialize(&laneJson, "persons", cache.Persons);
-			JsonSerialization::Serialize(&laneJson, "bikes", cache.Bikes);
-			JsonSerialization::Serialize(&laneJson, "motorcycles", cache.Motorcycles);
-			JsonSerialization::Serialize(&laneJson, "cars", cache.Cars);
-			JsonSerialization::Serialize(&laneJson, "tricycles", cache.Tricycles);
-			JsonSerialization::Serialize(&laneJson, "buss", cache.Buss);
-			JsonSerialization::Serialize(&laneJson, "vans", cache.Vans);
-			JsonSerialization::Serialize(&laneJson, "trucks", cache.Trucks);
+			JsonSerialization::SerializeValue(&laneJson, "channelUrl", _channelUrl);
+			JsonSerialization::SerializeValue(&laneJson, "laneId", cache.LaneId);
+			JsonSerialization::SerializeValue(&laneJson, "timeStamp", _currentMinuteTimeStamp);
+			JsonSerialization::SerializeValue(&laneJson, "persons", cache.Persons);
+			JsonSerialization::SerializeValue(&laneJson, "bikes", cache.Bikes);
+			JsonSerialization::SerializeValue(&laneJson, "motorcycles", cache.Motorcycles);
+			JsonSerialization::SerializeValue(&laneJson, "cars", cache.Cars);
+			JsonSerialization::SerializeValue(&laneJson, "tricycles", cache.Tricycles);
+			JsonSerialization::SerializeValue(&laneJson, "buss", cache.Buss);
+			JsonSerialization::SerializeValue(&laneJson, "vans", cache.Vans);
+			JsonSerialization::SerializeValue(&laneJson, "trucks", cache.Trucks);
 
-			JsonSerialization::Serialize(&laneJson, "averageSpeed", static_cast<int>(speed));
-			JsonSerialization::Serialize(&laneJson, "headDistance", headDistance);
-			JsonSerialization::Serialize(&laneJson, "headSpace", headSpace);
-			JsonSerialization::Serialize(&laneJson, "timeOccupancy", static_cast<int>(timeOccupancy));
-			JsonSerialization::Serialize(&laneJson, "trafficStatus", trafficStatus);
-			JsonSerialization::SerializeItem(&flowLanesJson, laneJson);
+			JsonSerialization::SerializeValue(&laneJson, "averageSpeed", static_cast<int>(speed));
+			JsonSerialization::SerializeValue(&laneJson, "headDistance", headDistance);
+			JsonSerialization::SerializeValue(&laneJson, "headSpace", headSpace);
+			JsonSerialization::SerializeValue(&laneJson, "timeOccupancy", static_cast<int>(timeOccupancy));
+			JsonSerialization::SerializeValue(&laneJson, "trafficStatus", trafficStatus);
+			JsonSerialization::AddClassItem(&flowLanesJson, laneJson);
 
 			LogPool::Debug(LogEvent::Detect, "lane:", cache.LaneId, "vehicles:", cache.Cars + cache.Tricycles + cache.Buss + cache.Vans + cache.Trucks, "bikes:", cache.Bikes + cache.Motorcycles, "persons:", cache.Persons, speed, "km/h ", headDistance, "sec ", timeOccupancy, "%");
 
@@ -285,11 +285,11 @@ void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long 
 		{
 			cache.IoStatus = ioStatus;
 			string laneJson;
-			JsonSerialization::Serialize(&laneJson, "channelUrl", _channelUrl);
-			JsonSerialization::Serialize(&laneJson, "laneId", cache.LaneId);
-			JsonSerialization::Serialize(&laneJson, "timeStamp", timeStamp);
-			JsonSerialization::Serialize(&laneJson, "status", (int)ioStatus);
-			JsonSerialization::SerializeItem(&ioLanesJson, laneJson);
+			JsonSerialization::SerializeValue(&laneJson, "channelUrl", _channelUrl);
+			JsonSerialization::SerializeValue(&laneJson, "laneId", cache.LaneId);
+			JsonSerialization::SerializeValue(&laneJson, "timeStamp", timeStamp);
+			JsonSerialization::SerializeValue(&laneJson, "status", (int)ioStatus);
+			JsonSerialization::AddClassItem(&ioLanesJson, laneJson);
 			LogPool::Debug(LogEvent::Detect, "lane:", cache.LaneId, "io:", ioStatus);
 		}
 	}
@@ -327,19 +327,19 @@ void FlowDetector::HandleRecognize(const RecognItem& recognItem, const unsigned 
 					int upperColor = jd.Get<int>(StringEx::Combine("ImageResults:0:Pedestrains:0:Recognize:UpperColor:TopList:0:Code"));
 					//pedestrain.Feature = jd.Get<string>(StringEx::Combine("ImageResults:", imageIndex, ":Pedestrains:0:Recognize:Feature:Feature"));
 					string videoStructJson;
-					JsonSerialization::Serialize(&videoStructJson, "channelUrl", _recognChannelUrl);
-					JsonSerialization::Serialize(&videoStructJson, "laneId", _recognLanes[i].LaneId);
-					JsonSerialization::Serialize(&videoStructJson, "timeStamp", timeStamp);
-					//JsonSerialization::Serialize(&videoStructJson, "feature", pedestrain.Feature);
+					JsonSerialization::SerializeValue(&videoStructJson, "channelUrl", _recognChannelUrl);
+					JsonSerialization::SerializeValue(&videoStructJson, "laneId", _recognLanes[i].LaneId);
+					JsonSerialization::SerializeValue(&videoStructJson, "timeStamp", timeStamp);
+					//JsonSerialization::SerializeValue(&videoStructJson, "feature", pedestrain.Feature);
 					IveToBgr(iveBuffer, recognItem.Width, recognItem.Height, _bgrBuffer);
 					int jpgSize = BgrToJpg(_bgrBuffer, recognItem.Width, recognItem.Height, &_jpgBuffer);
 					string image;
 					JpgToBase64(&image, _jpgBuffer, jpgSize);
-					JsonSerialization::Serialize(&videoStructJson, "image", image);
-					JsonSerialization::Serialize(&videoStructJson, "videoStructType", (int)VideoStructType::Pedestrain);
-					JsonSerialization::Serialize(&videoStructJson, "sex", sex);
-					JsonSerialization::Serialize(&videoStructJson, "age", age);
-					JsonSerialization::Serialize(&videoStructJson, "upperColor", upperColor);
+					JsonSerialization::SerializeValue(&videoStructJson, "image", image);
+					JsonSerialization::SerializeValue(&videoStructJson, "videoStructType", (int)VideoStructType::Pedestrain);
+					JsonSerialization::SerializeValue(&videoStructJson, "sex", sex);
+					JsonSerialization::SerializeValue(&videoStructJson, "age", age);
+					JsonSerialization::SerializeValue(&videoStructJson, "upperColor", upperColor);
 					if (_mqtt != NULL)
 					{
 						_mqtt->Send(VideoStructTopic, videoStructJson);
@@ -362,17 +362,17 @@ void FlowDetector::HandleRecognize(const RecognItem& recognItem, const unsigned 
 				{
 					//bike.Feature = jd.Get<string>(StringEx::Combine("ImageResults:", imageIndex, ":Bikes:0:Recognize:Feature:Feature"));
 					string videoStructJson;
-					JsonSerialization::Serialize(&videoStructJson, "channelUrl", _recognChannelUrl);
-					JsonSerialization::Serialize(&videoStructJson, "laneId", _recognLanes[i].LaneId);
-					JsonSerialization::Serialize(&videoStructJson, "timeStamp", timeStamp);
-					JsonSerialization::Serialize(&videoStructJson, "videoStructType", (int)VideoStructType::Bike);
-					//JsonSerialization::Serialize(&videoStructJson, "feature", bike.Feature);
+					JsonSerialization::SerializeValue(&videoStructJson, "channelUrl", _recognChannelUrl);
+					JsonSerialization::SerializeValue(&videoStructJson, "laneId", _recognLanes[i].LaneId);
+					JsonSerialization::SerializeValue(&videoStructJson, "timeStamp", timeStamp);
+					JsonSerialization::SerializeValue(&videoStructJson, "videoStructType", (int)VideoStructType::Bike);
+					//JsonSerialization::SerializeValue(&videoStructJson, "feature", bike.Feature);
 					IveToBgr(iveBuffer, recognItem.Width, recognItem.Height, _bgrBuffer);
 					int jpgSize = BgrToJpg(_bgrBuffer, recognItem.Width, recognItem.Height, &_jpgBuffer);
 					string image;
 					JpgToBase64(&image, _jpgBuffer, jpgSize);
-					JsonSerialization::Serialize(&videoStructJson, "image", image);
-					JsonSerialization::Serialize(&videoStructJson, "bikeType", bikeType);
+					JsonSerialization::SerializeValue(&videoStructJson, "image", image);
+					JsonSerialization::SerializeValue(&videoStructJson, "bikeType", bikeType);
 					if (_mqtt != NULL)
 					{
 						_mqtt->Send(VideoStructTopic, videoStructJson);
@@ -399,21 +399,21 @@ void FlowDetector::HandleRecognize(const RecognItem& recognItem, const unsigned 
 					string plateNumber = jd.Get<string>(StringEx::Combine("ImageResults:0:Vehicles:0:Recognize:Plate:Licence"));
 					//vehicle.Feature = jd.Get<string>(StringEx::Combine("ImageResults:", imageIndex, ":Vehicles:0:Recognize:Feature:Feature"));
 					string videoStructJson;
-					JsonSerialization::Serialize(&videoStructJson, "channelUrl", _recognChannelUrl);
-					JsonSerialization::Serialize(&videoStructJson, "laneId", _recognLanes[i].LaneId);
-					JsonSerialization::Serialize(&videoStructJson, "timeStamp", timeStamp);
-					JsonSerialization::Serialize(&videoStructJson, "videoStructType", (int)VideoStructType::Vehicle);
-					//JsonSerialization::Serialize(&videoStructJson, "feature", vehicle.Feature);
+					JsonSerialization::SerializeValue(&videoStructJson, "channelUrl", _recognChannelUrl);
+					JsonSerialization::SerializeValue(&videoStructJson, "laneId", _recognLanes[i].LaneId);
+					JsonSerialization::SerializeValue(&videoStructJson, "timeStamp", timeStamp);
+					JsonSerialization::SerializeValue(&videoStructJson, "videoStructType", (int)VideoStructType::Vehicle);
+					//JsonSerialization::SerializeValue(&videoStructJson, "feature", vehicle.Feature);
 					IveToBgr(iveBuffer, recognItem.Width, recognItem.Height, _bgrBuffer);
 					int jpgSize = BgrToJpg(_bgrBuffer, recognItem.Width, recognItem.Height, &_jpgBuffer);
 					string image;
 					JpgToBase64(&image, _jpgBuffer, jpgSize);
-					JsonSerialization::Serialize(&videoStructJson, "image", image);
-					JsonSerialization::Serialize(&videoStructJson, "carType", carType);
-					JsonSerialization::Serialize(&videoStructJson, "carColor", carColor);
-					JsonSerialization::Serialize(&videoStructJson, "carBrand", carBrand);
-					JsonSerialization::Serialize(&videoStructJson, "plateType", plateType);
-					JsonSerialization::Serialize(&videoStructJson, "plateNumber", plateNumber);
+					JsonSerialization::SerializeValue(&videoStructJson, "image", image);
+					JsonSerialization::SerializeValue(&videoStructJson, "carType", carType);
+					JsonSerialization::SerializeValue(&videoStructJson, "carColor", carColor);
+					JsonSerialization::SerializeValue(&videoStructJson, "carBrand", carBrand);
+					JsonSerialization::SerializeValue(&videoStructJson, "plateType", plateType);
+					JsonSerialization::SerializeValue(&videoStructJson, "plateNumber", plateNumber);
 					if (_mqtt != NULL)
 					{
 						_mqtt->Send(VideoStructTopic, videoStructJson);

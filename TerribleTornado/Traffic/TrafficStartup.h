@@ -158,7 +158,8 @@ namespace OnePunchMan
         bool _sdkInited;
         //算法版本
         std::string _sdkVersion;
-
+        //web版本
+        std::string _webVersion;
         //socket连接
         SocketMaid* _socketMaid;
         //http消息解析

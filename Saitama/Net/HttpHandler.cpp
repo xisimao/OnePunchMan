@@ -124,3 +124,23 @@ SocketHandler::ProtocolPacket HttpHandler::HandleCore(int socket, unsigned int i
 		return ProtocolPacket(AnalysisResult::Request, 0, static_cast<unsigned int>(packetSize + length), 0, 0);
 	}
 }
+
+void HttpHandler::WriteFile(const string& requestJson,  const string& filePath)
+{
+	vector<string> requestLines = StringEx::Split(requestJson, "\r\n");
+	if (requestLines.size() >= 5)
+	{
+		FILE* file = fopen(filePath.c_str(), "wb");
+		if (file != NULL)
+		{
+			fwrite(requestLines[4].c_str(), 1, requestLines[4].size(), file);
+			string lineBreak("\r\n");
+			for (unsigned int i = 5; i < requestLines.size() - 2; ++i)
+			{
+				fwrite(lineBreak.c_str(), 1, lineBreak.size(), file);
+				fwrite(requestLines[i].c_str(), 1, requestLines[i].size(), file);
+			}
+			fclose(file);
+		}
+	}
+}

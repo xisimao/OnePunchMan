@@ -19,7 +19,7 @@ namespace OnePunchMan
 		* @param: value 字段的值
 		*/
 		template<typename T>
-		static void Serialize(std::string* json, const std::string& key, T value)
+		static void SerializeValue(std::string* json, const std::string& key, T value)
 		{
 			if (json->empty())
 			{
@@ -36,12 +36,12 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 序列化Json字符串
+		* @brief: 序列化Json类
 		* @param: json 用于存放序列化结果的字符串
 		* @param: key 字段的键
-		* @param: value 字段的值
+		* @param: value 类的json字符串
 		*/
-		static void SerializeJson(std::string* json, const std::string& key, const std::string& value)
+		static void SerializeClass(std::string* json, const std::string& key, const std::string& value)
 		{
 			if (json->empty())
 			{
@@ -65,12 +65,12 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 序列化Json字符串
+		* @brief: 序列化Json数组
 		* @param: json 用于存放序列化结果的字符串
 		* @param: key 字段的键
-		* @param: value 字段的值
+		* @param: value 数组的json字符串
 		*/
-		static void SerializeJsons(std::string* json, const std::string& key, const std::string& value)
+		static void SerializeArray(std::string* json, const std::string& key, const std::string& value)
 		{
 			if (json->empty())
 			{
@@ -95,12 +95,11 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 序列化数组中的一项
+		* @brief: 序列化类数组中的一项
 		* @param: json 用于存放序列化结果的字符串
-		* @param: key 字段的键
-		* @param: value 字段的值
+		* @param: value 类的json字符串
 		*/
-		static void SerializeItem(std::string* json, const std::string& item)
+		static void AddClassItem(std::string* json, const std::string& value)
 		{
 			if (json->empty())
 			{
@@ -111,11 +110,30 @@ namespace OnePunchMan
 				json->erase(json->end() - 1, json->end());
 				json->append(",");
 			}
-			json->append(item);
+			json->append(value);
 			json->append("]");
 		}
 
-		
+		/**
+		* @brief: 序列化值数组中的一项
+		* @param: json 用于存放序列化结果的字符串
+		* @param: value 值
+		*/
+		template<typename T>
+		static void AddValueItem(std::string* json, T value)
+		{
+			if (json->empty())
+			{
+				json->append("[");
+			}
+			else
+			{
+				json->erase(json->end() - 1, json->end());
+				json->append(",");
+			}
+			ConvertToJson(json, value);
+			json->append("]");
+		}
 	private:
 
 		/**
@@ -160,7 +178,8 @@ namespace OnePunchMan
 			json->append("[");
 			for_each(values.begin(), values.end(), [&json](const T& value) {
 
-				SerializeValue(json, value);
+				ConvertToJson(json, value);
+				json->append(",");
 				});
 			if (!values.empty())
 			{

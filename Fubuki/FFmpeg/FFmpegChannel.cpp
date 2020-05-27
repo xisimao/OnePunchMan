@@ -11,7 +11,7 @@ FFmpegChannel::FFmpegChannel(const string& inputUrl, const string& outputUrl, bo
 	:ThreadObject("decode"),
 	_inputUrl(inputUrl), _inputFormat(NULL), _inputStream(NULL), _inputVideoIndex(-1)
 	, _outputUrl(outputUrl), _outputFormat(NULL), _outputStream(NULL), _outputCodec(NULL)
-	, _debug(debug), _options(NULL), _channelStatus(ChannelStatus::None), _sourceWidth(0), _sourceHeight(0)
+	, _debug(debug), _options(NULL), _channelStatus(ChannelStatus::Init), _sourceWidth(0), _sourceHeight(0)
 	, _decodeContext(NULL), _yuvFrame(NULL), _bgrFrame(NULL), _bgrBuffer(NULL), _bgrSwsContext(NULL)
 	, _lastframeIndex(0), _frameSpan(0)
 {
@@ -320,7 +320,7 @@ void FFmpegChannel::StartCore()
 				{
 					duration += (frameIndex-1) * frameTimeSpan;
 					frameIndex = 1;
-					_channelStatus = ChannelStatus::None;
+					_channelStatus = ChannelStatus::Init;
 				}
 			}
 			else if (readResult == 0)
@@ -364,9 +364,17 @@ void FFmpegChannel::StartCore()
 			}
 			else
 			{
-				LogPool::Error(LogEvent::Decode, "read error", _inputUrl,frameIndex, readResult);
-				_channelStatus = ChannelStatus::ReadError;
-				break;
+				LogPool::Error(LogEvent::Decode, "read error", _inputUrl, frameIndex, readResult);
+				//³¬Ê±
+				if (readResult == -110)
+				{
+					_channelStatus = ChannelStatus::Init;
+				}
+				else
+				{
+					_channelStatus = ChannelStatus::ReadError;
+					break;
+				}
 			}
 		}
 		else

@@ -3,6 +3,7 @@
 #include "MqttChannel.h"
 #include "RecognChannel.h"
 #include "TrafficDetector.h"
+#include "IVE_8UC3Handler.h"
 
 extern "C"
 {
@@ -82,6 +83,11 @@ namespace OnePunchMan
 		* @return: 如果未初始化或者当前线程正在进行检测返回true，否则返回false
 		*/
 		bool Inited();
+
+		/**
+		* @brief: 将下一帧写入到bmp文件
+		*/
+		void WriteBmp();
 
 		/**
 		* @brief: 当前检测线程是否未初始化或正在处理数据
@@ -181,7 +187,14 @@ namespace OnePunchMan
 		std::vector<char> _result;
 		std::string _param;
 
+		//mqtt
 		MqttChannel* _mqtt;
+
+		//ive写bmp
+		IVE_8UC3Handler _iveHandler;
+
+		//是否已经写入了视频的图片
+		bool _writeBmp;
 	};
 
 }

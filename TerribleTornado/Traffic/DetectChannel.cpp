@@ -6,7 +6,9 @@ using namespace OnePunchMan;
 const int DetectChannel::SleepTime=40;
 
 DetectChannel::DetectChannel(int channelIndex, int width, int height, RecognChannel* recogn, TrafficDetector* detector)
-	:ThreadObject("detect"), _inited(false), _channelIndex(channelIndex), _width(width), _height(height), _recogn(recogn),_detector(detector)
+	:ThreadObject("detect"), _inited(false), _channelIndex(channelIndex), _width(width), _height(height)
+	, _recogn(recogn),_detector(detector)
+	, _iveHandler(-1), _writeBmp(false)
 {
 #ifndef _WIN32
 	_item.YuvSize = static_cast<int>(_width * _height * 1.5);
@@ -53,6 +55,11 @@ DetectChannel::~DetectChannel()
 bool DetectChannel::Inited()
 {
 	return _inited;
+}
+
+void DetectChannel::WriteBmp()
+{
+	_writeBmp = true;
 }
 
 bool DetectChannel::IsBusy() 
@@ -204,6 +211,11 @@ void DetectChannel::StartCore()
 			_item.HasValue = false;
 			if (YuvToIve())
 			{
+				if (_writeBmp)
+				{
+					_iveHandler.HandleFrame(_item.IveBuffer, _width, _height, _channelIndex);
+					_writeBmp = false;
+				}
 				long long detectTimeStamp1 = DateTime::UtcNowTimeStamp();
 
 				int32_t size = static_cast<int32_t>(_result.size());

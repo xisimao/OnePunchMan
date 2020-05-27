@@ -18,7 +18,7 @@ namespace OnePunchMan
 	enum class ChannelStatus
 	{
 		//初始化
-		None,
+		Init,
 		//正常
 		Normal,
 		//输入初始化错误
