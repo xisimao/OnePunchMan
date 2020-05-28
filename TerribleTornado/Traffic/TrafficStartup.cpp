@@ -14,6 +14,7 @@ TrafficStartup::TrafficStartup()
 
 void TrafficStartup::Update(MqttDisconnectedEventArgs* e)
 {
+    LogPool::Information(LogEvent::System,"system restart");
     exit(1);
 }
 
@@ -53,7 +54,7 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
                 }
                 else
                 {
-                    LogPool::Error(LogEvent::Thread, "get channel lock timeout");
+                    LogPool::Error(LogEvent::System, "get channel lock timeout");
                 }
                 e->ResponseJson = channelJson;
                 e->Code = HttpCode::OK;
@@ -117,8 +118,6 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
 void TrafficStartup::GetDevice(HttpReceivedEventArgs* e)
 {
     string sn = StringEx::Trim(Command::Execute("cat /mtd/basesys/data/devguid"));
-
-
     string df = Command::Execute("df");
     string diskUsed;
     string diskTotal;
@@ -153,7 +152,7 @@ void TrafficStartup::GetDevice(HttpReceivedEventArgs* e)
             }
             else
             {
-                LogPool::Error(LogEvent::Thread, "get device lock timeout");
+                LogPool::Error(LogEvent::System, "get device lock timeout");
             }
         }
     }
@@ -220,7 +219,7 @@ void TrafficStartup::SetDecode(int channelIndex, const string& inputUrl, const s
     }
     else
     {
-        LogPool::Error(LogEvent::Thread, "set decode timeout");
+        LogPool::Error(LogEvent::System, "set decode timeout");
     }
 
 }
@@ -242,7 +241,7 @@ void TrafficStartup::DeleteDecode(int channelIndex)
     }
     else
     {
-        LogPool::Error(LogEvent::Thread, "delete decode timeout");
+        LogPool::Error(LogEvent::System, "delete decode timeout");
     }
 }
 
@@ -307,10 +306,31 @@ void TrafficStartup::Startup()
     {
         exit(2);
     }
+
+    //初始化sdk
     _sdkInited = SeemmoSDK::Init();
     if (SeemmoSDK::seemmo_version != NULL)
     {
         _sdkVersion = SeemmoSDK::seemmo_version();
+    }
+
+    //软件版本
+    InitSoftVersion();
+
+    //获取web版本
+    string cat = Command::Execute("cat ../web/static/config/config.js");
+    vector<string> catRows = StringEx::Split(cat, "\n", true);
+    for (unsigned int i = 0; i < catRows.size(); ++i)
+    {
+        if (catRows[i].find("window.WebVersionNumbe") != string::npos)
+        {
+            vector<string> datas = StringEx::Split(catRows[i], " ", true);
+            if (datas.size() >= 3 && datas[2].size() >= 3)
+            {
+                _webVersion = datas[2].substr(1, datas[2].size() - 2);
+                break;
+            }
+        }
     }
 
     _mqtt = new MqttChannel("127.0.0.1", 1883);
@@ -363,23 +383,6 @@ void TrafficStartup::Startup()
         _decodes.push_back(NULL);
     }
     InitDecodes();
-
-    //获取web版本
-    string cat = Command::Execute("cat ../web/static/config/config.js");
-    vector<string> catRows = StringEx::Split(cat, "\n", true);
-    for (unsigned int i = 0; i < catRows.size(); ++i)
-    {
-        if (catRows[i].find("window.WebVersionNumbe") != string::npos)
-        {
-            vector<string> datas = StringEx::Split(catRows[i], " ", true);
-            if (datas.size() >= 3 && datas[2].size() >= 3)
-            {
-                _webVersion = datas[2].substr(1, datas[2].size() - 2);
-                break;
-            }
-        }
-    }
-
     _socketMaid->Start();
     _socketMaid->Join();
     _socketMaid->Stop();

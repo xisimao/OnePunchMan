@@ -64,6 +64,11 @@ namespace OnePunchMan
         virtual void InitDecodes() = 0;
 
         /**
+        * @brief: 初始化软件版本
+        */
+        virtual void InitSoftVersion() = 0;
+
+        /**
         * @brief: 获取通道json数据
         * @param: host 请求地址
         * @param: channelIndex 通道序号

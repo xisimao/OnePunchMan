@@ -129,7 +129,13 @@ namespace OnePunchMan
 		* @brief: 获取软件版本号
 		* @return: 软件版本号
 		*/
-		std::string Version();
+		std::string GetVersion();
+
+		/**
+		* @brief: 设置版本号
+		* @param: version
+		*/
+		bool SetVersion(const std::string& version);
 
 	private:
 

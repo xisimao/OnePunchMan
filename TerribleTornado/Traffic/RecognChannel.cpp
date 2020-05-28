@@ -47,7 +47,7 @@ void RecognChannel::PushItems(const vector<RecognItem>& items)
 			}
 			else
 			{
-				LogPool::Error(LogEvent::Thread, "recogn push lock timeout");
+				LogPool::Error(LogEvent::System, "recogn push lock timeout");
 			}
 		}
 		else
@@ -111,7 +111,7 @@ void RecognChannel::StartCore()
 			}
 			else
 			{
-				LogPool::Error(LogEvent::Thread,"recogn pop lock timeout");
+				LogPool::Error(LogEvent::System,"recogn pop lock timeout");
 			}		
 		}
 	}

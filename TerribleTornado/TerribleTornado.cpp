@@ -9,9 +9,11 @@ int main(int argc, char* argv[])
 {
     LogPool::Init("appsettings.json");
     FFmpegChannel::InitFFmpeg();
-    char buffer[1024] = { 0 };
-    av_strerror(-110, buffer, 1024);
-    FlowStartup channel;
-    channel.Startup();
+    FFmpegChannel channel("2.mp4", string(), false);
+    channel.Start();
+    channel.Join();
+
+    //FlowStartup channel;
+    //channel.Startup();
     return 0;
 }

@@ -80,7 +80,7 @@ namespace OnePunchMan
 		/**
 		* @brief: 删除通道
 		* @param: channel 通道
-		* @return: 删除结构
+		* @return: 删除结果
 		*/
 		bool Delete(int channelIndex);
 
@@ -99,7 +99,14 @@ namespace OnePunchMan
 		* @brief: 获取软件版本号
 		* @return: 软件版本号
 		*/
-		std::string Version();
+		std::string GetVersion();
+
+		/**
+		* @brief: 设置版本号
+		* @param: version
+		* @return: 设置结果
+		*/
+		bool SetVersion(const std::string& version);
 
 	private:
 

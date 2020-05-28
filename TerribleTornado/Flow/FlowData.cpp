@@ -166,7 +166,7 @@ string FlowChannelData::LastError()
 	return _sqlite.LastError();
 }
 
-string FlowChannelData::Version()
+string FlowChannelData::GetVersion()
 {
 	string sql(StringEx::Combine("Select Version From Flow_Version"));
 	SqliteReader sqlite(DbName);
@@ -180,4 +180,9 @@ string FlowChannelData::Version()
 		sqlite.EndQuery();
 	}
 	return version;
+}
+
+bool FlowChannelData::SetVersion(const std::string& version)
+{
+	return _sqlite.ExecuteRowCount(StringEx::Combine("Update Flow_Version Set Version='", version, "'"));
 }

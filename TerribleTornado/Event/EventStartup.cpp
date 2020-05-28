@@ -11,6 +11,11 @@ EventStartup::~EventStartup()
     }
 }
 
+void EventStartup::InitSoftVersion()
+{
+    _softwareVersion = "2.0.0";
+}
+
 void EventStartup::InitDetectors(MqttChannel* mqtt, vector<DetectChannel*>* detects, vector<RecognChannel*>* recogns)
 {
     for (int i = 0; i < ChannelCount; ++i)
@@ -24,18 +29,14 @@ void EventStartup::InitDetectors(MqttChannel* mqtt, vector<DetectChannel*>* dete
 
 void EventStartup::InitDecodes()
 {
+    EventChannelData data;
     for (int i = 0; i < ChannelCount; ++i)
     {
-        EventChannelData data;
         EventChannel channel = data.Get(i + 1);
         if (!channel.ChannelUrl.empty())
         {
             SetDecode(channel.ChannelIndex, channel.ChannelUrl, channel.RtmpUrl("127.0.0.1"));
             _detectors[i]->UpdateChannel(channel);
-        }
-        if (_softwareVersion.empty())
-        {
-            _softwareVersion = data.Version();
         }
     }
 }

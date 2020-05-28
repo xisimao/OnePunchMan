@@ -15,6 +15,7 @@ namespace OnePunchMan
         ~FlowStartup();
 
     protected:
+        void InitSoftVersion();
 
         void InitDetectors(MqttChannel* mqtt, std::vector<DetectChannel*>* detects, std::vector<RecognChannel*>* recogns);
 

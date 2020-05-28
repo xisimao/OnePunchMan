@@ -146,7 +146,7 @@ string EventChannelData::LastError()
 	return _sqlite.LastError();
 }
 
-string EventChannelData::Version()
+string EventChannelData::GetVersion()
 {
 	string sql(StringEx::Combine("Select Version From Event_Version"));
 	SqliteReader sqlite(DbName);
@@ -160,4 +160,9 @@ string EventChannelData::Version()
 		sqlite.EndQuery();
 	}
 	return version;
+}
+
+bool EventChannelData::SetVersion(const std::string& version)
+{
+	return _sqlite.ExecuteRowCount(StringEx::Combine("Update Event_Version Set Version='", version, "'"));
 }

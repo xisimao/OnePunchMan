@@ -11,6 +11,11 @@ FlowStartup::~FlowStartup()
     }
 }
 
+void FlowStartup::InitSoftVersion()
+{
+    _softwareVersion = "2.0.0.1";
+}
+
 void FlowStartup::InitDetectors(MqttChannel* mqtt, vector<DetectChannel*>* detects, vector<RecognChannel*>* recogns)
 {
     vector<TrafficDetector*> detectors;
@@ -34,18 +39,14 @@ void FlowStartup::InitDetectors(MqttChannel* mqtt, vector<DetectChannel*>* detec
 
 void FlowStartup::InitDecodes()
 {
+    FlowChannelData data;
     for (int i = 0; i < ChannelCount; ++i)
     {
-        FlowChannelData data;
         FlowChannel channel = data.Get(i + 1);
         if (!channel.ChannelUrl.empty())
         {
             SetDecode(channel.ChannelIndex, channel.ChannelUrl, channel.RtmpUrl("127.0.0.1"));
             _detectors[i]->UpdateChannel(channel);
-        }
-        if (_softwareVersion.empty())
-        {
-            _softwareVersion = data.Version();
         }
     }
 }
