@@ -13,7 +13,9 @@ EventStartup::~EventStartup()
 
 void EventStartup::InitSoftVersion()
 {
-    _softwareVersion = "2.0.0";
+    _softwareVersion = "1.0.0";
+    EventChannelData data;
+    data.SetVersion(_softwareVersion);
 }
 
 void EventStartup::InitDetectors(MqttChannel* mqtt, vector<DetectChannel*>* detects, vector<RecognChannel*>* recogns)

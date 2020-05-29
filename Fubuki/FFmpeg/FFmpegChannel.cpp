@@ -365,16 +365,7 @@ void FFmpegChannel::StartCore()
 			else
 			{
 				LogPool::Error(LogEvent::Decode, "read error", _inputUrl, frameIndex, readResult);
-				//³¬Ê±
-				if (readResult == -110)
-				{
-					_channelStatus = ChannelStatus::Init;
-				}
-				else
-				{
-					_channelStatus = ChannelStatus::ReadError;
-					break;
-				}
+				_channelStatus = ChannelStatus::ReadError;
 			}
 		}
 		else

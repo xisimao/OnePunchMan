@@ -14,6 +14,8 @@ FlowStartup::~FlowStartup()
 void FlowStartup::InitSoftVersion()
 {
     _softwareVersion = "2.0.0.1";
+    FlowChannelData data;
+    data.SetVersion(_softwareVersion);
 }
 
 void FlowStartup::InitDetectors(MqttChannel* mqtt, vector<DetectChannel*>* detects, vector<RecognChannel*>* recogns)

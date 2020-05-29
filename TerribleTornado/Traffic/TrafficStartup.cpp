@@ -4,6 +4,7 @@ using namespace std;
 using namespace OnePunchMan;
 
 const int TrafficStartup::ChannelCount = 8;
+const int TrafficStartup::DetectCount = 4;
 const int TrafficStartup::RecognCount = 2;
 
 TrafficStartup::TrafficStartup()
@@ -103,7 +104,7 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
     {
         string filePath = Path::Combine(Path::GetCurrentPath(), "service.tar");
         HttpHandler::WriteFile(e->RequestJson, filePath);
-        Command::Execute("tar xf service.tar -C ../");
+        Command::Execute("tar xf service.tar -C ../../");
         Command::Execute("rm service.tar");
         e->Code = HttpCode::OK;
     }

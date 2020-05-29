@@ -27,6 +27,8 @@ namespace OnePunchMan
 
         //通道总数
         static const int ChannelCount;
+        //检测线程总数
+        static const int DetectCount;
         //识别线程总数
         static const int RecognCount;
 
