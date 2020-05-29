@@ -304,124 +304,77 @@ void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long 
 	DrawDetect(*detectItems, iveBuffer, frameIndex);
 }
 
-void FlowDetector::HandleRecognize(const RecognItem& recognItem, const unsigned char* iveBuffer, const string& recognJson)
+bool FlowDetector::ContainsRecogn(string* json,const RecognItem& recognItem, const unsigned char* iveBuffer)
 {
 	if (_debug)
 	{
-		return;
+		return false;
 	}
-	lock_guard<mutex> recognLock(_recognLaneMutex);
 	long long timeStamp = DateTime::UtcNowTimeStamp();
-	JsonDeserialization jd(recognJson);	
-	if (recognItem.Type == static_cast<int>(DetectType::Pedestrain))
+	lock_guard<mutex> recognLock(_recognLaneMutex);
+	for (unsigned int i = 0; i < _recognLanes.size(); ++i)
 	{
-		int pedestrainType = jd.Get<int>(StringEx::Combine("ImageResults:0:Pedestrains:0:Type"));
-		if (pedestrainType != 0)
+		if (_recognLanes[i].Region.Contains(recognItem.Region.HitPoint()))
 		{
-			for (unsigned int i = 0; i < _recognLanes.size(); ++i)
-			{
-				if (_recognLanes[i].Region.Contains(recognItem.Region.HitPoint()))
-				{
-					int sex = jd.Get<int>(StringEx::Combine("ImageResults:0:Pedestrains:0:Recognize:Sex:TopList:0:Code"));
-					int age = jd.Get<int>(StringEx::Combine("ImageResults:0:Pedestrains:0:Recognize:Age:TopList:0:Code"));
-					int upperColor = jd.Get<int>(StringEx::Combine("ImageResults:0:Pedestrains:0:Recognize:UpperColor:TopList:0:Code"));
-					//pedestrain.Feature = jd.Get<string>(StringEx::Combine("ImageResults:", imageIndex, ":Pedestrains:0:Recognize:Feature:Feature"));
-					string videoStructJson;
-					JsonSerialization::SerializeValue(&videoStructJson, "channelUrl", _recognChannelUrl);
-					JsonSerialization::SerializeValue(&videoStructJson, "laneId", _recognLanes[i].LaneId);
-					JsonSerialization::SerializeValue(&videoStructJson, "timeStamp", timeStamp);
-					//JsonSerialization::SerializeValue(&videoStructJson, "feature", pedestrain.Feature);
-					IveToBgr(iveBuffer, recognItem.Width, recognItem.Height, _bgrBuffer);
-					int jpgSize = BgrToJpg(_bgrBuffer, recognItem.Width, recognItem.Height, &_jpgBuffer);
-					string image;
-					JpgToBase64(&image, _jpgBuffer, jpgSize);
-					JsonSerialization::SerializeValue(&videoStructJson, "image", image);
-					JsonSerialization::SerializeValue(&videoStructJson, "videoStructType", (int)VideoStructType::Pedestrain);
-					JsonSerialization::SerializeValue(&videoStructJson, "sex", sex);
-					JsonSerialization::SerializeValue(&videoStructJson, "age", age);
-					JsonSerialization::SerializeValue(&videoStructJson, "upperColor", upperColor);
-					if (_mqtt != NULL)
-					{
-						_mqtt->Send(VideoStructTopic, videoStructJson);
-					}
-					LogPool::Debug(LogEvent::Detect, "lane:", _recognLanes[i].LaneId, "pedestrain");
-					return;
-				}
-			}
+			JsonSerialization::SerializeValue(json, "channelUrl", _recognChannelUrl);
+			JsonSerialization::SerializeValue(json, "laneId", _recognLanes[i].LaneId);
+			JsonSerialization::SerializeValue(json, "timeStamp", timeStamp);
+			IveToBgr(iveBuffer, recognItem.Width, recognItem.Height, _bgrBuffer);
+			int jpgSize = BgrToJpg(_bgrBuffer, recognItem.Width, recognItem.Height, &_jpgBuffer);
+			string image;
+			JpgToBase64(&image, _jpgBuffer, jpgSize);
+			JsonSerialization::SerializeValue(json, "image", image);
+			LogPool::Debug(LogEvent::Detect, "lane:", _recognLanes[i].LaneId, "type:", recognItem.Type);
+			return true;
 		}
 	}
-	else if (recognItem.Type == static_cast<int>(DetectType::Bike)
-		|| recognItem.Type == static_cast<int>(DetectType::Motobike))
+	return false;
+}
+
+void FlowDetector::HandleRecognVehicle(const RecognItem& recognItem, const unsigned char* iveBuffer, const VideoStruct_Vehicle& vehicle)
+{
+	string json;
+	if (ContainsRecogn(&json, recognItem, iveBuffer))
 	{
-		int bikeType = jd.Get<int>(StringEx::Combine("ImageResults:0:Bikes:0:Type"));
-		if (bikeType != 0)
+		JsonSerialization::SerializeValue(&json, "videoStructType", (int)VideoStructType::Vehicle);
+		JsonSerialization::SerializeValue(&json, "carType", vehicle.CarType);
+		JsonSerialization::SerializeValue(&json, "carColor", vehicle.CarColor);
+		JsonSerialization::SerializeValue(&json, "carBrand", vehicle.CarBrand);
+		JsonSerialization::SerializeValue(&json, "plateType", vehicle.PlateType);
+		JsonSerialization::SerializeValue(&json, "plateNumber", vehicle.PlateNumber);
+		if (_mqtt != NULL)
 		{
-			for (unsigned int i = 0; i < _recognLanes.size(); ++i)
-			{
-				if (_recognLanes[i].Region.Contains(recognItem.Region.HitPoint()))
-				{
-					//bike.Feature = jd.Get<string>(StringEx::Combine("ImageResults:", imageIndex, ":Bikes:0:Recognize:Feature:Feature"));
-					string videoStructJson;
-					JsonSerialization::SerializeValue(&videoStructJson, "channelUrl", _recognChannelUrl);
-					JsonSerialization::SerializeValue(&videoStructJson, "laneId", _recognLanes[i].LaneId);
-					JsonSerialization::SerializeValue(&videoStructJson, "timeStamp", timeStamp);
-					JsonSerialization::SerializeValue(&videoStructJson, "videoStructType", (int)VideoStructType::Bike);
-					//JsonSerialization::SerializeValue(&videoStructJson, "feature", bike.Feature);
-					IveToBgr(iveBuffer, recognItem.Width, recognItem.Height, _bgrBuffer);
-					int jpgSize = BgrToJpg(_bgrBuffer, recognItem.Width, recognItem.Height, &_jpgBuffer);
-					string image;
-					JpgToBase64(&image, _jpgBuffer, jpgSize);
-					JsonSerialization::SerializeValue(&videoStructJson, "image", image);
-					JsonSerialization::SerializeValue(&videoStructJson, "bikeType", bikeType);
-					if (_mqtt != NULL)
-					{
-						_mqtt->Send(VideoStructTopic, videoStructJson);
-					}
-					LogPool::Debug(LogEvent::Detect, "lane:", _recognLanes[i].LaneId, "bike:", bikeType);
-					return;
-				}
-			}
+			_mqtt->Send(VideoStructTopic, json);
 		}
 	}
-	else
+}
+
+void FlowDetector::HandleRecognBike(const RecognItem& recognItem, const unsigned char* iveBuffer, const VideoStruct_Bike& bike)
+{
+	string json;
+	if (ContainsRecogn(&json, recognItem, iveBuffer))
 	{
-		int vehicleType = jd.Get<int>(StringEx::Combine("ImageResults:0:Vehicles:0:Type"));
-		if (vehicleType != 0)
+		JsonSerialization::SerializeValue(&json, "videoStructType", (int)VideoStructType::Bike);
+		JsonSerialization::SerializeValue(&json, "bikeType", bike.BikeType);
+		if (_mqtt != NULL)
 		{
-			for (unsigned int i = 0; i < _recognLanes.size(); ++i)
-			{
-				if (_recognLanes[i].Region.Contains(recognItem.Region.HitPoint()))
-				{
-					int carType = jd.Get<int>(StringEx::Combine("ImageResults:0:Vehicles:0:Recognize:Type:TopList:0:Code"));
-					int carColor = jd.Get<int>(StringEx::Combine("ImageResults:0:Vehicles:0:Recognize:Color:TopList:0:Code"));
-					string carBrand = jd.Get<string>(StringEx::Combine("ImageResults:0:Vehicles:0:Recognize:Brand:TopList:0:Name"));
-					int plateType = jd.Get<int>(StringEx::Combine("ImageResults:0:Vehicles:0:Recognize:Plate:Type"));
-					string plateNumber = jd.Get<string>(StringEx::Combine("ImageResults:0:Vehicles:0:Recognize:Plate:Licence"));
-					//vehicle.Feature = jd.Get<string>(StringEx::Combine("ImageResults:", imageIndex, ":Vehicles:0:Recognize:Feature:Feature"));
-					string videoStructJson;
-					JsonSerialization::SerializeValue(&videoStructJson, "channelUrl", _recognChannelUrl);
-					JsonSerialization::SerializeValue(&videoStructJson, "laneId", _recognLanes[i].LaneId);
-					JsonSerialization::SerializeValue(&videoStructJson, "timeStamp", timeStamp);
-					JsonSerialization::SerializeValue(&videoStructJson, "videoStructType", (int)VideoStructType::Vehicle);
-					//JsonSerialization::SerializeValue(&videoStructJson, "feature", vehicle.Feature);
-					IveToBgr(iveBuffer, recognItem.Width, recognItem.Height, _bgrBuffer);
-					int jpgSize = BgrToJpg(_bgrBuffer, recognItem.Width, recognItem.Height, &_jpgBuffer);
-					string image;
-					JpgToBase64(&image, _jpgBuffer, jpgSize);
-					JsonSerialization::SerializeValue(&videoStructJson, "image", image);
-					JsonSerialization::SerializeValue(&videoStructJson, "carType", carType);
-					JsonSerialization::SerializeValue(&videoStructJson, "carColor", carColor);
-					JsonSerialization::SerializeValue(&videoStructJson, "carBrand", carBrand);
-					JsonSerialization::SerializeValue(&videoStructJson, "plateType", plateType);
-					JsonSerialization::SerializeValue(&videoStructJson, "plateNumber", plateNumber);
-					if (_mqtt != NULL)
-					{
-						_mqtt->Send(VideoStructTopic, videoStructJson);
-					}
-					LogPool::Debug(LogEvent::Detect, "lane:", _recognLanes[i].LaneId, "vehicle:", carType);
-					return;
-				}
-			}
+			_mqtt->Send(VideoStructTopic, json);
+		}
+	}
+}
+
+void FlowDetector::HandleRecognPedestrain(const RecognItem& recognItem, const unsigned char* iveBuffer, const VideoStruct_Pedestrain& pedestrain)
+{
+	string json;
+	if (ContainsRecogn(&json, recognItem, iveBuffer))
+	{
+		JsonSerialization::SerializeValue(&json, "videoStructType", (int)VideoStructType::Pedestrain);
+		JsonSerialization::SerializeValue(&json, "sex", pedestrain.Sex);
+		JsonSerialization::SerializeValue(&json, "age", pedestrain.Age);
+		JsonSerialization::SerializeValue(&json, "upperColor", pedestrain.UpperColor);
+		if (_mqtt != NULL)
+		{
+			_mqtt->Send(VideoStructTopic, json);
 		}
 	}
 }

@@ -5,9 +5,16 @@ using namespace OnePunchMan;
 
 TrafficDetector::TrafficDetector(int width, int height, MqttChannel* mqtt, bool debug)
 	:_channelIndex(0), _channelUrl(), _width(width), _height(height), _mqtt(mqtt)
-	, _lanesInited(false), _param(), _setParam(true), _bgrBuffer(new unsigned char[width * height * 3]), _jpgBuffer(new unsigned char[width * height])
+	, _lanesInited(false), _param(), _setParam(true)
+	, _bgrSize(0), _bgrBuffer(NULL)
+	, _jpgSize(0), _jpgBuffer(NULL)
 	, _debug(debug), _jpgHandler(-1)
 {
+	_bgrSize = _width * _height * 3;
+	_bgrBuffer = new unsigned char[_bgrSize];
+
+	_jpgSize = _width * _height;
+	_jpgBuffer = new unsigned char[_jpgSize];
 
 }
 

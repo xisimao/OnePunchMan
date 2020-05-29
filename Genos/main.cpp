@@ -28,7 +28,9 @@ int main(int argc, char* argv[])
                     {
                         return -1;
                     }
+                    vector<TrafficDetector*> detectors;
                     FlowDetector detector(FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight,NULL, true);
+                    detectors.push_back(&detector);
                     FlowChannelData data;
                     int channelIndex = 1;
                     if (argc >= 4)
@@ -37,7 +39,7 @@ int main(int argc, char* argv[])
                     }
                     FlowChannel channel = data.Get(channelIndex);
                     detector.UpdateChannel(channel);
-                    DetectChannel detect(1, FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, NULL, &detector);
+                    DetectChannel detect(1,1, FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, NULL, detectors);
                     DecodeChannel decode(channel.ChannelUrl, string(), channel.ChannelIndex, &detect, true);
                     detect.Start();
                     decode.Start();
@@ -73,7 +75,9 @@ int main(int argc, char* argv[])
                     {
                         return -1;
                     }
-                    EventDetector detector(FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight,NULL, true);
+                    vector<TrafficDetector*> detectors;
+                    EventDetector detector(FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, NULL, true);
+                    detectors.push_back(&detector);
                     EventChannelData data;
                     int channelIndex = 1;
                     if (argc >= 4)
@@ -82,7 +86,7 @@ int main(int argc, char* argv[])
                     }
                     EventChannel channel = data.Get(channelIndex);
                     detector.UpdateChannel(channel);
-                    DetectChannel detect(1, FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, NULL, &detector);
+                    DetectChannel detect(1, 1,FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, NULL, detectors);
                     DecodeChannel decode(channel.ChannelUrl, string(), channel.ChannelIndex, &detect, true);
                     detect.Start();
                     decode.Start();

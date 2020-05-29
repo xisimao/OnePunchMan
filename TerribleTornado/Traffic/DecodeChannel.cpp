@@ -782,7 +782,7 @@ void DecodeChannel::UninitHisi(int videoCount)
 
 bool DecodeChannel::InitDecoder()
 {
-	_detectChannel->WriteBmp();
+	_detectChannel->WriteBmp(_channelIndex);
 	return true;
 }
 
@@ -793,7 +793,6 @@ void DecodeChannel::UninitDecoder()
 DecodeResult DecodeChannel::Decode(const AVPacket* packet, int frameIndex, int frameSpan)
 {
 	bool handled = false;
-
 #ifndef _WIN32
 	int hi_s32_ret = HI_SUCCESS;
 	if (packet != NULL)
@@ -819,7 +818,7 @@ DecodeResult DecodeChannel::Decode(const AVPacket* packet, int frameIndex, int f
 		{
 			while (true)
 			{
-				if (_detectChannel->IsBusy())
+				if (_detectChannel->IsBusy(_channelIndex))
 				{
 					if (_debug)
 					{
@@ -835,7 +834,7 @@ DecodeResult DecodeChannel::Decode(const AVPacket* packet, int frameIndex, int f
 				{
 					handled = true;
 					unsigned char* yuv = reinterpret_cast<unsigned char*>(HI_MPI_SYS_Mmap(frame.stVFrame.u64PhyAddr[0], _yuv420spSize));
-					_detectChannel->HandleYUV(yuv, DestinationWidth, DestinationHeight, static_cast<int>(frame.stVFrame.u64PTS), frameSpan);
+					_detectChannel->HandleYUV(_channelIndex,yuv, DestinationWidth, DestinationHeight, static_cast<int>(frame.stVFrame.u64PTS), frameSpan);
 					HI_MPI_SYS_Munmap(reinterpret_cast<HI_VOID*>(yuv), _yuv420spSize);
 					break;
 					//	hi_s32_ret = HI_MPI_VENC_SendFrame(_channelIndex, &frame, 0);

@@ -16,12 +16,11 @@ namespace OnePunchMan
 		/**
 		* @brief: 构造函数
 		* @param: recognIndex 检测线程序号
-		* @param: recognCount 识别数量
 		* @param: width 图片宽度
 		* @param: height 图片高度
 		* @param: detectors 通道检测集合
 		*/
-		RecognChannel(int recognIndex,int recognCount,int width, int height, const std::vector<TrafficDetector*>& detectors);
+		RecognChannel(int recognIndex,int width, int height, const std::vector<TrafficDetector*>& detectors);
 
 		/**
 		* @brief: 析构函数
@@ -60,8 +59,6 @@ namespace OnePunchMan
 		int _inited;
 		//检测线程序号
 		int _recognIndex;
-		//识别数量
-		int _recognCount;
 		//通道检测集合
 		std::vector<TrafficDetector*> _detectors;
 		//guid数据项集合同步锁

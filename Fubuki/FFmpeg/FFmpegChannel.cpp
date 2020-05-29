@@ -370,8 +370,8 @@ void FFmpegChannel::StartCore()
 		}
 		else
 		{
-			//重置不关闭输出
 			UninitDecoder();
+			UninitOutput();
 			UninitInput();
 			if (InitInput())
 			{

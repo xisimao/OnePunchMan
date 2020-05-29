@@ -159,6 +159,9 @@ namespace OnePunchMan
         */
         std::string GetId(const std::string& url, const std::string& key);
 
+
+        DetectChannel* GetDetect(int channelIndex);
+
         //系统启动时间
         DateTime _startTime;
         //算法是否初始化成功

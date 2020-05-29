@@ -40,8 +40,6 @@ namespace OnePunchMan
 
 		void HandleDetect(std::map<std::string, DetectItem>* detectItems, long long timeStamp, std::string* param, const unsigned char* iveBuffer,int frameIndex,int frameSpan);
 
-		void HandleRecognize(const RecognItem& item, const unsigned char* iveBuffer, const std::string& recognJson);
-
 	private:
 
 		//ÊÂ¼þ¼ì²â»º´æ

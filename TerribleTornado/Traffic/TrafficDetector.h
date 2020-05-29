@@ -70,6 +70,55 @@ namespace OnePunchMan
 		int Height;
 	};
 
+	//检测类型
+	enum class VideoStructType
+	{
+		Vehicle = 1,
+		Bike = 2,
+		Pedestrain = 3
+	};
+
+	class VideoStruct_Vehicle
+	{
+	public:
+		VideoStruct_Vehicle()
+			:CarType(0),CarColor(0),CarBrand(),PlateType(0),PlateNumber()
+		{
+
+		}
+
+		int CarType;
+		int CarColor;
+		std::string CarBrand;
+		int PlateType;
+		std::string PlateNumber;
+	};
+
+	class VideoStruct_Bike
+	{
+	public:
+		VideoStruct_Bike()
+			:BikeType(0)
+		{
+
+		}
+		int BikeType;
+	};
+
+	class VideoStruct_Pedestrain
+	{
+	public:
+		VideoStruct_Pedestrain()
+			:Sex(0),Age(0),UpperColor(0)
+		{
+
+		}
+
+		int Sex;
+		int Age;
+		int UpperColor;
+	};
+
 	//通道检测
 	class TrafficDetector
 	{
@@ -106,12 +155,28 @@ namespace OnePunchMan
 		virtual void HandleDetect(std::map<std::string, DetectItem>* detectItems, long long timeStamp, std::string* param, const unsigned char* iveBuffer, int frameIndex,int frameSpan) = 0;
 
 		/**
-		* @brief: 处理识别数据
-		* @param: item 识别数据项
+		* @brief: 处理机动车识别数据
+		* @param: recognItem 识别数据项
 		* @param: iveBuffer 图片字节流
-		* @param: recognJson 识别json数据
+		* @param: vehicle 机动车识别数据
 		*/
-		virtual void HandleRecognize(const RecognItem& item, const unsigned char* iveBuffer, const std::string& recognJson)=0;
+		virtual void HandleRecognVehicle(const RecognItem& recognItem, const unsigned char* iveBuffer, const VideoStruct_Vehicle& vehicle) {}
+		
+		/**
+		* @brief: 处理非机动车识别数据
+		* @param: recognItem 识别数据项
+		* @param: iveBuffer 图片字节流
+		* @param: bike 非机动车识别数据
+		*/
+		virtual void HandleRecognBike(const RecognItem& recognItem, const unsigned char* iveBuffer, const VideoStruct_Bike& bike) {}
+		
+		/**
+		* @brief: 处理行人识别数据
+		* @param: recognItem 识别数据项
+		* @param: iveBuffer 图片字节流
+		* @param: pedestrain 行人识别数据
+		*/
+		virtual void HandleRecognPedestrain(const RecognItem& recognItem, const unsigned char* iveBuffer, const VideoStruct_Pedestrain& pedestrain) {}
 
 		/**
 		* @brief: hisi ive_8uc3转bgr
@@ -155,7 +220,6 @@ namespace OnePunchMan
 		static void DrawPoint(cv::Mat* image, const Point& point,const cv::Scalar& scalar);
 
 	protected:
-		//通道信息
 		//视频序号
 		int _channelIndex;
 		//视频地址
@@ -166,17 +230,23 @@ namespace OnePunchMan
 		int _height;
 		//mqtt
 		MqttChannel* _mqtt;
+
 		//车道初始化是否成功
 		bool _lanesInited;
 		//车道算法筛选区域参数
 		std::string _param;
 		//是否设置过车道参数
 		bool _setParam;
+
+		//bgr字节流长度
+		int _bgrSize;
 		//bgr字节流
 		unsigned char* _bgrBuffer;
+		//jpg字节流长度
+		int _jpgSize;
 		//jpg字节流
 		unsigned char* _jpgBuffer;
-
+	
 		//调试相关
 		//是否处于调试模式
 		bool _debug;

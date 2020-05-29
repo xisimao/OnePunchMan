@@ -29,8 +29,12 @@ namespace OnePunchMan
 		void ClearChannel();
 
 		void HandleDetect(std::map<std::string, DetectItem>* detectItems, long long timeStamp, std::string* param, const unsigned char* iveBuffer, int frameIndex,int frameSpan);
-
-		void HandleRecognize(const RecognItem& item, const unsigned char* iveBuffer, const std::string& recognJson);
+		
+		void HandleRecognVehicle(const RecognItem& recognItem, const unsigned char* iveBuffer, const VideoStruct_Vehicle& vehicle);
+		
+		void HandleRecognBike(const RecognItem& recognItem, const unsigned char* iveBuffer, const VideoStruct_Bike& bike);
+		
+		void HandleRecognPedestrain(const RecognItem& recognItem, const unsigned char* iveBuffer, const VideoStruct_Pedestrain& pedestrain);
 
 	private:
 		//Á÷Á¿¼ì²â»º´æ
@@ -139,6 +143,8 @@ namespace OnePunchMan
 				Flag = !Flag;
 			}
 		};
+
+		bool ContainsRecogn(std::string* json,const RecognItem& recognItem, const unsigned char* iveBuffer);
 
 		/**
 		* @brief: »æÖÆ¼ì²âÇøÓò

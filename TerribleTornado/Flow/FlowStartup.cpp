@@ -13,7 +13,7 @@ FlowStartup::~FlowStartup()
 
 void FlowStartup::InitSoftVersion()
 {
-    _softwareVersion = "2.0.0.1";
+    _softwareVersion = "2.0.0.3";
     FlowChannelData data;
     data.SetVersion(_softwareVersion);
 }
@@ -29,12 +29,12 @@ void FlowStartup::InitDetectors(MqttChannel* mqtt, vector<DetectChannel*>* detec
     }
     for (int i = 0; i < RecognCount; ++i)
     {
-        RecognChannel* recogn = new RecognChannel(i,ChannelCount/RecognCount, FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, detectors);
+        RecognChannel* recogn = new RecognChannel(i, FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, detectors);
         recogns->push_back(recogn);
     }
-    for (int i = 0; i < ChannelCount; ++i)
+    for (int i = 0; i < DetectCount; ++i)
     {
-        DetectChannel* detect = new DetectChannel(i + 1, FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, recogns->at(i / (ChannelCount / RecognCount)), detectors[i]);
+        DetectChannel* detect = new DetectChannel(i, ChannelCount / DetectCount, FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, recogns->at(i / (DetectCount / RecognCount)), detectors);
         detects->push_back(detect);
     }
 }

@@ -8,14 +8,6 @@
 
 namespace OnePunchMan
 {
-	//检测类型
-	enum class VideoStructType
-	{
-		Vehicle = 1,
-		Bike = 2,
-		Pedestrain = 3
-	};
-
 	//交通状态
 	enum class TrafficStatus
 	{
@@ -138,7 +130,6 @@ namespace OnePunchMan
 		bool SetVersion(const std::string& version);
 
 	private:
-
 		//数据库名称
 		static const std::string DbName;
 

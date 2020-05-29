@@ -52,14 +52,14 @@ SocketResult SocketHandler::SendUdp(int socket, const EndPoint& remoteEndPoint, 
 void SocketHandler::Handle(int socket, unsigned int ip, unsigned short port, const char* buffer, unsigned int size)
 {
 	_receiveSize += size;
-	if (ip == 0 && port == 0)
-	{
-		LogPool::Debug(LogEvent::Socket, socket,"+", size, StringEx::ToHex(buffer,size));
-	}
-	else
-	{
-		LogPool::Debug(LogEvent::Socket, socket, EndPoint(ip, port).ToString(), "+", size, StringEx::ToHex(buffer,size));
-	}
+	//if (ip == 0 && port == 0)
+	//{
+	//	LogPool::Debug(LogEvent::Socket, socket,"+", size, StringEx::ToHex(buffer,size));
+	//}
+	//else
+	//{
+	//	LogPool::Debug(LogEvent::Socket, socket, EndPoint(ip, port).ToString(), "+", size, StringEx::ToHex(buffer,size));
+	//}
 	
 	_residueBuffer.append(buffer,size);
 

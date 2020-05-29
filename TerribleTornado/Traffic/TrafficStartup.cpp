@@ -83,16 +83,17 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
     {
         string id = GetId(e->Url, "/api/images");
         int channelIndex = StringEx::Convert<int>(id);
-        if (ChannelIndexEnable(channelIndex))
+        DetectChannel* detect = GetDetect(channelIndex);
+        if (detect==NULL)
         {
-            _detects[channelIndex - 1]->WriteBmp();
-            e->Code = HttpCode::OK;
+            e->Code = HttpCode::NotFound;
+   
         }
         else
         {
-            e->Code = HttpCode::NotFound;
+            detect->WriteBmp(channelIndex);
+            e->Code = HttpCode::OK;
         }
-      
     }
     else if (UrlStartWith(e->Url, "/api/update/licence"))
     {
@@ -192,9 +193,9 @@ void TrafficStartup::SetDecode(int channelIndex, const string& inputUrl, const s
             if (_decodes[channelIndex - 1] == NULL)
             {
 #ifdef _WIN32
-                DecodeChannel* decode = new DecodeChannel(inputUrl, string(), channelIndex, _detects[channelIndex - 1], false);
+                DecodeChannel* decode = new DecodeChannel(inputUrl, string(), channelIndex, GetDetect(channelIndex), false);
 #else
-                DecodeChannel* decode = new DecodeChannel(inputUrl, outputUrl, channelIndex, _detects[channelIndex - 1], false);
+                DecodeChannel* decode = new DecodeChannel(inputUrl, outputUrl, channelIndex, GetDetect(channelIndex), false);
 #endif // _WIN32
 
                 decode->Start();
@@ -208,9 +209,9 @@ void TrafficStartup::SetDecode(int channelIndex, const string& inputUrl, const s
                     _decodes[channelIndex - 1]->Stop();
                     delete _decodes[channelIndex - 1];
 #ifdef _WIN32
-                    DecodeChannel* decode = new DecodeChannel(inputUrl, string(), channelIndex, _detects[channelIndex - 1], false);
+                    DecodeChannel* decode = new DecodeChannel(inputUrl, string(), channelIndex, GetDetect(channelIndex), false);
 #else
-                    DecodeChannel* decode = new DecodeChannel(inputUrl, outputUrl, channelIndex, _detects[channelIndex - 1], false);
+                    DecodeChannel* decode = new DecodeChannel(inputUrl, outputUrl, channelIndex, GetDetect(channelIndex), false);
 #endif // _WIN32
                     decode->Start();
                     _decodes[channelIndex - 1] = decode;
@@ -290,6 +291,18 @@ string TrafficStartup::GetErrorJson(const string& field, const string& message)
     return StringEx::Combine("{\"", field, "\":[\"", message, "\"]}");
 }
 
+DetectChannel* TrafficStartup::GetDetect(int channelIndex)
+{
+    if (ChannelIndexEnable(channelIndex))
+    {
+        return _detects[(channelIndex - 1) / (ChannelCount / DetectCount)];
+    }
+    else
+    {
+        return NULL;
+    }
+}
+
 void TrafficStartup::Startup()
 {
     Socket::Init();
@@ -303,7 +316,7 @@ void TrafficStartup::Startup()
 
     _socketMaid = new SocketMaid(2,false);
     _handler.HttpReceived.Subscribe(this);
-    if (_socketMaid->AddListenEndPoint(EndPoint(7772), &_handler) == -1)
+    if (_socketMaid->AddListenEndPoint(EndPoint(80), &_handler) == -1)
     {
         exit(2);
     }

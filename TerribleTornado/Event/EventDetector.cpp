@@ -280,11 +280,6 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 	}
 }
 
-void EventDetector::HandleRecognize(const RecognItem& recognItem, const unsigned char* iveBuffer, const string& recognJson)
-{
-
-}
-
 void EventDetector::DrawPedestrain(std::string* jpgBase64, const unsigned char* iveBuffer, const Point& point, int frameIndex)
 {
 	IveToBgr(iveBuffer, _width, _height, _bgrBuffer);
