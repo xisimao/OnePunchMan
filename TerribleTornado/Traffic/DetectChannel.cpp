@@ -6,7 +6,7 @@ using namespace OnePunchMan;
 const int DetectChannel::SleepTime=40;
 
 DetectChannel::DetectChannel(int detectIndex, int width, int height)
-	:ThreadObject("detect"), _inited(false), _detectIndex(detectIndex), _width(width), _height(height)
+	:ThreadObject("detect"), _inited(false), _detectIndex(detectIndex), _width(width), _height(height), _recogn(NULL)
 {
 	_indexes.resize(1);
 	_timeStamps.resize(1);
@@ -29,6 +29,7 @@ void DetectChannel::SetRecogn(RecognChannel* recogn)
 
 void DetectChannel::AddChannel(int channelIndex, DecodeChannel* decode, TrafficDetector* detector)
 {
+	LogPool::Information(LogEvent::System, "detect", _detectIndex, "add channel", channelIndex);
 	ChannelItem item;
 	item.ChannelIndex = channelIndex;
 	item.Param = "{\"Detect\":{\"DetectRegion\":[],\"IsDet\":true,\"MaxCarWidth\":10,\"MinCarWidth\":10,\"Mode\":0,\"Threshold\":20,\"Version\":1001}}";

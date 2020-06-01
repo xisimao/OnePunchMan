@@ -138,7 +138,7 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 					DrawPedestrain(&jpgBase64, iveBuffer, it->second.Region.HitPoint(), frameIndex);
 					JsonSerialization::SerializeValue(&laneJson, "image1", jpgBase64);
 					JsonSerialization::AddClassItem(&lanesJson, laneJson);
-					LogPool::Debug(LogEvent::Event, _channelIndex, "pedestrain event");
+					LogPool::Debug(LogEvent::Event, _channelIndex,it->first, "pedestrain event");
 				}
 				else
 				{

@@ -13,7 +13,7 @@ EventStartup::~EventStartup()
 
 void EventStartup::InitSoftVersion()
 {
-    _softwareVersion = "1.0.0";
+    _softwareVersion = "1.0.0.1";
     EventChannelData data;
     data.SetVersion(_softwareVersion);
 }
@@ -40,7 +40,8 @@ void EventStartup::InitThreads(MqttChannel* mqtt, vector<DecodeChannel*>* decode
         detects->at(i)->SetRecogn(NULL);
         for (int j = 0; j < ChannelCount / DetectCount; ++j)
         {
-            detects->at(i)->AddChannel((i + 1) * j, decodes->at(i * j), detectors->at(i * j));
+            int channelIndex = i + (j * DetectCount) + 1;
+            detects->at(i)->AddChannel(channelIndex, decodes->at(channelIndex - 1), detectors->at(channelIndex - 1));
         }
     }
 }
