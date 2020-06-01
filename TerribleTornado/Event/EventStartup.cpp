@@ -18,23 +18,34 @@ void EventStartup::InitSoftVersion()
     data.SetVersion(_softwareVersion);
 }
 
-void EventStartup::InitDetectors(MqttChannel* mqtt, vector<DetectChannel*>* detects, vector<RecognChannel*>* recogns)
+void EventStartup::InitThreads(MqttChannel* mqtt, vector<DecodeChannel*>* decodes, vector<TrafficDetector*>* detectors, vector<DetectChannel*>* detects, vector<RecognChannel*>* recogns)
 {
-    vector<TrafficDetector*> detectors;
     for (int i = 0; i < ChannelCount; ++i)
     {
         EventDetector* detector = new EventDetector(FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, mqtt, false);
         _detectors.push_back(detector);
-        detectors.push_back(detector);
+        detectors->push_back(detector);
+        DecodeChannel* decode = new DecodeChannel(i + 1, false);
+        decodes->push_back(decode);
     }
+
     for (int i = 0; i < DetectCount; ++i)
     {
-        DetectChannel* detect = new DetectChannel(i, ChannelCount / DetectCount, FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, NULL, detectors);
+        DetectChannel* detect = new DetectChannel(i, FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight);
         detects->push_back(detect);
+    }
+
+    for (int i = 0; i < DetectCount; ++i)
+    {
+        detects->at(i)->SetRecogn(NULL);
+        for (int j = 0; j < ChannelCount / DetectCount; ++j)
+        {
+            detects->at(i)->AddChannel((i + 1) * j, decodes->at(i * j), detectors->at(i * j));
+        }
     }
 }
 
-void EventStartup::InitDecodes()
+void EventStartup::InitChannels()
 {
     EventChannelData data;
     for (int i = 0; i < ChannelCount; ++i)

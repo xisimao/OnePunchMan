@@ -7,19 +7,15 @@ const int FFmpegChannel::ConnectSpan = 5000;
 const int FFmpegChannel::DestinationWidth = 1920;
 const int FFmpegChannel::DestinationHeight = 1080;
 
-FFmpegChannel::FFmpegChannel(const string& inputUrl, const string& outputUrl, bool debug)
-	:ThreadObject("decode"),
-	_inputUrl(inputUrl), _inputFormat(NULL), _inputStream(NULL), _inputVideoIndex(-1)
-	, _outputUrl(outputUrl), _outputFormat(NULL), _outputStream(NULL), _outputCodec(NULL)
-	, _debug(debug), _options(NULL), _channelStatus(ChannelStatus::Init), _sourceWidth(0), _sourceHeight(0)
+FFmpegChannel::FFmpegChannel(bool debug)
+	:ThreadObject("decode"), _debug(debug)
+	, _inputUrl(), _inputFormat(NULL), _inputStream(NULL), _inputVideoIndex(-1)
+	, _outputUrl(), _outputFormat(NULL), _outputStream(NULL), _outputCodec(NULL)
+	, _channelStatus(ChannelStatus::Init), _options(NULL), _sourceWidth(0), _sourceHeight(0)
 	, _decodeContext(NULL), _yuvFrame(NULL), _bgrFrame(NULL), _bgrBuffer(NULL), _bgrSwsContext(NULL)
 	, _lastframeIndex(0), _frameSpan(0)
 {
-	if (inputUrl.size() >= 4 && inputUrl.substr(0,4).compare("rtsp") == 0)
-	{
-		av_dict_set(&_options, "rtsp_transport", "tcp", 0);
-		av_dict_set(&_options, "stimeout", StringEx::ToString(ConnectSpan*1000).c_str(), 0);
-	}
+
 }
 
 void FFmpegChannel::InitFFmpeg()
@@ -38,8 +34,9 @@ void FFmpegChannel::UninitFFmpeg()
 	LogPool::Information(LogEvent::Decode, "uninit video sdk");
 }
 
-const string& FFmpegChannel::InputUrl() const
+string FFmpegChannel::InputUrl()
 {
+	lock_guard<mutex> lck(_mutex);
 	return _inputUrl;
 }
 
@@ -63,72 +60,92 @@ int FFmpegChannel::FrameSpan()
 	return _frameSpan;
 }
 
-bool FFmpegChannel::InitInput()
+void FFmpegChannel::UpdateChannel(const std::string& inputUrl, const std::string& outputUrl)
 {
-	if (_inputFormat == NULL)
-	{
-		_inputFormat = avformat_alloc_context();
-		if (avformat_open_input(&_inputFormat, _inputUrl.c_str(), NULL, &_options) != 0) {
-			LogPool::Error(LogEvent::Decode, "avformat_open_input", _inputUrl);
-			UninitInput();
-			return false;
-		}
-
-		if (avformat_find_stream_info(_inputFormat, NULL) < 0) {
-			LogPool::Error(LogEvent::Decode, "avformat_find_stream_info", _inputUrl);
-			UninitInput();
-			return false;
-		}
-
-		for (unsigned int i = 0; i < _inputFormat->nb_streams; i++) {
-			if (_inputFormat->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
-				_inputVideoIndex = i;
-				break;
-			}
-		}
-		if (_inputVideoIndex == -1) {
-			LogPool::Error(LogEvent::Decode, "not found video index", _inputUrl);
-			UninitInput();
-			return false;
-		}
-		_inputStream = _inputFormat->streams[_inputVideoIndex];
-		_sourceWidth = _inputStream->codecpar->width;
-		_sourceHeight = _inputStream->codecpar->height;
-		_channelStatus = ChannelStatus::Normal;
-	}
-	return true;
+	lock_guard<mutex> lck(_mutex);
+	_inputUrl.assign(inputUrl);
+	_outputUrl.assign(outputUrl);
 }
 
-bool FFmpegChannel::InitOutput()
+void FFmpegChannel::ClearChannel()
 {
-	if (_outputFormat == NULL && !_outputUrl.empty())
+	lock_guard<mutex> lck(_mutex);
+	_inputUrl.clear();
+	_outputUrl.clear();
+}
+
+ChannelStatus FFmpegChannel::InitInput(const string& inputUrl)
+{
+	if (inputUrl.empty())
 	{
-		avformat_alloc_output_context2(&_outputFormat, NULL, "flv", _outputUrl.c_str());
+		return ChannelStatus::Init;
+	}
+	else
+	{
+		if (_inputFormat == NULL)
+		{
+			_inputFormat = avformat_alloc_context();
+			if (avformat_open_input(&_inputFormat, inputUrl.c_str(), NULL, &_options) != 0) {
+				LogPool::Error(LogEvent::Decode, "avformat_open_input", inputUrl);
+				UninitInput();
+				return ChannelStatus::InputError;
+			}
+
+			if (avformat_find_stream_info(_inputFormat, NULL) < 0) {
+				LogPool::Error(LogEvent::Decode, "avformat_find_stream_info", inputUrl);
+				UninitInput();
+				return ChannelStatus::InputError;
+			}
+
+			for (unsigned int i = 0; i < _inputFormat->nb_streams; i++) {
+				if (_inputFormat->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
+					_inputVideoIndex = i;
+					break;
+				}
+			}
+			if (_inputVideoIndex == -1) {
+				LogPool::Error(LogEvent::Decode, "not found video index", inputUrl);
+				UninitInput();
+				return ChannelStatus::InputError;
+			}
+			_inputStream = _inputFormat->streams[_inputVideoIndex];
+			_sourceWidth = _inputStream->codecpar->width;
+			_sourceHeight = _inputStream->codecpar->height;
+		}
+		return ChannelStatus::Normal;
+	}
+}
+
+ChannelStatus FFmpegChannel::InitOutput(const string& outputUrl)
+{
+	if (_outputFormat == NULL && !outputUrl.empty())
+	{
+		avformat_alloc_output_context2(&_outputFormat, NULL, "flv", outputUrl.c_str());
 		if (_outputFormat == NULL) {
-			LogPool::Error(LogEvent::Decode, "avformat_alloc_output_context2", _outputUrl);
+			LogPool::Error(LogEvent::Decode, "avformat_alloc_output_context2", outputUrl);
 			UninitOutput();
-			return false;
+			return ChannelStatus::OutputError;
 		}
 
 		AVCodec* decode = avcodec_find_decoder(_inputStream->codecpar->codec_id);
 		if (decode == NULL) {
-			LogPool::Error(LogEvent::Decode, "avcodec_find_decoder", _inputUrl);
+			LogPool::Error(LogEvent::Decode, "avcodec_find_decoder", outputUrl);
 			UninitOutput();
-			return false;
+			return ChannelStatus::OutputError;
 		}
 
 		_outputStream = avformat_new_stream(_outputFormat, decode);
 		if (_outputStream == NULL) {
-			LogPool::Error(LogEvent::Decode, "avformat_new_stream", _outputUrl);
+			LogPool::Error(LogEvent::Decode, "avformat_new_stream", outputUrl);
 			UninitOutput();
-			return false;
+			return ChannelStatus::OutputError;
 		}
 
 		_outputCodec = avcodec_alloc_context3(decode);
 		if (avcodec_parameters_to_context(_outputCodec, _inputStream->codecpar) < 0) {
-			LogPool::Error(LogEvent::Decode, "avcodec_parameters_to_context", _inputUrl);
+			LogPool::Error(LogEvent::Decode, "avcodec_parameters_to_context", outputUrl);
 			UninitOutput();
-			return false;
+			return ChannelStatus::OutputError;
 		}
 		_outputCodec->codec_tag = 0;
 		if (_outputFormat->oformat->flags & AVFMT_GLOBALHEADER)
@@ -137,26 +154,26 @@ bool FFmpegChannel::InitOutput()
 		}
 
 		if (avcodec_parameters_from_context(_outputStream->codecpar, _outputCodec) < 0) {
-			LogPool::Error(LogEvent::Decode, "avcodec_parameters_to_context", _outputUrl);
+			LogPool::Error(LogEvent::Decode, "avcodec_parameters_to_context", outputUrl);
 			UninitOutput();
-			return false;
+			return ChannelStatus::OutputError;
 		}
 		if (!(_outputFormat->oformat->flags & AVFMT_NOFILE))
 		{
-			if (avio_open(&_outputFormat->pb, _outputUrl.c_str(), AVIO_FLAG_WRITE))
+			if (avio_open(&_outputFormat->pb, outputUrl.c_str(), AVIO_FLAG_WRITE))
 			{
-				LogPool::Error(LogEvent::Decode, "avio_open", _outputUrl);
+				LogPool::Error(LogEvent::Decode, "avio_open", outputUrl);
 				UninitOutput();
-				return false;
+				return ChannelStatus::OutputError;
 			}
 		}
 		if (avformat_write_header(_outputFormat, NULL) < 0) {
-			LogPool::Error(LogEvent::Decode, "avformat_write_header", _outputUrl);
+			LogPool::Error(LogEvent::Decode, "avformat_write_header", outputUrl);
 			UninitOutput();
-			return false;
+			return ChannelStatus::OutputError;
 		}
 	}
-	return true;
+	return ChannelStatus::Normal;
 }
 
 void FFmpegChannel::UninitInput()
@@ -186,28 +203,28 @@ void FFmpegChannel::UninitOutput()
 	}
 }
 
-bool FFmpegChannel::InitDecoder()
+ChannelStatus FFmpegChannel::InitDecoder(const string& inputUrl)
 {
 	if (_inputStream->codecpar->codec_id != AVCodecID::AV_CODEC_ID_H264)
 	{
-		LogPool::Warning(LogEvent::Decode, "codec is not h264", _inputUrl);
-		return false;
+		LogPool::Warning(LogEvent::Decode, "codec is not h264", inputUrl);
+		return ChannelStatus::DecoderError;
 	}
 
 	AVCodec* decode = avcodec_find_decoder(_inputStream->codecpar->codec_id);
 	if (decode == NULL) {
-		LogPool::Warning(LogEvent::Decode, "avcodec_find_decoder error", _inputUrl);
-		return false;
+		LogPool::Warning(LogEvent::Decode, "avcodec_find_decoder error", inputUrl);
+		return ChannelStatus::DecoderError;
 	}
 	_decodeContext = avcodec_alloc_context3(decode);
 	if (avcodec_parameters_to_context(_decodeContext, _inputStream->codecpar) < 0) {
-		LogPool::Warning(LogEvent::Decode, "avcodec_parameters_to_context error", _inputUrl);
-		return false;
+		LogPool::Warning(LogEvent::Decode, "avcodec_parameters_to_context error", inputUrl);
+		return ChannelStatus::DecoderError;
 	}
 
 	if (avcodec_open2(_decodeContext, decode, NULL) < 0) {//打开解码器
-		LogPool::Warning(LogEvent::Decode, "avcodec_open2 error", _inputUrl);
-		return false;
+		LogPool::Warning(LogEvent::Decode, "avcodec_open2 error", inputUrl);
+		return ChannelStatus::DecoderError;
 	}
 
 	//初始化帧
@@ -219,16 +236,16 @@ bool FFmpegChannel::InitDecoder()
 	if (av_image_fill_arrays(_bgrFrame->data, _bgrFrame->linesize, _bgrBuffer, AV_PIX_FMT_BGR24, DestinationWidth, DestinationHeight, 1) < 0)
 	{
 		LogPool::Warning(LogEvent::Decode, "av_image_fill_arrays error");
-		return false;
+		return ChannelStatus::DecoderError;
 	}
 	_bgrSwsContext = sws_getContext(_decodeContext->width, _decodeContext->height, _decodeContext->pix_fmt, DestinationWidth, DestinationHeight, AV_PIX_FMT_BGR24,
 		SWS_FAST_BILINEAR, NULL, NULL, NULL);
 	if (_bgrSwsContext == NULL)
 	{
-		LogPool::Warning(LogEvent::Decode, "sws_getContext error", _inputUrl);
-		return false;
+		LogPool::Warning(LogEvent::Decode, "sws_getContext error", inputUrl);
+		return ChannelStatus::DecoderError;
 	}
-	return true;
+	return ChannelStatus::Normal;
 }
 
 void FFmpegChannel::UninitDecoder()
@@ -267,7 +284,6 @@ DecodeResult FFmpegChannel::Decode(const AVPacket* packet, int frameIndex, int f
 			}
 			else if (resultReceive < 0)
 			{
-				LogPool::Warning(LogEvent::Decode, "receive error", _inputUrl);
 				return DecodeResult::Error;
 			}
 			else if (resultReceive >= 0)
@@ -283,7 +299,6 @@ DecodeResult FFmpegChannel::Decode(const AVPacket* packet, int frameIndex, int f
 	}
 	else
 	{
-		LogPool::Warning(LogEvent::Decode, "send error", _inputUrl);
 		return DecodeResult::Error;
 	}
 	return DecodeResult::Handle;
@@ -298,8 +313,18 @@ void FFmpegChannel::StartCore()
 	int frameTimeSpan = 0;
 	long long duration = 0;
 	int frameIndex = 1;
+	string inputUrl;
+	string outputUrl;
 	while (!_cancelled)
 	{
+		unique_lock<mutex> lck(_mutex);
+		if (inputUrl.compare(_inputUrl) != 0)
+		{
+			_channelStatus = ChannelStatus::Init;
+			inputUrl = _inputUrl;
+			outputUrl = _outputUrl;
+		}
+		lck.unlock();
 		if (_channelStatus == ChannelStatus::Normal)
 		{
 			if (frameTimeSpan == 0)
@@ -313,7 +338,7 @@ void FFmpegChannel::StartCore()
 				Decode(NULL, 0, frameTimeSpan);
 				if (_debug)
 				{
-					LogPool::Information(LogEvent::Decode, "read eof", _inputUrl);
+					LogPool::Information(LogEvent::Decode, "read eof", inputUrl);
 					break;
 				}
 				else
@@ -332,7 +357,7 @@ void FFmpegChannel::StartCore()
 					long long timeStamp3 = DateTime::UtcNowTimeStamp();
 					if (decodeResult == DecodeResult::Error)
 					{
-						LogPool::Error(LogEvent::Decode, "decode error", _inputUrl, frameIndex);
+						LogPool::Error(LogEvent::Decode, "decode error", inputUrl, frameIndex);
 						_channelStatus = ChannelStatus::DecodeError;
 						break;
 					}
@@ -357,14 +382,14 @@ void FFmpegChannel::StartCore()
 					{
 						this_thread::sleep_for(chrono::milliseconds(sleepTime));
 					}
-					LogPool::Debug(LogEvent::Decode, "frame", _inputUrl, frameIndex, static_cast<int>(decodeResult),timeStamp2-timeStamp1,timeStamp3-timeStamp2,timeStamp4-timeStamp3);
+					LogPool::Debug(LogEvent::Decode, "frame", inputUrl, frameIndex, static_cast<int>(decodeResult),timeStamp2-timeStamp1,timeStamp3-timeStamp2,timeStamp4-timeStamp3);
 					frameIndex += 1;
 				}
 				av_packet_unref(&packet);
 			}
 			else
 			{
-				LogPool::Error(LogEvent::Decode, "read error", _inputUrl, frameIndex, readResult);
+				LogPool::Error(LogEvent::Decode, "read error", inputUrl, frameIndex, readResult);
 				_channelStatus = ChannelStatus::ReadError;
 			}
 		}
@@ -373,28 +398,31 @@ void FFmpegChannel::StartCore()
 			UninitDecoder();
 			UninitOutput();
 			UninitInput();
-			if (InitInput())
+			ChannelStatus inputStatus = InitInput(inputUrl);
+			if(inputStatus ==ChannelStatus::Normal)
 			{
-				if (InitOutput())
+				ChannelStatus outputStatus = InitOutput(outputUrl);
+				if (outputStatus == ChannelStatus::Normal)
 				{
-					if (InitDecoder())
+					ChannelStatus decoderStatus = InitDecoder(inputUrl);
+					if (decoderStatus == ChannelStatus::Normal)
 					{
-						LogPool::Information(LogEvent::Decode, "init frame channel success", _inputUrl, _outputUrl);
+						LogPool::Information(LogEvent::Decode, "init frame channel success", inputUrl, outputUrl);
 						_channelStatus = ChannelStatus::Normal;
 					}
 					else
 					{
-						_channelStatus = ChannelStatus::DecoderError;
+						_channelStatus = decoderStatus;
 					}
 				}
 				else
 				{
-					_channelStatus = ChannelStatus::OutputError;
+					_channelStatus = outputStatus;
 				}
 			}
 			else
 			{
-				_channelStatus = ChannelStatus::InputError;
+				_channelStatus = inputStatus;
 			}
 			if (_channelStatus != ChannelStatus::Normal)
 			{

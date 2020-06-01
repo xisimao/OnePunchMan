@@ -18,28 +18,41 @@ void FlowStartup::InitSoftVersion()
     data.SetVersion(_softwareVersion);
 }
 
-void FlowStartup::InitDetectors(MqttChannel* mqtt, vector<DetectChannel*>* detects, vector<RecognChannel*>* recogns)
+void FlowStartup::InitThreads(MqttChannel* mqtt, vector<DecodeChannel*>* decodes, vector<TrafficDetector*>* detectors, vector<DetectChannel*>* detects, vector<RecognChannel*>* recogns)
 {
-    vector<TrafficDetector*> detectors;
     for (int i = 0; i < ChannelCount; ++i)
     {
         FlowDetector* detector = new FlowDetector(FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, mqtt, false);
         _detectors.push_back(detector);
-        detectors.push_back(detector);
+        detectors->push_back(detector);
+        DecodeChannel* decode = new DecodeChannel(i + 1, false);
+        decodes->push_back(decode);
     }
+
     for (int i = 0; i < RecognCount; ++i)
     {
         RecognChannel* recogn = new RecognChannel(i, FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, detectors);
         recogns->push_back(recogn);
     }
+
     for (int i = 0; i < DetectCount; ++i)
     {
-        DetectChannel* detect = new DetectChannel(i, ChannelCount / DetectCount, FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, recogns->at(i / (DetectCount / RecognCount)), detectors);
+        DetectChannel* detect = new DetectChannel(i,FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight);
         detects->push_back(detect);
+    }
+
+    for (int i = 0; i < DetectCount; ++i)
+    {
+        detects->at(i)->SetRecogn(recogns->at(i%RecognCount));
+        for (int j = 0; j < ChannelCount / DetectCount; ++j)
+        {
+            int channelIndex = i + (j * DetectCount) + 1;
+            detects->at(i)->AddChannel(channelIndex, decodes->at(channelIndex-1), detectors->at(channelIndex-1));
+        }
     }
 }
 
-void FlowStartup::InitDecodes()
+void FlowStartup::InitChannels()
 {
     FlowChannelData data;
     for (int i = 0; i < ChannelCount; ++i)

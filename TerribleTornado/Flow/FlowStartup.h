@@ -17,9 +17,9 @@ namespace OnePunchMan
     protected:
         void InitSoftVersion();
 
-        void InitDetectors(MqttChannel* mqtt, std::vector<DetectChannel*>* detects, std::vector<RecognChannel*>* recogns);
+        void InitThreads(MqttChannel* mqtt, std::vector<DecodeChannel*>* decodes, std::vector<TrafficDetector*>* detectors, std::vector<DetectChannel*>* detects, std::vector<RecognChannel*>* recogns);
 
-        void InitDecodes();
+        void InitChannels();
 
         std::string GetChannelJson(const std::string& host, int channelIndex);
 

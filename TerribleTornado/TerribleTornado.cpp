@@ -8,7 +8,7 @@ using namespace OnePunchMan;
 int main(int argc, char* argv[])
 {
     LogPool::Init("appsettings.json");
-    EventStartup channel;
+    FlowStartup channel;
     channel.Startup();
     return 0;
 }

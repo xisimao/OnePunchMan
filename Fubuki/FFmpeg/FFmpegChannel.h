@@ -46,11 +46,9 @@ namespace OnePunchMan
 	public:
 		/**
 		* @brief: 构造函数
-		* @param: inputUrl 输入url
-		* @param: outputUrl 输出url
 		* @param: debug 是否处于调试模式,处于调试模式不循环播放文件
 		*/
-		FFmpegChannel(const std::string& inputUrl, const std::string& outputUrl, bool debug);
+		FFmpegChannel(bool debug);
 
 		/**
 		* @brief: 析构函数
@@ -67,11 +65,15 @@ namespace OnePunchMan
 		*/
 		static void UninitFFmpeg();
 
+		void UpdateChannel(const std::string& inputUrl, const std::string& outputUrl);
+
+		void ClearChannel();
+
 		/**
 		* @brief: 获取输入通道地址
 		* @return: 输入通道地址
 		*/
-		const std::string& InputUrl() const;
+		std::string InputUrl();
 
 		/**
 		* @brief: 获取通道状态
@@ -107,9 +109,10 @@ namespace OnePunchMan
 
 		/**
 		* @brief: 初始化解码器
+		* @param: inputUrl 输入url
 		* @return: 初始化成功返回true
 		*/
-		virtual bool InitDecoder();
+		virtual ChannelStatus InitDecoder(const std::string& inputUrl);
 
 		/**
 		* @brief: 卸载解码器
@@ -125,32 +128,23 @@ namespace OnePunchMan
 		*/
 		virtual DecodeResult Decode(const AVPacket* packet, int frameIndex,int frameSpan);
 
-		//视频输入相关
-		std::string _inputUrl;
-		AVFormatContext* _inputFormat;
-		AVStream* _inputStream;
-		int _inputVideoIndex;
-		//视频输出相关
-		std::string _outputUrl;
-		AVFormatContext* _outputFormat;
-		AVStream* _outputStream;
-		AVCodecContext* _outputCodec;
-
 		//是否处于调试模式
 		bool _debug;
 
 	private:
 		/**
 		* @brief: 初始化视频输入
+		* @param: inputUrl 输入url
 		* @return: 初始化成功返回true
 		*/
-		bool InitInput();
+		ChannelStatus InitInput(const std::string& inputUrl);
 
 		/**
 		* @brief: 初始化视频输出
+		* @param: outputUrl 输出url
 		* @return: 初始化成功返回true
 		*/
-		bool InitOutput();
+		ChannelStatus InitOutput(const std::string& outputUrl);
 
 		/**
 		* @brief: 卸载视频输入
@@ -165,10 +159,23 @@ namespace OnePunchMan
 		//重连时间(秒)
 		static const int ConnectSpan;
 
-		//输入视频初始化参数
-		AVDictionary* _options;
+		//视频状态同步锁
+		std::mutex _mutex;
+		//视频输入相关
+		std::string _inputUrl;
+		AVFormatContext* _inputFormat;
+		AVStream* _inputStream;
+		int _inputVideoIndex;
+		//视频输出相关
+		std::string _outputUrl;
+		AVFormatContext* _outputFormat;
+		AVStream* _outputStream;
+		AVCodecContext* _outputCodec;
+
 		//当前视频状态
 		ChannelStatus _channelStatus;
+		//输入视频初始化参数
+		AVDictionary* _options;
 		//视频源宽度
 		int _sourceWidth;
 		//视频源高度

@@ -7,7 +7,7 @@ const int RecognChannel::MaxCacheCount = 100;
 const int RecognChannel::SleepTime = 500;
 const string RecognChannel::RecognTopic("Recogn");
 
-RecognChannel::RecognChannel(int recognIndex, int width, int height, const vector<TrafficDetector*>& detectors)
+RecognChannel::RecognChannel(int recognIndex, int width, int height, vector<TrafficDetector*>* detectors)
 	:ThreadObject("recogn"), _inited(false), _recognIndex(recognIndex), _detectors(detectors)
 {
 	_bgrs.push_back(new uint8_t[width * height * 3]);
@@ -120,7 +120,7 @@ void RecognChannel::StartCore()
 							vehicle.CarBrand = jd.Get<string>(StringEx::Combine("ImageResults:0:Vehicles:0:Recognize:Brand:TopList:0:Name"));
 							vehicle.PlateType = jd.Get<int>(StringEx::Combine("ImageResults:0:Vehicles:0:Recognize:Plate:Type"));
 							vehicle.PlateNumber = jd.Get<string>(StringEx::Combine("ImageResults:0:Vehicles:0:Recognize:Plate:Licence"));
-							_detectors[item.ChannelIndex - 1]->HandleRecognVehicle(item, _bgrs[0], vehicle);
+							_detectors->at(item.ChannelIndex - 1)->HandleRecognVehicle(item, _bgrs[0], vehicle);
 						}
 					}
 					else if (item.Type == static_cast<int>(DetectType::Bike)
@@ -132,7 +132,7 @@ void RecognChannel::StartCore()
 						{
 							VideoStruct_Bike bike;
 							bike.BikeType = bikeType;
-							_detectors[item.ChannelIndex - 1]->HandleRecognBike(item, _bgrs[0], bike);
+							_detectors->at(item.ChannelIndex - 1)->HandleRecognBike(item, _bgrs[0], bike);
 						}
 					}
 					else if (item.Type == static_cast<int>(DetectType::Pedestrain))
@@ -145,7 +145,7 @@ void RecognChannel::StartCore()
 							pedestrain.Sex = jd.Get<int>(StringEx::Combine("ImageResults:0:Pedestrains:0:Recognize:Sex:TopList:0:Code"));
 							pedestrain.Age = jd.Get<int>(StringEx::Combine("ImageResults:0:Pedestrains:0:Recognize:Age:TopList:0:Code"));
 							pedestrain.UpperColor = jd.Get<int>(StringEx::Combine("ImageResults:0:Pedestrains:0:Recognize:UpperColor:TopList:0:Code"));
-							_detectors[item.ChannelIndex - 1]->HandleRecognPedestrain(item, _bgrs[0], pedestrain);
+							_detectors->at(item.ChannelIndex - 1)->HandleRecognPedestrain(item, _bgrs[0], pedestrain);
 						}
 					}
 				}

@@ -5,39 +5,9 @@ using namespace OnePunchMan;
 
 const int DetectChannel::SleepTime=40;
 
-DetectChannel::DetectChannel(int detectIndex, int channelCount, int width, int height, RecognChannel* recogn, const vector<TrafficDetector*>& detectors)
-	:ThreadObject("detect"), _inited(false), _detectIndex(detectIndex),_channelCount(channelCount), _width(width), _height(height)
-	, _recogn(recogn),_detectors(detectors), _iveHandler(-1)
+DetectChannel::DetectChannel(int detectIndex, int width, int height)
+	:ThreadObject("detect"), _inited(false), _detectIndex(detectIndex), _width(width), _height(height)
 {
-	for (int i = 0; i < channelCount; ++i)
-	{
-		FrameItem item;
-		item.ChannelIndex = detectIndex * channelCount + i+1;
-		item.YuvSize = static_cast<int>(_width * _height * 1.5);
-		item.TempHasValue = false;
-		item.YuvTempBuffer = new uint8_t[item.YuvSize];
-		item.IveSize = _width * _height * 3;
-#ifndef _WIN32
-		if (HI_MPI_SYS_MmzAlloc_Cached(reinterpret_cast<HI_U64*>(&item.Yuv_phy_addr),
-			reinterpret_cast<HI_VOID**>(&item.YuvBuffer),
-			"yuv_buffer",
-			NULL,
-			item.YuvSize) != HI_SUCCESS) {
-			LogPool::Error(LogEvent::Detect,"HI_MPI_SYS_MmzAlloc_Cached yuv");
-			exit(2);
-		}
-		if (HI_MPI_SYS_MmzAlloc_Cached(reinterpret_cast<HI_U64*>(&item.Ive_phy_addr),
-			reinterpret_cast<HI_VOID**>(&item.IveBuffer),
-			"ive_buffer",
-			NULL,
-			item.IveSize) != HI_SUCCESS) {
-			LogPool::Error(LogEvent::Detect, "HI_MPI_SYS_MmzAlloc_Cached ive");
-			exit(2);
-		}
-#endif // !_WIN32
-		item.Param = "{\"Detect\":{\"DetectRegion\":[],\"IsDet\":true,\"MaxCarWidth\":10,\"MinCarWidth\":10,\"Mode\":0,\"Threshold\":20,\"Version\":1001}}";
-		_frameItems.push_back(item);
-	}
 	_indexes.resize(1);
 	_timeStamps.resize(1);
 	_ives.resize(1);
@@ -47,122 +17,24 @@ DetectChannel::DetectChannel(int detectIndex, int channelCount, int width, int h
 	_result.resize(4 * 1024 * 1024);
 }
 
-DetectChannel::~DetectChannel()
-{
-	for (int i = 0; i < _channelCount; ++i)
-	{
-		delete[] _frameItems[i].YuvTempBuffer;
-#ifndef _WIN32
-		HI_MPI_SYS_MmzFree(_frameItems[i].Yuv_phy_addr, reinterpret_cast<HI_VOID*>(_frameItems[i].YuvBuffer));
-		HI_MPI_SYS_MmzFree(_frameItems[i].Ive_phy_addr, reinterpret_cast<HI_VOID*>(_frameItems[i].IveBuffer));
-#endif // !_WIN32
-	}
-}
-
 bool DetectChannel::Inited()
 {
 	return _inited;
 }
 
-int DetectChannel::GetFrameItemIndex(int channelIndex)
+void DetectChannel::SetRecogn(RecognChannel* recogn)
 {
-	unsigned int itemIndex = (channelIndex - 1) % _channelCount;
-	if (itemIndex >= 0 && itemIndex < _frameItems.size())
-	{
-		return static_cast<int>(itemIndex);
-	}
-	else
-	{
-		return -1;
-	}
+	_recogn = recogn;
 }
 
-void DetectChannel::WriteBmp(int channelIndex)
+void DetectChannel::AddChannel(int channelIndex, DecodeChannel* decode, TrafficDetector* detector)
 {
-	int itemIndex= GetFrameItemIndex(channelIndex);
-	if (itemIndex!=-1)
-	{
-		_frameItems[itemIndex].WriteBmp = true;
-	}
-}
-
-bool DetectChannel::IsBusy(int channelIndex)
-{ 
-	int itemIndex = GetFrameItemIndex(channelIndex);
-	if (itemIndex == -1)
-	{
-		return true;
-	}
-	else
-	{
-		return _frameItems[itemIndex].TempHasValue || !_inited || (_recogn != NULL && !_recogn->Inited());
-	}
-}
-
-void DetectChannel::HandleYUV(int channelIndex, const unsigned char* yuv, int width, int height, int frameIndex, int frameSpan)
-{
-	int itemIndex = GetFrameItemIndex(channelIndex);
-	if (itemIndex != -1)
-	{
-		memcpy(_frameItems[itemIndex].YuvTempBuffer, yuv, _frameItems[itemIndex].YuvSize);
-		_frameItems[itemIndex].FrameTempIndex = frameIndex;
-		_frameItems[itemIndex].FrameSpan = frameSpan;
-		_frameItems[itemIndex].TempHasValue = true;
-	}
-}
-
-bool DetectChannel::YuvToIve(FrameItem* frameItem)
-{
-#ifndef _WIN32
-	IVE_IMAGE_S yuv_image_list;
-	IVE_IMAGE_S bgr_image_list;
-
-	IVE_HANDLE ive_handle;
-	IVE_CSC_CTRL_S ive_csc_ctrl = { IVE_CSC_MODE_PIC_BT709_YUV2RGB };
-	int hi_s32_ret = HI_SUCCESS;
-
-	yuv_image_list.enType = IVE_IMAGE_TYPE_YUV420SP;
-	yuv_image_list.u32Height = _height;
-	yuv_image_list.u32Width = _width;
-	yuv_image_list.au64PhyAddr[0] = frameItem->Yuv_phy_addr;
-	yuv_image_list.au64PhyAddr[1] = yuv_image_list.au64PhyAddr[0] + yuv_image_list.u32Width * yuv_image_list.u32Height;
-	yuv_image_list.au32Stride[0] = yuv_image_list.u32Width;
-	yuv_image_list.au32Stride[1] = yuv_image_list.u32Width;
-
-	yuv_image_list.au64VirAddr[0] = reinterpret_cast<HI_U64>(frameItem->YuvBuffer);
-	yuv_image_list.au64VirAddr[1] = yuv_image_list.au64VirAddr[0] + yuv_image_list.u32Width * yuv_image_list.u32Height;
-
-	bgr_image_list.enType = IVE_IMAGE_TYPE_U8C3_PLANAR;
-	bgr_image_list.u32Height = _height;
-	bgr_image_list.u32Width = _width;
-	bgr_image_list.au64PhyAddr[0] = frameItem->Ive_phy_addr;
-	bgr_image_list.au64PhyAddr[1] = bgr_image_list.au64PhyAddr[0] + bgr_image_list.u32Height * bgr_image_list.u32Width;
-	bgr_image_list.au64PhyAddr[2] = bgr_image_list.au64PhyAddr[1] + bgr_image_list.u32Height * bgr_image_list.u32Width;
-	bgr_image_list.au64VirAddr[0] = reinterpret_cast<HI_U64>(frameItem->IveBuffer);
-	bgr_image_list.au64VirAddr[1] = bgr_image_list.au64VirAddr[0] + bgr_image_list.u32Height * bgr_image_list.u32Width;
-	bgr_image_list.au64VirAddr[2] = bgr_image_list.au64VirAddr[1] + bgr_image_list.u32Height * bgr_image_list.u32Width;
-	bgr_image_list.au32Stride[0] = bgr_image_list.u32Width;
-	bgr_image_list.au32Stride[1] = bgr_image_list.u32Width;
-	bgr_image_list.au32Stride[2] = bgr_image_list.u32Width;
-
-	hi_s32_ret = HI_MPI_IVE_CSC(&ive_handle, &yuv_image_list, &bgr_image_list, &ive_csc_ctrl, HI_TRUE);
-	if (HI_SUCCESS != hi_s32_ret) {
-		LogPool::Error(LogEvent::Detect,"HI_MPI_IVE_CSC", hi_s32_ret);
-		return false;
-	}
-	HI_BOOL ive_finish = HI_FALSE;
-	hi_s32_ret = HI_SUCCESS;
-	do {
-		hi_s32_ret = HI_MPI_IVE_Query(ive_handle, &ive_finish, HI_TRUE);
-	} while (HI_ERR_IVE_QUERY_TIMEOUT == hi_s32_ret);
-
-	if (HI_SUCCESS != hi_s32_ret) {
-		LogPool::Error(LogEvent::Detect, "HI_MPI_IVE_Query", hi_s32_ret);
-		return false;
-	}
-
-#endif // !_WIN32
-	return true;
+	ChannelItem item;
+	item.ChannelIndex = channelIndex;
+	item.Param = "{\"Detect\":{\"DetectRegion\":[],\"IsDet\":true,\"MaxCarWidth\":10,\"MinCarWidth\":10,\"Mode\":0,\"Threshold\":20,\"Version\":1001}}";
+	item.Decode = decode;
+	item.Detector = detector;
+	_channelItems.push_back(item);
 }
 
 void DetectChannel::GetDetecItems(map<string, DetectItem>* items, const JsonDeserialization& jd, const string& key)
@@ -237,67 +109,53 @@ void DetectChannel::StartCore()
 	while (!_cancelled)
 	{
 		bool detected = false;
-		for (unsigned int i = 0; i < _frameItems.size(); ++i)
+		for (unsigned int i = 0; i < _channelItems.size(); ++i)
 		{
-			FrameItem& frameItem = _frameItems[i];
-			if (frameItem.TempHasValue)
+			ChannelItem& channelItem = _channelItems[i];
+			long long detectTimeStamp = DateTime::UtcNowTimeStamp();
+			FrameItem frameItem = channelItem.Decode->GetTempIve();
+			if (frameItem.IveBuffer != NULL)
 			{
 				detected = true;
-				long long detectTimeStamp = DateTime::UtcNowTimeStamp();
-				memcpy(frameItem.YuvBuffer, frameItem.YuvTempBuffer, frameItem.YuvSize);
-				frameItem.FrameIndex = frameItem.FrameTempIndex;
-				frameItem.TempHasValue = false;
-				if (YuvToIve(&frameItem))
+				_indexes[0] = channelItem.ChannelIndex;
+				_timeStamps[0] = frameItem.FrameIndex;
+				_ives[0] = frameItem.IveBuffer;
+				_params[0] = channelItem.Param.c_str();
+				long long detectTimeStamp1 = DateTime::UtcNowTimeStamp();
+				int32_t size = static_cast<int32_t>(_result.size());
+				int result = SeemmoSDK::seemmo_video_pvc(1,
+					_indexes.data(),
+					_timeStamps.data(),
+					const_cast<const std::uint8_t**>(_ives.data()),
+					_heights.data(),
+					_widths.data(),
+					_params.data(),
+					_result.data(),
+					&size,
+					0);
+				long long detectTimeStamp2 = DateTime::UtcNowTimeStamp();
+				if (result == 0)
 				{
-					if (frameItem.WriteBmp)
+					JsonDeserialization detectJd(_result.data());
+					if (_recogn != NULL)
 					{
-						_iveHandler.HandleFrame(frameItem.IveBuffer, _width, _height, frameItem.ChannelIndex);
-						frameItem.WriteBmp = false;
-					}
-					_indexes[0]= frameItem.ChannelIndex;
-					_timeStamps[0] = frameItem.FrameIndex;
-					_ives[0] = frameItem.IveBuffer;
-					_params[0] = frameItem.Param.c_str();
-					long long detectTimeStamp1 = DateTime::UtcNowTimeStamp();
-					int32_t size = static_cast<int32_t>(_result.size());
-					int result = SeemmoSDK::seemmo_video_pvc(1,
-						_indexes.data(),
-						_timeStamps.data(),
-						const_cast<const std::uint8_t**>(_ives.data()),
-						_heights.data(),
-						_widths.data(),
-						_params.data(),
-						_result.data(),
-						&size,
-						0);
-					long long detectTimeStamp2 = DateTime::UtcNowTimeStamp();
-					if (result == 0)
-					{
-						JsonDeserialization detectJd(_result.data());
-						if (_recogn != NULL)
+						vector<RecognItem> recognItems;
+						GetRecognItems(&recognItems, detectJd, "Vehicles", channelItem.ChannelIndex);
+						GetRecognItems(&recognItems, detectJd, "Bikes", channelItem.ChannelIndex);
+						GetRecognItems(&recognItems, detectJd, "Pedestrains", channelItem.ChannelIndex);
+						if (!recognItems.empty())
 						{
-							vector<RecognItem> recognItems;
-							GetRecognItems(&recognItems, detectJd, "Vehicles",frameItem.ChannelIndex);
-							GetRecognItems(&recognItems, detectJd, "Bikes", frameItem.ChannelIndex);
-							GetRecognItems(&recognItems, detectJd, "Pedestrains", frameItem.ChannelIndex);
-							if (!recognItems.empty())
-							{
-								_recogn->PushItems(recognItems);
-							}
+							_recogn->PushItems(recognItems);
 						}
-						map<string, DetectItem> detectItems;
-						GetDetecItems(&detectItems, detectJd, "Vehicles");
-						GetDetecItems(&detectItems, detectJd, "Bikes");
-						GetDetecItems(&detectItems, detectJd, "Pedestrains");
-						_detectors[frameItem.ChannelIndex-1]->HandleDetect(&detectItems, detectTimeStamp, &frameItem.Param, _ives[0], static_cast<int>(_timeStamps[0]), frameItem.FrameSpan);
 					}
-					long long detectTimeStamp3 = DateTime::UtcNowTimeStamp();
-					LogPool::Debug("detect", _indexes[0], _timeStamps[0], result, detectTimeStamp1 - detectTimeStamp, detectTimeStamp2 - detectTimeStamp1, detectTimeStamp3 - detectTimeStamp2);
+					map<string, DetectItem> detectItems;
+					GetDetecItems(&detectItems, detectJd, "Vehicles");
+					GetDetecItems(&detectItems, detectJd, "Bikes");
+					GetDetecItems(&detectItems, detectJd, "Pedestrains");
+					channelItem.Detector->HandleDetect(&detectItems, detectTimeStamp, &channelItem.Param, _ives[0], static_cast<int>(_timeStamps[0]), frameItem.FrameSpan);
 				}
-				else
-				{
-					LogPool::Warning(LogEvent::Detect, "yuv to bgr failed");
-				}
+				long long detectTimeStamp3 = DateTime::UtcNowTimeStamp();
+				LogPool::Debug("detect", _indexes[0], _timeStamps[0], result, detectTimeStamp1 - detectTimeStamp, detectTimeStamp2 - detectTimeStamp1, detectTimeStamp3 - detectTimeStamp2);
 			}
 		}
 		if (!detected)

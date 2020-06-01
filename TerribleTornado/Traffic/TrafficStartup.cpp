@@ -45,18 +45,10 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
             }
             else
             {
-                unique_lock<timed_mutex> lck(_decodeMutex, std::defer_lock);
-                if (lck.try_lock_for(chrono::seconds(ThreadObject::LockTime)))
-                {
-                    JsonSerialization::SerializeValue(&channelJson, "channelStatus", _decodes[channelIndex - 1] == NULL ? 0 : static_cast<int>(_decodes[channelIndex - 1]->Status()));
-                    JsonSerialization::SerializeValue(&channelJson, "frameSpan", _decodes[channelIndex - 1] == NULL ? 0 : _decodes[channelIndex - 1]->FrameSpan());
-                    JsonSerialization::SerializeValue(&channelJson, "sourceWidth", _decodes[channelIndex - 1] == NULL ? 0 : _decodes[channelIndex - 1]->SourceWidth());
-                    JsonSerialization::SerializeValue(&channelJson, "sourceHeight", _decodes[channelIndex - 1] == NULL ? 0 : _decodes[channelIndex - 1]->SourceHeight());
-                }
-                else
-                {
-                    LogPool::Error(LogEvent::System, "get channel lock timeout");
-                }
+                JsonSerialization::SerializeValue(&channelJson, "channelStatus", static_cast<int>(_decodes[channelIndex - 1]->Status()));
+                JsonSerialization::SerializeValue(&channelJson, "frameSpan",  _decodes[channelIndex - 1]->FrameSpan());
+                JsonSerialization::SerializeValue(&channelJson, "sourceWidth", _decodes[channelIndex - 1]->SourceWidth());
+                JsonSerialization::SerializeValue(&channelJson, "sourceHeight",  _decodes[channelIndex - 1]->SourceHeight());
                 e->ResponseJson = channelJson;
                 e->Code = HttpCode::OK;
             }
@@ -83,15 +75,14 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
     {
         string id = GetId(e->Url, "/api/images");
         int channelIndex = StringEx::Convert<int>(id);
-        DetectChannel* detect = GetDetect(channelIndex);
-        if (detect==NULL)
+        if (ChannelIndexEnable(channelIndex))
         {
-            e->Code = HttpCode::NotFound;
+            _decodes[channelIndex - 1]->WriteBmp();
+            e->Code = HttpCode::OK;
         }
         else
         {
-            detect->WriteBmp(channelIndex);
-            e->Code = HttpCode::OK;
+            e->Code = HttpCode::NotFound;
         }
     }
     else if (UrlStartWith(e->Url, "/api/update/licence"))
@@ -144,19 +135,11 @@ void TrafficStartup::GetDevice(HttpReceivedEventArgs* e)
         string channelJson = GetChannelJson(e->Host, i + 1);
         if (!channelJson.empty())
         {
-            unique_lock<timed_mutex> lck(_decodeMutex, std::defer_lock);
-            if (lck.try_lock_for(chrono::seconds(ThreadObject::LockTime)))
-            {
-                JsonSerialization::SerializeValue(&channelJson, "channelStatus", _decodes[i] == NULL ? 0 : static_cast<int>(_decodes[i]->Status()));
-                JsonSerialization::SerializeValue(&channelJson, "frameSpan", _decodes[i] == NULL ? 0 : _decodes[i]->FrameSpan());
-                JsonSerialization::SerializeValue(&channelJson, "sourceWidth", _decodes[i] == NULL ? 0 : _decodes[i]->SourceWidth());
-                JsonSerialization::SerializeValue(&channelJson, "sourceHeight", _decodes[i] == NULL ? 0 : _decodes[i]->SourceHeight());
-                JsonSerialization::AddClassItem(&channelsJson, channelJson);
-            }
-            else
-            {
-                LogPool::Error(LogEvent::System, "get device lock timeout");
-            }
+            JsonSerialization::SerializeValue(&channelJson, "channelStatus", static_cast<int>(_decodes[i]->Status()));
+            JsonSerialization::SerializeValue(&channelJson, "frameSpan", _decodes[i]->FrameSpan());
+            JsonSerialization::SerializeValue(&channelJson, "sourceWidth", _decodes[i]->SourceWidth());
+            JsonSerialization::SerializeValue(&channelJson, "sourceHeight", _decodes[i]->SourceHeight());
+            JsonSerialization::AddClassItem(&channelsJson, channelJson);
         }
     }
 
@@ -186,66 +169,18 @@ void TrafficStartup::GetDevice(HttpReceivedEventArgs* e)
 
 void TrafficStartup::SetDecode(int channelIndex, const string& inputUrl, const string& outputUrl)
 {
-    unique_lock<timed_mutex> lck(_decodeMutex, std::defer_lock);
-    if (lck.try_lock_for(chrono::seconds(ThreadObject::LockTime)))
+    if (ChannelIndexEnable(channelIndex))
     {
-        if (ChannelIndexEnable(channelIndex))
-        {
-            if (_decodes[channelIndex - 1] == NULL)
-            {
-#ifdef _WIN32
-                DecodeChannel* decode = new DecodeChannel(inputUrl, string(), channelIndex, GetDetect(channelIndex), false);
-#else
-                DecodeChannel* decode = new DecodeChannel(inputUrl, outputUrl, channelIndex, GetDetect(channelIndex), false);
-#endif // _WIN32
-
-                decode->Start();
-                _decodes[channelIndex - 1] = decode;
-            }
-            else
-            {
-                //如果地址不一致
-                if (_decodes[channelIndex - 1]->InputUrl().compare(inputUrl) != 0)
-                {
-                    _decodes[channelIndex - 1]->Stop();
-                    delete _decodes[channelIndex - 1];
-#ifdef _WIN32
-                    DecodeChannel* decode = new DecodeChannel(inputUrl, string(), channelIndex, GetDetect(channelIndex), false);
-#else
-                    DecodeChannel* decode = new DecodeChannel(inputUrl, outputUrl, channelIndex, GetDetect(channelIndex), false);
-#endif // _WIN32
-                    decode->Start();
-                    _decodes[channelIndex - 1] = decode;
-                }
-            }
-        }
+        _decodes[channelIndex - 1]->UpdateChannel(inputUrl, outputUrl);
     }
-    else
-    {
-        LogPool::Error(LogEvent::System, "set decode timeout");
-    }
-
 }
 
 void TrafficStartup::DeleteDecode(int channelIndex)
 {
-    unique_lock<timed_mutex> lck(_decodeMutex, std::defer_lock);
-    if (lck.try_lock_for(chrono::seconds(ThreadObject::LockTime)))
+    if (ChannelIndexEnable(channelIndex))
     {
-        if (ChannelIndexEnable(channelIndex))
-        {
-            if (_decodes[channelIndex - 1] != NULL)
-            {
-                _decodes[channelIndex - 1]->Stop();
-                delete _decodes[channelIndex - 1];
-                _decodes[channelIndex - 1] = NULL;
-            }
-        }
-    }
-    else
-    {
-        LogPool::Error(LogEvent::System, "delete decode timeout");
-    }
+        _decodes[channelIndex - 1]->ClearChannel();
+}
 }
 
 string TrafficStartup::CheckChannel(int channelIndex)
@@ -342,7 +277,14 @@ void TrafficStartup::Startup()
             vector<string> datas = StringEx::Split(catRows[i], " ", true);
             if (datas.size() >= 3 && datas[2].size() >= 3)
             {
-                _webVersion = datas[2].substr(1, datas[2].size() - 2);
+                size_t startIndex = datas[2].find_first_of('\'');
+                size_t endIndex=datas[2].find_last_of('\'');
+                if (startIndex != string::npos
+                    && endIndex != string::npos
+                    && startIndex != endIndex)
+                {
+                    _webVersion = datas[2].substr(startIndex+1, endIndex-startIndex-1);
+                }
                 break;
             }
         }
@@ -350,7 +292,7 @@ void TrafficStartup::Startup()
 
     _mqtt = new MqttChannel("127.0.0.1", 1883);
     _mqtt->MqttDisconnected.Subscribe(this);
-    InitDetectors(_mqtt, &_detects, &_recogns);
+    InitThreads(_mqtt, &_decodes,&_detectors,&_detects, &_recogns);
     if (_sdkInited)
     {
         _mqtt->Start();
@@ -393,11 +335,11 @@ void TrafficStartup::Startup()
             }
         }
     }
-    for (int i = 0; i < ChannelCount; ++i)
+    for (unsigned int i = 0; i < _decodes.size(); ++i)
     {
-        _decodes.push_back(NULL);
+        _decodes[i]->Start();
     }
-    InitDecodes();
+    InitChannels();
     _socketMaid->Start();
     _socketMaid->Join();
     _socketMaid->Stop();
@@ -405,11 +347,8 @@ void TrafficStartup::Startup()
 
     for (unsigned int i = 0; i < _decodes.size(); ++i)
     {
-        if (_decodes[i] != NULL)
-        {
-            _decodes[i]->Stop();
-            delete _decodes[i];
-        }
+        _decodes[i]->Stop();
+        delete _decodes[i];
     }
     for (unsigned int i = 0; i < _detects.size(); ++i)
     {

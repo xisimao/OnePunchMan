@@ -3,11 +3,38 @@
 using namespace std;
 using namespace OnePunchMan;
 
-DecodeChannel::DecodeChannel(const string& inputUrl, const string& outputUrl, int channelIndex, DetectChannel* detectChannel, bool debug)
-	:FFmpegChannel(inputUrl, outputUrl, debug), _channelIndex(channelIndex)
-	, _yuv420spSize(static_cast<int>(DestinationWidth* DestinationHeight * 1.5)),_detectChannel(detectChannel)
+DecodeChannel::DecodeChannel(int channelIndex, bool debug)
+	:FFmpegChannel(debug), _channelIndex(channelIndex),_writeBmp(false), _frameIndex(0)
+	, _yuvSize(static_cast<int>(DestinationWidth * DestinationHeight * 1.5)), _yuvHasValue(false), _yuv_phy_addr(0), _yuvBuffer(NULL)
+	, _iveSize(DestinationWidth* DestinationHeight * 3), _ive_phy_addr(0), _iveBuffer(NULL)
+	, _iveHandler(-1)
 {
+#ifndef _WIN32
+	if (HI_MPI_SYS_MmzAlloc_Cached(reinterpret_cast<HI_U64*>(&_yuv_phy_addr),
+		reinterpret_cast<HI_VOID**>(&_yuvBuffer),
+		"yuv_buffer",
+		NULL,
+		_yuvSize) != HI_SUCCESS) {
+		LogPool::Error(LogEvent::Detect, "HI_MPI_SYS_MmzAlloc_Cached yuv");
+		exit(2);
+	}
+	if (HI_MPI_SYS_MmzAlloc_Cached(reinterpret_cast<HI_U64*>(&_ive_phy_addr),
+		reinterpret_cast<HI_VOID**>(&_iveBuffer),
+		"ive_buffer",
+		NULL,
+		_iveSize) != HI_SUCCESS) {
+		LogPool::Error(LogEvent::Detect, "HI_MPI_SYS_MmzAlloc_Cached ive");
+		exit(2);
+	}
+#endif // !_WIN32
+}
 
+DecodeChannel::~DecodeChannel()
+{
+#ifndef _WIN32
+	HI_MPI_SYS_MmzFree(_yuv_phy_addr, reinterpret_cast<HI_VOID*>(_yuvBuffer));
+	HI_MPI_SYS_MmzFree(_ive_phy_addr, reinterpret_cast<HI_VOID*>(_iveBuffer));
+#endif // !_WIN32
 }
 
 bool DecodeChannel::InitHisi(int videoCount)
@@ -780,14 +807,19 @@ void DecodeChannel::UninitHisi(int videoCount)
 	LogPool::Information(LogEvent::Decode, "uninit hisi sdk");
 }
 
-bool DecodeChannel::InitDecoder()
+ChannelStatus DecodeChannel::InitDecoder(const string& inputUrl)
 {
-	_detectChannel->WriteBmp(_channelIndex);
-	return true;
+	WriteBmp();
+	return ChannelStatus::Normal;
 }
 
 void DecodeChannel::UninitDecoder()
 {
+}
+
+void DecodeChannel::WriteBmp()
+{
+	_writeBmp = true;
 }
 
 DecodeResult DecodeChannel::Decode(const AVPacket* packet, int frameIndex, int frameSpan)
@@ -816,82 +848,27 @@ DecodeResult DecodeChannel::Decode(const AVPacket* packet, int frameIndex, int f
 		hi_s32_ret = HI_MPI_VPSS_GetChnFrame(_channelIndex - 1, 0, &frame, 0);
 		if (hi_s32_ret == HI_SUCCESS)
 		{
-			while (true)
+			handled = true;
+			unsigned char* yuv = reinterpret_cast<unsigned char*>(HI_MPI_SYS_Mmap(frame.stVFrame.u64PhyAddr[0], _yuvSize));
+			if (_debug)
 			{
-				if (_detectChannel->IsBusy(_channelIndex))
+				while (true)
 				{
-					if (_debug)
-					{
-						this_thread::sleep_for(chrono::milliseconds(10));
-						continue;
-					}
-					else
+					if (SetTempIve(yuv, static_cast<int>(frame.stVFrame.u64PTS)))
 					{
 						break;
 					}
-				}
-				else
-				{
-					handled = true;
-					unsigned char* yuv = reinterpret_cast<unsigned char*>(HI_MPI_SYS_Mmap(frame.stVFrame.u64PhyAddr[0], _yuv420spSize));
-					_detectChannel->HandleYUV(_channelIndex,yuv, DestinationWidth, DestinationHeight, static_cast<int>(frame.stVFrame.u64PTS), frameSpan);
-					HI_MPI_SYS_Munmap(reinterpret_cast<HI_VOID*>(yuv), _yuv420spSize);
-					break;
-					//	hi_s32_ret = HI_MPI_VENC_SendFrame(_channelIndex, &frame, 0);
-					//	if (HI_SUCCESS != hi_s32_ret) {
-					//		LogPool::Warning("HI_MPI_VENC_SendFrame");
-					//		continue;
-					//	}
-					//	VENC_CHN_STATUS_S stStat;
-					//	VENC_STREAM_S stStream;
-					//	memset(&stStream, 0, sizeof(stStream));
-
-					//	s32Ret = HI_MPI_VENC_QueryStatus(_channelIndex, &stStat);
-					//	if (HI_SUCCESS != s32Ret)
-					//	{
-					//		LogPool::Warning("HI_MPI_VENC_QueryStatus");
-					//		continue;
-					//	}
-					//	if (0 == stStat.u32CurPacks)
-					//	{
-					//		continue;
-					//	}
-					//	stStream.pstPack = (VENC_PACK_S*)malloc(sizeof(VENC_PACK_S) * stStat.u32CurPacks);
-					//	if (NULL == stStream.pstPack)
-					//	{
-					//		break;
-					//	}
-					//	stStream.u32PackCount = stStat.u32CurPacks;
-					//	s32Ret = HI_MPI_VENC_GetStream(_channelIndex, &stStream, HI_TRUE);
-					//	if (HI_SUCCESS != s32Ret)
-					//	{
-					//		free(stStream.pstPack);
-					//		stStream.pstPack = NULL;
-					//		LogPool::Warning("HI_MPI_VENC_GetStream");
-					//		continue;
-					//	}
-
-					//	av_interleaved_write_frame(_outputFormat, &packet);
-
-					///*	fwrite(pstStream->pstPack[i].pu8Addr + pstStream->pstPack[i].u32Offset,
-					//		pstStream->pstPack[i].u32Len - pstStream->pstPack[i].u32Offset, 1, pFd);*/
-
-					//	s32Ret = HI_MPI_VENC_ReleaseStream(i, &stStream);
-					//	if (HI_SUCCESS != s32Ret)
-					//	{
-					//		LogPool::Warning("HI_MPI_VENC_ReleaseStream");
-					//		free(stStream.pstPack);
-					//		stStream.pstPack = NULL;
-					//		continue;
-					//	}
-
-					//	/*******************************************************
-					//	 step 2.7 : free pack nodes
-					//	*******************************************************/
-					//	free(stStream.pstPack);
-					//	stStream.pstPack = NULL;
+					else
+					{
+						this_thread::sleep_for(chrono::milliseconds(10));
+					}
 				}
 			}
+			else 
+			{
+				SetTempIve(yuv, static_cast<int>(frame.stVFrame.u64PTS));
+			}
+			HI_MPI_SYS_Munmap(reinterpret_cast<HI_VOID*>(yuv), _yuvSize);
 			HI_MPI_VPSS_ReleaseChnFrame(_channelIndex - 1, 0, &frame);
 		}
 		else
@@ -902,4 +879,90 @@ DecodeResult DecodeChannel::Decode(const AVPacket* packet, int frameIndex, int f
 	}
 #endif // !_WIN32
 	return handled ? DecodeResult::Handle : DecodeResult::Skip;
+}
+
+bool DecodeChannel::YuvToIve()
+{
+#ifndef _WIN32
+	IVE_IMAGE_S yuv_image_list;
+	IVE_IMAGE_S bgr_image_list;
+
+	IVE_HANDLE ive_handle;
+	IVE_CSC_CTRL_S ive_csc_ctrl = { IVE_CSC_MODE_PIC_BT709_YUV2RGB };
+	int hi_s32_ret = HI_SUCCESS;
+
+	yuv_image_list.enType = IVE_IMAGE_TYPE_YUV420SP;
+	yuv_image_list.u32Height = DestinationHeight;
+	yuv_image_list.u32Width = DestinationWidth;
+	yuv_image_list.au64PhyAddr[0] = _yuv_phy_addr;
+	yuv_image_list.au64PhyAddr[1] = yuv_image_list.au64PhyAddr[0] + yuv_image_list.u32Width * yuv_image_list.u32Height;
+	yuv_image_list.au32Stride[0] = yuv_image_list.u32Width;
+	yuv_image_list.au32Stride[1] = yuv_image_list.u32Width;
+
+	yuv_image_list.au64VirAddr[0] = reinterpret_cast<HI_U64>(_yuvBuffer);
+	yuv_image_list.au64VirAddr[1] = yuv_image_list.au64VirAddr[0] + yuv_image_list.u32Width * yuv_image_list.u32Height;
+
+	bgr_image_list.enType = IVE_IMAGE_TYPE_U8C3_PLANAR;
+	bgr_image_list.u32Height = DestinationHeight;
+	bgr_image_list.u32Width = DestinationWidth;
+	bgr_image_list.au64PhyAddr[0] = _ive_phy_addr;
+	bgr_image_list.au64PhyAddr[1] = bgr_image_list.au64PhyAddr[0] + bgr_image_list.u32Height * bgr_image_list.u32Width;
+	bgr_image_list.au64PhyAddr[2] = bgr_image_list.au64PhyAddr[1] + bgr_image_list.u32Height * bgr_image_list.u32Width;
+	bgr_image_list.au64VirAddr[0] = reinterpret_cast<HI_U64>(_iveBuffer);
+	bgr_image_list.au64VirAddr[1] = bgr_image_list.au64VirAddr[0] + bgr_image_list.u32Height * bgr_image_list.u32Width;
+	bgr_image_list.au64VirAddr[2] = bgr_image_list.au64VirAddr[1] + bgr_image_list.u32Height * bgr_image_list.u32Width;
+	bgr_image_list.au32Stride[0] = bgr_image_list.u32Width;
+	bgr_image_list.au32Stride[1] = bgr_image_list.u32Width;
+	bgr_image_list.au32Stride[2] = bgr_image_list.u32Width;
+
+	hi_s32_ret = HI_MPI_IVE_CSC(&ive_handle, &yuv_image_list, &bgr_image_list, &ive_csc_ctrl, HI_TRUE);
+	if (HI_SUCCESS != hi_s32_ret) {
+		LogPool::Error(LogEvent::Detect, "HI_MPI_IVE_CSC", hi_s32_ret);
+		return false;
+	}
+	HI_BOOL ive_finish = HI_FALSE;
+	hi_s32_ret = HI_SUCCESS;
+	do {
+		hi_s32_ret = HI_MPI_IVE_Query(ive_handle, &ive_finish, HI_TRUE);
+	} while (HI_ERR_IVE_QUERY_TIMEOUT == hi_s32_ret);
+
+	if (HI_SUCCESS != hi_s32_ret) {
+		LogPool::Error(LogEvent::Detect, "HI_MPI_IVE_Query", hi_s32_ret);
+		return false;
+	}
+#endif // !_WIN32
+	return true;
+}
+
+bool DecodeChannel::SetTempIve(const unsigned char* yuv, int frameIndex)
+{
+	if (_yuvHasValue)
+	{
+		return false;
+	}
+	else
+	{
+		memcpy(_yuvBuffer, yuv, _yuvSize);
+		_frameIndex = frameIndex;
+		_yuvHasValue = true;
+		return true;
+	}
+}
+
+FrameItem DecodeChannel::GetTempIve()
+{
+	FrameItem item;
+	if (_yuvHasValue && YuvToIve())
+	{
+		item.IveBuffer = _iveBuffer;
+		item.FrameIndex = _frameIndex;
+		item.FrameSpan = FrameSpan();
+		_yuvHasValue = false;
+		if (_writeBmp)
+		{
+			_iveHandler.HandleFrame(_iveBuffer, DestinationWidth, DestinationHeight, _channelIndex);
+			_writeBmp = false;
+		}
+	}
+	return item;
 }

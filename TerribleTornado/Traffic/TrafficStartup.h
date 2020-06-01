@@ -52,18 +52,19 @@ namespace OnePunchMan
     protected:
 
         /**
-        * @brief: 初始化检测逻辑类集合
+        * @brief: 初始化线程集合
         * @param: mqtt mqtt
-        * @param: detects 检测类集合
-        * @param: recogns 识别类集合
-        * @return: 检测类集合
+        * @param: decodes 解码类集合
+        * @param: detectors 交通检测类集合
+        * @param: detects 视频检测类集合
+        * @param: recogns 视频识别类集合
         */
-        virtual void InitDetectors(MqttChannel* mqtt, std::vector<DetectChannel*>* detects, std::vector<RecognChannel*>* recogns) = 0;
+        virtual void InitThreads(MqttChannel* mqtt, std::vector<DecodeChannel*>* decodes, std::vector<TrafficDetector*>* detectors, std::vector<DetectChannel*>* detects, std::vector<RecognChannel*>* recogns) = 0;
 
         /**
         * @brief: 初始化通道集合
         */
-        virtual void InitDecodes() = 0;
+        virtual void InitChannels() = 0;
 
         /**
         * @brief: 初始化软件版本
@@ -176,13 +177,14 @@ namespace OnePunchMan
         HttpHandler _handler;
         //mqtt
         MqttChannel* _mqtt;
-        //解码线程同步锁
-        std::timed_mutex _decodeMutex;
-        //解码线程集合，等于视频总数，如果视频清空则为NULL
+
+        //解码线程集合，等于视频总数
         std::vector<DecodeChannel*> _decodes;
-        //检测线程集合，等于视频总数
+        //交通检测类集合，等于视频总数
+        std::vector<TrafficDetector*> _detectors;
+        //视频检测线程集合，等于视频总数
         std::vector<DetectChannel*> _detects;
-        //识别线程集合，等于视频总数/RecognChannel::ItemCount
+        //视频识别线程集合，等于视频总数/RecognChannel::ItemCount
         std::vector<RecognChannel*> _recogns;
     };
 }
