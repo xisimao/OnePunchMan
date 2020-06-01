@@ -18,19 +18,21 @@ namespace OnePunchMan
 	enum class ChannelStatus
 	{
 		//初始化
-		Init,
+		Init=0,
 		//正常
-		Normal,
+		Normal=1,
 		//输入初始化错误
-		InputError,
+		InputError=2,
 		//输出初始化错误
-		OutputError,
+		OutputError=3,
 		//解码器初始化错误
-		DecoderError,
+		DecoderError=4,
 		//读取视频帧错误
-		ReadError,
+		ReadError=5,
 		//解码错误
-		DecodeError
+		DecodeError=6,
+		//文件读取结束
+		ReadEOF=7
 	};
 
 	//解码结果

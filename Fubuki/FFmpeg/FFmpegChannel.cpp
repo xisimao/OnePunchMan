@@ -345,7 +345,7 @@ void FFmpegChannel::StartCore()
 				{
 					duration += (frameIndex-1) * frameTimeSpan;
 					frameIndex = 1;
-					_channelStatus = ChannelStatus::Init;
+					_channelStatus = ChannelStatus::ReadEOF;
 				}
 			}
 			else if (readResult == 0)
@@ -396,7 +396,11 @@ void FFmpegChannel::StartCore()
 		else
 		{
 			UninitDecoder();
-			UninitOutput();
+			//文件循环时不关闭输出
+			if (_channelStatus != ChannelStatus::ReadEOF)
+			{
+				UninitOutput();
+			}
 			UninitInput();
 			ChannelStatus inputStatus = InitInput(inputUrl);
 			if(inputStatus ==ChannelStatus::Normal)
