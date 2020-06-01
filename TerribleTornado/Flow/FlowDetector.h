@@ -160,6 +160,8 @@ namespace OnePunchMan
 		static const std::string FlowTopic;
 		//视频结构化mqtt主题
 		static const std::string VideoStructTopic;
+		//上报的最大时长(毫秒)
+		static const int ReportMaxSpan;
 
 		//上一帧的时间戳
 		long long _lastFrameTimeStamp;

@@ -13,7 +13,7 @@ FlowStartup::~FlowStartup()
 
 void FlowStartup::InitSoftVersion()
 {
-    _softwareVersion = "2.0.0.3";
+    _softwareVersion = "2.0.0.4";
     FlowChannelData data;
     data.SetVersion(_softwareVersion);
 }

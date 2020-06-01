@@ -6,6 +6,7 @@ using namespace OnePunchMan;
 const string FlowDetector::IOTopic("IO");
 const string FlowDetector::FlowTopic("Flow");
 const string FlowDetector::VideoStructTopic("VideoStruct");
+const int FlowDetector::ReportMaxSpan = 60 * 1000;
 
 FlowDetector::FlowDetector(int width, int height, MqttChannel* mqtt, bool debug)
 	:TrafficDetector(width,height, mqtt,debug), _lastFrameTimeStamp(0)
@@ -173,19 +174,20 @@ void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long 
 			cache.Vehicles = 0;
 			cache.TotalSpan = 0;
 		}
+
+		if (!flowLanesJson.empty()
+			&& _mqtt != NULL
+			&& (timeStamp - _nextMinuteTimeStamp) < ReportMaxSpan)
+		{
+			_mqtt->Send(FlowTopic, flowLanesJson);
+		}
+
 		//结算后认为该分钟结束，当前帧收到的数据结算到下一分钟
 		DateTime currentTime(timeStamp);
 		DateTime currentTimePoint(currentTime.Year(), currentTime.Month(), currentTime.Day(), currentTime.Hour(), currentTime.Minute(), 0);
 		_currentMinuteTimeStamp = currentTimePoint.UtcTimeStamp();
 		_lastFrameTimeStamp = _currentMinuteTimeStamp;
 		_nextMinuteTimeStamp = _currentMinuteTimeStamp + 60 * 1000;
-		if (!flowLanesJson.empty())
-		{
-			if (_mqtt != NULL)
-			{
-				_mqtt->Send(FlowTopic, flowLanesJson);
-			}
-		}
 	}
 
 	//计算当前帧

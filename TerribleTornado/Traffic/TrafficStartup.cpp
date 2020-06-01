@@ -87,7 +87,6 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
         if (detect==NULL)
         {
             e->Code = HttpCode::NotFound;
-   
         }
         else
         {
@@ -97,12 +96,14 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
     }
     else if (UrlStartWith(e->Url, "/api/update/licence"))
     {
+        LogPool::Information(LogEvent::Http, "update licence");
         string filePath("/mtd/seemmo/programs/aisdk/data/licence");
         HttpHandler::WriteFile(e->RequestJson, filePath);
         e->Code = HttpCode::OK;
     }
     else if (UrlStartWith(e->Url, "/api/update/system"))
     {
+        LogPool::Information(LogEvent::Http, "update system");
         string filePath = Path::Combine(Path::GetCurrentPath(), "service.tar");
         HttpHandler::WriteFile(e->RequestJson, filePath);
         Command::Execute("tar xf service.tar -C ../../");
