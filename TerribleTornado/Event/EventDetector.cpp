@@ -37,10 +37,11 @@ void EventDetector::UpdateChannel(const EventChannel& channel)
 				Line line = Line::FromJson(lit->Line);
 				if (!line.Empty())
 				{
-					cache.XTrend = line.Point1.X > line.Point2.X;
-					cache.YTrend = line.Point1.Y > line.Point1.Y;
+					cache.XTrend = line.Point2.X > line.Point1.X;
+					cache.YTrend = line.Point2.Y > line.Point1.Y;
+					cache.BaseAsX = abs(line.Point2.X - line.Point1.X) > abs(line.Point2.Y - line.Point1.Y);
 					_lanes.push_back(cache);
-					LogPool::Information("init lane", channel.ChannelIndex, lit->LaneIndex, cache.XTrend, cache.XTrend);
+					LogPool::Information("init lane", channel.ChannelIndex, lit->LaneIndex, line.Point2.X -line.Point1.X, line.Point2.Y - line.Point1.Y);
 					regionsParam.append(lit->Region);
 					regionsParam.append(",");
 				}
@@ -180,7 +181,6 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 								JsonSerialization::SerializeValue(&laneJson, "image2", jpgBase64);
 								JsonSerialization::AddClassItem(&lanesJson, laneJson);
 								LogPool::Debug(LogEvent::Event, _channelIndex, "park event");
-
 							}
 						}
 						else
@@ -231,37 +231,41 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 							it->second.Status = DetectStatus::In;
 							mit->second.LastTimeStamp = timeStamp;
 							if (mit->second.RetrogradePoints.size() < PointCount)
-							{
-								bool xtrend = it->second.Region.HitPoint().X > mit->second.RetrogradePoints.back().X;
-								bool ytrend = it->second.Region.HitPoint().Y > mit->second.RetrogradePoints.back().Y;
+							{								
 								double distance = it->second.Region.HitPoint().Distance(mit->second.RetrogradePoints.back());
-								if (xtrend != cache.XTrend
-									&& ytrend != cache.YTrend
-									&& distance > MovePixel)
+								if (distance > MovePixel)
 								{
-									mit->second.RetrogradePoints.push_back(it->second.Region.HitPoint());
+									bool xtrend = it->second.Region.HitPoint().X > mit->second.RetrogradePoints.back().X;
+									bool ytrend = it->second.Region.HitPoint().Y > mit->second.RetrogradePoints.back().Y;
+									if ((cache.BaseAsX && cache.XTrend!= xtrend)
+										||(!cache.BaseAsX && cache.YTrend != ytrend))
+									{
+										mit->second.RetrogradePoints.push_back(it->second.Region.HitPoint());
+									}
 								}
 							}
 							else if (mit->second.RetrogradePoints.size() == PointCount)
 							{
-								bool xtrend = it->second.Region.HitPoint().X > mit->second.RetrogradePoints.back().X;
-								bool ytrend = it->second.Region.HitPoint().Y > mit->second.RetrogradePoints.back().Y;
 								double distance = it->second.Region.HitPoint().Distance(mit->second.RetrogradePoints.back());
-								if (xtrend != cache.XTrend
-									&& ytrend != cache.YTrend
-									&& distance > MovePixel)
+								if (distance > MovePixel)
 								{
-									mit->second.RetrogradePoints.push_back(it->second.Region.HitPoint());
-									string laneJson;
-									JsonSerialization::SerializeValue(&laneJson, "channelUrl", channelUrl);
-									JsonSerialization::SerializeValue(&laneJson, "laneIndex", cache.LaneIndex);
-									JsonSerialization::SerializeValue(&laneJson, "timeStamp", timeStamp);
-									JsonSerialization::SerializeValue(&laneJson, "type", (int)EventType::Retrograde);
-									string jpgBase64;
-									DrawRetrograde(&jpgBase64, iveBuffer, mit->second.RetrogradePoints, frameIndex);
-									JsonSerialization::SerializeValue(&laneJson, "image1", jpgBase64);
-									JsonSerialization::AddClassItem(&lanesJson, laneJson);
-									LogPool::Debug(LogEvent::Event, _channelIndex, "retrograde event");
+									bool xtrend = it->second.Region.HitPoint().X > mit->second.RetrogradePoints.back().X;
+									bool ytrend = it->second.Region.HitPoint().Y > mit->second.RetrogradePoints.back().Y;
+									if ((cache.BaseAsX && cache.XTrend != xtrend)
+										|| (!cache.BaseAsX && cache.YTrend != ytrend))
+									{
+										mit->second.RetrogradePoints.push_back(it->second.Region.HitPoint());
+										string laneJson;
+										JsonSerialization::SerializeValue(&laneJson, "channelUrl", channelUrl);
+										JsonSerialization::SerializeValue(&laneJson, "laneIndex", cache.LaneIndex);
+										JsonSerialization::SerializeValue(&laneJson, "timeStamp", timeStamp);
+										JsonSerialization::SerializeValue(&laneJson, "type", (int)EventType::Retrograde);
+										string jpgBase64;
+										DrawRetrograde(&jpgBase64, iveBuffer, mit->second.RetrogradePoints, frameIndex);
+										JsonSerialization::SerializeValue(&laneJson, "image1", jpgBase64);
+										JsonSerialization::AddClassItem(&lanesJson, laneJson);
+										LogPool::Debug(LogEvent::Event, _channelIndex, "retrograde event");
+									}
 								}
 							}
 						}
@@ -271,13 +275,12 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 		}
 		cache.Congestion = carsInLane >= CarCount;
 	}
-	if (!lanesJson.empty())
+	if (!lanesJson.empty()&& _mqtt != NULL)
 	{
-		if (_mqtt != NULL)
-		{
-			_mqtt->Send(EventTopic, lanesJson);
-		}
+		_mqtt->Send(EventTopic, lanesJson);
 	}
+
+	DrawDetect(*detectItems, iveBuffer, frameIndex);
 }
 
 void EventDetector::DrawPedestrain(std::string* jpgBase64, const unsigned char* iveBuffer, const Point& point, int frameIndex)
@@ -371,3 +374,43 @@ void EventDetector::DrawRetrograde(string* jpgBase64, const unsigned char* iveBu
 		_jpgHandler.HandleFrame(_jpgBuffer, jpgSize, frameIndex);
 	}
 }
+
+void EventDetector::DrawDetect(const map<string, DetectItem>& detectItems, const unsigned char* iveBuffer, int frameIndex)
+{
+	if (!_debug)
+	{
+		return;
+	}
+	IveToBgr(iveBuffer, _width, _height, _bgrBuffer);
+	cv::Mat image(_height, _width, CV_8UC3, _bgrBuffer);
+	for (unsigned int i = 0; i < _lanes.size(); ++i)
+	{
+		EventLaneCache& cache = _lanes[i];
+		DrawPolygon(&image, cache.Region, cv::Scalar(0, 0, 255));
+	}
+	for (map<string, DetectItem>::const_iterator it = detectItems.begin(); it != detectItems.end(); ++it)
+	{
+		cv::Point point(it->second.Region.HitPoint().X, it->second.Region.HitPoint().Y);
+		cv::Scalar scalar;
+		//绿色新车
+		if (it->second.Status == DetectStatus::New)
+		{
+			scalar = cv::Scalar(0, 255, 0);
+		}
+		//黄色在区域
+		else if (it->second.Status == DetectStatus::In)
+		{
+			scalar = cv::Scalar(0, 255, 255);
+		}
+		//蓝色不在区域
+		else
+		{
+			scalar = cv::Scalar(255, 0, 0);
+		}
+		cv::circle(image, point, 10, scalar, -1);
+	}
+
+	int jpgSize = BgrToJpg(image.data, _width, _height, &_jpgBuffer);
+	_jpgHandler.HandleFrame(_jpgBuffer, jpgSize, frameIndex);
+}
+

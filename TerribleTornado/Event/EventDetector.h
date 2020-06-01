@@ -86,6 +86,8 @@ namespace OnePunchMan
 			bool XTrend;
 			//y移动的趋势，true表示正向，逆行检测
 			bool YTrend;
+			//判断的坐标系
+			bool BaseAsX;
 
 			//当前车道是否处于拥堵状态
 			bool Congestion;
@@ -132,6 +134,14 @@ namespace OnePunchMan
 		*/
 		void DrawCongestion(std::string* jpgBase64, const unsigned char* iveBuffer, int frameIndex);
 
+		/**
+		* @brief: 绘制检测区域
+		* @param: detectItems 检测项集合
+		* @param: iveBuffer ive字节流
+		* @param: frameIndex 帧序号
+		*/
+		void DrawDetect(const std::map<std::string, DetectItem>& detectItems, const unsigned char* iveBuffer, int frameIndex);
+
 		//IO mqtt主题
 		static const std::string EventTopic;
 		//数据移除的时间间隔(毫秒)
@@ -151,8 +161,6 @@ namespace OnePunchMan
 
 		//车道集合同步锁
 		std::mutex _laneMutex;
-		//mqtt
-		MqttChannel* _mqtt;
 		//车道集合
 		std::vector<EventLaneCache> _lanes;
 

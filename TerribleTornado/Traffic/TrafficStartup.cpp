@@ -317,7 +317,7 @@ void TrafficStartup::Startup()
 
     _socketMaid = new SocketMaid(2,false);
     _handler.HttpReceived.Subscribe(this);
-    if (_socketMaid->AddListenEndPoint(EndPoint(80), &_handler) == -1)
+    if (_socketMaid->AddListenEndPoint(EndPoint(7772), &_handler) == -1)
     {
         exit(2);
     }

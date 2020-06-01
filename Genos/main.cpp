@@ -39,7 +39,7 @@ int main(int argc, char* argv[])
                     }
                     FlowChannel channel = data.Get(channelIndex);
                     detector.UpdateChannel(channel);
-                    DetectChannel detect(1,1, FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, NULL, detectors);
+                    DetectChannel detect(0,1, FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, NULL, detectors);
                     DecodeChannel decode(channel.ChannelUrl, string(), channel.ChannelIndex, &detect, true);
                     detect.Start();
                     decode.Start();
@@ -86,7 +86,7 @@ int main(int argc, char* argv[])
                     }
                     EventChannel channel = data.Get(channelIndex);
                     detector.UpdateChannel(channel);
-                    DetectChannel detect(1, 1,FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, NULL, detectors);
+                    DetectChannel detect(0, 1,FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, NULL, detectors);
                     DecodeChannel decode(channel.ChannelUrl, string(), channel.ChannelIndex, &detect, true);
                     detect.Start();
                     decode.Start();

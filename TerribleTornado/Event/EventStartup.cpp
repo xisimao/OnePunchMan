@@ -23,7 +23,7 @@ void EventStartup::InitDetectors(MqttChannel* mqtt, vector<DetectChannel*>* dete
     vector<TrafficDetector*> detectors;
     for (int i = 0; i < ChannelCount; ++i)
     {
-        EventDetector* detector = new EventDetector(FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight,mqtt,false);
+        EventDetector* detector = new EventDetector(FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, mqtt, false);
         _detectors.push_back(detector);
         detectors.push_back(detector);
     }
