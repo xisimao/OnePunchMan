@@ -16,6 +16,10 @@ string Command::Execute(const std::string& cmd)
 		}
 		pclose(ptr);
 	}
+	else
+	{
+		LogPool::Error(LogEvent::System, "popen", errno);
+	}
 	return lines;
 }
 

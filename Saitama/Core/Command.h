@@ -2,6 +2,8 @@
 #include <vector>
 #include <string>
 
+#include "LogPool.h"
+
 #ifdef _WIN32
 #define popen(cmd,mode) _popen(cmd,mode)
 #define pclose(file) _pclose(file)

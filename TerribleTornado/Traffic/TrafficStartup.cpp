@@ -128,6 +128,10 @@ void TrafficStartup::GetDevice(HttpReceivedEventArgs* e)
             break;
         }
     }
+    if (diskUsed.empty() || diskTotal.empty())
+    {
+        LogPool::Warning(LogEvent::Http,"df empty", df);
+    }
 
     string channelsJson;
     for (unsigned int i = 0; i < ChannelCount; ++i)
