@@ -25,6 +25,8 @@ namespace OnePunchMan
 		*/
 		void HandleFrame(unsigned char* frame, int size);
 
+		void Close();
+
 	private:
 		//当前写入数量
 		int _index;

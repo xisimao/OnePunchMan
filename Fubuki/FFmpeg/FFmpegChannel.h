@@ -67,8 +67,16 @@ namespace OnePunchMan
 		*/
 		static void UninitFFmpeg();
 
+		/**
+		* @brief: 获取通道地址
+		* @param: inputUrl 视频源地址
+		* @param: outputUrl rtmp输出地址		
+		*/
 		void UpdateChannel(const std::string& inputUrl, const std::string& outputUrl);
 
+		/**
+		* @brief: 清空通道
+		*/
 		void ClearChannel();
 
 		/**

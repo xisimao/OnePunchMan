@@ -23,7 +23,6 @@ void FFmpegChannel::InitFFmpeg()
 	av_register_all();
 	avcodec_register_all();
 	avformat_network_init();
-	avformat_network_init();
 	av_log_set_level(AV_LOG_INFO);
 	LogPool::Information(LogEvent::Decode, "init ffmpeg sdk");
 }
@@ -84,7 +83,6 @@ ChannelStatus FFmpegChannel::InitInput(const string& inputUrl)
 	{
 		if (_inputFormat == NULL)
 		{
-			_inputFormat = avformat_alloc_context();
 			if (avformat_open_input(&_inputFormat, inputUrl.c_str(), NULL, &_options) != 0) {
 				LogPool::Error(LogEvent::Decode, "avformat_open_input", inputUrl);
 				UninitInput();
@@ -179,8 +177,9 @@ ChannelStatus FFmpegChannel::InitOutput(const string& outputUrl)
 void FFmpegChannel::UninitInput()
 {
 	if (_inputFormat != NULL) {
+		_inputVideoIndex = -1;
+		_inputStream = NULL;
 		avformat_close_input(&_inputFormat);
-		avformat_free_context(_inputFormat);
 		_inputFormat = NULL;
 	}
 }
@@ -192,13 +191,15 @@ void FFmpegChannel::UninitOutput()
 		if (_outputFormat->pb != NULL)
 		{
 			av_write_trailer(_outputFormat);
-			avio_close(_outputFormat->pb);
+			avio_closep(&_outputFormat->pb);
 		}	
 		if (_outputCodec != NULL)
 		{
-			avcodec_close(_outputCodec);
+			avcodec_free_context(&_outputCodec);
 		}
 		avformat_free_context(_outputFormat);
+		_outputCodec = NULL;
+		_outputStream = NULL;
 		_outputFormat = NULL;
 	}
 }
@@ -306,10 +307,7 @@ DecodeResult FFmpegChannel::Decode(const AVPacket* packet, int frameIndex, int f
 
 void FFmpegChannel::StartCore()
 {
-	AVPacket packet;
-	av_init_packet(&packet);
-	packet.data = NULL;
-	packet.size = 0;
+	AVPacket* packet= av_packet_alloc();
 	int frameTimeSpan = 0;
 	long long duration = 0;
 	int frameIndex = 1;
@@ -332,13 +330,14 @@ void FFmpegChannel::StartCore()
 				frameTimeSpan = 1000 /(_inputStream->avg_frame_rate.num/ _inputStream->avg_frame_rate.den);
 			}
 			long long timeStamp1 = DateTime::UtcNowTimeStamp();
-			int readResult = av_read_frame(_inputFormat, &packet);
+			int readResult = av_read_frame(_inputFormat, packet);
 			if (readResult == AVERROR_EOF)
 			{
 				Decode(NULL, 0, frameTimeSpan);
 				if (_debug)
 				{
 					LogPool::Information(LogEvent::Decode, "read eof", inputUrl);
+					av_packet_unref(packet);
 					break;
 				}
 				else
@@ -350,15 +349,16 @@ void FFmpegChannel::StartCore()
 			}
 			else if (readResult == 0)
 			{
-				if (packet.stream_index == _inputVideoIndex)
+				if (packet->stream_index == _inputVideoIndex)
 				{
 					long long timeStamp2 = DateTime::UtcNowTimeStamp();
-					DecodeResult decodeResult = Decode(&packet, frameIndex, frameTimeSpan);
+					DecodeResult decodeResult = Decode(packet, frameIndex, frameTimeSpan);
 					long long timeStamp3 = DateTime::UtcNowTimeStamp();
 					if (decodeResult == DecodeResult::Error)
 					{
 						LogPool::Error(LogEvent::Decode, "decode error", inputUrl, frameIndex);
 						_channelStatus = ChannelStatus::DecodeError;
+						av_packet_unref(packet);
 						break;
 					}
 					else if (decodeResult == DecodeResult::Handle)
@@ -370,11 +370,11 @@ void FFmpegChannel::StartCore()
 
 					if (_outputFormat != NULL)
 					{
-						packet.pts = packet.pts == AV_NOPTS_VALUE ? duration + frameIndex * frameTimeSpan : duration + av_rescale_q_rnd(packet.pts, _inputStream->time_base, _outputStream->time_base, (AVRounding)(AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
-						packet.dts = duration + av_rescale_q_rnd(packet.dts, _inputStream->time_base, _outputStream->time_base, (AVRounding)(AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
-						packet.duration = av_rescale_q(packet.duration, _inputStream->time_base, _outputStream->time_base);
-						packet.pos = -1;
-						av_write_frame(_outputFormat, &packet);
+						packet->pts = packet->pts == AV_NOPTS_VALUE ? duration + frameIndex * frameTimeSpan : duration + av_rescale_q_rnd(packet->pts, _inputStream->time_base, _outputStream->time_base, (AVRounding)(AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
+						packet->dts = duration + av_rescale_q_rnd(packet->dts, _inputStream->time_base, _outputStream->time_base, (AVRounding)(AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
+						packet->duration = av_rescale_q(packet->duration, _inputStream->time_base, _outputStream->time_base);
+						packet->pos = -1;
+						av_interleaved_write_frame(_outputFormat, packet);
 					}
 					long long timeStamp4 = DateTime::UtcNowTimeStamp();
 					long long sleepTime = frameTimeSpan - (timeStamp4 - timeStamp2);
@@ -385,13 +385,13 @@ void FFmpegChannel::StartCore()
 					LogPool::Debug(LogEvent::Decode, "frame", inputUrl, frameIndex, static_cast<int>(decodeResult),timeStamp2-timeStamp1,timeStamp3-timeStamp2,timeStamp4-timeStamp3);
 					frameIndex += 1;
 				}
-				av_packet_unref(&packet);
 			}
 			else
 			{
 				LogPool::Error(LogEvent::Decode, "read error", inputUrl, frameIndex, readResult);
 				_channelStatus = ChannelStatus::ReadError;
 			}
+			av_packet_unref(packet);
 		}
 		else
 		{
@@ -432,8 +432,10 @@ void FFmpegChannel::StartCore()
 			{
 				this_thread::sleep_for(chrono::milliseconds(ConnectSpan));
 			}
+			this_thread::sleep_for(chrono::milliseconds(1000));
 		}
 	}
+	av_packet_free(&packet);
 	UninitDecoder();
 	UninitInput();
 	UninitOutput();

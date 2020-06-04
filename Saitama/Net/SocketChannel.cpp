@@ -70,8 +70,8 @@ void SocketChannel::MoveTempSockets()
 			{
 				//只有tcp的handler是复制的listen和udp都是传入
 				//tcp handler复制只在accpet和connect时触发
-				if ((data.Type == SocketType::Accept|| data.Type == SocketType::Connect)&&
-					_sockets[data.Socket].Handler != NULL)
+				if ((data.Type == SocketType::Accept|| data.Type == SocketType::Connect)
+					&&_sockets[data.Socket].Handler != NULL)
 				{
 					delete _sockets[data.Socket].Handler;
 				}
