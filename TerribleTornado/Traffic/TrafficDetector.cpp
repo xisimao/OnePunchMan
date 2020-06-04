@@ -13,14 +13,14 @@ TrafficDetector::TrafficDetector(int width, int height, MqttChannel* mqtt, bool 
 	_bgrSize = _width * _height * 3;
 	_bgrBuffer = new unsigned char[_bgrSize];
 
-	_jpgSize = _width * _height;
-	_jpgBuffer = new unsigned char[_jpgSize];
+	_jpgSize = static_cast<int>(tjBufSize(1920, 1080, TJSAMP_422));
+	_jpgBuffer = tjAlloc(_jpgSize);
 
 }
 
 TrafficDetector::~TrafficDetector()
 {
-	delete[] _jpgBuffer;
+	tjFree(_jpgBuffer);
 	delete[] _bgrBuffer;
 }
 
@@ -43,14 +43,21 @@ void TrafficDetector::IveToBgr(const unsigned char* iveBuffer, int width, int he
 	}
 }
 
-int TrafficDetector::BgrToJpg(const unsigned char* bgrBuffer, int width, int height, unsigned char** jpgBuffer)
+int TrafficDetector::BgrToJpg(const unsigned char* bgrBuffer, int width, int height, unsigned char** jpgBuffer,int jpgSize)
 {
+	unsigned char* tempJpgBuffer = *jpgBuffer;
 	//jpg×ª»»
 	tjhandle jpgHandle = tjInitCompress();
-	unsigned long jpgSize=0;
-	tjCompress2(jpgHandle, bgrBuffer, width, 0, height, TJPF_BGR, jpgBuffer, &jpgSize, TJSAMP_422, 10, 0);
+	unsigned long tempJpgSize = jpgSize;
+	tjCompress2(jpgHandle, bgrBuffer, width, 0, height, TJPF_BGR, jpgBuffer, &tempJpgSize, TJSAMP_422, 10, TJFLAG_NOREALLOC);
+	if (tempJpgBuffer != *jpgBuffer)
+	{
+		LogPool::Error(LogEvent::Detect, "jpg memory leak");
+		free(*jpgBuffer);
+		*jpgBuffer = tempJpgBuffer;
+	}
 	tjDestroy(jpgHandle);
-	return static_cast<int>(jpgSize);
+	return static_cast<int>(tempJpgSize);
 }
 
 void TrafficDetector::JpgToBase64(string* base64,const unsigned char* jpgBuffer, int jpgSize)

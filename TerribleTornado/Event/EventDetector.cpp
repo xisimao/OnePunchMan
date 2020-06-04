@@ -298,7 +298,7 @@ void EventDetector::DrawPedestrain(std::string* jpgBase64, const unsigned char* 
 	}
 	//绿色行人点
 	DrawPoint(&image, point, cv::Scalar(0, 255, 0));
-	int jpgSize = BgrToJpg(image.data, _width, _height, &_jpgBuffer);
+	int jpgSize = BgrToJpg(image.data, _width, _height, &_jpgBuffer, _jpgSize);
 	JpgToBase64(jpgBase64, _jpgBuffer, jpgSize);
 	if (_debug)
 	{
@@ -321,7 +321,7 @@ void EventDetector::DrawPark(std::string* jpgBase64, const unsigned char* iveBuf
 	}
 	//绿色检测车点
 	DrawPoint(&image, point, cv::Scalar(0, 255, 0));
-	int jpgSize = BgrToJpg(image.data, _width, _height, &_jpgBuffer);
+	int jpgSize = BgrToJpg(image.data, _width, _height, &_jpgBuffer,_jpgSize);
 	JpgToBase64(jpgBase64, _jpgBuffer, jpgSize);	
 	if (_debug)
 	{
@@ -339,7 +339,7 @@ void EventDetector::DrawCongestion(string* jpgBase64, const unsigned char* iveBu
 		EventLaneCache& cache = _lanes[i];
 		DrawPolygon(&image, cache.Region, cv::Scalar(0, 0, 255));
 	}
-	int jpgSize = BgrToJpg(image.data, _width, _height, &_jpgBuffer);
+	int jpgSize = BgrToJpg(image.data, _width, _height, &_jpgBuffer, _jpgSize);
 	JpgToBase64(jpgBase64, _jpgBuffer, jpgSize);
 	if (_debug)
 	{
@@ -367,7 +367,7 @@ void EventDetector::DrawRetrograde(string* jpgBase64, const unsigned char* iveBu
 		DrawPoint(&image, points[i], cv::Scalar(0, 255, 0));
 	}
 
-	int jpgSize = BgrToJpg(image.data, _width, _height, &_jpgBuffer);
+	int jpgSize = BgrToJpg(image.data, _width, _height, &_jpgBuffer, _jpgSize);
 	JpgToBase64(jpgBase64, _jpgBuffer, jpgSize);
 	if (_debug)
 	{
@@ -410,7 +410,7 @@ void EventDetector::DrawDetect(const map<string, DetectItem>& detectItems, const
 		cv::circle(image, point, 10, scalar, -1);
 	}
 
-	int jpgSize = BgrToJpg(image.data, _width, _height, &_jpgBuffer);
+	int jpgSize = BgrToJpg(image.data, _width, _height, &_jpgBuffer, _jpgSize);
 	_jpgHandler.HandleFrame(_jpgBuffer, jpgSize, frameIndex);
 }
 

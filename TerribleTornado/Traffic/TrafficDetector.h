@@ -192,10 +192,11 @@ namespace OnePunchMan
 		* @param: bgrBuffer bgr字节流
 		* @param: width 图片宽度
 		* @param: height 图片高度
-		* @param: jpgBuffer 写入的jpg字节流
+		* @param: jpgBuffer 用于写入的jpg字节流
+		* @param: jpgSize 用于写入的jpg字节流长度
 		* @return: jpg字节流的长度
 		*/
-		static int BgrToJpg(const unsigned char* bgrBuffer, int width, int height, unsigned char** jpgBuffer);
+		static int BgrToJpg(const unsigned char* bgrBuffer, int width, int height, unsigned char** jpgBuffer, int jpgSize);
 
 		/**
 		* @brief: hisi ive_8uc3转bgr

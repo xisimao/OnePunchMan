@@ -322,7 +322,7 @@ bool FlowDetector::ContainsRecogn(string* json,const RecognItem& recognItem, con
 			JsonSerialization::SerializeValue(json, "laneId", _recognLanes[i].LaneId);
 			JsonSerialization::SerializeValue(json, "timeStamp", timeStamp);
 			IveToBgr(iveBuffer, recognItem.Width, recognItem.Height, _bgrBuffer);
-			int jpgSize = BgrToJpg(_bgrBuffer, recognItem.Width, recognItem.Height, &_jpgBuffer);
+			int jpgSize = BgrToJpg(_bgrBuffer, recognItem.Width, recognItem.Height, &_jpgBuffer, _jpgSize);
 			string image;
 			JpgToBase64(&image, _jpgBuffer, jpgSize);
 			JsonSerialization::SerializeValue(json, "image", image);
@@ -416,7 +416,7 @@ void FlowDetector::DrawDetect(const map<string, DetectItem>& detectItems, const 
 		cv::circle(image, point, 10 , scalar, -1);
 	}
 
-	int jpgSize = BgrToJpg(image.data, _width, _height,&_jpgBuffer);
+	int jpgSize = BgrToJpg(image.data, _width, _height,&_jpgBuffer, _jpgSize);
 	_jpgHandler.HandleFrame(_jpgBuffer, jpgSize, frameIndex);
 }
 

@@ -7,6 +7,14 @@ using namespace OnePunchMan;
 
 int main(int argc, char* argv[])
 {
+    unsigned char* bgrBuffer = new unsigned char[1920*1080*3];
+    int size = tjBufSize(1920, 1080, TJSAMP_422);
+    unsigned char* jpgBuffer=tjAlloc(size);
+    while (true)
+    {
+        TrafficDetector::BgrToJpg(bgrBuffer, 1920, 1080, &jpgBuffer,size);
+    }
+  
     LogPool::Init("appsettings.json");
     FFmpegChannel::InitFFmpeg();
     DecodeChannel channel(1,false);

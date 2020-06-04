@@ -432,7 +432,6 @@ void FFmpegChannel::StartCore()
 			{
 				this_thread::sleep_for(chrono::milliseconds(ConnectSpan));
 			}
-			this_thread::sleep_for(chrono::milliseconds(1000));
 		}
 	}
 	av_packet_free(&packet);

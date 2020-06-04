@@ -13,7 +13,7 @@ EventStartup::~EventStartup()
 
 void EventStartup::InitSoftVersion()
 {
-    _softwareVersion = "1.0.0.1";
+    _softwareVersion = "1.0.0.2";
     EventChannelData data;
     data.SetVersion(_softwareVersion);
 }
