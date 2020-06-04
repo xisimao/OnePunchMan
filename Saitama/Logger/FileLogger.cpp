@@ -102,9 +102,10 @@ void FileLogger::Close()
 
 void FileLogger::LogCore(const std::string& log)
 {
-	if (_date != DateTime::Today())
+	DateTime today = DateTime::Today();
+	if (_date != today)
 	{
-		_date = DateTime::Today();
+		_date = today;
 		Close();
 		DeleteLog(_directory, _holdDays);
 		Open();
