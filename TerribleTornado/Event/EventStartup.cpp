@@ -13,7 +13,7 @@ EventStartup::~EventStartup()
 
 void EventStartup::InitSoftVersion()
 {
-    _softwareVersion = "1.0.0.2";
+    _softwareVersion = "1.0.0.3";
     EventChannelData data;
     data.SetVersion(_softwareVersion);
 }
@@ -31,7 +31,7 @@ void EventStartup::InitThreads(MqttChannel* mqtt, vector<DecodeChannel*>* decode
 
     for (int i = 0; i < DetectCount; ++i)
     {
-        DetectChannel* detect = new DetectChannel(i, FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight);
+        DetectChannel* detect = new DetectChannel(i, FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight,true);
         detects->push_back(detect);
     }
 

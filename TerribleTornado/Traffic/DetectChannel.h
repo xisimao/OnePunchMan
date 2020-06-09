@@ -16,8 +16,9 @@ namespace OnePunchMan
 		* @param: detectIndex 检测序号
 		* @param: width 视频解码后宽度
 		* @param: height 视频解码后高度
+		* @param: needEncode 是否需要编码
 		*/
-		DetectChannel(int detectIndex,int width, int height);
+		DetectChannel(int detectIndex,int width, int height, bool needEncode);
 
 		/**
 		* @brief: 当前检测线程是否未初始化
@@ -92,6 +93,8 @@ namespace OnePunchMan
 		int _width;
 		//图片高度
 		int _height;
+		//是否序号编码
+		bool _needEncode;
 		//视频帧数据
 		std::vector<ChannelItem> _channelItems;
 		//检测线程

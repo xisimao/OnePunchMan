@@ -9,10 +9,11 @@ enum class LogEvent :int
 	Mqtt = 3,
 	Sqlite=4,
 	Decode =5,
-	Detect=6,
-	Recogn=7,
-	Flow=8,
-	Event=9,
-	Adapter=10,
-	Http=11
+	Encode=6,
+	Detect=7,
+	Recogn=8,
+	Flow=9,
+	Event=10,
+	Adapter=11,
+	Http=12
 };

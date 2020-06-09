@@ -1,10 +1,9 @@
 #pragma once
-#include "turbojpeg.h"
-#include "opencv2/opencv.hpp"
-
 #include "Shape.h"
 #include "MqttChannel.h"
 #include "JPGHandler.h"
+
+#include "turbojpeg.h"
 
 namespace OnePunchMan
 {
@@ -152,7 +151,7 @@ namespace OnePunchMan
 		* @param: frameIndex 帧序号
 		* @param: frameSpan 帧间隔时间(毫秒)
 		*/
-		virtual void HandleDetect(std::map<std::string, DetectItem>* detectItems, long long timeStamp, std::string* param, const unsigned char* iveBuffer, int frameIndex,int frameSpan) = 0;
+		virtual void HandleDetect(std::map<std::string, DetectItem>* detectItems, long long timeStamp, std::string* param, const unsigned char* iveBuffer, const unsigned char* yuvBuffer, int frameIndex,int frameSpan) = 0;
 
 		/**
 		* @brief: 处理机动车识别数据
@@ -177,48 +176,6 @@ namespace OnePunchMan
 		* @param: pedestrain 行人识别数据
 		*/
 		virtual void HandleRecognPedestrain(const RecognItem& recognItem, const unsigned char* iveBuffer, const VideoStruct_Pedestrain& pedestrain) {}
-
-		/**
-		* @brief: hisi ive_8uc3转bgr
-		* @param: iveBuffer ive字节流
-		* @param: width 图片宽度
-		* @param: height 图片高度
-		* @param: bgrBuffer 写入的bgr字节流
-		*/
-		static void IveToBgr(const unsigned char* iveBuffer, int width, int height, unsigned char* bgrBuffer);
-		
-		/**
-		* @brief: bgr转jpg
-		* @param: bgrBuffer bgr字节流
-		* @param: width 图片宽度
-		* @param: height 图片高度
-		* @param: jpgBuffer 用于写入的jpg字节流
-		* @param: jpgSize 用于写入的jpg字节流长度
-		* @return: jpg字节流的长度
-		*/
-		static int BgrToJpg(const unsigned char* bgrBuffer, int width, int height, unsigned char** jpgBuffer, int jpgSize);
-
-		/**
-		* @brief: hisi ive_8uc3转bgr
-		* @param: base64 用于存放base64字符串
-		* @param: jpgBuffer jpg字节流
-		* @param: jpgSize jpg字节流长度
-		*/
-		static void JpgToBase64(std::string* base64,const unsigned char* jpgBuffer, int jpgSize);
-
-		/**
-		* @brief: 绘制检测区域
-		* @param: image 绘制的图片
-		* @param: polygon 多边形
-		*/
-		static void DrawPolygon(cv::Mat* image,const Polygon& polygon, const cv::Scalar& scalar);
-
-		/**
-		* @brief: 绘制检测点
-		* @param: image 绘制的图片
-		* @param: point 点
-		*/
-		static void DrawPoint(cv::Mat* image, const Point& point,const cv::Scalar& scalar);
 
 	protected:
 		//视频序号

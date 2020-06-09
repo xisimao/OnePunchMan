@@ -73,6 +73,9 @@
     <ClCompile Include="..\TerribleTornado\Flow\FlowStartup.cpp" />
     <ClCompile Include="..\TerribleTornado\Traffic\DecodeChannel.cpp" />
     <ClCompile Include="..\TerribleTornado\Traffic\DetectChannel.cpp" />
+    <ClCompile Include="..\TerribleTornado\Traffic\EncodeHandler.cpp" />
+    <ClCompile Include="..\TerribleTornado\Traffic\ImageConvert.cpp" />
+    <ClCompile Include="..\TerribleTornado\Traffic\ImageHandler.cpp" />
     <ClCompile Include="..\TerribleTornado\Traffic\RecognChannel.cpp" />
     <ClCompile Include="..\TerribleTornado\Traffic\SeemmoSDK.cpp" />
     <ClCompile Include="..\TerribleTornado\Traffic\TrafficDetector.cpp" />
@@ -122,6 +125,9 @@
     <ClInclude Include="..\TerribleTornado\Flow\FlowStartup.h" />
     <ClInclude Include="..\TerribleTornado\Traffic\DecodeChannel.h" />
     <ClInclude Include="..\TerribleTornado\Traffic\DetectChannel.h" />
+    <ClInclude Include="..\TerribleTornado\Traffic\EncodeHandler.h" />
+    <ClInclude Include="..\TerribleTornado\Traffic\ImageConvert.h" />
+    <ClInclude Include="..\TerribleTornado\Traffic\ImageHandler.h" />
     <ClInclude Include="..\TerribleTornado\Traffic\RecognChannel.h" />
     <ClInclude Include="..\TerribleTornado\Traffic\SeemmoSDK.h" />
     <ClInclude Include="..\TerribleTornado\Traffic\TrafficData.h" />

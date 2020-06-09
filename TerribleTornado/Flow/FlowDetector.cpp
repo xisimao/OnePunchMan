@@ -86,7 +86,7 @@ void FlowDetector::ClearChannel()
 	_recognChannelUrl = string();
 }
 
-void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long timeStamp, string* param, const unsigned char* iveBuffer, int frameIndex, int frameSpan)
+void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long timeStamp, string* param, const unsigned char* iveBuffer, const unsigned char* yuvBuffer, int frameIndex, int frameSpan)
 {
 	if (_debug)
 	{
@@ -321,10 +321,10 @@ bool FlowDetector::ContainsRecogn(string* json,const RecognItem& recognItem, con
 			JsonSerialization::SerializeValue(json, "channelUrl", _recognChannelUrl);
 			JsonSerialization::SerializeValue(json, "laneId", _recognLanes[i].LaneId);
 			JsonSerialization::SerializeValue(json, "timeStamp", timeStamp);
-			IveToBgr(iveBuffer, recognItem.Width, recognItem.Height, _bgrBuffer);
-			int jpgSize = BgrToJpg(_bgrBuffer, recognItem.Width, recognItem.Height, &_jpgBuffer, _jpgSize);
-			string image;
-			JpgToBase64(&image, _jpgBuffer, jpgSize);
+			ImageConvert::IveToBgr(iveBuffer, recognItem.Width, recognItem.Height, _bgrBuffer);
+			int jpgSize = ImageConvert::BgrToJpg(_bgrBuffer, recognItem.Width, recognItem.Height, &_jpgBuffer, _jpgSize);
+			string image("data:image/jpg;base64,");
+			StringEx::ToBase64String(_jpgBuffer, jpgSize, &image);
 			JsonSerialization::SerializeValue(json, "image", image);
 			LogPool::Debug(LogEvent::Detect, "lane:", _recognLanes[i].LaneId, "type:", recognItem.Type);
 			return true;
@@ -387,12 +387,12 @@ void FlowDetector::DrawDetect(const map<string, DetectItem>& detectItems, const 
 	{
 		return;
 	}
-	IveToBgr(iveBuffer,_width,_height,_bgrBuffer);
+	ImageConvert::IveToBgr(iveBuffer,_width,_height,_bgrBuffer);
 	cv::Mat image(_height, _width, CV_8UC3, _bgrBuffer);
 	for (unsigned int i = 0; i < _detectLanes.size(); ++i)
 	{
 		FlowLaneCache& cache = _detectLanes[i];
-		DrawPolygon(&image, cache.Region, cv::Scalar(0, 0, 255));
+		ImageConvert::DrawPolygon(&image, cache.Region, cv::Scalar(0, 0, 255));
 	}
 	for (map<string, DetectItem>::const_iterator it = detectItems.begin(); it != detectItems.end(); ++it)
 	{
@@ -416,7 +416,7 @@ void FlowDetector::DrawDetect(const map<string, DetectItem>& detectItems, const 
 		cv::circle(image, point, 10 , scalar, -1);
 	}
 
-	int jpgSize = BgrToJpg(image.data, _width, _height,&_jpgBuffer, _jpgSize);
+	int jpgSize = ImageConvert::BgrToJpg(image.data, _width, _height,&_jpgBuffer, _jpgSize);
 	_jpgHandler.HandleFrame(_jpgBuffer, jpgSize, frameIndex);
 }
 

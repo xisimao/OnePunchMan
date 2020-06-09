@@ -37,7 +37,7 @@ void FlowStartup::InitThreads(MqttChannel* mqtt, vector<DecodeChannel*>* decodes
 
     for (int i = 0; i < DetectCount; ++i)
     {
-        DetectChannel* detect = new DetectChannel(i,FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight);
+        DetectChannel* detect = new DetectChannel(i,FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight,false);
         detects->push_back(detect);
     }
 

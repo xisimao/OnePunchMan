@@ -13,7 +13,7 @@ FFmpegChannel::FFmpegChannel(bool debug)
 	, _outputUrl(), _outputFormat(NULL), _outputStream(NULL), _outputCodec(NULL)
 	, _channelStatus(ChannelStatus::Init), _options(NULL), _sourceWidth(0), _sourceHeight(0)
 	, _decodeContext(NULL), _yuvFrame(NULL), _bgrFrame(NULL), _bgrBuffer(NULL), _bgrSwsContext(NULL)
-	, _lastframeIndex(0), _frameSpan(0)
+	, _lastframeIndex(0), _frameSpan(0), _bgrHandler(8), _yuv420SPHandler(-1)
 {
 
 }
@@ -233,13 +233,13 @@ ChannelStatus FFmpegChannel::InitDecoder(const string& inputUrl)
 
 	//yuvתrgb
 	_bgrFrame = av_frame_alloc();
-	_bgrBuffer = (uint8_t*)av_malloc(av_image_get_buffer_size(AV_PIX_FMT_BGR24, DestinationWidth, DestinationHeight, 1));
-	if (av_image_fill_arrays(_bgrFrame->data, _bgrFrame->linesize, _bgrBuffer, AV_PIX_FMT_BGR24, DestinationWidth, DestinationHeight, 1) < 0)
+	_bgrBuffer = (uint8_t*)av_malloc(av_image_get_buffer_size(AV_PIX_FMT_NV12, DestinationWidth, DestinationHeight, 1));
+	if (av_image_fill_arrays(_bgrFrame->data, _bgrFrame->linesize, _bgrBuffer, AV_PIX_FMT_NV12, DestinationWidth, DestinationHeight, 1) < 0)
 	{
 		LogPool::Warning(LogEvent::Decode, "av_image_fill_arrays error");
 		return ChannelStatus::DecoderError;
 	}
-	_bgrSwsContext = sws_getContext(_decodeContext->width, _decodeContext->height, _decodeContext->pix_fmt, DestinationWidth, DestinationHeight, AV_PIX_FMT_BGR24,
+	_bgrSwsContext = sws_getContext(_decodeContext->width, _decodeContext->height, _decodeContext->pix_fmt, DestinationWidth, DestinationHeight, AV_PIX_FMT_NV12,
 		SWS_FAST_BILINEAR, NULL, NULL, NULL);
 	if (_bgrSwsContext == NULL)
 	{
@@ -293,7 +293,7 @@ DecodeResult FFmpegChannel::Decode(const AVPacket* packet, int frameIndex, int f
 					_yuvFrame->linesize, 0, _decodeContext->height,
 					_bgrFrame->data, _bgrFrame->linesize) != 0)
 				{
-					_bgrHandler.HandleFrame(_bgrFrame->data[0], DestinationWidth, DestinationHeight, frameIndex);
+					_yuv420SPHandler.HandleFrame(_bgrFrame->data[0], DestinationWidth, DestinationHeight, frameIndex);
 				}
 			}
 		}
@@ -327,7 +327,14 @@ void FFmpegChannel::StartCore()
 		{
 			if (frameTimeSpan == 0)
 			{
-				frameTimeSpan = 1000 /(_inputStream->avg_frame_rate.num/ _inputStream->avg_frame_rate.den);
+				if (_inputStream->avg_frame_rate.den != 0)
+				{
+					frameTimeSpan = 1000 / (_inputStream->avg_frame_rate.num / _inputStream->avg_frame_rate.den);
+				}
+				else if (_inputStream->r_frame_rate.den != 0)
+				{
+					frameTimeSpan = 1000 / (_inputStream->r_frame_rate.num / _inputStream->r_frame_rate.den);
+				}
 			}
 			long long timeStamp1 = DateTime::UtcNowTimeStamp();
 			int readResult = av_read_frame(_inputFormat, packet);

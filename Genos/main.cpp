@@ -39,7 +39,7 @@ int main(int argc, char* argv[])
                     detector.UpdateChannel(channel);
                     DecodeChannel decode(channel.ChannelIndex, true);
                     decode.UpdateChannel(channel.ChannelUrl,string());
-                    DetectChannel detect(0,FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight);
+                    DetectChannel detect(0,FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight,false);
                     detect.AddChannel(channelIndex, &decode, &detector);                
                     detect.Start();
                     decode.Start();
@@ -86,7 +86,7 @@ int main(int argc, char* argv[])
                     detector.UpdateChannel(channel);
                     DecodeChannel decode(channel.ChannelIndex, true);
                     decode.UpdateChannel(channel.ChannelUrl, string());
-                    DetectChannel detect(0, FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight);
+                    DetectChannel detect(0, FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight,true);
                     detect.AddChannel(channelIndex, &decode, &detector);
                     detect.Start();
                     decode.Start();

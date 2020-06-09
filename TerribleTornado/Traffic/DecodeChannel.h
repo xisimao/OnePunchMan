@@ -60,12 +60,14 @@ namespace OnePunchMan
 	{
 	public:
 		FrameItem()
-			:IveBuffer(NULL),FrameIndex(0), FrameSpan(0)
+			:IveBuffer(NULL), YuvBuffer(NULL),FrameIndex(0), FrameSpan(0)
 		{
 
 		}
 		//ive字节流
 		unsigned char* IveBuffer;
+		//yuv字节流
+		unsigned char* YuvBuffer;
 		//帧序号
 		int FrameIndex;
 		//帧率
@@ -103,9 +105,10 @@ namespace OnePunchMan
 
 		/**
 		* @brief: 获取临时存放的ive数据
+		* @param: needYuv 是否需要对应的yuv数据
 		* @return: ive帧数据
 		*/
-		FrameItem GetTempIve();
+		FrameItem GetTempIve(bool needYuv);
 
 		/**
 		* @brief: 将下一帧视频写入到bmp
@@ -148,6 +151,8 @@ namespace OnePunchMan
 		//yuv操作时字节流
 		unsigned long long _yuv_phy_addr;
 		uint8_t* _yuvBuffer;
+		//yuv临时字节流
+		uint8_t* _tempYuvBuffer;
 
 		//ive操作时字节流
 		int _iveSize;

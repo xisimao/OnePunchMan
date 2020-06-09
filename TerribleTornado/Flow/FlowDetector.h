@@ -1,6 +1,7 @@
 #pragma once
 #include "FlowData.h"
 #include "TrafficDetector.h"
+#include "ImageConvert.h"
 
 namespace OnePunchMan
 {
@@ -28,7 +29,7 @@ namespace OnePunchMan
 		*/
 		void ClearChannel();
 
-		void HandleDetect(std::map<std::string, DetectItem>* detectItems, long long timeStamp, std::string* param, const unsigned char* iveBuffer, int frameIndex,int frameSpan);
+		void HandleDetect(std::map<std::string, DetectItem>* detectItems, long long timeStamp, std::string* param, const unsigned char* iveBuffer, const unsigned char* yuvBuffer,int frameIndex,int frameSpan);
 		
 		void HandleRecognVehicle(const RecognItem& recognItem, const unsigned char* iveBuffer, const VideoStruct_Vehicle& vehicle);
 		
@@ -181,6 +182,7 @@ namespace OnePunchMan
 		std::string _recognChannelUrl;
 		//识别车道集合
 		std::vector<FlowLaneCache> _recognLanes;
+
 	};
 
 }

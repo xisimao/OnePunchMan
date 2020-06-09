@@ -9,6 +9,8 @@ DecodeChannel::DecodeChannel(int channelIndex, bool debug)
 	, _iveSize(DestinationWidth* DestinationHeight * 3), _ive_phy_addr(0), _iveBuffer(NULL)
 	, _iveHandler(-1)
 {
+	_tempYuvBuffer = new unsigned char[_yuvSize];
+
 #ifndef _WIN32
 	if (HI_MPI_SYS_MmzAlloc_Cached(reinterpret_cast<HI_U64*>(&_yuv_phy_addr),
 		reinterpret_cast<HI_VOID**>(&_yuvBuffer),
@@ -27,6 +29,7 @@ DecodeChannel::DecodeChannel(int channelIndex, bool debug)
 		exit(2);
 	}
 #endif // !_WIN32
+
 }
 
 DecodeChannel::~DecodeChannel()
@@ -35,6 +38,7 @@ DecodeChannel::~DecodeChannel()
 	HI_MPI_SYS_MmzFree(_yuv_phy_addr, reinterpret_cast<HI_VOID*>(_yuvBuffer));
 	HI_MPI_SYS_MmzFree(_ive_phy_addr, reinterpret_cast<HI_VOID*>(_iveBuffer));
 #endif // !_WIN32
+	delete[] _tempYuvBuffer;
 }
 
 bool DecodeChannel::InitHisi(int videoCount)
@@ -949,12 +953,17 @@ bool DecodeChannel::SetTempIve(const unsigned char* yuv, int frameIndex)
 	}
 }
 
-FrameItem DecodeChannel::GetTempIve()
+FrameItem DecodeChannel::GetTempIve(bool needYuv)
 {
 	FrameItem item;
-	if (_yuvHasValue && YuvToIve())
+	if (_yuvHasValue&& YuvToIve())
 	{
+		if (needYuv)
+		{
+			memcpy(_tempYuvBuffer, _yuvBuffer, _yuvSize);
+		}
 		item.IveBuffer = _iveBuffer;
+		item.YuvBuffer = _tempYuvBuffer;
 		item.FrameIndex = _frameIndex;
 		item.FrameSpan = FrameSpan();
 		_yuvHasValue = false;
