@@ -15,6 +15,18 @@ FlowDetector::FlowDetector(int width, int height, MqttChannel* mqtt, bool debug)
 	DateTime now = DateTime::Now();
 	_currentMinuteTimeStamp = DateTime(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), 0).UtcTimeStamp();
 	_nextMinuteTimeStamp = _currentMinuteTimeStamp + 60 * 1000;
+
+	_bgrSize = _width * _height * 3;
+	_bgrBuffer = new unsigned char[_bgrSize];
+	_jpgSize = static_cast<int>(tjBufSize(1920, 1080, TJSAMP_422));
+	_jpgBuffer = tjAlloc(_jpgSize);
+
+}
+
+FlowDetector::~FlowDetector()
+{
+	tjFree(_jpgBuffer);
+	delete[] _bgrBuffer;
 }
 
 void FlowDetector::UpdateChannel(const FlowChannel& channel)
@@ -303,7 +315,7 @@ void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long 
 			_mqtt->Send(IOTopic, ioLanesJson);
 		}
 	}
-	DrawDetect(*detectItems, iveBuffer, frameIndex);
+	//DrawDetect(*detectItems, iveBuffer, frameIndex);
 }
 
 bool FlowDetector::ContainsRecogn(string* json,const RecognItem& recognItem, const unsigned char* iveBuffer)
@@ -321,10 +333,8 @@ bool FlowDetector::ContainsRecogn(string* json,const RecognItem& recognItem, con
 			JsonSerialization::SerializeValue(json, "channelUrl", _recognChannelUrl);
 			JsonSerialization::SerializeValue(json, "laneId", _recognLanes[i].LaneId);
 			JsonSerialization::SerializeValue(json, "timeStamp", timeStamp);
-			ImageConvert::IveToBgr(iveBuffer, recognItem.Width, recognItem.Height, _bgrBuffer);
-			int jpgSize = ImageConvert::BgrToJpg(_bgrBuffer, recognItem.Width, recognItem.Height, &_jpgBuffer, _jpgSize);
-			string image("data:image/jpg;base64,");
-			StringEx::ToBase64String(_jpgBuffer, jpgSize, &image);
+			string image;
+			ImageConvert::IveToJpgBase64(iveBuffer, recognItem.Width, recognItem.Height, _bgrBuffer, &image, _jpgBuffer, _jpgSize);
 			JsonSerialization::SerializeValue(json, "image", image);
 			LogPool::Debug(LogEvent::Detect, "lane:", _recognLanes[i].LaneId, "type:", recognItem.Type);
 			return true;
@@ -381,42 +391,42 @@ void FlowDetector::HandleRecognPedestrain(const RecognItem& recognItem, const un
 	}
 }
 
-void FlowDetector::DrawDetect(const map<string, DetectItem>& detectItems, const unsigned char* iveBuffer, int frameIndex)
-{
-	if (!_debug)
-	{
-		return;
-	}
-	ImageConvert::IveToBgr(iveBuffer,_width,_height,_bgrBuffer);
-	cv::Mat image(_height, _width, CV_8UC3, _bgrBuffer);
-	for (unsigned int i = 0; i < _detectLanes.size(); ++i)
-	{
-		FlowLaneCache& cache = _detectLanes[i];
-		ImageConvert::DrawPolygon(&image, cache.Region, cv::Scalar(0, 0, 255));
-	}
-	for (map<string, DetectItem>::const_iterator it = detectItems.begin(); it != detectItems.end(); ++it)
-	{
-		cv::Point point(it->second.Region.HitPoint().X, it->second.Region.HitPoint().Y);
-		cv::Scalar scalar;
-		//绿色新车
-		if (it->second.Status == DetectStatus::New)
-		{
-			scalar = cv::Scalar(0, 255, 0);
-		}
-		//黄色在区域
-		else if (it->second.Status == DetectStatus::In)
-		{
-			scalar = cv::Scalar(0, 255, 255);
-		}
-		//蓝色不在区域
-		else
-		{
-			scalar = cv::Scalar(255, 0, 0);
-		}
-		cv::circle(image, point, 10 , scalar, -1);
-	}
-
-	int jpgSize = ImageConvert::BgrToJpg(image.data, _width, _height,&_jpgBuffer, _jpgSize);
-	_jpgHandler.HandleFrame(_jpgBuffer, jpgSize, frameIndex);
-}
+//void FlowDetector::DrawDetect(const map<string, DetectItem>& detectItems, const unsigned char* iveBuffer, int frameIndex)
+//{
+//	if (!_debug)
+//	{
+//		return;
+//	}
+//	ImageConvert::IveToBgr(iveBuffer,_width,_height,_bgrBuffer);
+//	cv::Mat image(_height, _width, CV_8UC3, _bgrBuffer);
+//	for (unsigned int i = 0; i < _detectLanes.size(); ++i)
+//	{
+//		FlowLaneCache& cache = _detectLanes[i];
+//		ImageConvert::DrawPolygon(&image, cache.Region, cv::Scalar(0, 0, 255));
+//	}
+//	for (map<string, DetectItem>::const_iterator it = detectItems.begin(); it != detectItems.end(); ++it)
+//	{
+//		cv::Point point(it->second.Region.HitPoint().X, it->second.Region.HitPoint().Y);
+//		cv::Scalar scalar;
+//		//绿色新车
+//		if (it->second.Status == DetectStatus::New)
+//		{
+//			scalar = cv::Scalar(0, 255, 0);
+//		}
+//		//黄色在区域
+//		else if (it->second.Status == DetectStatus::In)
+//		{
+//			scalar = cv::Scalar(0, 255, 255);
+//		}
+//		//蓝色不在区域
+//		else
+//		{
+//			scalar = cv::Scalar(255, 0, 0);
+//		}
+//		cv::circle(image, point, 10 , scalar, -1);
+//	}
+//
+//	int jpgSize = ImageConvert::BgrToJpg(image.data, _width, _height,&_jpgBuffer, _jpgSize);
+//	_jpgHandler.HandleFrame(_jpgBuffer, jpgSize, frameIndex);
+//}
 

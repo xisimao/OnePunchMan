@@ -17,6 +17,7 @@ namespace OnePunchMan
 	};
 
 	//通道检测
+	//使用yuv420p
 	class EventDetector :public TrafficDetector
 	{
 	public:
@@ -126,44 +127,44 @@ namespace OnePunchMan
 			ImageHandler Image;
 		};
 
-		/**
-		* @brief: 绘制逆行事件图片
-		* @param: iveBuffer ive字节流
-		* @param: points 检测点集合
-		* @param: frameIndex 帧序号
-		*/
-		void DrawRetrograde(const unsigned char* iveBuffer, const std::vector<Point>& points, int frameIndex);
-		
-		/**
-		* @brief: 绘制逆行事件图片
-		* @param: iveBuffer ive字节流
-		* @param: point 行人点
-		* @param: frameIndex 帧序号
-		*/
-		void DrawPedestrain(const unsigned char* iveBuffer, const Point& point, int frameIndex);
-		
-		/**
-		* @brief: 绘制逆行事件图片
-		* @param: iveBuffer ive字节流
-		* @param: point 停车点
-		* @param: frameIndex 帧序号
-		*/
-		void DrawPark(const unsigned char* iveBuffer, const Point& point, int frameIndex);
-		
-		/**
-		* @brief: 绘制拥堵区域
-		* @param: iveBuffer ive字节流
-		* @param: frameIndex 帧序号
-		*/
-		void DrawCongestion(const unsigned char* iveBuffer, int frameIndex);
+		///**
+		//* @brief: 绘制逆行事件图片
+		//* @param: iveBuffer ive字节流
+		//* @param: points 检测点集合
+		//* @param: frameIndex 帧序号
+		//*/
+		//void DrawRetrograde(const unsigned char* iveBuffer, const std::vector<Point>& points, int frameIndex);
+		//
+		///**
+		//* @brief: 绘制逆行事件图片
+		//* @param: iveBuffer ive字节流
+		//* @param: point 行人点
+		//* @param: frameIndex 帧序号
+		//*/
+		//void DrawPedestrain(const unsigned char* iveBuffer, const Point& point, int frameIndex);
+		//
+		///**
+		//* @brief: 绘制逆行事件图片
+		//* @param: iveBuffer ive字节流
+		//* @param: point 停车点
+		//* @param: frameIndex 帧序号
+		//*/
+		//void DrawPark(const unsigned char* iveBuffer, const Point& point, int frameIndex);
+		//
+		///**
+		//* @brief: 绘制拥堵区域
+		//* @param: iveBuffer ive字节流
+		//* @param: frameIndex 帧序号
+		//*/
+		//void DrawCongestion(const unsigned char* iveBuffer, int frameIndex);
 
-		/**
-		* @brief: 绘制检测区域
-		* @param: detectItems 检测项集合
-		* @param: iveBuffer ive字节流
-		* @param: frameIndex 帧序号
-		*/
-		void DrawDetect(const std::map<std::string, DetectItem>& detectItems, const unsigned char* iveBuffer, int frameIndex);
+		///**
+		//* @brief: 绘制检测区域
+		//* @param: detectItems 检测项集合
+		//* @param: iveBuffer ive字节流
+		//* @param: frameIndex 帧序号
+		//*/
+		//void DrawDetect(const std::map<std::string, DetectItem>& detectItems, const unsigned char* iveBuffer, int frameIndex);
 
 		//IO mqtt主题
 		static const std::string EventTopic;

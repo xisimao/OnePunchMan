@@ -14,7 +14,6 @@ void JPGHandler::HandleFrame(unsigned char* jpgBuffer, int jpgSize, int frameInd
 	{
 		return;
 	}
-	Path::CreateDirectory("../images");
 	FILE* fw = NULL;
 	if ((fw = fopen(StringEx::Combine("../images/jpg_", frameIndex, ".jpg").c_str(), "wb")) == NULL) {
 		return;

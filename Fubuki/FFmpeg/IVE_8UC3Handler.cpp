@@ -17,7 +17,6 @@ void IVE_8UC3Handler::HandleFrame(unsigned char* ive, int width, int height, int
 	{
 		return;
 	}
-	Path::CreateDirectory("../images");
 	FILE* fw = fopen(StringEx::Combine("../images/channel_", frameIndex, ".bmp").c_str(), "wb");
 	if (fw ==NULL) {
 		return;

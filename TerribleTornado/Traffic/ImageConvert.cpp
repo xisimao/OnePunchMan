@@ -17,18 +17,16 @@ void ImageConvert::IveToBgr(const unsigned char* iveBuffer, int width, int heigh
 	}
 }
 
-int ImageConvert::BgrToJpg(const unsigned char* bgrBuffer, int width, int height, unsigned char** jpgBuffer, int jpgSize)
+int ImageConvert::BgrToJpg(const unsigned char* bgrBuffer, int width, int height, unsigned char* jpgBuffer, int jpgSize)
 {
-	unsigned char* tempJpgBuffer = *jpgBuffer;
+	unsigned char* tempJpgBuffer = jpgBuffer;
 	//jpg×ª»»
 	tjhandle jpgHandle = tjInitCompress();
 	unsigned long tempJpgSize = jpgSize;
-	tjCompress2(jpgHandle, bgrBuffer, width, 0, height, TJPF_BGR, jpgBuffer, &tempJpgSize, TJSAMP_422, 10, TJFLAG_NOREALLOC);
-	if (tempJpgBuffer != *jpgBuffer)
+	tjCompress2(jpgHandle, bgrBuffer, width, 0, height, TJPF_BGR, &jpgBuffer, &tempJpgSize, TJSAMP_422, 10, TJFLAG_NOREALLOC);
+	if (tempJpgBuffer != jpgBuffer)
 	{
 		LogPool::Error(LogEvent::Detect, "jpg memory leak");
-		free(*jpgBuffer);
-		*jpgBuffer = tempJpgBuffer;
 	}
 	tjDestroy(jpgHandle);
 	return static_cast<int>(tempJpgSize);
@@ -47,20 +45,27 @@ void ImageConvert::Yuv420spToYuv420p(const unsigned char* yuv420spBuffer, int wi
 	}
 }
 
-
-void ImageConvert::DrawPolygon(cv::Mat* image, const Polygon& polygon, const cv::Scalar& scalar)
+void ImageConvert::IveToJpgBase64(const unsigned char* iveBuffer,int width,int height,unsigned char* bgrBuffer,string* jpgBase64,unsigned char* jpgBuffer,int jpgSize)
 {
-	vector<vector<cv::Point>> polygons;
-	vector<cv::Point> points;
-	for (unsigned int j = 0; j < polygon.Points().size(); ++j)
-	{
-		points.push_back(cv::Point(polygon.Points()[j].X, polygon.Points()[j].Y));
-	}
-	polygons.push_back(points);
-	cv::polylines(*image, polygons, true, scalar, 3);
+	ImageConvert::IveToBgr(iveBuffer, width,height,bgrBuffer);
+	int size = ImageConvert::BgrToJpg(bgrBuffer, width, height, jpgBuffer, jpgSize);
+	jpgBase64->assign("data:image/jpg;base64,");
+	StringEx::ToBase64String(jpgBuffer, size, jpgBase64);
 }
 
-void ImageConvert::DrawPoint(cv::Mat* image, const Point& point, const cv::Scalar& scalar)
-{
-	cv::circle(*image, cv::Point(point.X, point.Y), 10, scalar, -1);
-}
+//void ImageConvert::DrawPolygon(cv::Mat* image, const Polygon& polygon, const cv::Scalar& scalar)
+//{
+//	vector<vector<cv::Point>> polygons;
+//	vector<cv::Point> points;
+//	for (unsigned int j = 0; j < polygon.Points().size(); ++j)
+//	{
+//		points.push_back(cv::Point(polygon.Points()[j].X, polygon.Points()[j].Y));
+//	}
+//	polygons.push_back(points);
+//	cv::polylines(*image, polygons, true, scalar, 3);
+//}
+//
+//void ImageConvert::DrawPoint(cv::Mat* image, const Point& point, const cv::Scalar& scalar)
+//{
+//	cv::circle(*image, cv::Point(point.X, point.Y), 10, scalar, -1);
+//}

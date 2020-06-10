@@ -28,11 +28,9 @@ void ImageHandler::AddIve(const unsigned char* iveBuffer)
 	{
 		return;
 	}
-	ImageConvert::IveToBgr(iveBuffer, _width, _height, _bgrBuffer);
-	int jpgSize=ImageConvert::BgrToJpg(_bgrBuffer, _width, _height, &_jpgBuffer, _jpgSize);
-	string base64("data:image/jpg;base64,");
-	StringEx::ToBase64String(_jpgBuffer, jpgSize, &base64);
-	JsonSerialization::SerializeValue(_json,StringEx::Combine("image", _imageIndex), base64);
+	string image;
+	ImageConvert::IveToJpgBase64(iveBuffer, _width,_height, _bgrBuffer, &image, _jpgBuffer, _jpgSize);
+	JsonSerialization::SerializeValue(_json,StringEx::Combine("image", _imageIndex), image);
 	_count -= 1;
 	_imageIndex += 1;
 }

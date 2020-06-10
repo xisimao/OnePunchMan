@@ -75,6 +75,7 @@ namespace OnePunchMan
 
 	};
 	//解码线程
+	//输出:yuv420sp字节流,ive字节流
 	class DecodeChannel :public FFmpegChannel
 	{
 	public:

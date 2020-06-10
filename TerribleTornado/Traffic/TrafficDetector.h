@@ -134,7 +134,7 @@ namespace OnePunchMan
 		/**
 		* @brief: 析构函数
 		*/
-		virtual ~TrafficDetector();
+		virtual ~TrafficDetector() {}
 
 		/**
 		* @brief: 获取车道是否初始化成功
@@ -195,22 +195,8 @@ namespace OnePunchMan
 		std::string _param;
 		//是否设置过车道参数
 		bool _setParam;
-
-		//bgr字节流长度
-		int _bgrSize;
-		//bgr字节流
-		unsigned char* _bgrBuffer;
-		//jpg字节流长度
-		int _jpgSize;
-		//jpg字节流
-		unsigned char* _jpgBuffer;
-	
-		//调试相关
 		//是否处于调试模式
 		bool _debug;
-		//调试时写jpg
-		JPGHandler _jpgHandler;
-
 	};
 
 }
