@@ -3,12 +3,11 @@
 using namespace std;
 using namespace OnePunchMan;
 
-const int TrafficStartup::ChannelCount = 8;
 const int TrafficStartup::DetectCount = 4;
 const int TrafficStartup::RecognCount = 2;
 
-TrafficStartup::TrafficStartup()
-    :_startTime(DateTime::Now()), _sdkInited(false), _socketMaid(NULL), _mqtt(NULL)
+TrafficStartup::TrafficStartup(int channelCount)
+    :_channelCount(channelCount),_startTime(DateTime::Now()), _sdkInited(false), _socketMaid(NULL), _mqtt(NULL)
 {
 
 }
@@ -134,7 +133,7 @@ void TrafficStartup::GetDevice(HttpReceivedEventArgs* e)
     }
 
     string channelsJson;
-    for (unsigned int i = 0; i < ChannelCount; ++i)
+    for (int i = 0; i < _channelCount; ++i)
     {
         string channelJson = GetChannelJson(e->Host, i + 1);
         if (!channelJson.empty())
@@ -176,6 +175,7 @@ void TrafficStartup::SetDecode(int channelIndex, const string& inputUrl, const s
     if (ChannelIndexEnable(channelIndex))
     {
         _decodes[channelIndex - 1]->UpdateChannel(inputUrl, outputUrl);
+        _decodes[channelIndex - 1]->WriteBmp();
     }
 }
 
@@ -195,13 +195,13 @@ string TrafficStartup::CheckChannel(int channelIndex)
     }
     else
     {
-        return GetErrorJson("channelIndex", StringEx::Combine("channelIndex is limited to 1-", ChannelCount));
+        return GetErrorJson("channelIndex", StringEx::Combine("channelIndex is limited to 1-", _channelCount));
     }
 }
 
 bool TrafficStartup::ChannelIndexEnable(int channelIndex)
 {
-    return channelIndex >= 1 && channelIndex <= ChannelCount;
+    return channelIndex >= 1 && channelIndex <= _channelCount;
 }
 
 bool TrafficStartup::UrlStartWith(const string& url, const string& key)
@@ -231,25 +231,13 @@ string TrafficStartup::GetErrorJson(const string& field, const string& message)
     return StringEx::Combine("{\"", field, "\":[\"", message, "\"]}");
 }
 
-DetectChannel* TrafficStartup::GetDetect(int channelIndex)
-{
-    if (ChannelIndexEnable(channelIndex))
-    {
-        return _detects[(channelIndex - 1) / (ChannelCount / DetectCount)];
-    }
-    else
-    {
-        return NULL;
-    }
-}
-
 void TrafficStartup::Startup()
 {
     Socket::Init();
     MqttChannel::Init();
     FFmpegChannel::InitFFmpeg();
-    DecodeChannel::UninitHisi(ChannelCount);
-    if (!DecodeChannel::InitHisi(ChannelCount))
+    DecodeChannel::UninitHisi(_channelCount);
+    if (!DecodeChannel::InitHisi(_channelCount))
     {
         exit(2);
     }
@@ -371,7 +359,7 @@ void TrafficStartup::Startup()
     }
 
     SeemmoSDK::Uninit();
-    DecodeChannel::UninitHisi(ChannelCount);
+    DecodeChannel::UninitHisi(_channelCount);
     FFmpegChannel::UninitFFmpeg();
     MqttChannel::Uninit();
     Socket::Uninit();

@@ -22,15 +22,9 @@ namespace OnePunchMan
 
         /**
         * @brief: 构造函数
+        * @param: channelCount 通道数量
         */
-        TrafficStartup();
-
-        //通道总数
-        static const int ChannelCount;
-        //检测线程总数
-        static const int DetectCount;
-        //识别线程总数
-        static const int RecognCount;
+        TrafficStartup(int channelCount);
 
         /**
         * @brief: http消息接收事件函数
@@ -134,6 +128,14 @@ namespace OnePunchMan
         */
         std::string GetErrorJson(const std::string& field, const std::string& message);
 
+        //检测线程总数
+        static const int DetectCount;
+        //识别线程总数
+        static const int RecognCount;
+
+        //通道数量
+        int _channelCount;
+
         //软件版本
         std::string _softwareVersion;
 
@@ -159,9 +161,6 @@ namespace OnePunchMan
         * @return: id
         */
         std::string GetId(const std::string& url, const std::string& key);
-
-
-        DetectChannel* GetDetect(int channelIndex);
 
         //系统启动时间
         DateTime _startTime;

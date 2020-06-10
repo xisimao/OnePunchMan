@@ -3,6 +3,12 @@
 using namespace std;
 using namespace OnePunchMan;
 
+FlowStartup::FlowStartup()
+    :TrafficStartup(8)
+{
+
+}
+
 FlowStartup::~FlowStartup()
 {
     for (unsigned int i = 0; i < _detectors.size(); ++i)
@@ -20,7 +26,7 @@ void FlowStartup::InitSoftVersion()
 
 void FlowStartup::InitThreads(MqttChannel* mqtt, vector<DecodeChannel*>* decodes, vector<TrafficDetector*>* detectors, vector<DetectChannel*>* detects, vector<RecognChannel*>* recogns)
 {
-    for (int i = 0; i < ChannelCount; ++i)
+    for (int i = 0; i < _channelCount; ++i)
     {
         FlowDetector* detector = new FlowDetector(FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, mqtt, false);
         _detectors.push_back(detector);
@@ -44,7 +50,7 @@ void FlowStartup::InitThreads(MqttChannel* mqtt, vector<DecodeChannel*>* decodes
     for (int i = 0; i < DetectCount; ++i)
     {
         detects->at(i)->SetRecogn(recogns->at(i%RecognCount));
-        for (int j = 0; j < ChannelCount / DetectCount; ++j)
+        for (int j = 0; j < _channelCount / DetectCount; ++j)
         {
             int channelIndex = i + (j * DetectCount) + 1;
             detects->at(i)->AddChannel(channelIndex, decodes->at(channelIndex-1), detectors->at(channelIndex-1));
@@ -55,7 +61,7 @@ void FlowStartup::InitThreads(MqttChannel* mqtt, vector<DecodeChannel*>* decodes
 void FlowStartup::InitChannels()
 {
     FlowChannelData data;
-    for (int i = 0; i < ChannelCount; ++i)
+    for (int i = 0; i < _channelCount; ++i)
     {
         FlowChannel channel = data.Get(i + 1);
         if (!channel.ChannelUrl.empty())
@@ -168,7 +174,7 @@ void FlowStartup::SetDevice(HttpReceivedEventArgs* e)
     FlowChannelData data;
     if (data.SetList(channels))
     {
-        for (int i = 0; i < ChannelCount; ++i)
+        for (int i = 0; i < _channelCount; ++i)
         {
             map<int, FlowChannel>::iterator it = tempChannels.find(i + 1);
             if (it == tempChannels.end())

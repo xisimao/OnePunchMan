@@ -10,6 +10,11 @@ namespace OnePunchMan
     {
     public:
         /**
+        * @brief: 构造函数
+        */
+        FlowStartup();
+
+        /**
         * @brief: 析构函数
         */
         ~FlowStartup();
