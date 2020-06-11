@@ -13,7 +13,6 @@ int main(int argc, char* argv[])
         if (arg.compare("flow") == 0)
         {
             LogPool::Init("appsettings.json");
-
             FlowStartup channel;
             channel.Startup();
         }

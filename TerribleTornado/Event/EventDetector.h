@@ -1,7 +1,6 @@
 #pragma once
 #include "EventData.h"
 #include "TrafficDetector.h"
-#include "EncodeHandler.h"
 #include "ImageHandler.h"
 
 namespace OnePunchMan
@@ -29,11 +28,6 @@ namespace OnePunchMan
 		* @param: debug 是否处于调试模式，处于调试模式则输出画线后的bmp
 		*/
 		EventDetector(int width, int height,MqttChannel* mqtt, bool debug);
-
-		/**
-		* @brief: 析构函数
-		*/
-		~EventDetector();
 
 		/**
 		* @brief: 更新通道
@@ -111,8 +105,8 @@ namespace OnePunchMan
 		class EventEncoderCache
 		{
 		public:
-			EventEncoderCache(const std::string& channelUrl,int laneIndex,long long timeStamp,EventType eventType,const std::string& videoFilePath,int width,int height)
-				:Json(),Encoder(&Json, videoFilePath, width, height, 10), Image(&Json,2,width,height)
+			EventEncoderCache(const std::string& channelUrl,int laneIndex,long long timeStamp,EventType eventType,int width,int height)
+				:Json(), Image(&Json,2,width,height)
 			{
 				JsonSerialization::SerializeValue(&Json, "channelUrl", channelUrl);
 				JsonSerialization::SerializeValue(&Json, "laneIndex", laneIndex);
@@ -121,8 +115,6 @@ namespace OnePunchMan
 			}
 			//json
 			std::string Json;
-			//视频
-			EncodeHandler Encoder;
 			//图片
 			ImageHandler Image;
 		};
@@ -192,10 +184,6 @@ namespace OnePunchMan
 
 		//需要编码的事件集合
 		std::vector<EventEncoderCache*> _encoders;
-
-		//yuv420p字节流
-		unsigned char* _yuv420pBuffer;
-
 	};
 
 }

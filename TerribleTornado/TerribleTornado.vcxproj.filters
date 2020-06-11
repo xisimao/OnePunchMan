@@ -55,13 +55,13 @@
     <ClCompile Include="Adapter\IoAdapter.cpp">
       <Filter>Adapter</Filter>
     </ClCompile>
-    <ClCompile Include="Traffic\EncodeHandler.cpp">
-      <Filter>Traffic</Filter>
-    </ClCompile>
     <ClCompile Include="Traffic\ImageHandler.cpp">
       <Filter>Traffic</Filter>
     </ClCompile>
     <ClCompile Include="Traffic\ImageConvert.cpp">
+      <Filter>Traffic</Filter>
+    </ClCompile>
+    <ClCompile Include="Traffic\EncodeChannel.cpp">
       <Filter>Traffic</Filter>
     </ClCompile>
   </ItemGroup>
@@ -108,13 +108,13 @@
     <ClInclude Include="Adapter\IoAdapter.h">
       <Filter>Adapter</Filter>
     </ClInclude>
-    <ClInclude Include="Traffic\EncodeHandler.h">
-      <Filter>Traffic</Filter>
-    </ClInclude>
     <ClInclude Include="Traffic\ImageHandler.h">
       <Filter>Traffic</Filter>
     </ClInclude>
     <ClInclude Include="Traffic\ImageConvert.h">
+      <Filter>Traffic</Filter>
+    </ClInclude>
+    <ClInclude Include="Traffic\EncodeChannel.h">
       <Filter>Traffic</Filter>
     </ClInclude>
   </ItemGroup>

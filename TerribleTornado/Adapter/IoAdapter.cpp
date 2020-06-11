@@ -78,8 +78,7 @@ void IoAdapter::StartCore()
 				{
 					if (!lit->IOIp.empty())
 					{
-						//ips.insert(EndPoint(lit->IOIp, 24000));
-						ips.insert(EndPoint("127.0.0.1", 24000));
+						ips.insert(EndPoint(lit->IOIp, 24000));
 						_lanes.insert(pair<string, FlowLane>(cit->ChannelUrl + "_" + lit->LaneId, *lit));
 					}
 				}

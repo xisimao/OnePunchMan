@@ -20,7 +20,7 @@ namespace OnePunchMan
 		* @param: height 图片高度
 		* @param: frameIndex 视频帧序号
 		*/
-		void HandleFrame(unsigned char* yuv, int width, int height, int frameIndex);
+		void HandleFrame(const unsigned char* yuv, int width, int height, int frameIndex);
 
 	private:
 		//当前写入数量

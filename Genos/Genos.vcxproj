@@ -73,7 +73,6 @@
     <ClCompile Include="..\TerribleTornado\Flow\FlowStartup.cpp" />
     <ClCompile Include="..\TerribleTornado\Traffic\DecodeChannel.cpp" />
     <ClCompile Include="..\TerribleTornado\Traffic\DetectChannel.cpp" />
-    <ClCompile Include="..\TerribleTornado\Traffic\EncodeHandler.cpp" />
     <ClCompile Include="..\TerribleTornado\Traffic\ImageConvert.cpp" />
     <ClCompile Include="..\TerribleTornado\Traffic\ImageHandler.cpp" />
     <ClCompile Include="..\TerribleTornado\Traffic\RecognChannel.cpp" />
@@ -125,7 +124,6 @@
     <ClInclude Include="..\TerribleTornado\Flow\FlowStartup.h" />
     <ClInclude Include="..\TerribleTornado\Traffic\DecodeChannel.h" />
     <ClInclude Include="..\TerribleTornado\Traffic\DetectChannel.h" />
-    <ClInclude Include="..\TerribleTornado\Traffic\EncodeHandler.h" />
     <ClInclude Include="..\TerribleTornado\Traffic\ImageConvert.h" />
     <ClInclude Include="..\TerribleTornado\Traffic\ImageHandler.h" />
     <ClInclude Include="..\TerribleTornado\Traffic\RecognChannel.h" />
@@ -196,7 +194,7 @@
     </ClCompile>
     <Link />
     <Link>
-      <LibraryDependencies>turbojpeg;dsp;isp;ive;hdmi;mpi;nnie;sns_imx277_slvs;sns_imx290;sns_imx334;sns_imx334_slave;sns_imx477;dnvqe;upvqe;VoiceEngine;securec;_hiae;_hiawb;_hidehaze;_hidrc;_hildci;opencv_highgui;opencv_core;opencv_imgproc;opencv_flann;opencv_calib3d;opencv_features2d;avcodec;avdevice;avfilter;avformat;avutil;swresample;swscale;postproc;sqlite3;mosquitto;dl;pthread;%(LibraryDependencies)</LibraryDependencies>
+      <LibraryDependencies>turbojpeg;dsp;isp;ive;hdmi;mpi;nnie;sns_imx277_slvs;sns_imx290;sns_imx334;sns_imx334_slave;sns_imx477;dnvqe;upvqe;VoiceEngine;securec;_hiae;_hiawb;_hidehaze;_hidrc;_hildci;opencv_highgui;opencv_core;opencv_imgproc;opencv_flann;opencv_calib3d;opencv_features2d;avcodec;avdevice;avfilter;avformat;avutil;swresample;swscale;postproc;x264;sqlite3;mosquitto;dl;pthread;%(LibraryDependencies)</LibraryDependencies>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

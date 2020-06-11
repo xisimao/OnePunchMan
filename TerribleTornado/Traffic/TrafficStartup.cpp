@@ -259,8 +259,11 @@ void TrafficStartup::Startup()
     //软件版本
     InitSoftVersion();
 
+    //删除临时文件
+    Command::Execute("rm -rf ../temp/*");
+
     //获取web版本
-    string cat = Command::Execute("cat ../web/static/config/config.js");
+    string cat = Command::Execute("cat ../web/static/config/base.js");
     vector<string> catRows = StringEx::Split(cat, "\n", true);
     for (unsigned int i = 0; i < catRows.size(); ++i)
     {

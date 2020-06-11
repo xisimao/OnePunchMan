@@ -1,6 +1,7 @@
 #pragma once
 #include "FFmpegChannel.h"
 #include "IVE_8UC3Handler.h"
+#include "YUV420SPHandler.h"
 
 extern "C"
 {
@@ -162,6 +163,7 @@ namespace OnePunchMan
 
 		//iveдbmp
 		IVE_8UC3Handler _iveHandler;
+		YUV420SPHandler _yuvHandler;
 	};
 
 }

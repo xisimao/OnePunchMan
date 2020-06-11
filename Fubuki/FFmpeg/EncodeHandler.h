@@ -1,7 +1,5 @@
 #pragma once
 #include "LogPool.h"
-#include "YUV420PHandler.h"
-#include "YUV420SPHandler.h"
 
 extern "C"
 {
@@ -21,7 +19,7 @@ namespace OnePunchMan
 
 		bool Finished();
 
-		void AddYuv(unsigned char* yuv420pBuffer);
+		void AddYuv(const unsigned char* yuvBuffer);
 
 	private:
 		void Uninit();
@@ -35,8 +33,7 @@ namespace OnePunchMan
 		int _count;
 		AVCodecContext* _encodeContext;
 		AVFormatContext* _outputContext;
-		SwsContext* _swsContext;
-		AVFrame* _yuv420pFrame;
+		AVFrame* _yuvFrame;
 		int _yuvSize;
 		int _pts;
 	

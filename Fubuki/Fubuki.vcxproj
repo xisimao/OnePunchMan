@@ -143,6 +143,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="FFmpeg\BGR24Handler.cpp" />
+    <ClCompile Include="FFmpeg\EncodeHandler.cpp" />
     <ClCompile Include="FFmpeg\FFmpegChannel.cpp" />
     <ClCompile Include="FFmpeg\H264Handler.cpp" />
     <ClCompile Include="FFmpeg\IVE_8UC3Handler.cpp" />
@@ -154,6 +155,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FFmpeg\BGR24Handler.h" />
+    <ClInclude Include="FFmpeg\EncodeHandler.h" />
     <ClInclude Include="FFmpeg\FFmpegChannel.h" />
     <ClInclude Include="FFmpeg\H264Handler.h" />
     <ClInclude Include="FFmpeg\IVE_8UC3Handler.h" />

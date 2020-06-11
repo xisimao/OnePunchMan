@@ -417,8 +417,8 @@ bool DecodeChannel::InitHisi(int videoCount)
 
 
 	//vo
-	RECT_S                 stDefDispRect = { 0, 0, DestinationWidth, DestinationHeight };
-	SIZE_S                 stDefImageSize = { DestinationWidth, DestinationHeight };
+	RECT_S                 stDefDispRect = { 0, 0, static_cast<HI_U32>(DestinationWidth), static_cast<HI_U32>(DestinationHeight) };
+	SIZE_S                 stDefImageSize = { static_cast<HI_U32>(DestinationWidth), static_cast<HI_U32>(DestinationHeight) };
 
 	VO_DEV                 VoDev = 0;
 	VO_LAYER               VoLayer = 0;
@@ -606,17 +606,11 @@ bool DecodeChannel::InitHisi(int videoCount)
 	}
 
 	//venc
-	//int ret = 0;
-	//VENC_RECV_PIC_PARAM_S stRecvParam;
-	//VENC_GOP_MODE_E enGopMode;
 	//VENC_GOP_ATTR_S stGopAttr;
-
 	//memset(&stGopAttr, 0, sizeof(VENC_GOP_ATTR_S));
-
-	//stRecvParam.s32RecvPicNum = -1;
 	//stGopAttr.enGopMode = VENC_GOPMODE_NORMALP;
 	//stGopAttr.stNormalP.s32IPQpDelta = 3;
-	//for (int i = 0; i < 8; i++)
+	//for (int i = 0; i < videoCount; i++)
 	//{
 	//	HI_S32 s32Ret;
 	//	VENC_RECV_PIC_PARAM_S  stRecvParam;
@@ -696,17 +690,17 @@ void DecodeChannel::UninitHisi(int videoCount)
 {
 #ifndef _WIN32
 	//venc
-	for (int i = 0; i < videoCount; ++i)
-	{
-		/******************************************
-		 step 1:  Stop Recv Pictures
-		******************************************/
-		HI_MPI_VENC_StopRecvFrame(i);
-		/******************************************
-		 step 2:  Distroy Venc Channel
-		******************************************/
-		HI_MPI_VENC_DestroyChn(i);
-	}
+	//for (int i = 0; i < videoCount; ++i)
+	//{
+	//	/******************************************
+	//	 step 1:  Stop Recv Pictures
+	//	******************************************/
+	//	HI_MPI_VENC_StopRecvFrame(i);
+	//	/******************************************
+	//	 step 2:  Distroy Venc Channel
+	//	******************************************/
+	//	HI_MPI_VENC_DestroyChn(i);
+	//}
 	//vedc
 	for (int i = 0; i < videoCount; ++i) {
 		MPP_CHN_S stSrcChn;

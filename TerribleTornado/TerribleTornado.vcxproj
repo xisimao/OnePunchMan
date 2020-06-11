@@ -154,9 +154,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Traffic\EncodeChannel.cpp" />
     <ClCompile Include="Traffic\ImageConvert.cpp" />
     <ClCompile Include="Traffic\ImageHandler.cpp" />
-    <ClCompile Include="Traffic\EncodeHandler.cpp" />
     <ClCompile Include="Event\EventData.cpp" />
     <ClCompile Include="Event\EventDetector.cpp" />
     <ClCompile Include="Event\EventStartup.cpp" />
@@ -173,9 +173,9 @@
     <ClCompile Include="Traffic\SeemmoSDK.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Traffic\EncodeChannel.h" />
     <ClInclude Include="Traffic\ImageConvert.h" />
     <ClInclude Include="Traffic\ImageHandler.h" />
-    <ClInclude Include="Traffic\EncodeHandler.h" />
     <ClInclude Include="Event\EventData.h" />
     <ClInclude Include="Event\EventDetector.h" />
     <ClInclude Include="Event\EventStartup.h" />

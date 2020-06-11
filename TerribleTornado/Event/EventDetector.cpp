@@ -12,17 +12,12 @@ const int EventDetector::CarCount = 4;
 const int EventDetector::ReportSpan = 60*1000;
 const double EventDetector::MovePixel = 50.0;
 const int EventDetector::PointCount = 3;
-const int EventDetector::MaxEncodeCount = 3;
+const int EventDetector::MaxEncodeCount = 1;
 
 EventDetector::EventDetector(int width, int height, MqttChannel* mqtt, bool debug)
 	:TrafficDetector(width, height, mqtt, debug)
 {
-	_yuv420pBuffer = new unsigned char[static_cast<int>(width * height * 1.5)];
-}
-
-EventDetector::~EventDetector()
-{
-	delete[] _yuv420pBuffer;
+	
 }
 
 void EventDetector::UpdateChannel(const EventChannel& channel)
@@ -97,17 +92,20 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 		timeStamp = frameIndex * frameSpan;
 	}
 
-	if (!_encoders.empty())
-	{
-		ImageConvert::Yuv420spToYuv420p(yuvBuffer, _width, _height, _yuv420pBuffer);
-	}
+	//if (!_encoders.empty())
+	//{
+	//	_handler1.HandleFrame(yuvBuffer, _width, _height, frameIndex);
+	//	ImageConvert::Yuv420spToYuv420p(yuvBuffer, _width, _height, _yuv420pBuffer);
+
+	//	_handler.HandleFrame(_yuv420pBuffer, _width, _height, frameIndex);
+	//	
+	//}
 
 	for (vector<EventEncoderCache*>::iterator it = _encoders.begin(); it != _encoders.end();)
 	{
 		EventEncoderCache* cache = *it;
-		cache->Encoder.AddYuv(_yuv420pBuffer);
 		cache->Image.AddIve(iveBuffer);
-		if (cache->Encoder.Finished()&&cache->Image.Finished())
+		if (cache->Image.Finished())
 		{
 			if (_mqtt != NULL)
 			{
@@ -162,7 +160,7 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 					laneCache.Items.insert(pair<string, EventDetectCache>(it->first, eventItem));
 					if (_encoders.size() < MaxEncodeCount)
 					{
-						_encoders.push_back(new EventEncoderCache(_channelUrl, laneCache.LaneIndex, timeStamp, EventType::Pedestrain, StringEx::Combine("../temp/", it->first,".mp4"), _width, _height));
+						_encoders.push_back(new EventEncoderCache(_channelUrl, laneCache.LaneIndex, timeStamp, EventType::Pedestrain, _width, _height));
 					}
 					LogPool::Debug(LogEvent::Event, _channelIndex,it->first, "pedestrain event");
 					//DrawPedestrain(iveBuffer, it->second.Region.HitPoint(), frameIndex);
@@ -199,7 +197,7 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 								mit->second.StopPark = true;
 								if (_encoders.size() < MaxEncodeCount)
 								{
-									_encoders.push_back(new EventEncoderCache(_channelUrl, laneCache.LaneIndex, timeStamp, EventType::Park, StringEx::Combine("../temp/", it->first, ".mp4"), _width, _height));
+									_encoders.push_back(new EventEncoderCache(_channelUrl, laneCache.LaneIndex, timeStamp, EventType::Park, _width, _height));
 								}
 								LogPool::Debug(LogEvent::Event, _channelIndex, "park event");
 								//DrawPark(iveBuffer, it->second.Region.HitPoint(), frameIndex);
@@ -225,7 +223,7 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 							laneCache.LastReportTimeStamp = timeStamp;
 							if (_encoders.size() < MaxEncodeCount)
 							{
-								_encoders.push_back(new EventEncoderCache(_channelUrl, laneCache.LaneIndex, timeStamp, EventType::Congestion, StringEx::Combine("../temp/", it->first, ".mp4"), _width, _height));
+								_encoders.push_back(new EventEncoderCache(_channelUrl, laneCache.LaneIndex, timeStamp, EventType::Congestion, _width, _height));
 							}
 							LogPool::Debug(LogEvent::Event, _channelIndex, "congestion event");		
 							//DrawCongestion(iveBuffer, frameIndex);
@@ -274,7 +272,7 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 										mit->second.RetrogradePoints.push_back(it->second.Region.HitPoint());
 										if (_encoders.size() < MaxEncodeCount)
 										{
-											_encoders.push_back(new EventEncoderCache(_channelUrl, laneCache.LaneIndex, timeStamp, EventType::Pedestrain, StringEx::Combine("../temp/", it->first, ".mp4"), _width, _height));
+											_encoders.push_back(new EventEncoderCache(_channelUrl, laneCache.LaneIndex, timeStamp, EventType::Pedestrain, _width, _height));
 										}
 										LogPool::Debug(LogEvent::Event, _channelIndex, "retrograde event");
 										//DrawRetrograde(iveBuffer, mit->second.RetrogradePoints, frameIndex);

@@ -4,7 +4,6 @@
 
 #include "Thread.h"
 #include "BGR24Handler.h"
-#include "YUV420SPHandler.h"
 
 extern "C"
 {
@@ -209,7 +208,6 @@ namespace OnePunchMan
 		int _frameSpan;
 		//bgrдbmp
 		BGR24Handler _bgrHandler;
-		YUV420SPHandler _yuv420SPHandler;
 	};
 
 }
