@@ -9,8 +9,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Fubuki", "Fubuki\Fubuki.vcx
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Genos", "Genos\Genos.vcxproj", "{B90A649E-D7E5-44F5-A211-2B92DBFA4440}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{5BA7A5F4-95EA-4A46-8F44-4D5AEB049038}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TerribleTornado", "TerribleTornado\TerribleTornado.vcxproj", "{F5C7EDBE-90EF-442B-94A9-34E74F2A5314}"
 EndProject
 Global

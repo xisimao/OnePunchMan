@@ -5,8 +5,8 @@ using namespace OnePunchMan;
 
 const int DetectChannel::SleepTime=40;
 
-DetectChannel::DetectChannel(int detectIndex, int width, int height,bool needEncode)
-	:ThreadObject("detect"), _inited(false), _detectIndex(detectIndex), _width(width), _height(height), _needEncode(needEncode), _recogn(NULL)
+DetectChannel::DetectChannel(int detectIndex, int width, int height)
+	:ThreadObject("detect"), _inited(false), _detectIndex(detectIndex), _width(width), _height(height), _recogn(NULL)
 {
 	_indexes.resize(1);
 	_timeStamps.resize(1);
@@ -114,7 +114,7 @@ void DetectChannel::StartCore()
 		{
 			ChannelItem& channelItem = _channelItems[i];
 			long long detectTimeStamp = DateTime::UtcNowTimeStamp();
-			FrameItem frameItem = channelItem.Decode->GetTempIve(_needEncode);
+			FrameItem frameItem = channelItem.Decode->GetTempIve();
 			if (frameItem.IveBuffer != NULL)
 			{
 				detected = true;
@@ -153,7 +153,7 @@ void DetectChannel::StartCore()
 					GetDetecItems(&detectItems, detectJd, "Vehicles");
 					GetDetecItems(&detectItems, detectJd, "Bikes");
 					GetDetecItems(&detectItems, detectJd, "Pedestrains");
-					channelItem.Detector->HandleDetect(&detectItems, detectTimeStamp, &channelItem.Param, _ives[0], frameItem.YuvBuffer, static_cast<int>(_timeStamps[0]), frameItem.FrameSpan);
+					channelItem.Detector->HandleDetect(&detectItems, detectTimeStamp, &channelItem.Param, _ives[0], static_cast<int>(_timeStamps[0]), frameItem.FrameSpan);
 				}
 				long long detectTimeStamp3 = DateTime::UtcNowTimeStamp();
 				LogPool::Debug("detect", _indexes[0], _timeStamps[0], result, detectTimeStamp1 - detectTimeStamp, detectTimeStamp2 - detectTimeStamp1, detectTimeStamp3 - detectTimeStamp2);

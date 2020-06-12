@@ -12,6 +12,7 @@ void YUV420PHandler::HandleFrame(unsigned char* yuv, int width, int height,int f
 {
 	if (_index < _count)
 	{
+		Path::CreateDirectory("../images");
 		FILE* file = fopen(StringEx::Combine("../images/yuv420p_", frameIndex, ".yuv").c_str(), "wb");
 		if (file  == NULL) {
 			return;

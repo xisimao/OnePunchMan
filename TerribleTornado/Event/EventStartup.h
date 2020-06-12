@@ -9,10 +9,6 @@ namespace OnePunchMan
     class EventStartup : public TrafficStartup
     {
     public:
-        /**
-        * @brief: 构造函数
-        */
-        EventStartup();
 
         /**
         * @brief: 析构函数

@@ -1,9 +1,10 @@
 #pragma once
+#include "turbojpeg.h"
+#include "opencv2/opencv.hpp"
+
 #include "Shape.h"
 #include "MqttChannel.h"
 #include "JPGHandler.h"
-
-#include "turbojpeg.h"
 
 namespace OnePunchMan
 {
@@ -134,7 +135,7 @@ namespace OnePunchMan
 		/**
 		* @brief: 析构函数
 		*/
-		virtual ~TrafficDetector() {}
+		virtual ~TrafficDetector();
 
 		/**
 		* @brief: 获取车道是否初始化成功
@@ -151,7 +152,7 @@ namespace OnePunchMan
 		* @param: frameIndex 帧序号
 		* @param: frameSpan 帧间隔时间(毫秒)
 		*/
-		virtual void HandleDetect(std::map<std::string, DetectItem>* detectItems, long long timeStamp, std::string* param, const unsigned char* iveBuffer, const unsigned char* yuvBuffer, int frameIndex,int frameSpan) = 0;
+		virtual void HandleDetect(std::map<std::string, DetectItem>* detectItems, long long timeStamp, std::string* param, const unsigned char* iveBuffer, int frameIndex,int frameSpan) = 0;
 
 		/**
 		* @brief: 处理机动车识别数据
@@ -195,8 +196,22 @@ namespace OnePunchMan
 		std::string _param;
 		//是否设置过车道参数
 		bool _setParam;
+
+		//bgr字节流长度
+		int _bgrSize;
+		//bgr字节流
+		unsigned char* _bgrBuffer;
+		//jpg字节流长度
+		int _jpgSize;
+		//jpg字节流
+		unsigned char* _jpgBuffer;
+	
+		//调试相关
 		//是否处于调试模式
 		bool _debug;
+		//调试时写jpg
+		JPGHandler _jpgHandler;
+
 	};
 
 }

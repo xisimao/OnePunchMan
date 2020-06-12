@@ -12,12 +12,10 @@ const int EventDetector::CarCount = 4;
 const int EventDetector::ReportSpan = 60*1000;
 const double EventDetector::MovePixel = 50.0;
 const int EventDetector::PointCount = 3;
-const int EventDetector::MaxEncodeCount = 1;
 
 EventDetector::EventDetector(int width, int height, MqttChannel* mqtt, bool debug)
 	:TrafficDetector(width, height, mqtt, debug)
 {
-	
 }
 
 void EventDetector::UpdateChannel(const EventChannel& channel)
@@ -85,41 +83,12 @@ void EventDetector::ClearChannel()
 	_lanesInited = false;
 }
 
-void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long timeStamp, string* param, const unsigned char* iveBuffer,const unsigned char* yuvBuffer, int frameIndex, int frameSpan)
+void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long timeStamp, string* param, const unsigned char* iveBuffer, int frameIndex, int frameSpan)
 {
 	if (_debug)
 	{
 		timeStamp = frameIndex * frameSpan;
 	}
-
-	//if (!_encoders.empty())
-	//{
-	//	_handler1.HandleFrame(yuvBuffer, _width, _height, frameIndex);
-	//	ImageConvert::Yuv420spToYuv420p(yuvBuffer, _width, _height, _yuv420pBuffer);
-
-	//	_handler.HandleFrame(_yuv420pBuffer, _width, _height, frameIndex);
-	//	
-	//}
-
-	for (vector<EventEncoderCache*>::iterator it = _encoders.begin(); it != _encoders.end();)
-	{
-		EventEncoderCache* cache = *it;
-		cache->Image.AddIve(iveBuffer);
-		if (cache->Image.Finished())
-		{
-			if (_mqtt != NULL)
-			{
-				_mqtt->Send(EventTopic, cache->Json);
-			}
-			it = _encoders.erase(it);
-			delete cache;
-		}
-		else
-		{
-			++it;
-		}
-	}
-
 	lock_guard<mutex> lck(_laneMutex);
 	if (!_setParam)
 	{
@@ -128,18 +97,17 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 	}
 	for (unsigned int i = 0; i < _lanes.size(); ++i)
 	{
-		EventLaneCache& laneCache = _lanes[i];
+		EventLaneCache& cache = _lanes[i];
 		//删除超时数据
-		map<string, EventDetectCache>::iterator it = laneCache.Items.begin();
-		while (it != laneCache.Items.end()) {
+		map<string, EventDetectCache>::iterator it = cache.Items.begin();
+		while (it != cache.Items.end()) {
 			if (timeStamp - it->second.LastTimeStamp > DeleteSpan) {
-				laneCache.Items.erase(it++);
+				cache.Items.erase(it++);
 			}
 			else {
 				++it;
 			}
 		}
-	
 		int carsInLane = 0;
 		for (map<string, DetectItem>::iterator it = detectItems->begin(); it != detectItems->end(); ++it)
 		{
@@ -148,22 +116,29 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 				continue;
 			}
 			if (it->second.Type == DetectType::Pedestrain
-				&& laneCache.LaneType == EventLaneType::Pedestrain
-				&& laneCache.Region.Contains(it->second.Region.HitPoint()))
+				&& cache.LaneType == EventLaneType::Pedestrain
+				&& cache.Region.Contains(it->second.Region.HitPoint()))
 			{
-				map<string, EventDetectCache>::iterator mit = laneCache.Items.find(it->first);
-				if (mit == laneCache.Items.end())
+				map<string, EventDetectCache>::iterator mit = cache.Items.find(it->first);
+				if (mit == cache.Items.end())
 				{
 					it->second.Status = DetectStatus::New;
 					EventDetectCache eventItem;
 					eventItem.LastTimeStamp = timeStamp;
-					laneCache.Items.insert(pair<string, EventDetectCache>(it->first, eventItem));
-					if (_encoders.size() < MaxEncodeCount)
+					cache.Items.insert(pair<string, EventDetectCache>(it->first, eventItem));
+					string laneJson;
+					JsonSerialization::SerializeValue(&laneJson, "channelUrl", _channelUrl);
+					JsonSerialization::SerializeValue(&laneJson, "laneIndex", cache.LaneIndex);
+					JsonSerialization::SerializeValue(&laneJson, "timeStamp", timeStamp);
+					JsonSerialization::SerializeValue(&laneJson, "type", (int)EventType::Pedestrain);
+					string jpgBase64;
+					DrawPedestrain(&jpgBase64, iveBuffer, it->second.Region.HitPoint(), frameIndex);
+					JsonSerialization::SerializeValue(&laneJson, "image1", jpgBase64);
+					if (_mqtt != NULL)
 					{
-						_encoders.push_back(new EventEncoderCache(_channelUrl, laneCache.LaneIndex, timeStamp, EventType::Pedestrain, _width, _height));
+						_mqtt->Send(EventTopic, laneJson);
 					}
 					LogPool::Debug(LogEvent::Event, _channelIndex,it->first, "pedestrain event");
-					//DrawPedestrain(iveBuffer, it->second.Region.HitPoint(), frameIndex);
 				}
 				else
 				{
@@ -172,18 +147,18 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 				}
 			}
 			else if (it->second.Type > DetectType::Motobike
-				&& laneCache.Region.Contains(it->second.Region.HitPoint()))
+				&& cache.Region.Contains(it->second.Region.HitPoint()))
 			{
-				if (laneCache.LaneType == EventLaneType::Park)
+				if (cache.LaneType == EventLaneType::Park)
 				{
-					map<string, EventDetectCache>::iterator mit = laneCache.Items.find(it->first);
-					if (mit == laneCache.Items.end())
+					map<string, EventDetectCache>::iterator mit = cache.Items.find(it->first);
+					if (mit == cache.Items.end())
 					{
 						it->second.Status = DetectStatus::New;
 						EventDetectCache eventItem;
 						eventItem.FirstTimeStamp = timeStamp;
 						eventItem.LastTimeStamp = timeStamp;
-						laneCache.Items.insert(pair<string, EventDetectCache>(it->first, eventItem));
+						cache.Items.insert(pair<string, EventDetectCache>(it->first, eventItem));
 					}
 					else
 					{
@@ -195,12 +170,20 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 								&& mit->second.LastTimeStamp - mit->second.FirstTimeStamp > ParkEndSpan)
 							{
 								mit->second.StopPark = true;
-								if (_encoders.size() < MaxEncodeCount)
+								string laneJson;
+								JsonSerialization::SerializeValue(&laneJson, "channelUrl", _channelUrl);
+								JsonSerialization::SerializeValue(&laneJson, "laneIndex", cache.LaneIndex);
+								JsonSerialization::SerializeValue(&laneJson, "timeStamp", timeStamp);
+								JsonSerialization::SerializeValue(&laneJson, "type", (int)EventType::Park);
+								JsonSerialization::SerializeValue(&laneJson, "image1", mit->second.StartParkImage);
+								string jpgBase64;
+								DrawPark(&jpgBase64, iveBuffer, it->second.Region.HitPoint(), frameIndex);
+								JsonSerialization::SerializeValue(&laneJson, "image2", jpgBase64);
+								if (_mqtt != NULL)
 								{
-									_encoders.push_back(new EventEncoderCache(_channelUrl, laneCache.LaneIndex, timeStamp, EventType::Park, _width, _height));
+									_mqtt->Send(EventTopic, laneJson);
 								}
 								LogPool::Debug(LogEvent::Event, _channelIndex, "park event");
-								//DrawPark(iveBuffer, it->second.Region.HitPoint(), frameIndex);
 							}
 						}
 						else
@@ -209,37 +192,45 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 							if (mit->second.LastTimeStamp - mit->second.FirstTimeStamp > ParkStartSpan)
 							{
 								mit->second.StartPark = true;
+								DrawPark(&mit->second.StartParkImage, iveBuffer, it->second.Region.HitPoint(), frameIndex);
 							}
 						}
 					}
 				}
-				else if (laneCache.LaneType == EventLaneType::Lane)
+				else if (cache.LaneType == EventLaneType::Lane)
 				{
 					++carsInLane;
 					if (carsInLane == CarCount)
 					{
-						if (timeStamp - laneCache.LastReportTimeStamp > ReportSpan)
+						if (timeStamp - cache.LastReportTimeStamp > ReportSpan)
 						{
-							laneCache.LastReportTimeStamp = timeStamp;
-							if (_encoders.size() < MaxEncodeCount)
+							string laneJson;
+							JsonSerialization::SerializeValue(&laneJson, "channelUrl", _channelUrl);
+							JsonSerialization::SerializeValue(&laneJson, "laneIndex", cache.LaneIndex);
+							JsonSerialization::SerializeValue(&laneJson, "timeStamp", timeStamp);
+							JsonSerialization::SerializeValue(&laneJson, "type", (int)EventType::Congestion);
+							string jpgBase64;
+							DrawCongestion(&jpgBase64, iveBuffer, frameIndex);
+							JsonSerialization::SerializeValue(&laneJson, "image1", jpgBase64);
+							if (_mqtt != NULL)
 							{
-								_encoders.push_back(new EventEncoderCache(_channelUrl, laneCache.LaneIndex, timeStamp, EventType::Congestion, _width, _height));
+								_mqtt->Send(EventTopic, laneJson);
 							}
-							LogPool::Debug(LogEvent::Event, _channelIndex, "congestion event");		
-							//DrawCongestion(iveBuffer, frameIndex);
+							cache.LastReportTimeStamp = timeStamp;
+							LogPool::Debug(LogEvent::Event, _channelIndex, "congestion event");
 						}
 					}
 					//处于拥堵状态不检测逆行
-					if (!laneCache.Congestion)
+					if (!cache.Congestion)
 					{
-						map<string, EventDetectCache>::iterator mit = laneCache.Items.find(it->first);
-						if (mit == laneCache.Items.end())
+						map<string, EventDetectCache>::iterator mit = cache.Items.find(it->first);
+						if (mit == cache.Items.end())
 						{
 							it->second.Status = DetectStatus::New;
 							EventDetectCache eventItem;
 							eventItem.LastTimeStamp = timeStamp;
 							eventItem.RetrogradePoints.push_back(it->second.Region.HitPoint());
-							laneCache.Items.insert(pair<string, EventDetectCache>(it->first, eventItem));
+							cache.Items.insert(pair<string, EventDetectCache>(it->first, eventItem));
 						}
 						else
 						{
@@ -252,8 +243,8 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 								{
 									bool xtrend = it->second.Region.HitPoint().X > mit->second.RetrogradePoints.back().X;
 									bool ytrend = it->second.Region.HitPoint().Y > mit->second.RetrogradePoints.back().Y;
-									if ((laneCache.BaseAsX && laneCache.XTrend!= xtrend)
-										||(!laneCache.BaseAsX && laneCache.YTrend != ytrend))
+									if ((cache.BaseAsX && cache.XTrend!= xtrend)
+										||(!cache.BaseAsX && cache.YTrend != ytrend))
 									{
 										mit->second.RetrogradePoints.push_back(it->second.Region.HitPoint());
 									}
@@ -266,16 +257,23 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 								{
 									bool xtrend = it->second.Region.HitPoint().X > mit->second.RetrogradePoints.back().X;
 									bool ytrend = it->second.Region.HitPoint().Y > mit->second.RetrogradePoints.back().Y;
-									if ((laneCache.BaseAsX && laneCache.XTrend != xtrend)
-										|| (!laneCache.BaseAsX && laneCache.YTrend != ytrend))
+									if ((cache.BaseAsX && cache.XTrend != xtrend)
+										|| (!cache.BaseAsX && cache.YTrend != ytrend))
 									{
 										mit->second.RetrogradePoints.push_back(it->second.Region.HitPoint());
-										if (_encoders.size() < MaxEncodeCount)
+										string laneJson;
+										JsonSerialization::SerializeValue(&laneJson, "channelUrl", _channelUrl);
+										JsonSerialization::SerializeValue(&laneJson, "laneIndex", cache.LaneIndex);
+										JsonSerialization::SerializeValue(&laneJson, "timeStamp", timeStamp);
+										JsonSerialization::SerializeValue(&laneJson, "type", (int)EventType::Retrograde);
+										string jpgBase64;
+										DrawRetrograde(&jpgBase64, iveBuffer, mit->second.RetrogradePoints, frameIndex);
+										JsonSerialization::SerializeValue(&laneJson, "image1", jpgBase64);
+										if (_mqtt != NULL)
 										{
-											_encoders.push_back(new EventEncoderCache(_channelUrl, laneCache.LaneIndex, timeStamp, EventType::Pedestrain, _width, _height));
+											_mqtt->Send(EventTopic, laneJson);
 										}
 										LogPool::Debug(LogEvent::Event, _channelIndex, "retrograde event");
-										//DrawRetrograde(iveBuffer, mit->second.RetrogradePoints, frameIndex);
 									}
 								}
 							}
@@ -284,138 +282,137 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 				}
 			}
 		}
-		laneCache.Congestion = carsInLane >= CarCount;
+		cache.Congestion = carsInLane >= CarCount;
 	}
-	//DrawDetect(*detectItems, iveBuffer, frameIndex);
+
+
+	DrawDetect(*detectItems, iveBuffer, frameIndex);
 }
-//
-//void EventDetector::DrawPedestrain(const unsigned char* iveBuffer, const Point& point, int frameIndex)
-//{
-//	if (!_debug)
-//	{
-//		return;
-//	}
-//	ImageConvert::IveToBgr(iveBuffer, _width, _height, _bgrBuffer);
-//	cv::Mat image(_height, _width, CV_8UC3, _bgrBuffer);
-//	for (unsigned int i = 0; i < _lanes.size(); ++i)
-//	{
-//		EventLaneCache& cache = _lanes[i];
-//		if (cache.LaneType == EventLaneType::Pedestrain)
-//		{
-//			//红色检测区域
-//			ImageConvert::DrawPolygon(&image, cache.Region, cv::Scalar(0, 0, 255));
-//		}
-//	}
-//	//绿色行人点
-//	ImageConvert::DrawPoint(&image, point, cv::Scalar(0, 255, 0));
-//	int jpgSize = ImageConvert::BgrToJpg(image.data, _width, _height, &_jpgBuffer, _jpgSize);
-//	_jpgHandler.HandleFrame(_jpgBuffer, jpgSize, -frameIndex);
-//}
-//
-//void EventDetector::DrawPark(const unsigned char* iveBuffer, const Point& point, int frameIndex)
-//{
-//	if (!_debug)
-//	{
-//		return;
-//	}
-//	ImageConvert::IveToBgr(iveBuffer, _width, _height, _bgrBuffer);
-//	cv::Mat image(_height, _width, CV_8UC3, _bgrBuffer);
-//	for (unsigned int i = 0; i < _lanes.size(); ++i)
-//	{
-//		EventLaneCache& cache = _lanes[i];
-//		if (cache.LaneType == EventLaneType::Park)
-//		{
-//			//红色检测区域
-//			ImageConvert::DrawPolygon(&image, cache.Region, cv::Scalar(0, 0, 255));
-//		}
-//	}
-//	//绿色检测车点
-//	ImageConvert::DrawPoint(&image, point, cv::Scalar(0, 255, 0));
-//	int jpgSize = ImageConvert::BgrToJpg(image.data, _width, _height, &_jpgBuffer,_jpgSize);
-//	_jpgHandler.HandleFrame(_jpgBuffer, jpgSize, -frameIndex);
-//}
-//
-//void EventDetector::DrawCongestion(const unsigned char* iveBuffer, int frameIndex)
-//{
-//	if (!_debug)
-//	{
-//		return;
-//	}
-//	ImageConvert::IveToBgr(iveBuffer, _width, _height, _bgrBuffer);
-//	cv::Mat image(_height, _width, CV_8UC3, _bgrBuffer);
-//	for (unsigned int i = 0; i < _lanes.size(); ++i)
-//	{
-//		EventLaneCache& cache = _lanes[i];
-//		ImageConvert::DrawPolygon(&image, cache.Region, cv::Scalar(0, 0, 255));
-//	}
-//	int jpgSize = ImageConvert::BgrToJpg(image.data, _width, _height, &_jpgBuffer, _jpgSize);
-//	_jpgHandler.HandleFrame(_jpgBuffer, jpgSize, -frameIndex);
-//}
-//
-//void EventDetector::DrawRetrograde(const unsigned char* iveBuffer, const vector<Point>& points, int frameIndex)
-//{
-//	if (!_debug)
-//	{
-//		return;
-//	}
-//	ImageConvert::IveToBgr(iveBuffer, _width, _height, _bgrBuffer);
-//	cv::Mat image(_height, _width, CV_8UC3, _bgrBuffer);
-//	for (unsigned int i = 0; i < _lanes.size(); ++i)
-//	{
-//		EventLaneCache& cache = _lanes[i];
-//		if (cache.LaneType == EventLaneType::Lane)
-//		{
-//			//红色检测区域
-//			ImageConvert::DrawPolygon(&image, cache.Region, cv::Scalar(0, 0, 255));
-//		}
-//	}
-//
-//	//绿色点
-//	for (unsigned int i = 0; i < points.size(); ++i)
-//	{
-//		ImageConvert::DrawPoint(&image, points[i], cv::Scalar(0, 255, 0));
-//	}
-//
-//	int jpgSize = ImageConvert::BgrToJpg(image.data, _width, _height, &_jpgBuffer, _jpgSize);
-//	_jpgHandler.HandleFrame(_jpgBuffer, jpgSize, -frameIndex);
-//}
-//
-//void EventDetector::DrawDetect(const map<string, DetectItem>& detectItems, const unsigned char* iveBuffer, int frameIndex)
-//{
-//	if (!_debug)
-//	{
-//		return;
-//	}
-//	ImageConvert::IveToBgr(iveBuffer, _width, _height, _bgrBuffer);
-//	cv::Mat image(_height, _width, CV_8UC3, _bgrBuffer);
-//	for (unsigned int i = 0; i < _lanes.size(); ++i)
-//	{
-//		EventLaneCache& cache = _lanes[i];
-//		ImageConvert::DrawPolygon(&image, cache.Region, cv::Scalar(0, 0, 255));
-//	}
-//	for (map<string, DetectItem>::const_iterator it = detectItems.begin(); it != detectItems.end(); ++it)
-//	{
-//		cv::Point point(it->second.Region.HitPoint().X, it->second.Region.HitPoint().Y);
-//		cv::Scalar scalar;
-//		//绿色新车
-//		if (it->second.Status == DetectStatus::New)
-//		{
-//			scalar = cv::Scalar(0, 255, 0);
-//		}
-//		//黄色在区域
-//		else if (it->second.Status == DetectStatus::In)
-//		{
-//			scalar = cv::Scalar(0, 255, 255);
-//		}
-//		//蓝色不在区域
-//		else
-//		{
-//			scalar = cv::Scalar(255, 0, 0);
-//		}
-//		cv::circle(image, point, 10, scalar, -1);
-//	}
-//
-//	int jpgSize = ImageConvert::BgrToJpg(image.data, _width, _height, &_jpgBuffer, _jpgSize);
-//	_jpgHandler.HandleFrame(_jpgBuffer, jpgSize, frameIndex);
-//}
-//
+
+void EventDetector::DrawPedestrain(std::string* jpgBase64, const unsigned char* iveBuffer, const Point& point, int frameIndex)
+{
+	ImageConvert::IveToBgr(iveBuffer, _width, _height, _bgrBuffer);
+	cv::Mat image(_height, _width, CV_8UC3, _bgrBuffer);
+	for (unsigned int i = 0; i < _lanes.size(); ++i)
+	{
+		EventLaneCache& cache = _lanes[i];
+		if (cache.LaneType == EventLaneType::Pedestrain)
+		{
+			//红色检测区域
+			ImageConvert::DrawPolygon(&image, cache.Region, cv::Scalar(0, 0, 255));
+		}
+	}
+	//绿色行人点
+	ImageConvert::DrawPoint(&image, point, cv::Scalar(0, 255, 0));
+	int jpgSize = ImageConvert::BgrToJpgBase64(image.data, _width, _height,jpgBase64, _jpgBuffer, _jpgSize);
+	if (_debug)
+	{
+		_jpgHandler.HandleFrame(_jpgBuffer, jpgSize, frameIndex);
+	}
+}
+
+void EventDetector::DrawPark(std::string* jpgBase64, const unsigned char* iveBuffer, const Point& point, int frameIndex)
+{
+	ImageConvert::IveToBgr(iveBuffer, _width, _height, _bgrBuffer);
+	cv::Mat image(_height, _width, CV_8UC3, _bgrBuffer);
+	for (unsigned int i = 0; i < _lanes.size(); ++i)
+	{
+		EventLaneCache& cache = _lanes[i];
+		if (cache.LaneType == EventLaneType::Park)
+		{
+			//红色检测区域
+			ImageConvert::DrawPolygon(&image, cache.Region, cv::Scalar(0, 0, 255));
+		}
+	}
+	//绿色检测车点
+	ImageConvert::DrawPoint(&image, point, cv::Scalar(0, 255, 0));
+	int jpgSize = ImageConvert::BgrToJpgBase64(image.data, _width, _height,jpgBase64, _jpgBuffer,_jpgSize);
+	if (_debug)
+	{
+		_jpgHandler.HandleFrame(_jpgBuffer, jpgSize, frameIndex);
+	}
+}
+
+void EventDetector::DrawCongestion(string* jpgBase64, const unsigned char* iveBuffer, int frameIndex)
+{
+	ImageConvert::IveToBgr(iveBuffer, _width, _height, _bgrBuffer);
+	cv::Mat image(_height, _width, CV_8UC3, _bgrBuffer);
+	//cv::putText(image, DateTime::Now().ToString(), cv::Point(0, 30), cv::FONT_HERSHEY_SIMPLEX, 2, cv::Scalar(0, 0, 0), 3);
+	for (unsigned int i = 0; i < _lanes.size(); ++i)
+	{
+		EventLaneCache& cache = _lanes[i];
+		ImageConvert::DrawPolygon(&image, cache.Region, cv::Scalar(0, 0, 255));
+	}
+	int jpgSize = ImageConvert::BgrToJpgBase64(image.data, _width, _height,jpgBase64, _jpgBuffer, _jpgSize);
+	if (_debug)
+	{
+		_jpgHandler.HandleFrame(_jpgBuffer, jpgSize, frameIndex);
+	}
+}
+
+void EventDetector::DrawRetrograde(string* jpgBase64, const unsigned char* iveBuffer, const vector<Point>& points, int frameIndex)
+{
+	ImageConvert::IveToBgr(iveBuffer, _width, _height, _bgrBuffer);
+	cv::Mat image(_height, _width, CV_8UC3, _bgrBuffer);
+	for (unsigned int i = 0; i < _lanes.size(); ++i)
+	{
+		EventLaneCache& cache = _lanes[i];
+		if (cache.LaneType == EventLaneType::Lane)
+		{
+			//红色检测区域
+			ImageConvert::DrawPolygon(&image, cache.Region, cv::Scalar(0, 0, 255));
+		}
+	}
+
+	//绿色点
+	for (unsigned int i = 0; i < points.size(); ++i)
+	{
+		ImageConvert::DrawPoint(&image, points[i], cv::Scalar(0, 255, 0));
+	}
+
+	int jpgSize = ImageConvert::BgrToJpgBase64(image.data, _width, _height,jpgBase64, _jpgBuffer, _jpgSize);
+	if (_debug)
+	{
+		_jpgHandler.HandleFrame(_jpgBuffer, jpgSize, frameIndex);
+	}
+}
+
+void EventDetector::DrawDetect(const map<string, DetectItem>& detectItems, const unsigned char* iveBuffer, int frameIndex)
+{
+	if (!_debug)
+	{
+		return;
+	}
+	ImageConvert::IveToBgr(iveBuffer, _width, _height, _bgrBuffer);
+	cv::Mat image(_height, _width, CV_8UC3, _bgrBuffer);
+	for (unsigned int i = 0; i < _lanes.size(); ++i)
+	{
+		EventLaneCache& cache = _lanes[i];
+		ImageConvert::DrawPolygon(&image, cache.Region, cv::Scalar(0, 0, 255));
+	}
+	for (map<string, DetectItem>::const_iterator it = detectItems.begin(); it != detectItems.end(); ++it)
+	{
+		cv::Point point(it->second.Region.HitPoint().X, it->second.Region.HitPoint().Y);
+		cv::Scalar scalar;
+		//绿色新车
+		if (it->second.Status == DetectStatus::New)
+		{
+			scalar = cv::Scalar(0, 255, 0);
+		}
+		//黄色在区域
+		else if (it->second.Status == DetectStatus::In)
+		{
+			scalar = cv::Scalar(0, 255, 255);
+		}
+		//蓝色不在区域
+		else
+		{
+			scalar = cv::Scalar(255, 0, 0);
+		}
+		cv::circle(image, point, 10, scalar, -1);
+	}
+
+	int jpgSize = ImageConvert::BgrToJpg(image.data, _width, _height, _jpgBuffer, _jpgSize);
+	_jpgHandler.HandleFrame(_jpgBuffer, jpgSize, frameIndex);
+}
+

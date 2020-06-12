@@ -3,12 +3,6 @@
 using namespace std;
 using namespace OnePunchMan;
 
-FlowStartup::FlowStartup()
-    :TrafficStartup(8)
-{
-
-}
-
 FlowStartup::~FlowStartup()
 {
     for (unsigned int i = 0; i < _detectors.size(); ++i)
@@ -19,14 +13,14 @@ FlowStartup::~FlowStartup()
 
 void FlowStartup::InitSoftVersion()
 {
-    _softwareVersion = "2.0.0.7";
+    _softwareVersion = "2.0.0.8";
     FlowChannelData data;
     data.SetVersion(_softwareVersion);
 }
 
 void FlowStartup::InitThreads(MqttChannel* mqtt, vector<DecodeChannel*>* decodes, vector<TrafficDetector*>* detectors, vector<DetectChannel*>* detects, vector<RecognChannel*>* recogns)
 {
-    for (int i = 0; i < _channelCount; ++i)
+    for (int i = 0; i < ChannelCount; ++i)
     {
         FlowDetector* detector = new FlowDetector(FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, mqtt, false);
         _detectors.push_back(detector);
@@ -43,14 +37,14 @@ void FlowStartup::InitThreads(MqttChannel* mqtt, vector<DecodeChannel*>* decodes
 
     for (int i = 0; i < DetectCount; ++i)
     {
-        DetectChannel* detect = new DetectChannel(i,FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight,false);
+        DetectChannel* detect = new DetectChannel(i,FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight);
         detects->push_back(detect);
     }
 
     for (int i = 0; i < DetectCount; ++i)
     {
         detects->at(i)->SetRecogn(recogns->at(i%RecognCount));
-        for (int j = 0; j < _channelCount / DetectCount; ++j)
+        for (int j = 0; j < ChannelCount / DetectCount; ++j)
         {
             int channelIndex = i + (j * DetectCount) + 1;
             detects->at(i)->AddChannel(channelIndex, decodes->at(channelIndex-1), detectors->at(channelIndex-1));
@@ -61,7 +55,7 @@ void FlowStartup::InitThreads(MqttChannel* mqtt, vector<DecodeChannel*>* decodes
 void FlowStartup::InitChannels()
 {
     FlowChannelData data;
-    for (int i = 0; i < _channelCount; ++i)
+    for (int i = 0; i < ChannelCount; ++i)
     {
         FlowChannel channel = data.Get(i + 1);
         if (!channel.ChannelUrl.empty())
@@ -174,7 +168,7 @@ void FlowStartup::SetDevice(HttpReceivedEventArgs* e)
     FlowChannelData data;
     if (data.SetList(channels))
     {
-        for (int i = 0; i < _channelCount; ++i)
+        for (int i = 0; i < ChannelCount; ++i)
         {
             map<int, FlowChannel>::iterator it = tempChannels.find(i + 1);
             if (it == tempChannels.end())

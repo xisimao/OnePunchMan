@@ -3,11 +3,12 @@
 using namespace std;
 using namespace OnePunchMan;
 
+const int TrafficStartup::ChannelCount = 8;
 const int TrafficStartup::DetectCount = 4;
 const int TrafficStartup::RecognCount = 2;
 
-TrafficStartup::TrafficStartup(int channelCount)
-    :_channelCount(channelCount),_startTime(DateTime::Now()), _sdkInited(false), _socketMaid(NULL), _mqtt(NULL)
+TrafficStartup::TrafficStartup()
+    :_startTime(DateTime::Now()), _sdkInited(false), _socketMaid(NULL), _mqtt(NULL)
 {
 
 }
@@ -133,7 +134,7 @@ void TrafficStartup::GetDevice(HttpReceivedEventArgs* e)
     }
 
     string channelsJson;
-    for (int i = 0; i < _channelCount; ++i)
+    for (unsigned int i = 0; i < ChannelCount; ++i)
     {
         string channelJson = GetChannelJson(e->Host, i + 1);
         if (!channelJson.empty())
@@ -195,13 +196,13 @@ string TrafficStartup::CheckChannel(int channelIndex)
     }
     else
     {
-        return GetErrorJson("channelIndex", StringEx::Combine("channelIndex is limited to 1-", _channelCount));
+        return GetErrorJson("channelIndex", StringEx::Combine("channelIndex is limited to 1-", ChannelCount));
     }
 }
 
 bool TrafficStartup::ChannelIndexEnable(int channelIndex)
 {
-    return channelIndex >= 1 && channelIndex <= _channelCount;
+    return channelIndex >= 1 && channelIndex <= ChannelCount;
 }
 
 bool TrafficStartup::UrlStartWith(const string& url, const string& key)
@@ -231,13 +232,25 @@ string TrafficStartup::GetErrorJson(const string& field, const string& message)
     return StringEx::Combine("{\"", field, "\":[\"", message, "\"]}");
 }
 
+DetectChannel* TrafficStartup::GetDetect(int channelIndex)
+{
+    if (ChannelIndexEnable(channelIndex))
+    {
+        return _detects[(channelIndex - 1) / (ChannelCount / DetectCount)];
+    }
+    else
+    {
+        return NULL;
+    }
+}
+
 void TrafficStartup::Startup()
 {
     Socket::Init();
     MqttChannel::Init();
     FFmpegChannel::InitFFmpeg();
-    DecodeChannel::UninitHisi(_channelCount);
-    if (!DecodeChannel::InitHisi(_channelCount))
+    DecodeChannel::UninitHisi(ChannelCount);
+    if (!DecodeChannel::InitHisi(ChannelCount))
     {
         exit(2);
     }
@@ -259,11 +272,8 @@ void TrafficStartup::Startup()
     //软件版本
     InitSoftVersion();
 
-    //删除临时文件
-    Command::Execute("rm -rf ../temp/*");
-
     //获取web版本
-    string cat = Command::Execute("cat ../web/static/config/base.js");
+    string cat = Command::Execute("cat ../web/static/config/config.js");
     vector<string> catRows = StringEx::Split(cat, "\n", true);
     for (unsigned int i = 0; i < catRows.size(); ++i)
     {
@@ -362,7 +372,7 @@ void TrafficStartup::Startup()
     }
 
     SeemmoSDK::Uninit();
-    DecodeChannel::UninitHisi(_channelCount);
+    DecodeChannel::UninitHisi(ChannelCount);
     FFmpegChannel::UninitFFmpeg();
     MqttChannel::Uninit();
     Socket::Uninit();

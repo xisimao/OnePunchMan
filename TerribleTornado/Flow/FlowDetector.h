@@ -6,7 +6,6 @@
 namespace OnePunchMan
 {
 	//通道检测
-	//使用bgr24,jpg
 	class FlowDetector :public TrafficDetector
 	{
 	public:
@@ -20,11 +19,6 @@ namespace OnePunchMan
 		FlowDetector(int width, int height,MqttChannel* mqtt, bool debug);
 
 		/**
-		* @brief: 析构函数
-		*/
-		~FlowDetector();
-
-		/**
 		* @brief: 更新通道
 		* @param: channel 通道
 		*/
@@ -35,7 +29,7 @@ namespace OnePunchMan
 		*/
 		void ClearChannel();
 
-		void HandleDetect(std::map<std::string, DetectItem>* detectItems, long long timeStamp, std::string* param, const unsigned char* iveBuffer, const unsigned char* yuvBuffer,int frameIndex,int frameSpan);
+		void HandleDetect(std::map<std::string, DetectItem>* detectItems, long long timeStamp, std::string* param, const unsigned char* iveBuffer, int frameIndex,int frameSpan);
 		
 		void HandleRecognVehicle(const RecognItem& recognItem, const unsigned char* iveBuffer, const VideoStruct_Vehicle& vehicle);
 		
@@ -153,13 +147,13 @@ namespace OnePunchMan
 
 		bool ContainsRecogn(std::string* json,const RecognItem& recognItem, const unsigned char* iveBuffer);
 
-		///**
-		//* @brief: 绘制检测区域
-		//* @param: detectItems 检测项集合
-		//* @param: iveBuffer ive字节流
-		//* @param: frameIndex 帧序号
-		//*/
-		//void DrawDetect(const std::map<std::string, DetectItem>& detectItems, const unsigned char* iveBuffer, int frameIndex);
+		/**
+		* @brief: 绘制检测区域
+		* @param: detectItems 检测项集合
+		* @param: iveBuffer ive字节流
+		* @param: frameIndex 帧序号
+		*/
+		void DrawDetect(const std::map<std::string, DetectItem>& detectItems, const unsigned char* iveBuffer, int frameIndex);
 
 		//IO mqtt主题
 		static const std::string IOTopic;
@@ -188,16 +182,6 @@ namespace OnePunchMan
 		std::string _recognChannelUrl;
 		//识别车道集合
 		std::vector<FlowLaneCache> _recognLanes;
-
-
-		//bgr字节流长度
-		int _bgrSize;
-		//bgr字节流
-		unsigned char* _bgrBuffer;
-		//jpg字节流长度
-		int _jpgSize;
-		//jpg字节流
-		unsigned char* _jpgBuffer;
 	};
 
 }

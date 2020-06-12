@@ -67,6 +67,7 @@ char StringEx::Xor(const char* buffer, unsigned int size)
 
 void StringEx::ToBase64String(const unsigned char* buffer, unsigned int size, string* base64) {
 
+
 	int i = 0;
 	int j = 0;
 	unsigned char char_array_3[3];

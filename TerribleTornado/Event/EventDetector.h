@@ -1,7 +1,7 @@
 #pragma once
 #include "EventData.h"
 #include "TrafficDetector.h"
-#include "ImageHandler.h"
+#include "ImageConvert.h"
 
 namespace OnePunchMan
 {
@@ -16,7 +16,6 @@ namespace OnePunchMan
 	};
 
 	//通道检测
-	//使用yuv420p
 	class EventDetector :public TrafficDetector
 	{
 	public:
@@ -40,7 +39,7 @@ namespace OnePunchMan
 		*/
 		void ClearChannel();
 
-		void HandleDetect(std::map<std::string, DetectItem>* detectItems, long long timeStamp, std::string* param, const unsigned char* iveBuffer,const unsigned char* yuvBuffer,int frameIndex,int frameSpan);
+		void HandleDetect(std::map<std::string, DetectItem>* detectItems, long long timeStamp, std::string* param, const unsigned char* iveBuffer,int frameIndex,int frameSpan);
 
 	private:
 
@@ -72,7 +71,7 @@ namespace OnePunchMan
 		{
 		public:
 			EventLaneCache()
-				:LaneIndex(0), LaneType(EventLaneType::None), Region(), XTrend(false), YTrend(false),BaseAsX(false)
+				:LaneIndex(0), LaneType(EventLaneType::None), Region(), XTrend(true), YTrend(true)
 				, Congestion(false),LastReportTimeStamp(0), Items()
 			{
 
@@ -101,62 +100,48 @@ namespace OnePunchMan
 
 		};
 
-		//事件编码缓存
-		class EventEncoderCache
-		{
-		public:
-			EventEncoderCache(const std::string& channelUrl,int laneIndex,long long timeStamp,EventType eventType,int width,int height)
-				:Json(), Image(&Json,2,width,height)
-			{
-				JsonSerialization::SerializeValue(&Json, "channelUrl", channelUrl);
-				JsonSerialization::SerializeValue(&Json, "laneIndex", laneIndex);
-				JsonSerialization::SerializeValue(&Json, "timeStamp", timeStamp);
-				JsonSerialization::SerializeValue(&Json, "type", (int)eventType);
-			}
-			//json
-			std::string Json;
-			//图片
-			ImageHandler Image;
-		};
+		/**
+		* @brief: 绘制逆行事件图片
+		* @param: jpgBase64 用于写入的字符串
+		* @param: iveBuffer ive字节流
+		* @param: points 检测点集合
+		* @param: frameIndex 帧序号
+		*/
+		void DrawRetrograde(std::string* jpgBase64, const unsigned char* iveBuffer, const std::vector<Point>& points, int frameIndex);
+		
+		/**
+		* @brief: 绘制逆行事件图片
+		* @param: jpgBase64 用于写入的字符串
+		* @param: iveBuffer ive字节流
+		* @param: point 行人点
+		* @param: frameIndex 帧序号
+		*/
+		void DrawPedestrain(std::string* jpgBase64, const unsigned char* iveBuffer, const Point& point, int frameIndex);
+		
+		/**
+		* @brief: 绘制逆行事件图片
+		* @param: jpgBase64 用于写入的字符串
+		* @param: iveBuffer ive字节流
+		* @param: point 停车点
+		* @param: frameIndex 帧序号
+		*/
+		void DrawPark(std::string* jpgBase64, const unsigned char* iveBuffer, const Point& point, int frameIndex);
+		
+		/**
+		* @brief: 绘制拥堵区域
+		* @param: jpgBase64 用于写入的字符串
+		* @param: iveBuffer ive字节流
+		* @param: frameIndex 帧序号
+		*/
+		void DrawCongestion(std::string* jpgBase64, const unsigned char* iveBuffer, int frameIndex);
 
-		///**
-		//* @brief: 绘制逆行事件图片
-		//* @param: iveBuffer ive字节流
-		//* @param: points 检测点集合
-		//* @param: frameIndex 帧序号
-		//*/
-		//void DrawRetrograde(const unsigned char* iveBuffer, const std::vector<Point>& points, int frameIndex);
-		//
-		///**
-		//* @brief: 绘制逆行事件图片
-		//* @param: iveBuffer ive字节流
-		//* @param: point 行人点
-		//* @param: frameIndex 帧序号
-		//*/
-		//void DrawPedestrain(const unsigned char* iveBuffer, const Point& point, int frameIndex);
-		//
-		///**
-		//* @brief: 绘制逆行事件图片
-		//* @param: iveBuffer ive字节流
-		//* @param: point 停车点
-		//* @param: frameIndex 帧序号
-		//*/
-		//void DrawPark(const unsigned char* iveBuffer, const Point& point, int frameIndex);
-		//
-		///**
-		//* @brief: 绘制拥堵区域
-		//* @param: iveBuffer ive字节流
-		//* @param: frameIndex 帧序号
-		//*/
-		//void DrawCongestion(const unsigned char* iveBuffer, int frameIndex);
-
-		///**
-		//* @brief: 绘制检测区域
-		//* @param: detectItems 检测项集合
-		//* @param: iveBuffer ive字节流
-		//* @param: frameIndex 帧序号
-		//*/
-		//void DrawDetect(const std::map<std::string, DetectItem>& detectItems, const unsigned char* iveBuffer, int frameIndex);
+		/**
+		* @brief: 绘制检测区域
+		* @param: detectItems 检测项集合
+		* @param: iveBuffer ive字节流
+		* @param: frameIndex 帧序号
+		*/
+		void DrawDetect(const std::map<std::string, DetectItem>& detectItems, const unsigned char* iveBuffer, int frameIndex);
 
 		//IO mqtt主题
 		static const std::string EventTopic;
@@ -174,16 +159,12 @@ namespace OnePunchMan
 		static const double MovePixel;
 		//判断逆行事件的点的数量
 		static const int PointCount;
-		//最大的编码个数
-		static const int MaxEncodeCount;
 
 		//车道集合同步锁
 		std::mutex _laneMutex;
 		//车道集合
 		std::vector<EventLaneCache> _lanes;
 
-		//需要编码的事件集合
-		std::vector<EventEncoderCache*> _encoders;
 	};
 
 }

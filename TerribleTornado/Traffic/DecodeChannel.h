@@ -1,7 +1,6 @@
 #pragma once
 #include "FFmpegChannel.h"
 #include "IVE_8UC3Handler.h"
-#include "YUV420SPHandler.h"
 
 extern "C"
 {
@@ -61,14 +60,12 @@ namespace OnePunchMan
 	{
 	public:
 		FrameItem()
-			:IveBuffer(NULL), YuvBuffer(NULL),FrameIndex(0), FrameSpan(0)
+			:IveBuffer(NULL),FrameIndex(0), FrameSpan(0)
 		{
 
 		}
 		//ive字节流
 		unsigned char* IveBuffer;
-		//yuv字节流
-		unsigned char* YuvBuffer;
 		//帧序号
 		int FrameIndex;
 		//帧率
@@ -76,7 +73,6 @@ namespace OnePunchMan
 
 	};
 	//解码线程
-	//输出:yuv420sp字节流,ive字节流
 	class DecodeChannel :public FFmpegChannel
 	{
 	public:
@@ -107,10 +103,9 @@ namespace OnePunchMan
 
 		/**
 		* @brief: 获取临时存放的ive数据
-		* @param: needYuv 是否需要对应的yuv数据
 		* @return: ive帧数据
 		*/
-		FrameItem GetTempIve(bool needYuv);
+		FrameItem GetTempIve();
 
 		/**
 		* @brief: 将下一帧视频写入到bmp
@@ -153,8 +148,6 @@ namespace OnePunchMan
 		//yuv操作时字节流
 		unsigned long long _yuv_phy_addr;
 		uint8_t* _yuvBuffer;
-		//yuv临时字节流
-		uint8_t* _tempYuvBuffer;
 
 		//ive操作时字节流
 		int _iveSize;
@@ -163,7 +156,6 @@ namespace OnePunchMan
 
 		//ive写bmp
 		IVE_8UC3Handler _iveHandler;
-		YUV420SPHandler _yuvHandler;
 	};
 
 }

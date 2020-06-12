@@ -3,12 +3,6 @@
 using namespace std;
 using namespace OnePunchMan;
 
-EventStartup::EventStartup()
-    :TrafficStartup(4)
-{
-
-}
-
 EventStartup::~EventStartup()
 {
     for (unsigned int i = 0; i < _detectors.size(); ++i)
@@ -19,14 +13,14 @@ EventStartup::~EventStartup()
 
 void EventStartup::InitSoftVersion()
 {
-    _softwareVersion = "1.0.0.4";
+    _softwareVersion = "1.0.0.5";
     EventChannelData data;
     data.SetVersion(_softwareVersion);
 }
 
 void EventStartup::InitThreads(MqttChannel* mqtt, vector<DecodeChannel*>* decodes, vector<TrafficDetector*>* detectors, vector<DetectChannel*>* detects, vector<RecognChannel*>* recogns)
 {
-    for (int i = 0; i < _channelCount; ++i)
+    for (int i = 0; i < ChannelCount; ++i)
     {
         EventDetector* detector = new EventDetector(FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, mqtt, false);
         _detectors.push_back(detector);
@@ -37,14 +31,14 @@ void EventStartup::InitThreads(MqttChannel* mqtt, vector<DecodeChannel*>* decode
 
     for (int i = 0; i < DetectCount; ++i)
     {
-        DetectChannel* detect = new DetectChannel(i, FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight,true);
+        DetectChannel* detect = new DetectChannel(i, FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight);
         detects->push_back(detect);
     }
 
     for (int i = 0; i < DetectCount; ++i)
     {
         detects->at(i)->SetRecogn(NULL);
-        for (int j = 0; j < _channelCount / DetectCount; ++j)
+        for (int j = 0; j < ChannelCount / DetectCount; ++j)
         {
             int channelIndex = i + (j * DetectCount) + 1;
             detects->at(i)->AddChannel(channelIndex, decodes->at(channelIndex - 1), detectors->at(channelIndex - 1));
@@ -55,7 +49,7 @@ void EventStartup::InitThreads(MqttChannel* mqtt, vector<DecodeChannel*>* decode
 void EventStartup::InitChannels()
 {
     EventChannelData data;
-    for (int i = 0; i < _channelCount; ++i)
+    for (int i = 0; i < ChannelCount; ++i)
     {
         EventChannel channel = data.Get(i + 1);
         if (!channel.ChannelUrl.empty())
@@ -149,7 +143,7 @@ void EventStartup::SetDevice(HttpReceivedEventArgs* e)
     EventChannelData data;
     if (data.SetList(channels))
     {
-        for (int i = 0; i < _channelCount; ++i)
+        for (int i = 0; i < ChannelCount; ++i)
         {
             map<int, EventChannel>::iterator it = tempChannels.find(i + 1);
             if (it == tempChannels.end())

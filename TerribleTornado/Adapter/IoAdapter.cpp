@@ -27,8 +27,7 @@ void IoAdapter::Update(MqttReceivedEventArgs* e)
 		map<string, FlowLane>::iterator it = _lanes.find(channelUrl + "_" + laneId);
 		if (it != _lanes.end())
 		{
-			//EndPoint ep(it->second.IOIp, 24000);
-			EndPoint ep("127.0.0.1", 24000);
+			EndPoint ep(it->second.IOIp, 24000);
 			if (_ips.find(ep) != _ips.end())
 			{
 				std::stringstream ss;
@@ -78,7 +77,8 @@ void IoAdapter::StartCore()
 				{
 					if (!lit->IOIp.empty())
 					{
-						ips.insert(EndPoint(lit->IOIp, 24000));
+						//ips.insert(EndPoint(lit->IOIp, 24000));
+						ips.insert(EndPoint("127.0.0.1", 24000));
 						_lanes.insert(pair<string, FlowLane>(cit->ChannelUrl + "_" + lit->LaneId, *lit));
 					}
 				}
