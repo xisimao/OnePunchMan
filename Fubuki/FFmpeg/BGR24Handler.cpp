@@ -5,7 +5,7 @@ using namespace OnePunchMan;
 BGR24Handler::BGR24Handler(int count)
 	:_index(0),_count(count)
 {
-
+	
 }
 
 void BGR24Handler::HandleFrame(unsigned char* bgr24, int width, int height, int frameIndex)
@@ -14,7 +14,7 @@ void BGR24Handler::HandleFrame(unsigned char* bgr24, int width, int height, int 
 	{
 		return;
 	}
-	Path::CreateDirectory("../images");
+
 	FILE* fw = NULL;
 	if ((fw = fopen(StringEx::Combine("../images/bgr24_", frameIndex, ".bmp").c_str(), "wb")) == NULL) {
 		return;

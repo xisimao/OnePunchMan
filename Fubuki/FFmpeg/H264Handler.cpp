@@ -23,6 +23,6 @@ void H264Handler::Close()
 	if (_h264File != NULL)
 	{
 		fclose(_h264File);
-		_h264File = fopen("test.h264", "wb");
+		_h264File = fopen("../images/test.h264", "wb");
 	}
 }

@@ -8,13 +8,22 @@ const string FlowDetector::FlowTopic("Flow");
 const string FlowDetector::VideoStructTopic("VideoStruct");
 const int FlowDetector::ReportMaxSpan = 60 * 1000;
 
-FlowDetector::FlowDetector(int width, int height, MqttChannel* mqtt, bool debug)
-	:TrafficDetector(width,height, mqtt,debug), _lastFrameTimeStamp(0)
-	
+FlowDetector::FlowDetector(int width, int height, MqttChannel* mqtt)
+	:TrafficDetector(width,height, mqtt), _lastFrameTimeStamp(0), _currentMinuteTimeStamp(0),_nextMinuteTimeStamp(0), _outputImage(false),_report(NULL)
 {
-	DateTime now = DateTime::Now();
-	_currentMinuteTimeStamp = DateTime(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), 0).UtcTimeStamp();
-	_nextMinuteTimeStamp = _currentMinuteTimeStamp + 60 * 1000;
+	_detectBgrBuffer = new unsigned char[_bgrSize];
+	_detectJpgBuffer = tjAlloc(_jpgSize);
+
+	_recognBgrBuffer = new unsigned char[_bgrSize];
+	_recognJpgBuffer = tjAlloc(_jpgSize);
+}
+
+FlowDetector::~FlowDetector()
+{
+	tjFree(_detectJpgBuffer);
+	delete[] _detectBgrBuffer;
+	tjFree(_recognJpgBuffer);
+	delete[] _recognBgrBuffer;
 }
 
 void FlowDetector::UpdateChannel(const FlowChannel& channel)
@@ -63,8 +72,35 @@ void FlowDetector::UpdateChannel(const FlowChannel& channel)
 		LogPool::Warning("lane init failed", channel.ChannelIndex);
 	}
 	_channelIndex = channel.ChannelIndex;
-	_param = StringEx::Combine("{\"Detect\":{\"DetectRegion\":", regionsParam, ",\"IsDet\":true,\"MaxCarWidth\":10,\"MinCarWidth\":10,\"Mode\":0,\"Threshold\":20,\"Version\":1001}}");
+	_param = GetDetectParam(regionsParam);
 	_setParam = false;
+	//输出图片时先删除旧的
+	_outputImage = channel.OutputImage;
+	if (_outputImage)
+	{
+		Command::Execute(StringEx::Combine("rm -rf ../temp/jpg_",channel.ChannelIndex,"*"));
+	}
+
+	//输出报告时调整时间戳范围
+	if (_report != NULL)
+	{
+		delete _report;
+		_report = NULL;
+	}
+	DateTime date;
+	if (channel.OutputReport)
+	{
+		_report = new ReportWriter(channel.ChannelIndex,static_cast<int>(channel.Lanes.size()));
+		date = DateTime(0);
+	}
+	else
+	{
+		date = DateTime::Now();
+	}
+	_currentMinuteTimeStamp = DateTime(date.Year(), date.Month(), date.Day(), date.Hour(), date.Minute(), 0).UtcTimeStamp();
+	_nextMinuteTimeStamp = _currentMinuteTimeStamp + 60 * 1000;
+
+	LogPool::Information(LogEvent::Flow, "channel:",channel.ChannelIndex,"output image:",channel.OutputImage,"output report:",channel.OutputReport,"current:",_currentMinuteTimeStamp,"next:", _nextMinuteTimeStamp);
 	detectLock.unlock();
 
 	lock_guard<mutex> recognLock(_recognLaneMutex);
@@ -86,17 +122,50 @@ void FlowDetector::ClearChannel()
 	_recognChannelUrl = string();
 }
 
+void FlowDetector::CalculateMinuteFlow(FlowLaneCache* laneCache)
+{
+	//平均速度(km/h)
+	laneCache->Speed = laneCache->TotalTime == 0 ? 0 : (laneCache->TotalDistance * laneCache->MeterPerPixel / 1000.0) / (static_cast<double>(laneCache->TotalTime) / 3600000.0);
+	//车道时距(sec)
+	laneCache->HeadDistance = laneCache->Vehicles > 1 ? static_cast<double>(laneCache->TotalSpan) / static_cast<double>(laneCache->Vehicles - 1) / 1000.0 : 0;
+	//车头间距(m)
+	laneCache->HeadSpace = laneCache->Speed * 1000 * laneCache->HeadDistance/ 3600.0;
+	//时间占用率(%)
+	laneCache->TimeOccupancy = static_cast<double>(laneCache->TotalInTime) / 60000.0 * 100;
+	if (laneCache->Speed > 40)
+	{
+		laneCache->TrafficStatus = static_cast<int>(TrafficStatus::Good);
+	}
+	else if (laneCache->Speed <= 40 && laneCache->Speed > 30)
+	{
+		laneCache->TrafficStatus = static_cast<int>(TrafficStatus::Normal);
+	}
+	else if (laneCache->Speed <= 30 && laneCache->Speed > 20)
+	{
+		laneCache->TrafficStatus = static_cast<int>(TrafficStatus::Warning);
+	}
+	else if (laneCache->Speed <= 20 && laneCache->Speed > 15)
+	{
+		laneCache->TrafficStatus = static_cast<int>(TrafficStatus::Warning);
+	}
+	else
+	{
+		laneCache->TrafficStatus = static_cast<int>(TrafficStatus::Dead);
+	}
+}
+
 void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long timeStamp, string* param, const unsigned char* iveBuffer, int frameIndex, int frameSpan)
 {
-	if (_debug)
-	{
-		timeStamp = frameIndex * frameSpan;
-	}
 	lock_guard<mutex> detectLock(_detectLaneMutex);
 	if (!_setParam)
 	{
 		param->assign(_param);
 		_setParam = true;
+	}
+	//输出检测报告时调整时间戳
+	if (_report != NULL)
+	{
+		timeStamp = frameIndex * frameSpan;
 	}
 	//结算上一分钟
 	if (timeStamp > _nextMinuteTimeStamp)
@@ -105,35 +174,7 @@ void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long 
 		for (unsigned int i = 0; i < _detectLanes.size(); ++i)
 		{
 			FlowLaneCache& cache = _detectLanes[i];
-			//平均速度(km/h)
-			double speed = cache.TotalTime == 0 ? 0 : (cache.TotalDistance * cache.MeterPerPixel / 1000.0) / (static_cast<double>(cache.TotalTime) / 3600000.0);
-			//车道时距(sec)
-			double headDistance = cache.Vehicles > 1 ? static_cast<double>(cache.TotalSpan) / static_cast<double>(cache.Vehicles - 1) / 1000.0 : 0;
-			//车头间距(m)
-			double headSpace = speed * 1000 * headDistance / 3600.0;
-			//时间占用率(%)
-			double timeOccupancy = static_cast<double>(cache.TotalInTime) / 60000.0 * 100;
-			int trafficStatus = 0;
-			if (speed > 40)
-			{
-				trafficStatus = static_cast<int>(TrafficStatus::Good);
-			}
-			else if (speed <= 40 && speed > 30)
-			{
-				trafficStatus = static_cast<int>(TrafficStatus::Normal);
-			}
-			else if (speed <= 30 && speed > 20)
-			{
-				trafficStatus = static_cast<int>(TrafficStatus::Warning);
-			}
-			else if (speed <= 20 && speed > 15)
-			{
-				trafficStatus = static_cast<int>(TrafficStatus::Warning);
-			}
-			else
-			{
-				trafficStatus = static_cast<int>(TrafficStatus::Dead);
-			}
+			CalculateMinuteFlow(&cache);
 			string laneJson;
 			JsonSerialization::SerializeValue(&laneJson, "channelUrl", _channelUrl);
 			JsonSerialization::SerializeValue(&laneJson, "laneId", cache.LaneId);
@@ -147,15 +188,18 @@ void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long 
 			JsonSerialization::SerializeValue(&laneJson, "vans", cache.Vans);
 			JsonSerialization::SerializeValue(&laneJson, "trucks", cache.Trucks);
 
-			JsonSerialization::SerializeValue(&laneJson, "averageSpeed", static_cast<int>(speed));
-			JsonSerialization::SerializeValue(&laneJson, "headDistance", headDistance);
-			JsonSerialization::SerializeValue(&laneJson, "headSpace", headSpace);
-			JsonSerialization::SerializeValue(&laneJson, "timeOccupancy", static_cast<int>(timeOccupancy));
-			JsonSerialization::SerializeValue(&laneJson, "trafficStatus", trafficStatus);
+			JsonSerialization::SerializeValue(&laneJson, "averageSpeed", static_cast<int>(cache.Speed));
+			JsonSerialization::SerializeValue(&laneJson, "headDistance", cache.HeadDistance);
+			JsonSerialization::SerializeValue(&laneJson, "headSpace", cache.HeadSpace);
+			JsonSerialization::SerializeValue(&laneJson, "timeOccupancy", static_cast<int>(cache.TimeOccupancy));
+			JsonSerialization::SerializeValue(&laneJson, "trafficStatus", cache.TrafficStatus);
 			JsonSerialization::AddClassItem(&flowLanesJson, laneJson);
 
-			LogPool::Debug(LogEvent::Detect, "lane:", cache.LaneId, "vehicles:", cache.Cars + cache.Tricycles + cache.Buss + cache.Vans + cache.Trucks, "bikes:", cache.Bikes + cache.Motorcycles, "persons:", cache.Persons, speed, "km/h ", headDistance, "sec ", timeOccupancy, "%");
-
+			LogPool::Debug(LogEvent::Detect, "lane:", cache.LaneId, "vehicles:", cache.Cars + cache.Tricycles + cache.Buss + cache.Vans + cache.Trucks, "bikes:", cache.Bikes + cache.Motorcycles, "persons:", cache.Persons, cache.Speed, "km/h ", cache.HeadDistance, "sec ", cache.TimeOccupancy, "%");
+			if (_report != NULL)
+			{
+				_report->Write(cache);
+			}
 			cache.Persons = 0;
 			cache.Bikes = 0;
 			cache.Motorcycles = 0;
@@ -177,6 +221,7 @@ void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long 
 
 		if (!flowLanesJson.empty()
 			&& _mqtt != NULL
+			&& _report==NULL
 			&& (timeStamp - _nextMinuteTimeStamp) < ReportMaxSpan)
 		{
 			_mqtt->Send(FlowTopic, flowLanesJson);
@@ -296,22 +341,34 @@ void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long 
 		}
 	}
 	_lastFrameTimeStamp = timeStamp;
-	if (!ioLanesJson.empty())
+	if (!ioLanesJson.empty()
+		&& _mqtt != NULL
+		&&_report==NULL)
 	{
-		if (_mqtt != NULL)
-		{
-			_mqtt->Send(IOTopic, ioLanesJson);
-		}
+		_mqtt->Send(IOTopic, ioLanesJson);
 	}
 	DrawDetect(*detectItems, iveBuffer, frameIndex);
 }
 
-bool FlowDetector::ContainsRecogn(string* json,const RecognItem& recognItem, const unsigned char* iveBuffer)
+void FlowDetector::FinishDetect()
 {
-	if (_debug)
+	lock_guard<mutex> lock(_detectLaneMutex);
+	for (unsigned int i = 0; i < _detectLanes.size(); ++i)
 	{
-		return false;
+		FlowLaneCache& cache = _detectLanes[i];
+		CalculateMinuteFlow(&cache);
+		if (_report != NULL)
+		{
+			_report->Write(cache);
+		}
+		
 	}
+	delete _report;
+	_report = NULL;
+}
+
+void FlowDetector::HandleRecogn(string* json,const RecognItem& recognItem, const unsigned char* iveBuffer)
+{
 	long long timeStamp = DateTime::UtcNowTimeStamp();
 	lock_guard<mutex> recognLock(_recognLaneMutex);
 	for (unsigned int i = 0; i < _recognLanes.size(); ++i)
@@ -322,99 +379,97 @@ bool FlowDetector::ContainsRecogn(string* json,const RecognItem& recognItem, con
 			JsonSerialization::SerializeValue(json, "laneId", _recognLanes[i].LaneId);
 			JsonSerialization::SerializeValue(json, "timeStamp", timeStamp);
 			string image;
-			ImageConvert::IveToJpgBase64(iveBuffer, recognItem.Width, recognItem.Height, _bgrBuffer, &image, _jpgBuffer, _jpgSize);
+			ImageConvert::IveToJpgBase64(iveBuffer, recognItem.Width, recognItem.Height, _recognBgrBuffer, &image, _recognJpgBuffer, _jpgSize);
 			JsonSerialization::SerializeValue(json, "image", image);
+			if (_mqtt != NULL && _report == NULL)
+			{
+				_mqtt->Send(VideoStructTopic, *json);
+			}
 			LogPool::Debug(LogEvent::Detect, "lane:", _recognLanes[i].LaneId, "type:", recognItem.Type);
-			return true;
+			return;
 		}
 	}
-	return false;
 }
 
 void FlowDetector::HandleRecognVehicle(const RecognItem& recognItem, const unsigned char* iveBuffer, const VideoStruct_Vehicle& vehicle)
 {
 	string json;
-	if (ContainsRecogn(&json, recognItem, iveBuffer))
-	{
-		JsonSerialization::SerializeValue(&json, "videoStructType", (int)VideoStructType::Vehicle);
-		JsonSerialization::SerializeValue(&json, "carType", vehicle.CarType);
-		JsonSerialization::SerializeValue(&json, "carColor", vehicle.CarColor);
-		JsonSerialization::SerializeValue(&json, "carBrand", vehicle.CarBrand);
-		JsonSerialization::SerializeValue(&json, "plateType", vehicle.PlateType);
-		JsonSerialization::SerializeValue(&json, "plateNumber", vehicle.PlateNumber);
-		if (_mqtt != NULL)
-		{
-			_mqtt->Send(VideoStructTopic, json);
-		}
-	}
+	JsonSerialization::SerializeValue(&json, "videoStructType", (int)VideoStructType::Vehicle);
+	JsonSerialization::SerializeValue(&json, "carType", vehicle.CarType);
+	JsonSerialization::SerializeValue(&json, "carColor", vehicle.CarColor);
+	JsonSerialization::SerializeValue(&json, "carBrand", vehicle.CarBrand);
+	JsonSerialization::SerializeValue(&json, "plateType", vehicle.PlateType);
+	JsonSerialization::SerializeValue(&json, "plateNumber", vehicle.PlateNumber);
+	HandleRecogn(&json, recognItem, iveBuffer);
 }
 
 void FlowDetector::HandleRecognBike(const RecognItem& recognItem, const unsigned char* iveBuffer, const VideoStruct_Bike& bike)
 {
 	string json;
-	if (ContainsRecogn(&json, recognItem, iveBuffer))
-	{
-		JsonSerialization::SerializeValue(&json, "videoStructType", (int)VideoStructType::Bike);
-		JsonSerialization::SerializeValue(&json, "bikeType", bike.BikeType);
-		if (_mqtt != NULL)
-		{
-			_mqtt->Send(VideoStructTopic, json);
-		}
-	}
+	JsonSerialization::SerializeValue(&json, "videoStructType", (int)VideoStructType::Bike);
+	JsonSerialization::SerializeValue(&json, "bikeType", bike.BikeType);
+	HandleRecogn(&json, recognItem, iveBuffer);
 }
 
 void FlowDetector::HandleRecognPedestrain(const RecognItem& recognItem, const unsigned char* iveBuffer, const VideoStruct_Pedestrain& pedestrain)
 {
 	string json;
-	if (ContainsRecogn(&json, recognItem, iveBuffer))
-	{
-		JsonSerialization::SerializeValue(&json, "videoStructType", (int)VideoStructType::Pedestrain);
-		JsonSerialization::SerializeValue(&json, "sex", pedestrain.Sex);
-		JsonSerialization::SerializeValue(&json, "age", pedestrain.Age);
-		JsonSerialization::SerializeValue(&json, "upperColor", pedestrain.UpperColor);
-		if (_mqtt != NULL)
-		{
-			_mqtt->Send(VideoStructTopic, json);
-		}
-	}
+	JsonSerialization::SerializeValue(&json, "videoStructType", (int)VideoStructType::Pedestrain);
+	JsonSerialization::SerializeValue(&json, "sex", pedestrain.Sex);
+	JsonSerialization::SerializeValue(&json, "age", pedestrain.Age);
+	JsonSerialization::SerializeValue(&json, "upperColor", pedestrain.UpperColor);
+	HandleRecogn(&json, recognItem, iveBuffer);
 }
 
 void FlowDetector::DrawDetect(const map<string, DetectItem>& detectItems, const unsigned char* iveBuffer, int frameIndex)
 {
-	if (!_debug)
+	if (!_outputImage)
 	{
 		return;
 	}
-	ImageConvert::IveToBgr(iveBuffer,_width,_height,_bgrBuffer);
-	cv::Mat image(_height, _width, CV_8UC3, _bgrBuffer);
-	for (unsigned int i = 0; i < _detectLanes.size(); ++i)
-	{
-		FlowLaneCache& cache = _detectLanes[i];
-		ImageConvert::DrawPolygon(&image, cache.Region, cv::Scalar(0, 0, 255));
-	}
+	bool hasNew = false;
 	for (map<string, DetectItem>::const_iterator it = detectItems.begin(); it != detectItems.end(); ++it)
 	{
-		cv::Point point(it->second.Region.HitPoint().X, it->second.Region.HitPoint().Y);
-		cv::Scalar scalar;
-		//绿色新车
 		if (it->second.Status == DetectStatus::New)
 		{
-			scalar = cv::Scalar(0, 255, 0);
+			hasNew = true;
+			break;
 		}
-		//黄色在区域
-		else if (it->second.Status == DetectStatus::In)
+	}
+	if (hasNew)
+	{
+		ImageConvert::IveToBgr(iveBuffer, _width, _height, _detectBgrBuffer);
+		cv::Mat image(_height, _width, CV_8UC3, _detectBgrBuffer);
+		for (unsigned int i = 0; i < _detectLanes.size(); ++i)
 		{
-			scalar = cv::Scalar(0, 255, 255);
+			FlowLaneCache& cache = _detectLanes[i];
+			ImageConvert::DrawPolygon(&image, cache.Region, cv::Scalar(0, 0, 255));
 		}
-		//蓝色不在区域
-		else
+		for (map<string, DetectItem>::const_iterator it = detectItems.begin(); it != detectItems.end(); ++it)
 		{
-			scalar = cv::Scalar(255, 0, 0);
+			cv::Point point(it->second.Region.HitPoint().X, it->second.Region.HitPoint().Y);
+			cv::Scalar scalar;
+			//绿色新车
+			if (it->second.Status == DetectStatus::New)
+			{
+				scalar = cv::Scalar(0, 255, 0);
+			}
+			//黄色在区域
+			else if (it->second.Status == DetectStatus::In)
+			{
+				scalar = cv::Scalar(0, 255, 255);
+			}
+			//蓝色不在区域
+			else
+			{
+				scalar = cv::Scalar(255, 0, 0);
+			}
+			cv::circle(image, point, 10, scalar, -1);
 		}
-		cv::circle(image, point, 10 , scalar, -1);
+
+		int jpgSize = ImageConvert::BgrToJpg(image.data, _width, _height, _detectJpgBuffer, _jpgSize);
+		ImageConvert::JpgToFile(_detectJpgBuffer, jpgSize, _channelIndex, frameIndex);
 	}
 
-	int jpgSize = ImageConvert::BgrToJpg(image.data, _width, _height,_jpgBuffer, _jpgSize);
-	_jpgHandler.HandleFrame(_jpgBuffer, jpgSize, frameIndex);
 }
 

@@ -43,6 +43,12 @@ namespace OnePunchMan
 		static std::string GetExtension(const std::string& path);
 
 		/**
+		* @brief: 创建文件夹
+		* @param: directory 文件夹路径
+		*/
+		static void CreatePath(const std::string& directory);
+
+		/**
 		* @brief: 将多个元素组合成一个路径。
 		* @param: t 由路径的各部分构成的元素
 		* @param: u... 由路径的各部分构成的元素
@@ -83,12 +89,6 @@ namespace OnePunchMan
 		{
 			(*ss) << t;
 		}
-
-		/**
-		* @brief: 创建文件夹
-		* @param: directory 文件夹路径
-		*/
-		static void CreateDirectory(const std::string& directory);
 
 	private:
 

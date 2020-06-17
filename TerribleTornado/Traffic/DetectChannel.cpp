@@ -32,7 +32,7 @@ void DetectChannel::AddChannel(int channelIndex, DecodeChannel* decode, TrafficD
 	LogPool::Information(LogEvent::System, "detect", _detectIndex, "add channel", channelIndex);
 	ChannelItem item;
 	item.ChannelIndex = channelIndex;
-	item.Param = "{\"Detect\":{\"DetectRegion\":[],\"IsDet\":true,\"MaxCarWidth\":10,\"MinCarWidth\":10,\"Mode\":0,\"Threshold\":20,\"Version\":1001}}";
+	item.Param = TrafficDetector::DefaultDetectParam;
 	item.Decode = decode;
 	item.Detector = detector;
 	_channelItems.push_back(item);
@@ -156,7 +156,12 @@ void DetectChannel::StartCore()
 					channelItem.Detector->HandleDetect(&detectItems, detectTimeStamp, &channelItem.Param, _ives[0], static_cast<int>(_timeStamps[0]), frameItem.FrameSpan);
 				}
 				long long detectTimeStamp3 = DateTime::UtcNowTimeStamp();
-				LogPool::Debug("detect", _indexes[0], _timeStamps[0], result, detectTimeStamp1 - detectTimeStamp, detectTimeStamp2 - detectTimeStamp1, detectTimeStamp3 - detectTimeStamp2);
+				LogPool::Debug("detect", _indexes[0], _timeStamps[0], frameItem.FrameSpan, result, detectTimeStamp1 - detectTimeStamp, detectTimeStamp2 - detectTimeStamp1, detectTimeStamp3 - detectTimeStamp2);
+			}
+
+			if (frameItem.Finished)
+			{
+				channelItem.Detector->FinishDetect();
 			}
 		}
 		if (!detected)

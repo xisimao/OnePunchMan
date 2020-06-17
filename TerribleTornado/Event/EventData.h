@@ -37,12 +37,9 @@ namespace OnePunchMan
 	};
 
 	//流量视频通道数据库操作
-	class EventChannelData
+	class EventChannelData:public TrafficData
 	{
 	public:
-
-		EventChannelData();
-
 		/**
 		* @brief: 查询通道列表
 		* @return: 通道列表
@@ -89,39 +86,15 @@ namespace OnePunchMan
 		*/
 		void Clear();
 
-		/**
-		* @brief: 获取最后一个错误信息
-		* @return: 最后一个错误信息
-		*/
-		std::string LastError();
-
-		/**
-		* @brief: 获取软件版本号
-		* @return: 软件版本号
-		*/
-		std::string GetVersion();
-
-		/**
-		* @brief: 设置版本号
-		* @param: version
-		* @return: 设置结果
-		*/
-		bool SetVersion(const std::string& version);
+		void UpdateDb();
 
 	private:
-
-		//数据库名称
-		static const std::string DbName;
-
 		/**
 		* @brief: 填充通道
 		* @param: sqlite 查询结果
 		* @return: 通道
 		*/
 		EventChannel FillChannel(const SqliteReader& sqlite);
-
-		//数据写入
-		SqliteWriter _sqlite;
 	};
 }
 

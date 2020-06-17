@@ -3,6 +3,12 @@
 using namespace std;
 using namespace OnePunchMan;
 
+EventStartup::EventStartup()
+    :TrafficStartup()
+{
+    TrafficData::Init("event.db");
+}
+
 EventStartup::~EventStartup()
 {
     for (unsigned int i = 0; i < _detectors.size(); ++i)
@@ -11,21 +17,20 @@ EventStartup::~EventStartup()
     }
 }
 
-void EventStartup::InitSoftVersion()
+void EventStartup::UpdateDb()
 {
-    _softwareVersion = "1.0.0.5";
     EventChannelData data;
-    data.SetVersion(_softwareVersion);
+    data.UpdateDb();
 }
 
 void EventStartup::InitThreads(MqttChannel* mqtt, vector<DecodeChannel*>* decodes, vector<TrafficDetector*>* detectors, vector<DetectChannel*>* detects, vector<RecognChannel*>* recogns)
 {
     for (int i = 0; i < ChannelCount; ++i)
     {
-        EventDetector* detector = new EventDetector(FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, mqtt, false);
+        EventDetector* detector = new EventDetector(FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, mqtt);
         _detectors.push_back(detector);
         detectors->push_back(detector);
-        DecodeChannel* decode = new DecodeChannel(i + 1, false);
+        DecodeChannel* decode = new DecodeChannel(i + 1);
         decodes->push_back(decode);
     }
 
@@ -54,7 +59,7 @@ void EventStartup::InitChannels()
         EventChannel channel = data.Get(i + 1);
         if (!channel.ChannelUrl.empty())
         {
-            SetDecode(channel.ChannelIndex, channel.ChannelUrl, channel.RtmpUrl("127.0.0.1"));
+            _decodes[i]->UpdateChannel(channel.ChannelUrl, channel.RtmpUrl("127.0.0.1"), channel.Loop);
             _detectors[i]->UpdateChannel(channel);
         }
     }
@@ -92,7 +97,18 @@ string EventStartup::GetChannelJson(const string& host,int channelIndex)
         JsonSerialization::SerializeArray(&channelJson, "lanes", lanesJson);
     }
     return channelJson;
+}
 
+string EventStartup::CheckChannel(EventChannel* channel)
+{
+    if (ChannelIndexEnable(channel->ChannelIndex))
+    {
+        return string();
+    }
+    else
+    {
+        return GetErrorJson("channelIndex", StringEx::Combine("channelIndex is limited to 1-", ChannelCount));
+    }
 }
 
 void EventStartup::SetDevice(HttpReceivedEventArgs* e)
@@ -129,7 +145,7 @@ void EventStartup::SetDevice(HttpReceivedEventArgs* e)
             channel.Lanes.push_back(lane);
             laneIndex += 1;
         }
-        string error = CheckChannel(channel.ChannelIndex);
+        string error = CheckChannel(&channel);
         if (!error.empty())
         {
             e->Code = HttpCode::BadRequest;
@@ -148,12 +164,12 @@ void EventStartup::SetDevice(HttpReceivedEventArgs* e)
             map<int, EventChannel>::iterator it = tempChannels.find(i + 1);
             if (it == tempChannels.end())
             {
-                DeleteDecode(i + 1);
+                _decodes[i]->ClearChannel();
                 _detectors[i]->ClearChannel();
             }
             else
             {
-                SetDecode(i + 1, it->second.ChannelUrl, it->second.RtmpUrl("127.0.0.1"));
+                _decodes[i]->UpdateChannel(it->second.ChannelUrl, it->second.RtmpUrl("127.0.0.1"), it->second.Loop);
                 _detectors[i]->UpdateChannel(it->second);
             }
         }
@@ -192,7 +208,7 @@ void EventStartup::SetChannel(HttpReceivedEventArgs* e)
         channel.Lanes.push_back(lane);
         laneIndex += 1;
     }
-    string error = CheckChannel(channel.ChannelIndex);
+    string error = CheckChannel(&channel);
     if (!error.empty())
     {
         e->Code = HttpCode::BadRequest;
@@ -202,7 +218,7 @@ void EventStartup::SetChannel(HttpReceivedEventArgs* e)
     EventChannelData data;
     if (data.Set(channel))
     {
-        SetDecode(channel.ChannelIndex, channel.ChannelUrl, channel.RtmpUrl("127.0.0.1"));
+        _decodes[channel.ChannelIndex - 1]->UpdateChannel(channel.ChannelUrl, channel.RtmpUrl("127.0.0.1"),channel.Loop);
         _detectors[channel.ChannelIndex - 1]->UpdateChannel(channel);
         e->Code = HttpCode::OK;
     }
@@ -218,7 +234,7 @@ bool EventStartup::DeleteChannel(int channelIndex)
     EventChannelData data;
     if (data.Delete(channelIndex))
     {
-        DeleteDecode(channelIndex);
+        _decodes[channelIndex - 1]->ClearChannel();
         _detectors[channelIndex - 1]->ClearChannel();
         return true;
     }

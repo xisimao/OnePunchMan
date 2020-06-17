@@ -3,8 +3,8 @@
 using namespace std;
 using namespace OnePunchMan;
 
-DecodeChannel::DecodeChannel(int channelIndex, bool debug)
-	:FFmpegChannel(debug), _channelIndex(channelIndex),_writeBmp(false), _frameIndex(0)
+DecodeChannel::DecodeChannel(int channelIndex)
+	:FFmpegChannel(channelIndex), _frameIndex(0), _finished(false)
 	, _yuvSize(static_cast<int>(DestinationWidth * DestinationHeight * 1.5)), _yuvHasValue(false), _yuv_phy_addr(0), _yuvBuffer(NULL)
 	, _iveSize(DestinationWidth* DestinationHeight * 3), _ive_phy_addr(0), _iveBuffer(NULL)
 	, _iveHandler(-1)
@@ -413,8 +413,8 @@ bool DecodeChannel::InitHisi(int videoCount)
 
 
 	//vo
-	RECT_S                 stDefDispRect = { 0, 0, DestinationWidth, DestinationHeight };
-	SIZE_S                 stDefImageSize = { DestinationWidth, DestinationHeight };
+	RECT_S                 stDefDispRect = { 0, 0, static_cast<HI_U32>(DestinationWidth), static_cast<HI_U32>(DestinationHeight) };
+	SIZE_S                 stDefImageSize = { static_cast<HI_U32>(DestinationWidth), static_cast<HI_U32>(DestinationHeight) };
 
 	VO_DEV                 VoDev = 0;
 	VO_LAYER               VoLayer = 0;
@@ -692,17 +692,17 @@ void DecodeChannel::UninitHisi(int videoCount)
 {
 #ifndef _WIN32
 	//venc
-	for (int i = 0; i < videoCount; ++i)
-	{
-		/******************************************
-		 step 1:  Stop Recv Pictures
-		******************************************/
-		HI_MPI_VENC_StopRecvFrame(i);
-		/******************************************
-		 step 2:  Distroy Venc Channel
-		******************************************/
-		HI_MPI_VENC_DestroyChn(i);
-	}
+	//for (int i = 0; i < videoCount; ++i)
+	//{
+	//	/******************************************
+	//	 step 1:  Stop Recv Pictures
+	//	******************************************/
+	//	HI_MPI_VENC_StopRecvFrame(i);
+	//	/******************************************
+	//	 step 2:  Distroy Venc Channel
+	//	******************************************/
+	//	HI_MPI_VENC_DestroyChn(i);
+	//}
 	//vedc
 	for (int i = 0; i < videoCount; ++i) {
 		MPP_CHN_S stSrcChn;
@@ -817,11 +817,6 @@ void DecodeChannel::UninitDecoder()
 {
 }
 
-void DecodeChannel::WriteBmp()
-{
-	_writeBmp = true;
-}
-
 DecodeResult DecodeChannel::Decode(const AVPacket* packet, int frameIndex, int frameSpan)
 {
 	bool handled = false;
@@ -850,24 +845,7 @@ DecodeResult DecodeChannel::Decode(const AVPacket* packet, int frameIndex, int f
 		{
 			handled = true;
 			unsigned char* yuv = reinterpret_cast<unsigned char*>(HI_MPI_SYS_Mmap(frame.stVFrame.u64PhyAddr[0], _yuvSize));
-			if (_debug)
-			{
-				while (true)
-				{
-					if (SetTempIve(yuv, static_cast<int>(frame.stVFrame.u64PTS)))
-					{
-						break;
-					}
-					else
-					{
-						this_thread::sleep_for(chrono::milliseconds(10));
-					}
-				}
-			}
-			else 
-			{
-				SetTempIve(yuv, static_cast<int>(frame.stVFrame.u64PTS));
-			}
+			SetTempIve(yuv, static_cast<int>(frame.stVFrame.u64PTS),packet==NULL);
 			HI_MPI_SYS_Munmap(reinterpret_cast<HI_VOID*>(yuv), _yuvSize);
 			HI_MPI_VPSS_ReleaseChnFrame(_channelIndex - 1, 0, &frame);
 		}
@@ -934,8 +912,9 @@ bool DecodeChannel::YuvToIve()
 	return true;
 }
 
-bool DecodeChannel::SetTempIve(const unsigned char* yuv, int frameIndex)
+bool DecodeChannel::SetTempIve(const unsigned char* yuv, int frameIndex, bool finished)
 {
+	_finished = finished;
 	if (_yuvHasValue)
 	{
 		return false;
@@ -952,11 +931,12 @@ bool DecodeChannel::SetTempIve(const unsigned char* yuv, int frameIndex)
 FrameItem DecodeChannel::GetTempIve()
 {
 	FrameItem item;
+	item.Finished = _finished;
 	if (_yuvHasValue && YuvToIve())
 	{
 		item.IveBuffer = _iveBuffer;
 		item.FrameIndex = _frameIndex;
-		item.FrameSpan = FrameSpan();
+		item.FrameSpan = _frameSpan;
 		_yuvHasValue = false;
 		if (_writeBmp)
 		{

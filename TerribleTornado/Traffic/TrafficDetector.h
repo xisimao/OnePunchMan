@@ -4,7 +4,7 @@
 
 #include "Shape.h"
 #include "MqttChannel.h"
-#include "JPGHandler.h"
+#include "ImageConvert.h"
 
 namespace OnePunchMan
 {
@@ -128,14 +128,13 @@ namespace OnePunchMan
 		* @param: width 图片宽度
 		* @param: height 图片高度
 		* @param: mqtt mqtt
-		* @param: debug 是否处于调试模式，处于调试模式则输出画线后的bmp
 		*/
-		TrafficDetector(int width, int height, MqttChannel* mqtt, bool debug);
+		TrafficDetector(int width, int height, MqttChannel* mqtt);
 
 		/**
 		* @brief: 析构函数
 		*/
-		virtual ~TrafficDetector();
+		virtual ~TrafficDetector() {};
 
 		/**
 		* @brief: 获取车道是否初始化成功
@@ -153,6 +152,11 @@ namespace OnePunchMan
 		* @param: frameSpan 帧间隔时间(毫秒)
 		*/
 		virtual void HandleDetect(std::map<std::string, DetectItem>* detectItems, long long timeStamp, std::string* param, const unsigned char* iveBuffer, int frameIndex,int frameSpan) = 0;
+		
+		/**
+		* @brief: 结束检测
+		*/
+		virtual void FinishDetect() {};
 
 		/**
 		* @brief: 处理机动车识别数据
@@ -178,7 +182,14 @@ namespace OnePunchMan
 		*/
 		virtual void HandleRecognPedestrain(const RecognItem& recognItem, const unsigned char* iveBuffer, const VideoStruct_Pedestrain& pedestrain) {}
 
+		//默认检测参数
+		static const std::string DefaultDetectParam;
+
 	protected:
+		
+
+		std::string GetDetectParam(const std::string& regions);
+
 		//视频序号
 		int _channelIndex;
 		//视频地址
@@ -199,18 +210,8 @@ namespace OnePunchMan
 
 		//bgr字节流长度
 		int _bgrSize;
-		//bgr字节流
-		unsigned char* _bgrBuffer;
 		//jpg字节流长度
 		int _jpgSize;
-		//jpg字节流
-		unsigned char* _jpgBuffer;
-	
-		//调试相关
-		//是否处于调试模式
-		bool _debug;
-		//调试时写jpg
-		JPGHandler _jpgHandler;
 
 	};
 

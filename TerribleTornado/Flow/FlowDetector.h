@@ -1,7 +1,7 @@
 #pragma once
 #include "FlowData.h"
 #include "TrafficDetector.h"
-#include "ImageConvert.h"
+#include "Command.h"
 
 namespace OnePunchMan
 {
@@ -14,9 +14,13 @@ namespace OnePunchMan
 		* @param: width 图片宽度
 		* @param: height 图片高度
 		* @param: mqtt mqtt
-		* @param: debug 是否处于调试模式，处于调试模式则输出画线后的bmp
 		*/
-		FlowDetector(int width, int height,MqttChannel* mqtt, bool debug);
+		FlowDetector(int width, int height,MqttChannel* mqtt);
+		
+		/**
+		* @brief: 析构函数
+		*/
+		~FlowDetector();
 
 		/**
 		* @brief: 更新通道
@@ -31,6 +35,8 @@ namespace OnePunchMan
 
 		void HandleDetect(std::map<std::string, DetectItem>* detectItems, long long timeStamp, std::string* param, const unsigned char* iveBuffer, int frameIndex,int frameSpan);
 		
+		void FinishDetect();
+
 		void HandleRecognVehicle(const RecognItem& recognItem, const unsigned char* iveBuffer, const VideoStruct_Vehicle& vehicle);
 		
 		void HandleRecognBike(const RecognItem& recognItem, const unsigned char* iveBuffer, const VideoStruct_Bike& bike);
@@ -59,10 +65,10 @@ namespace OnePunchMan
 			FlowLaneCache()
 				: LaneId(), Region(),MeterPerPixel(0.0)
 				, Persons(0), Bikes(0), Motorcycles(0), Cars(0), Tricycles(0), Buss(0), Vans(0), Trucks(0)
-				, TotalDistance(0.0), TotalTime(0)
-				, TotalInTime(0)
-				, LastInRegion(0), Vehicles(0), TotalSpan(0)
-				, IoStatus(false), Flag(false)
+				, TotalDistance(0.0), TotalTime(0), Speed(0.0)
+				, TotalInTime(0), TimeOccupancy(0.0)
+				, LastInRegion(0), Vehicles(0), TotalSpan(0), HeadDistance(0.0),HeadSpace(0.0)
+				, TrafficStatus(0),IoStatus(false), Flag(false)
 			{
 
 			}
@@ -96,10 +102,14 @@ namespace OnePunchMan
 			double TotalDistance;
 			//车辆行驶总时间(毫秒)
 			long long TotalTime;
+			//平均速度(km/h)
+			double Speed;
 
 			//用于计算时间占有率
 			//区域占用总时间(毫秒)
 			long long TotalInTime;
+			//时间占用率(%)
+			double TimeOccupancy;
 
 			//用于计算车头时距
 			//上一次有车进入区域的时间戳 
@@ -108,6 +118,13 @@ namespace OnePunchMan
 			int Vehicles;
 			//车辆进入区域时间差的和(毫秒)
 			long long TotalSpan;
+			//车道时距(sec)
+			double HeadDistance;
+			//车头间距(m)
+			double HeadSpace;
+
+			//交通状态
+			int TrafficStatus;
 
 			//io状态
 			bool IoStatus;
@@ -145,7 +162,85 @@ namespace OnePunchMan
 			}
 		};
 
-		bool ContainsRecogn(std::string* json,const RecognItem& recognItem, const unsigned char* iveBuffer);
+		//检测报告写入
+		class ReportWriter
+		{
+		public:
+			ReportWriter(int channelIndex,int laneCount)
+				:_laneCount(laneCount), _minute(0)
+			{
+				_file.open(StringEx::Combine("../logs/report_", channelIndex, ".txt"), std::ofstream::out);
+				_file << std::setiosflags(std::ios::left) << std::setw(10) << "分钟"
+					<< std::setiosflags(std::ios::left) << std::setw(10) << "车道"
+					<< std::setiosflags(std::ios::left) << std::setw(10) << "轿车"
+					<< std::setiosflags(std::ios::left) << std::setw(10) << "卡车"
+					<< std::setiosflags(std::ios::left) << std::setw(10) << "客车"
+					<< std::setiosflags(std::ios::left) << std::setw(10) << "面包车"
+					<< std::setiosflags(std::ios::left) << std::setw(10) << "三轮车"
+					<< std::setiosflags(std::ios::left) << std::setw(10) << "自行车"
+					<< std::setiosflags(std::ios::left) << std::setw(10) << "摩托车"
+					<< std::setiosflags(std::ios::left) << std::setw(10) << "行人"
+					<< std::setiosflags(std::ios::left) << std::setw(15) << "平均速度(km/h)"
+					<< std::setiosflags(std::ios::left) << std::setw(15) << "车头时距(sec)"
+					<< std::setiosflags(std::ios::left) << std::setw(15) << "车头间距(m)"
+					<< std::setiosflags(std::ios::left) << std::setw(15) << "时间占有率(%)"
+					<< std::setiosflags(std::ios::left) << std::setw(15) << "交通状态(1-5)"
+					<< std::endl;
+				_file.flush();
+			}
+
+			~ReportWriter()
+			{
+				if (_file.is_open())
+				{
+					_file.close();
+				}
+			}
+
+			void Write(const FlowLaneCache& cache)
+			{
+				_file << std::setiosflags(std::ios::left) << std::setw(10) << _minute/_laneCount+1
+					<< std::setiosflags(std::ios::left) << std::setw(10) << cache.LaneId
+					<< std::setiosflags(std::ios::left) << std::setw(10) << cache.Cars
+					<< std::setiosflags(std::ios::left) << std::setw(10) << cache.Trucks
+					<< std::setiosflags(std::ios::left) << std::setw(10) << cache.Buss
+					<< std::setiosflags(std::ios::left) << std::setw(10) << cache.Vans
+					<< std::setiosflags(std::ios::left) << std::setw(10) << cache.Tricycles
+					<< std::setiosflags(std::ios::left) << std::setw(10) << cache.Bikes
+					<< std::setiosflags(std::ios::left) << std::setw(10) << cache.Motorcycles
+					<< std::setiosflags(std::ios::left) << std::setw(10) << cache.Persons
+					<< std::setiosflags(std::ios::left) << std::setw(15) << cache.Speed
+					<< std::setiosflags(std::ios::left) << std::setw(15) << cache.HeadDistance
+					<< std::setiosflags(std::ios::left) << std::setw(15) << cache.HeadSpace
+					<< std::setiosflags(std::ios::left) << std::setw(15) << cache.TimeOccupancy
+					<< std::setiosflags(std::ios::left) << std::setw(15) << cache.TrafficStatus
+					<< std::endl;
+				_file.flush();
+				_minute += 1;
+			}
+
+		private:
+			//文件流 
+			std::ofstream _file;
+			//车道数量
+			int _laneCount;
+			//分钟
+			int _minute;
+		};
+
+		/**
+		* @brief: 计算分钟流量
+		* @param: laneCache 车道缓存
+		*/
+		void CalculateMinuteFlow(FlowLaneCache* laneCache);
+
+		/**
+		* @brief: 判断检测项所在车道，如果有车道则发送数据
+		* @param: json json字符串
+		* @param: recognItem 识别项
+		* @param: iveBuffer ive字节流
+		*/
+		void HandleRecogn(std::string* json,const RecognItem& recognItem, const unsigned char* iveBuffer);
 
 		/**
 		* @brief: 绘制检测区域
@@ -182,6 +277,20 @@ namespace OnePunchMan
 		std::string _recognChannelUrl;
 		//识别车道集合
 		std::vector<FlowLaneCache> _recognLanes;
+
+		//监测时用到的bgr字节流
+		unsigned char* _detectBgrBuffer;
+		//监测时用到的jpg字节流
+		unsigned char* _detectJpgBuffer;
+		//识别时用到的bgr字节流
+		unsigned char* _recognBgrBuffer;
+		//识别时用到的jpg字节流
+		unsigned char* _recognJpgBuffer;
+
+		//是否输出图片
+		bool _outputImage;
+		//用于输出检测报告
+		ReportWriter* _report;
 	};
 
 }

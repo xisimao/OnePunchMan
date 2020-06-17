@@ -58,6 +58,9 @@
     <ClCompile Include="Traffic\ImageConvert.cpp">
       <Filter>Traffic</Filter>
     </ClCompile>
+    <ClCompile Include="Traffic\TrafficData.cpp">
+      <Filter>Traffic</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Flow\FlowData.h">

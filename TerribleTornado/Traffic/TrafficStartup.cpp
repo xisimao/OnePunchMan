@@ -46,7 +46,7 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
             else
             {
                 JsonSerialization::SerializeValue(&channelJson, "channelStatus", static_cast<int>(_decodes[channelIndex - 1]->Status()));
-                JsonSerialization::SerializeValue(&channelJson, "frameSpan",  _decodes[channelIndex - 1]->FrameSpan());
+                JsonSerialization::SerializeValue(&channelJson, "handleSpan",  _decodes[channelIndex - 1]->HandleSpan());
                 JsonSerialization::SerializeValue(&channelJson, "sourceWidth", _decodes[channelIndex - 1]->SourceWidth());
                 JsonSerialization::SerializeValue(&channelJson, "sourceHeight",  _decodes[channelIndex - 1]->SourceHeight());
                 e->ResponseJson = channelJson;
@@ -101,6 +101,14 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
         Command::Execute("rm service.tar");
         e->Code = HttpCode::OK;
     }
+    else if (UrlStartWith(e->Url, "/api/update/sn"))
+    {
+        JsonDeserialization jd(e->RequestJson);
+        string sn=jd.Get<string>("sn");
+        TrafficData data;
+        data.SetParameter("SN", sn);
+        e->Code = HttpCode::OK;
+    }
     else if (UrlStartWith(e->Url, "/api/logs/export"))
     {
         string ls = Command::Execute("cd ../logs;tar cf logs.tar *.log");
@@ -111,7 +119,9 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
 
 void TrafficStartup::GetDevice(HttpReceivedEventArgs* e)
 {
-    string sn = StringEx::Trim(Command::Execute("cat /mtd/basesys/data/devguid"));
+    TrafficData data;
+    string sn = data.GetParameter("SN");
+    string guid = StringEx::Trim(Command::Execute("cat /mtd/basesys/data/devguid"));
     string df = Command::Execute("df");
     string diskUsed;
     string diskTotal;
@@ -128,10 +138,6 @@ void TrafficStartup::GetDevice(HttpReceivedEventArgs* e)
             break;
         }
     }
-    if (diskUsed.empty() || diskTotal.empty())
-    {
-        LogPool::Warning(LogEvent::Http,"df empty", df);
-    }
 
     string channelsJson;
     for (unsigned int i = 0; i < ChannelCount; ++i)
@@ -140,7 +146,7 @@ void TrafficStartup::GetDevice(HttpReceivedEventArgs* e)
         if (!channelJson.empty())
         {
             JsonSerialization::SerializeValue(&channelJson, "channelStatus", static_cast<int>(_decodes[i]->Status()));
-            JsonSerialization::SerializeValue(&channelJson, "frameSpan", _decodes[i]->FrameSpan());
+            JsonSerialization::SerializeValue(&channelJson, "handleSpan", _decodes[i]->HandleSpan());
             JsonSerialization::SerializeValue(&channelJson, "sourceWidth", _decodes[i]->SourceWidth());
             JsonSerialization::SerializeValue(&channelJson, "sourceHeight", _decodes[i]->SourceHeight());
             JsonSerialization::AddClassItem(&channelsJson, channelJson);
@@ -156,6 +162,7 @@ void TrafficStartup::GetDevice(HttpReceivedEventArgs* e)
     JsonSerialization::SerializeValue(&deviceJson, "diskTotal", diskTotal);
     JsonSerialization::SerializeValue(&deviceJson, "licenceStatus", _sdkInited);
     JsonSerialization::SerializeValue(&deviceJson, "sn", sn);
+    JsonSerialization::SerializeValue(&deviceJson, "guid", guid);
     JsonSerialization::SerializeValue(&deviceJson, "softwareVersion", _softwareVersion);
     JsonSerialization::SerializeValue(&deviceJson, "webVersion", _webVersion);
     JsonSerialization::SerializeValue(&deviceJson, "sdkVersion", _sdkVersion);
@@ -169,35 +176,6 @@ void TrafficStartup::GetDevice(HttpReceivedEventArgs* e)
     JsonSerialization::SerializeClass(&deviceJson, "channels", channelsJson);
     e->Code = HttpCode::OK;
     e->ResponseJson = deviceJson;
-}
-
-void TrafficStartup::SetDecode(int channelIndex, const string& inputUrl, const string& outputUrl)
-{
-    if (ChannelIndexEnable(channelIndex))
-    {
-        _decodes[channelIndex - 1]->UpdateChannel(inputUrl, outputUrl);
-        _decodes[channelIndex - 1]->WriteBmp();
-    }
-}
-
-void TrafficStartup::DeleteDecode(int channelIndex)
-{
-    if (ChannelIndexEnable(channelIndex))
-    {
-        _decodes[channelIndex - 1]->ClearChannel();
-}
-}
-
-string TrafficStartup::CheckChannel(int channelIndex)
-{
-    if (ChannelIndexEnable(channelIndex))
-    {
-        return string();
-    }
-    else
-    {
-        return GetErrorJson("channelIndex", StringEx::Combine("channelIndex is limited to 1-", ChannelCount));
-    }
 }
 
 bool TrafficStartup::ChannelIndexEnable(int channelIndex)
@@ -232,18 +210,6 @@ string TrafficStartup::GetErrorJson(const string& field, const string& message)
     return StringEx::Combine("{\"", field, "\":[\"", message, "\"]}");
 }
 
-DetectChannel* TrafficStartup::GetDetect(int channelIndex)
-{
-    if (ChannelIndexEnable(channelIndex))
-    {
-        return _detects[(channelIndex - 1) / (ChannelCount / DetectCount)];
-    }
-    else
-    {
-        return NULL;
-    }
-}
-
 void TrafficStartup::Startup()
 {
     Socket::Init();
@@ -262,6 +228,11 @@ void TrafficStartup::Startup()
         exit(2);
     }
 
+    Path::CreatePath("../temp");
+    Path::CreatePath("../images");
+    Command::Execute("rm -rf ../temp/*");
+    Command::Execute("rm -rf ../images/*");
+
     //初始化sdk
     _sdkInited = SeemmoSDK::Init();
     if (SeemmoSDK::seemmo_version != NULL)
@@ -269,11 +240,15 @@ void TrafficStartup::Startup()
         _sdkVersion = SeemmoSDK::seemmo_version();
     }
 
+    //升级数据库
+    UpdateDb();
+
     //软件版本
-    InitSoftVersion();
+    TrafficData data;
+    _softwareVersion=data.GetParameter("Version");
 
     //获取web版本
-    string cat = Command::Execute("cat ../web/static/config/config.js");
+    string cat = Command::Execute("cat ../web/static/config/base.js");
     vector<string> catRows = StringEx::Split(cat, "\n", true);
     for (unsigned int i = 0; i < catRows.size(); ++i)
     {

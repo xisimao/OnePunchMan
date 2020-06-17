@@ -3,19 +3,11 @@
 using namespace std;
 using namespace OnePunchMan;
 
-const string FlowChannelData::DbName("flow.db");
-
-FlowChannelData::FlowChannelData()
-	:_sqlite(DbName)
-{
-
-}
-
 vector<FlowChannel> FlowChannelData::GetList()
 {
 	vector<FlowChannel> channels;
 	string channelSql("Select * From Flow_Channel Order By ChannelIndex");
-	SqliteReader sqlite(DbName);
+	SqliteReader sqlite(_dbName);
 	if (sqlite.BeginQuery(channelSql))
 	{
 		while (sqlite.HasRow()) 
@@ -31,7 +23,7 @@ FlowChannel FlowChannelData::Get(int channelIndex)
 {
 	FlowChannel channel;
 	string sql(StringEx::Combine("Select * From Flow_Channel Where ChannelIndex=", channelIndex));
-	SqliteReader sqlite(DbName);
+	SqliteReader sqlite(_dbName);
 	if (sqlite.BeginQuery(sql))
 	{
 		if (sqlite.HasRow()) 
@@ -51,7 +43,7 @@ FlowChannel FlowChannelData::FillChannel(const SqliteReader& sqlite)
 	channel.ChannelUrl = sqlite.GetString(2);
 	channel.ChannelType = sqlite.GetInt(3);
 
-	SqliteReader laneSqlite(DbName);
+	SqliteReader laneSqlite(_dbName);
 	string laneSql(StringEx::Combine("Select * From Flow_Lane Where ChannelIndex=", channel.ChannelIndex," Order By LaneIndex"));
 	if (laneSqlite.BeginQuery(laneSql))
 	{
@@ -161,28 +153,9 @@ void FlowChannelData::Clear()
 	_sqlite.ExecuteRowCount(StringEx::Combine("Delete From Flow_Lane"));
 }
 
-string FlowChannelData::LastError()
+void FlowChannelData::UpdateDb()
 {
-	return _sqlite.LastError();
-}
-
-string FlowChannelData::GetVersion()
-{
-	string sql(StringEx::Combine("Select Version From Flow_Version"));
-	SqliteReader sqlite(DbName);
-	string version;
-	if (sqlite.BeginQuery(sql))
-	{
-		if (sqlite.HasRow())
-		{
-			version= sqlite.GetString(0);
-		}
-		sqlite.EndQuery();
-	}
-	return version;
-}
-
-bool FlowChannelData::SetVersion(const std::string& version)
-{
-	return _sqlite.ExecuteRowCount(StringEx::Combine("Update Flow_Version Set Version='", version, "'"));
+	TrafficData::UpdateDb();
+	SetParameter("Version", "2.0.0.9");
+	SetParameter("VersionValue", "2009");
 }

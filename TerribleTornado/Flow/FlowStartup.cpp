@@ -3,6 +3,12 @@
 using namespace std;
 using namespace OnePunchMan;
 
+FlowStartup::FlowStartup()
+    :TrafficStartup()
+{
+    TrafficData::Init("flow.db");
+}
+
 FlowStartup::~FlowStartup()
 {
     for (unsigned int i = 0; i < _detectors.size(); ++i)
@@ -11,21 +17,20 @@ FlowStartup::~FlowStartup()
     }
 }
 
-void FlowStartup::InitSoftVersion()
+void FlowStartup::UpdateDb()
 {
-    _softwareVersion = "2.0.0.8";
     FlowChannelData data;
-    data.SetVersion(_softwareVersion);
+    data.UpdateDb();
 }
 
 void FlowStartup::InitThreads(MqttChannel* mqtt, vector<DecodeChannel*>* decodes, vector<TrafficDetector*>* detectors, vector<DetectChannel*>* detects, vector<RecognChannel*>* recogns)
 {
     for (int i = 0; i < ChannelCount; ++i)
     {
-        FlowDetector* detector = new FlowDetector(FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, mqtt, false);
+        FlowDetector* detector = new FlowDetector(FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, mqtt);
         _detectors.push_back(detector);
         detectors->push_back(detector);
-        DecodeChannel* decode = new DecodeChannel(i + 1, false);
+        DecodeChannel* decode = new DecodeChannel(i + 1);
         decodes->push_back(decode);
     }
 
@@ -60,7 +65,7 @@ void FlowStartup::InitChannels()
         FlowChannel channel = data.Get(i + 1);
         if (!channel.ChannelUrl.empty())
         {
-            SetDecode(channel.ChannelIndex, channel.ChannelUrl, channel.RtmpUrl("127.0.0.1"));
+            _decodes[i]->UpdateChannel(channel.ChannelUrl, channel.RtmpUrl("127.0.0.1"), channel.Loop);
             _detectors[i]->UpdateChannel(channel);
         }
     }
@@ -110,6 +115,24 @@ string FlowStartup::GetChannelJson(const string& host,int channelIndex)
     return channelJson;
 }
 
+string FlowStartup::CheckChannel(FlowChannel* channel)
+{
+    if (ChannelIndexEnable(channel->ChannelIndex))
+    {
+        if (channel->ChannelType != static_cast<int>(ChannelType::File)
+            || channel->Loop)
+        {
+            channel->OutputImage = false;
+            channel->OutputReport = false;
+        }
+        return string();
+    }
+    else
+    {
+        return GetErrorJson("channelIndex", StringEx::Combine("channelIndex is limited to 1-", ChannelCount));
+    }
+}
+
 void FlowStartup::SetDevice(HttpReceivedEventArgs* e)
 {
     JsonDeserialization jd(e->RequestJson);
@@ -127,6 +150,9 @@ void FlowStartup::SetDevice(HttpReceivedEventArgs* e)
         channel.ChannelName = jd.Get<string>(StringEx::Combine("channels:", channelIndex, ":channelName"));
         channel.ChannelUrl = jd.Get<string>(StringEx::Combine("channels:", channelIndex, ":channelUrl"));
         channel.ChannelType = jd.Get<int>(StringEx::Combine("channels:", channelIndex, ":channelType"));
+        channel.Loop = jd.Get<bool>(StringEx::Combine("channels:", channelIndex, ":loop"));
+        channel.OutputImage = jd.Get<bool>(StringEx::Combine("channels:", channelIndex, ":outputImage"));
+        channel.OutputReport = jd.Get<bool>(StringEx::Combine("channels:", channelIndex, ":outputReport"));
         int laneIndex = 0;
         while (true)
         {
@@ -154,7 +180,7 @@ void FlowStartup::SetDevice(HttpReceivedEventArgs* e)
             channel.Lanes.push_back(lane);
             laneIndex += 1;
         }
-        string error = CheckChannel(channel.ChannelIndex);
+        string error = CheckChannel(&channel);
         if (!error.empty())
         {
             e->Code = HttpCode::BadRequest;
@@ -173,12 +199,12 @@ void FlowStartup::SetDevice(HttpReceivedEventArgs* e)
             map<int, FlowChannel>::iterator it = tempChannels.find(i + 1);
             if (it == tempChannels.end())
             {
-                DeleteDecode(i+1);
+                _decodes[i]->ClearChannel();
                 _detectors[i]->ClearChannel();
             }
             else
             {
-                SetDecode(i + 1, it->second.ChannelUrl, it->second.RtmpUrl("127.0.0.1"));
+                _decodes[i]->UpdateChannel(it->second.ChannelUrl, it->second.RtmpUrl("127.0.0.1"), it->second.Loop);
                 _detectors[i]->UpdateChannel(it->second);
             }
         }
@@ -200,6 +226,9 @@ void FlowStartup::SetChannel(HttpReceivedEventArgs* e)
     channel.ChannelName = jd.Get<string>("channelName");
     channel.ChannelUrl = jd.Get<string>("channelUrl");
     channel.ChannelType = jd.Get<int>("channelType");
+    channel.Loop = jd.Get<bool>("loop");
+    channel.OutputImage = jd.Get<bool>("outputImage");
+    channel.OutputReport = jd.Get<bool>("outputReport");
     int laneIndex = 0;
     while (true)
     {
@@ -227,7 +256,7 @@ void FlowStartup::SetChannel(HttpReceivedEventArgs* e)
         channel.Lanes.push_back(lane);
         laneIndex += 1;
     }
-    string error = CheckChannel(channel.ChannelIndex);
+    string error = CheckChannel(&channel);
     if (!error.empty())
     {
         e->Code = HttpCode::BadRequest;
@@ -237,7 +266,7 @@ void FlowStartup::SetChannel(HttpReceivedEventArgs* e)
     FlowChannelData data;
     if (data.Set(channel))
     {
-        SetDecode(channel.ChannelIndex, channel.ChannelUrl, channel.RtmpUrl("127.0.0.1"));
+        _decodes[channel.ChannelIndex - 1]->UpdateChannel(channel.ChannelUrl, channel.RtmpUrl("127.0.0.1"), channel.Loop);
         _detectors[channel.ChannelIndex - 1]->UpdateChannel(channel);
         e->Code = HttpCode::OK;
     }
@@ -253,7 +282,7 @@ bool FlowStartup::DeleteChannel(int channelIndex)
     FlowChannelData data;
     if (data.Delete(channelIndex))
     {
-        DeleteDecode(channelIndex);
+        _decodes[channelIndex - 1]->ClearChannel();
         _detectors[channelIndex - 1]->ClearChannel();
         return true;
     }

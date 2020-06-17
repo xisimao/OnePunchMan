@@ -10,6 +10,7 @@
 #include "DecodeChannel.h"
 #include "TrafficDetector.h"
 #include "SocketMaid.h"
+#include "TrafficData.h"
 
 namespace OnePunchMan
 {
@@ -67,9 +68,9 @@ namespace OnePunchMan
         virtual void InitChannels() = 0;
 
         /**
-        * @brief: 初始化软件版本
+        * @brief: 升级数据库
         */
-        virtual void InitSoftVersion() = 0;
+        virtual void UpdateDb() = 0;
 
         /**
         * @brief: 获取通道json数据
@@ -99,27 +100,6 @@ namespace OnePunchMan
         virtual bool DeleteChannel(int channelIndex)=0;
 
         /**
-        * @brief: 设置解码器
-        * @param: channelIndex 通道序号
-        * @param: inputUrl 视频源地址
-        * @param: outputUrl 视频输入地址
-        */
-        void SetDecode(int channelIndex, const std::string& inputUrl, const std::string& outputUrl);
-        
-        /**
-        * @brief: 删除解码器
-        * @param: channelIndex 通道序号
-        */
-        void DeleteDecode(int channelIndex);
-
-        /**
-        * @brief: 检查通道序号信息
-        * @param: channelIndex 通道序号
-        * @return: 检查成功返回空字符串，否则返回错误原因
-        */
-        std::string CheckChannel(int channelIndex);
-
-        /**
         * @brief: 判断通道序号是否可用
         * @param: channelIndex 通道序号
         * @return: 返回ture表示通道序号可用，否则返回false
@@ -134,8 +114,8 @@ namespace OnePunchMan
         */
         std::string GetErrorJson(const std::string& field, const std::string& message);
 
-        //软件版本
-        std::string _softwareVersion;
+        //解码线程集合，等于视频总数
+        std::vector<DecodeChannel*> _decodes;
 
     private:
         /**
@@ -160,13 +140,12 @@ namespace OnePunchMan
         */
         std::string GetId(const std::string& url, const std::string& key);
 
-
-        DetectChannel* GetDetect(int channelIndex);
-
         //系统启动时间
         DateTime _startTime;
         //算法是否初始化成功
         bool _sdkInited;
+        //软件版本
+        std::string _softwareVersion;
         //算法版本
         std::string _sdkVersion;
         //web版本
@@ -178,8 +157,6 @@ namespace OnePunchMan
         //mqtt
         MqttChannel* _mqtt;
 
-        //解码线程集合，等于视频总数
-        std::vector<DecodeChannel*> _decodes;
         //交通检测类集合，等于视频总数
         std::vector<TrafficDetector*> _detectors;
         //视频检测线程集合，等于视频总数

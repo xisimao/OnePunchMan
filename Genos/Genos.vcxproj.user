@@ -11,6 +11,6 @@
     <RemoteTarget>-1348326008;192.168.0.9 (username=, port=12000, authentication=PrivateKey)</RemoteTarget>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
-    <RemoteTarget>-1722200186;192.168.5.6 (username=, port=12000, authentication=PrivateKey)</RemoteTarget>
+    <RemoteTarget>-935756435;192.168.201.100 (username=, port=12000, authentication=PrivateKey)</RemoteTarget>
   </PropertyGroup>
 </Project>

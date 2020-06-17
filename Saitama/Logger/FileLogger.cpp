@@ -8,7 +8,7 @@ FileLogger::FileLogger(LogLevel minLevel, LogLevel maxLevel, const string& name,
 	:Logger(minLevel,maxLevel),_name(name), _date(DateTime::Today()),_directory(directory),_holdDays(holdDays)
 {
 	//创建日志目录
-	Path::CreateDirectory(_directory);
+	Path::CreatePath(_directory);
 
 	//删除日志
 	DeleteLog(_directory, _holdDays);

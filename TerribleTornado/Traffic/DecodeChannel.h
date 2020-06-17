@@ -60,7 +60,7 @@ namespace OnePunchMan
 	{
 	public:
 		FrameItem()
-			:IveBuffer(NULL),FrameIndex(0), FrameSpan(0)
+			:IveBuffer(NULL),FrameIndex(0), FrameSpan(0), Finished(false)
 		{
 
 		}
@@ -70,7 +70,8 @@ namespace OnePunchMan
 		int FrameIndex;
 		//帧率
 		int FrameSpan;
-
+		//视频是否已经读取完成
+		bool Finished;
 	};
 	//解码线程
 	class DecodeChannel :public FFmpegChannel
@@ -79,9 +80,8 @@ namespace OnePunchMan
 		/**
 		* @brief: 构造函数
 		* @param: channelIndex 通道序号
-		* @param: debug 是否处于调试模式,处于调试模式同步调用算法
 		*/
-		DecodeChannel(int channelIndex, bool debug);
+		DecodeChannel(int channelIndex);
 		
 		/**
 		* @brief: 析构函数
@@ -107,11 +107,6 @@ namespace OnePunchMan
 		*/
 		FrameItem GetTempIve();
 
-		/**
-		* @brief: 将下一帧视频写入到bmp
-		*/
-		void WriteBmp();
-
 	protected:
 		ChannelStatus InitDecoder(const std::string& inputUrl);
 
@@ -124,9 +119,10 @@ namespace OnePunchMan
 		* @brief: 写入临时ive数据
 		* @param: yuv yuv数据
 		* @param: frameIndex 帧序号
+		* @param: finished 视频是否读取完成
 		* @return: 返回true表示成功写入，返回false表示当前已经有yuv数据
 		*/
-		bool SetTempIve(const unsigned char* yuv, int frameIndex);
+		bool SetTempIve(const unsigned char* yuv, int frameIndex,bool finished);
 
 		/**
 		* @brief: yuv转ive
@@ -134,12 +130,10 @@ namespace OnePunchMan
 		*/
 		bool YuvToIve();
 
-		//通道序号
-		int _channelIndex;
-		//是否需要写入bmp文件
-		bool _writeBmp;
 		//当前写入yuv时的帧序号
 		int _frameIndex;
+		//视频是否读取完成
+		bool _finished;
 
 		//yuv420sp
 		int _yuvSize;

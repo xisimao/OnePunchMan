@@ -57,14 +57,9 @@ namespace OnePunchMan
 	};
 
 	//流量视频通道数据库操作
-	class FlowChannelData
+	class FlowChannelData:public TrafficData
 	{
 	public:
-		/**
-		* @brief: 构造函数
-		*/
-		FlowChannelData();
-
 		/**
 		* @brief: 查询通道列表
 		* @return: 通道列表
@@ -102,7 +97,7 @@ namespace OnePunchMan
 		/**
 		* @brief: 删除通道
 		* @param: channel 通道
-		* @return: 删除结构
+		* @return: 删除结果
 		*/
 		bool Delete(int channelIndex);
 
@@ -111,37 +106,15 @@ namespace OnePunchMan
 		*/
 		void Clear();
 
-		/**
-		* @brief: 获取最后一个错误信息
-		* @return: 最后一个错误信息
-		*/
-		std::string LastError();
-
-		/**
-		* @brief: 获取软件版本号
-		* @return: 软件版本号
-		*/
-		std::string GetVersion();
-
-		/**
-		* @brief: 设置版本号
-		* @param: version
-		*/
-		bool SetVersion(const std::string& version);
+		void UpdateDb();
 
 	private:
-		//数据库名称
-		static const std::string DbName;
-
 		/**
 		* @brief: 填充通道
 		* @param: sqlite 查询结果
 		* @return: 通道
 		*/
 		FlowChannel FillChannel(const SqliteReader& sqlite);
-
-		//数据写入
-		SqliteWriter _sqlite;
 	};
 }
 

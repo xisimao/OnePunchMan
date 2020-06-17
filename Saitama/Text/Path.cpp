@@ -43,7 +43,7 @@ string Path::GetFileName(const string& path)
 	}
 }
 
-void Path::CreateDirectory(const string& directory)
+void Path::CreatePath(const string& directory)
 {
 #ifdef _WIN32 
 	_mkdir(directory.c_str());

@@ -3,28 +3,22 @@
 using namespace std;
 using namespace OnePunchMan;
 
-TrafficDetector::TrafficDetector(int width, int height, MqttChannel* mqtt, bool debug)
+const string TrafficDetector::DefaultDetectParam("{\"Detect\":{\"DetectRegion\":[],\"IsDet\":true,\"MaxCarWidth\":10,\"MinCarWidth\":10,\"Mode\":0,\"Threshold\":20,\"Version\":1001}}");
+
+TrafficDetector::TrafficDetector(int width, int height, MqttChannel* mqtt)
 	:_channelIndex(0), _channelUrl(), _width(width), _height(height), _mqtt(mqtt)
 	, _lanesInited(false), _param(), _setParam(true)
-	, _bgrSize(0), _bgrBuffer(NULL)
-	, _jpgSize(0), _jpgBuffer(NULL)
-	, _debug(debug), _jpgHandler(-1)
+	, _bgrSize(width* height * 3), _jpgSize(static_cast<int>(tjBufSize(width, height, TJSAMP_422)))
 {
-	_bgrSize = _width * _height * 3;
-	_bgrBuffer = new unsigned char[_bgrSize];
 
-	_jpgSize = static_cast<int>(tjBufSize(1920, 1080, TJSAMP_422));
-	_jpgBuffer = tjAlloc(_jpgSize);
-
-}
-
-TrafficDetector::~TrafficDetector()
-{
-	tjFree(_jpgBuffer);
-	delete[] _bgrBuffer;
 }
 
 bool TrafficDetector::LanesInited() const
 {
 	return _lanesInited;
+}
+
+string TrafficDetector::GetDetectParam(const std::string& regions)
+{
+	return StringEx::Combine("{\"Detect\":{\"DetectRegion\":", regions, ",\"IsDet\":true,\"MaxCarWidth\":10,\"MinCarWidth\":10,\"Mode\":0,\"Threshold\":20,\"Version\":1001}}");
 }

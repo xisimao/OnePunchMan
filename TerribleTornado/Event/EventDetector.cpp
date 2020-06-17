@@ -13,9 +13,17 @@ const int EventDetector::ReportSpan = 60*1000;
 const double EventDetector::MovePixel = 50.0;
 const int EventDetector::PointCount = 3;
 
-EventDetector::EventDetector(int width, int height, MqttChannel* mqtt, bool debug)
-	:TrafficDetector(width, height, mqtt, debug)
+EventDetector::EventDetector(int width, int height, MqttChannel* mqtt)
+	:TrafficDetector(width, height, mqtt)
 {
+	_bgrBuffer = new unsigned char[_bgrSize];
+	_jpgBuffer = tjAlloc(_jpgSize);
+}
+
+EventDetector::~EventDetector()
+{
+	tjFree(_jpgBuffer);
+	delete[] _bgrBuffer;
 }
 
 void EventDetector::UpdateChannel(const EventChannel& channel)
@@ -70,7 +78,7 @@ void EventDetector::UpdateChannel(const EventChannel& channel)
 		LogPool::Warning("lane init failed", channel.ChannelIndex);
 	}
 	_channelIndex = channel.ChannelIndex;
-	_param = StringEx::Combine("{\"Detect\":{\"DetectRegion\":", regionsParam, ",\"IsDet\":true,\"MaxCarWidth\":10,\"MinCarWidth\":10,\"Mode\":0,\"Threshold\":20,\"Version\":1001}}");
+	_param = GetDetectParam(regionsParam);
 	_setParam = false;
 	
 }
@@ -85,10 +93,6 @@ void EventDetector::ClearChannel()
 
 void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long timeStamp, string* param, const unsigned char* iveBuffer, int frameIndex, int frameSpan)
 {
-	if (_debug)
-	{
-		timeStamp = frameIndex * frameSpan;
-	}
 	lock_guard<mutex> lck(_laneMutex);
 	if (!_setParam)
 	{
@@ -304,11 +308,7 @@ void EventDetector::DrawPedestrain(std::string* jpgBase64, const unsigned char* 
 	}
 	//绿色行人点
 	ImageConvert::DrawPoint(&image, point, cv::Scalar(0, 255, 0));
-	int jpgSize = ImageConvert::BgrToJpgBase64(image.data, _width, _height,jpgBase64, _jpgBuffer, _jpgSize);
-	if (_debug)
-	{
-		_jpgHandler.HandleFrame(_jpgBuffer, jpgSize, frameIndex);
-	}
+	ImageConvert::BgrToJpgBase64(image.data, _width, _height,jpgBase64, _jpgBuffer, _jpgSize);
 }
 
 void EventDetector::DrawPark(std::string* jpgBase64, const unsigned char* iveBuffer, const Point& point, int frameIndex)
@@ -326,11 +326,7 @@ void EventDetector::DrawPark(std::string* jpgBase64, const unsigned char* iveBuf
 	}
 	//绿色检测车点
 	ImageConvert::DrawPoint(&image, point, cv::Scalar(0, 255, 0));
-	int jpgSize = ImageConvert::BgrToJpgBase64(image.data, _width, _height,jpgBase64, _jpgBuffer,_jpgSize);
-	if (_debug)
-	{
-		_jpgHandler.HandleFrame(_jpgBuffer, jpgSize, frameIndex);
-	}
+	ImageConvert::BgrToJpgBase64(image.data, _width, _height,jpgBase64, _jpgBuffer,_jpgSize);
 }
 
 void EventDetector::DrawCongestion(string* jpgBase64, const unsigned char* iveBuffer, int frameIndex)
@@ -343,11 +339,7 @@ void EventDetector::DrawCongestion(string* jpgBase64, const unsigned char* iveBu
 		EventLaneCache& cache = _lanes[i];
 		ImageConvert::DrawPolygon(&image, cache.Region, cv::Scalar(0, 0, 255));
 	}
-	int jpgSize = ImageConvert::BgrToJpgBase64(image.data, _width, _height,jpgBase64, _jpgBuffer, _jpgSize);
-	if (_debug)
-	{
-		_jpgHandler.HandleFrame(_jpgBuffer, jpgSize, frameIndex);
-	}
+	ImageConvert::BgrToJpgBase64(image.data, _width, _height,jpgBase64, _jpgBuffer, _jpgSize);
 }
 
 void EventDetector::DrawRetrograde(string* jpgBase64, const unsigned char* iveBuffer, const vector<Point>& points, int frameIndex)
@@ -370,49 +362,48 @@ void EventDetector::DrawRetrograde(string* jpgBase64, const unsigned char* iveBu
 		ImageConvert::DrawPoint(&image, points[i], cv::Scalar(0, 255, 0));
 	}
 
-	int jpgSize = ImageConvert::BgrToJpgBase64(image.data, _width, _height,jpgBase64, _jpgBuffer, _jpgSize);
-	if (_debug)
-	{
-		_jpgHandler.HandleFrame(_jpgBuffer, jpgSize, frameIndex);
-	}
+	ImageConvert::BgrToJpgBase64(image.data, _width, _height,jpgBase64, _jpgBuffer, _jpgSize);
 }
 
 void EventDetector::DrawDetect(const map<string, DetectItem>& detectItems, const unsigned char* iveBuffer, int frameIndex)
 {
-	if (!_debug)
-	{
-		return;
-	}
-	ImageConvert::IveToBgr(iveBuffer, _width, _height, _bgrBuffer);
-	cv::Mat image(_height, _width, CV_8UC3, _bgrBuffer);
-	for (unsigned int i = 0; i < _lanes.size(); ++i)
-	{
-		EventLaneCache& cache = _lanes[i];
-		ImageConvert::DrawPolygon(&image, cache.Region, cv::Scalar(0, 0, 255));
-	}
-	for (map<string, DetectItem>::const_iterator it = detectItems.begin(); it != detectItems.end(); ++it)
-	{
-		cv::Point point(it->second.Region.HitPoint().X, it->second.Region.HitPoint().Y);
-		cv::Scalar scalar;
-		//绿色新车
-		if (it->second.Status == DetectStatus::New)
-		{
-			scalar = cv::Scalar(0, 255, 0);
-		}
-		//黄色在区域
-		else if (it->second.Status == DetectStatus::In)
-		{
-			scalar = cv::Scalar(0, 255, 255);
-		}
-		//蓝色不在区域
-		else
-		{
-			scalar = cv::Scalar(255, 0, 0);
-		}
-		cv::circle(image, point, 10, scalar, -1);
-	}
+	//if (!_outputImage)
+	//{
+	//	return;
+	//}
+	//ImageConvert::IveToBgr(iveBuffer, _width, _height, _bgrBuffer);
+	//cv::Mat image(_height, _width, CV_8UC3, _bgrBuffer);
+	//for (unsigned int i = 0; i < _lanes.size(); ++i)
+	//{
+	//	EventLaneCache& cache = _lanes[i];
+	//	ImageConvert::DrawPolygon(&image, cache.Region, cv::Scalar(0, 0, 255));
+	//}
+	//for (map<string, DetectItem>::const_iterator it = detectItems.begin(); it != detectItems.end(); ++it)
+	//{
+	//	cv::Point point(it->second.Region.HitPoint().X, it->second.Region.HitPoint().Y);
+	//	cv::Scalar scalar;
+	//	//绿色新车
+	//	if (it->second.Status == DetectStatus::New)
+	//	{
+	//		scalar = cv::Scalar(0, 255, 0);
+	//	}
+	//	//黄色在区域
+	//	else if (it->second.Status == DetectStatus::In)
+	//	{
+	//		scalar = cv::Scalar(0, 255, 255);
+	//	}
+	//	//蓝色不在区域
+	//	else
+	//	{
+	//		scalar = cv::Scalar(255, 0, 0);
+	//	}
+	//	cv::circle(image, point, 10, scalar, -1);
+	//}
 
-	int jpgSize = ImageConvert::BgrToJpg(image.data, _width, _height, _jpgBuffer, _jpgSize);
-	_jpgHandler.HandleFrame(_jpgBuffer, jpgSize, frameIndex);
+	//int jpgSize = ImageConvert::BgrToJpg(image.data, _width, _height, _jpgBuffer, _jpgSize);
+	//if (_outputImage)
+	//{
+	//	ImageConvert::JpgToFile(_jpgBuffer, jpgSize, _channelIndex, frameIndex);
+	//}
 }
 

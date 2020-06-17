@@ -62,6 +62,16 @@ int ImageConvert::IveToJpgBase64(const unsigned char* iveBuffer,int width,int he
 	return size;
 }
 
+void ImageConvert::JpgToFile(unsigned char* jpgBuffer, int jpgSize, int channelIndex,int frameIndex)
+{
+	FILE* fw = NULL;
+	if ((fw = fopen(StringEx::Combine("../temp/jpg_", channelIndex,"_", frameIndex, ".jpg").c_str(), "wb")) == NULL) {
+		return;
+	}
+	fwrite(jpgBuffer, 1, jpgSize, fw);
+	fclose(fw);
+}
+
 void ImageConvert::DrawPolygon(cv::Mat* image, const Polygon& polygon, const cv::Scalar& scalar)
 {
 	vector<vector<cv::Point>> polygons;

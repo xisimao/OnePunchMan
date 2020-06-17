@@ -17,22 +17,24 @@ namespace OnePunchMan
 	//通道状态
 	enum class ChannelStatus
 	{
-		//初始化
-		Init=0,
 		//正常
 		Normal=1,
-		//输入初始化错误
+		//无法打开视频源
 		InputError=2,
-		//输出初始化错误
+		//Rtmp输出异常
 		OutputError=3,
-		//解码器初始化错误
+		//解码器异常
 		DecoderError=4,
-		//读取视频帧错误
+		//无法读取视频数据
 		ReadError=5,
 		//解码错误
 		DecodeError=6,
-		//文件读取结束
-		ReadEOF=7
+		//准备循环播放
+		ReadEOF_Restart =7,
+		//文件播放结束
+		ReadEOF_Stop=8,
+		//正在初始化
+		Init = 9
 	};
 
 	//解码结果
@@ -48,9 +50,9 @@ namespace OnePunchMan
 	public:
 		/**
 		* @brief: 构造函数
-		* @param: debug 是否处于调试模式,处于调试模式不循环播放文件
+		* @param: channelIndex 通道序号
 		*/
-		FFmpegChannel(bool debug);
+		FFmpegChannel(int channelIndex);
 
 		/**
 		* @brief: 析构函数
@@ -71,13 +73,19 @@ namespace OnePunchMan
 		* @brief: 获取通道地址
 		* @param: inputUrl 视频源地址
 		* @param: outputUrl rtmp输出地址		
+		* @param: loop 是否循环播放
 		*/
-		void UpdateChannel(const std::string& inputUrl, const std::string& outputUrl);
+		void UpdateChannel(const std::string& inputUrl, const std::string& outputUrl, bool loop);
 
 		/**
 		* @brief: 清空通道
 		*/
 		void ClearChannel();
+
+		/**
+		* @brief: 将下一帧视频写入到bmp
+		*/
+		void WriteBmp();
 
 		/**
 		* @brief: 获取输入通道地址
@@ -95,7 +103,7 @@ namespace OnePunchMan
 		* @brief: 获取处理帧间隔
 		* @return: 处理帧间隔
 		*/
-		int FrameSpan();
+		int HandleSpan();
 
 		/**
 		* @brief: 获取输出视频输入宽度
@@ -138,8 +146,14 @@ namespace OnePunchMan
 		*/
 		virtual DecodeResult Decode(const AVPacket* packet, int frameIndex,int frameSpan);
 
-		//是否处于调试模式
-		bool _debug;
+		//通道序号
+		int _channelIndex;
+
+		//两帧的间隔
+		int _frameSpan;
+
+		//是否需要写入bmp文件
+		bool _writeBmp;
 
 	private:
 		/**
@@ -184,6 +198,8 @@ namespace OnePunchMan
 
 		//当前视频状态
 		ChannelStatus _channelStatus;
+		//是否循环播放
+		bool _loop;
 		//输入视频初始化参数
 		AVDictionary* _options;
 		//视频源宽度
@@ -204,8 +220,8 @@ namespace OnePunchMan
 		SwsContext* _bgrSwsContext;
 		//上一次处理帧的序号
 		int _lastframeIndex;
-		//两次处理帧的间隔
-		int _frameSpan;
+		//处理帧的间隔
+		int _handleSpan;
 		//bgr写bmp
 		BGR24Handler _bgrHandler;
 	};

@@ -3,19 +3,11 @@
 using namespace std;
 using namespace OnePunchMan;
 
-const string EventChannelData::DbName("event.db");
-
-EventChannelData::EventChannelData()
-	:_sqlite(DbName)
-{
-
-}
-
 vector<EventChannel> EventChannelData::GetList()
 {
 	vector<EventChannel> channels;
 	string channelSql("Select * From Event_Channel Order By ChannelIndex");
-	SqliteReader sqlite(DbName);
+	SqliteReader sqlite(_dbName);
 	if (sqlite.BeginQuery(channelSql))
 	{
 		while (sqlite.HasRow()) 
@@ -31,7 +23,7 @@ EventChannel EventChannelData::Get(int channelIndex)
 {
 	EventChannel channel;
 	string sql(StringEx::Combine("Select * From Event_Channel Where ChannelIndex=", channelIndex));
-	SqliteReader sqlite(DbName);
+	SqliteReader sqlite(_dbName);
 	if (sqlite.BeginQuery(sql))
 	{
 		if (sqlite.HasRow()) 
@@ -51,7 +43,7 @@ EventChannel EventChannelData::FillChannel(const SqliteReader& sqlite)
 	channel.ChannelUrl = sqlite.GetString(2);
 	channel.ChannelType = sqlite.GetInt(3);
 
-	SqliteReader laneSqlite(DbName);
+	SqliteReader laneSqlite(_dbName);
 	string laneSql(StringEx::Combine("Select * From Event_Lane Where ChannelIndex=", channel.ChannelIndex," Order By LaneIndex"));
 	if (laneSqlite.BeginQuery(laneSql))
 	{
@@ -141,28 +133,9 @@ void EventChannelData::Clear()
 	_sqlite.ExecuteRowCount(StringEx::Combine("Delete From Event_Lane"));
 }
 
-string EventChannelData::LastError()
+void EventChannelData::UpdateDb()
 {
-	return _sqlite.LastError();
-}
-
-string EventChannelData::GetVersion()
-{
-	string sql(StringEx::Combine("Select Version From Event_Version"));
-	SqliteReader sqlite(DbName);
-	string version;
-	if (sqlite.BeginQuery(sql))
-	{
-		if (sqlite.HasRow())
-		{
-			version = sqlite.GetString(0);
-		}
-		sqlite.EndQuery();
-	}
-	return version;
-}
-
-bool EventChannelData::SetVersion(const std::string& version)
-{
-	return _sqlite.ExecuteRowCount(StringEx::Combine("Update Event_Version Set Version='", version, "'"));
+	TrafficData::UpdateDb();
+	SetParameter("Version", "1.0.0.5");
+	SetParameter("VersionValue", "1005");
 }

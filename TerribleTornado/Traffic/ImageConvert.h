@@ -64,6 +64,15 @@ namespace OnePunchMan
 		static int IveToJpgBase64(const unsigned char* iveBuffer, int width, int height, unsigned char* bgrBuffer, std::string* jpgBase64, unsigned char* jpgBuffer, int jpgSize);
 		
 		/**
+		* @brief: jpg写入file
+		* @param: jpgBuffer jpg字节流
+		* @param: jpgSize jpg字节流长度
+		* @param: channelIndex 通道序号
+		* @param: frameIndex 帧序号
+		*/
+		static void JpgToFile(unsigned char* jpgBuffer, int jpgSize, int channelIndex, int frameIndex);
+
+		/**
 		* @brief: 绘制检测区域
 		* @param: image 绘制的图片
 		* @param: polygon 多边形

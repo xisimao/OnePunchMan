@@ -25,9 +25,6 @@
     <ClInclude Include="FFmpeg\FFmpegChannel.h">
       <Filter>FFmpeg</Filter>
     </ClInclude>
-    <ClInclude Include="FFmpeg\JPGHandler.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="FFmpeg">
@@ -63,9 +60,6 @@
       <Filter>Mqtt</Filter>
     </ClCompile>
     <ClCompile Include="FFmpeg\FFmpegChannel.cpp">
-      <Filter>FFmpeg</Filter>
-    </ClCompile>
-    <ClCompile Include="FFmpeg\JPGHandler.cpp">
       <Filter>FFmpeg</Filter>
     </ClCompile>
   </ItemGroup>

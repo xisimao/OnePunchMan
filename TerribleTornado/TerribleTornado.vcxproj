@@ -133,8 +133,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <PrecompiledHeader>
-      </PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -158,6 +157,7 @@
     <ClCompile Include="Event\EventDetector.cpp" />
     <ClCompile Include="Event\EventStartup.cpp" />
     <ClCompile Include="Adapter\IoAdapter.cpp" />
+    <ClCompile Include="Traffic\TrafficData.cpp" />
     <ClCompile Include="Traffic\ImageConvert.cpp" />
     <ClCompile Include="Traffic\TrafficStartup.cpp" />
     <ClCompile Include="Traffic\TrafficDetector.cpp" />

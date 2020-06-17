@@ -39,7 +39,6 @@
     <ClCompile Include="..\Fubuki\FFmpeg\FFmpegChannel.cpp" />
     <ClCompile Include="..\Fubuki\FFmpeg\H264Handler.cpp" />
     <ClCompile Include="..\Fubuki\FFmpeg\IVE_8UC3Handler.cpp" />
-    <ClCompile Include="..\Fubuki\FFmpeg\JPGHandler.cpp" />
     <ClCompile Include="..\Fubuki\FFmpeg\YUV420PHandler.cpp" />
     <ClCompile Include="..\Fubuki\FFmpeg\YUV420SPHandler.cpp" />
     <ClCompile Include="..\Fubuki\Mqtt\MqttChannel.cpp" />
@@ -76,6 +75,7 @@
     <ClCompile Include="..\TerribleTornado\Traffic\ImageConvert.cpp" />
     <ClCompile Include="..\TerribleTornado\Traffic\RecognChannel.cpp" />
     <ClCompile Include="..\TerribleTornado\Traffic\SeemmoSDK.cpp" />
+    <ClCompile Include="..\TerribleTornado\Traffic\TrafficData.cpp" />
     <ClCompile Include="..\TerribleTornado\Traffic\TrafficDetector.cpp" />
     <ClCompile Include="..\TerribleTornado\Traffic\TrafficStartup.cpp" />
     <ClCompile Include="main.cpp" />
@@ -85,7 +85,6 @@
     <ClInclude Include="..\Fubuki\FFmpeg\FFmpegChannel.h" />
     <ClInclude Include="..\Fubuki\FFmpeg\H264Handler.h" />
     <ClInclude Include="..\Fubuki\FFmpeg\IVE_8UC3Handler.h" />
-    <ClInclude Include="..\Fubuki\FFmpeg\JPGHandler.h" />
     <ClInclude Include="..\Fubuki\FFmpeg\YUV420PHandler.h" />
     <ClInclude Include="..\Fubuki\FFmpeg\YUV420SPHandler.h" />
     <ClInclude Include="..\Fubuki\Mqtt\MqttChannel.h" />

@@ -1,7 +1,6 @@
 #pragma once
 #include "EventData.h"
 #include "TrafficDetector.h"
-#include "ImageConvert.h"
 
 namespace OnePunchMan
 {
@@ -24,9 +23,13 @@ namespace OnePunchMan
 		* @param: width 图片宽度
 		* @param: height 图片高度
 		* @param: mqtt mqtt
-		* @param: debug 是否处于调试模式，处于调试模式则输出画线后的bmp
 		*/
-		EventDetector(int width, int height,MqttChannel* mqtt, bool debug);
+		EventDetector(int width, int height,MqttChannel* mqtt);
+		
+		/**
+		* @brief: 析构函数
+		*/
+		~EventDetector();
 
 		/**
 		* @brief: 更新通道
@@ -165,6 +168,10 @@ namespace OnePunchMan
 		//车道集合
 		std::vector<EventLaneCache> _lanes;
 
+		//bgr字节流
+		unsigned char* _bgrBuffer;
+		//jpg字节流
+		unsigned char* _jpgBuffer;
 	};
 
 }
