@@ -122,6 +122,28 @@ void TrafficStartup::GetDevice(HttpReceivedEventArgs* e)
     TrafficData data;
     string sn = data.GetParameter("SN");
     string guid = StringEx::Trim(Command::Execute("cat /mtd/basesys/data/devguid"));
+    string webVersion;
+    string cat = Command::Execute("cat ../web/static/config/base.js");
+    vector<string> catRows = StringEx::Split(cat, "\n", true);
+    for (unsigned int i = 0; i < catRows.size(); ++i)
+    {
+        if (catRows[i].find("window.WebVersionNumbe") != string::npos)
+        {
+            vector<string> datas = StringEx::Split(catRows[i], " ", true);
+            if (datas.size() >= 3 && datas[2].size() >= 3)
+            {
+                size_t startIndex = datas[2].find_first_of('\'');
+                size_t endIndex = datas[2].find_last_of('\'');
+                if (startIndex != string::npos
+                    && endIndex != string::npos
+                    && startIndex != endIndex)
+                {
+                    webVersion = datas[2].substr(startIndex + 1, endIndex - startIndex - 1);
+                }
+                break;
+            }
+        }
+    }
     string df = Command::Execute("df");
     string diskUsed;
     string diskTotal;
@@ -164,7 +186,7 @@ void TrafficStartup::GetDevice(HttpReceivedEventArgs* e)
     JsonSerialization::SerializeValue(&deviceJson, "sn", sn);
     JsonSerialization::SerializeValue(&deviceJson, "guid", guid);
     JsonSerialization::SerializeValue(&deviceJson, "softwareVersion", _softwareVersion);
-    JsonSerialization::SerializeValue(&deviceJson, "webVersion", _webVersion);
+    JsonSerialization::SerializeValue(&deviceJson, "webVersion", webVersion);
     JsonSerialization::SerializeValue(&deviceJson, "sdkVersion", _sdkVersion);
     JsonSerialization::SerializeValue(&deviceJson, "destinationWidth", FFmpegChannel::DestinationWidth);
     JsonSerialization::SerializeValue(&deviceJson, "destinationHeight", FFmpegChannel::DestinationHeight);
@@ -233,6 +255,9 @@ void TrafficStartup::Startup()
     Command::Execute("rm -rf ../temp/*");
     Command::Execute("rm -rf ../images/*");
 
+    //升级数据库
+    UpdateDb();
+
     //初始化sdk
     _sdkInited = SeemmoSDK::Init();
     if (SeemmoSDK::seemmo_version != NULL)
@@ -240,35 +265,9 @@ void TrafficStartup::Startup()
         _sdkVersion = SeemmoSDK::seemmo_version();
     }
 
-    //升级数据库
-    UpdateDb();
-
     //软件版本
     TrafficData data;
     _softwareVersion=data.GetParameter("Version");
-
-    //获取web版本
-    string cat = Command::Execute("cat ../web/static/config/base.js");
-    vector<string> catRows = StringEx::Split(cat, "\n", true);
-    for (unsigned int i = 0; i < catRows.size(); ++i)
-    {
-        if (catRows[i].find("window.WebVersionNumbe") != string::npos)
-        {
-            vector<string> datas = StringEx::Split(catRows[i], " ", true);
-            if (datas.size() >= 3 && datas[2].size() >= 3)
-            {
-                size_t startIndex = datas[2].find_first_of('\'');
-                size_t endIndex=datas[2].find_last_of('\'');
-                if (startIndex != string::npos
-                    && endIndex != string::npos
-                    && startIndex != endIndex)
-                {
-                    _webVersion = datas[2].substr(startIndex+1, endIndex-startIndex-1);
-                }
-                break;
-            }
-        }
-    }
 
     _mqtt = new MqttChannel("127.0.0.1", 1883);
     _mqtt->MqttDisconnected.Subscribe(this);
