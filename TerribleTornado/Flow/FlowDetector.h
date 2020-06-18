@@ -24,18 +24,19 @@ namespace OnePunchMan
 
 		/**
 		* @brief: 更新通道
+		* @param: taskId 任务编号
 		* @param: channel 通道
 		*/
-		void UpdateChannel(const FlowChannel& channel);
+		void UpdateChannel(unsigned char taskId,const FlowChannel& channel);
 
 		/**
 		* @brief: 清空通道
 		*/
 		void ClearChannel();
 
-		void HandleDetect(std::map<std::string, DetectItem>* detectItems, long long timeStamp, std::string* param, const unsigned char* iveBuffer, int frameIndex,int frameSpan);
+		void HandleDetect(std::map<std::string, DetectItem>* detectItems, long long timeStamp, std::string* param, unsigned char taskId, const unsigned char* iveBuffer, unsigned int frameIndex,unsigned char frameSpan);
 		
-		void FinishDetect();
+		void FinishDetect(unsigned char taskId);
 
 		void HandleRecognVehicle(const RecognItem& recognItem, const unsigned char* iveBuffer, const VideoStruct_Vehicle& vehicle);
 		
@@ -248,7 +249,7 @@ namespace OnePunchMan
 		* @param: iveBuffer ive字节流
 		* @param: frameIndex 帧序号
 		*/
-		void DrawDetect(const std::map<std::string, DetectItem>& detectItems, const unsigned char* iveBuffer, int frameIndex);
+		void DrawDetect(const std::map<std::string, DetectItem>& detectItems, const unsigned char* iveBuffer, unsigned int frameIndex);
 
 		//IO mqtt主题
 		static const std::string IOTopic;
@@ -259,9 +260,11 @@ namespace OnePunchMan
 		//上报的最大时长(毫秒)
 		static const int ReportMaxSpan;
 
+		//任务编号
+		int _taskId;
+
 		//上一帧的时间戳
 		long long _lastFrameTimeStamp;
-
 		//当前分钟的时间戳
 		long long _currentMinuteTimeStamp;
 		//下一分钟的时间戳

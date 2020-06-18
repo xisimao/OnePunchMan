@@ -74,18 +74,14 @@ namespace OnePunchMan
 		* @param: inputUrl 视频源地址
 		* @param: outputUrl rtmp输出地址		
 		* @param: loop 是否循环播放
+		* @return: 当前任务编号
 		*/
-		void UpdateChannel(const std::string& inputUrl, const std::string& outputUrl, bool loop);
+		unsigned char UpdateChannel(const std::string& inputUrl, const std::string& outputUrl, bool loop);
 
 		/**
 		* @brief: 清空通道
 		*/
 		void ClearChannel();
-
-		/**
-		* @brief: 将下一帧视频写入到bmp
-		*/
-		void WriteBmp();
 
 		/**
 		* @brief: 获取输入通道地址
@@ -140,20 +136,15 @@ namespace OnePunchMan
 		/**
 		* @brief: 解码
 		* @param: packet 视频帧
+		* @param: taskId 任务号
 		* @param: frameIndex 视频帧序号
 		* @param: frameSpan 两帧的间隔时间(毫秒)
 		* @return: 解码成功返回Handle，略过返回Ski，否则返回Error，解码失败会结束线程
 		*/
-		virtual DecodeResult Decode(const AVPacket* packet, int frameIndex,int frameSpan);
+		virtual DecodeResult Decode(const AVPacket* packet, unsigned char taskId,unsigned int frameIndex,unsigned char frameSpan);
 
 		//通道序号
 		int _channelIndex;
-
-		//两帧的间隔
-		int _frameSpan;
-
-		//是否需要写入bmp文件
-		bool _writeBmp;
 
 	private:
 		/**
@@ -196,6 +187,8 @@ namespace OnePunchMan
 		AVStream* _outputStream;
 		AVCodecContext* _outputCodec;
 
+		//任务号
+		unsigned char _taskId;
 		//当前视频状态
 		ChannelStatus _channelStatus;
 		//是否循环播放
@@ -219,9 +212,9 @@ namespace OnePunchMan
 		//yuv转bgr
 		SwsContext* _bgrSwsContext;
 		//上一次处理帧的序号
-		int _lastframeIndex;
+		unsigned int _lastframeIndex;
 		//处理帧的间隔
-		int _handleSpan;
+		unsigned int _handleSpan;
 		//bgr写bmp
 		BGR24Handler _bgrHandler;
 	};

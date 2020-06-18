@@ -91,7 +91,7 @@ void EventDetector::ClearChannel()
 	_lanesInited = false;
 }
 
-void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long timeStamp, string* param, const unsigned char* iveBuffer, int frameIndex, int frameSpan)
+void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long timeStamp, string* param, unsigned char taskId, const unsigned char* iveBuffer, unsigned int frameIndex, unsigned char frameSpan)
 {
 	lock_guard<mutex> lck(_laneMutex);
 	if (!_setParam)
@@ -293,7 +293,7 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 	DrawDetect(*detectItems, iveBuffer, frameIndex);
 }
 
-void EventDetector::DrawPedestrain(std::string* jpgBase64, const unsigned char* iveBuffer, const Point& point, int frameIndex)
+void EventDetector::DrawPedestrain(std::string* jpgBase64, const unsigned char* iveBuffer, const Point& point, unsigned int frameIndex)
 {
 	ImageConvert::IveToBgr(iveBuffer, _width, _height, _bgrBuffer);
 	cv::Mat image(_height, _width, CV_8UC3, _bgrBuffer);
@@ -311,7 +311,7 @@ void EventDetector::DrawPedestrain(std::string* jpgBase64, const unsigned char* 
 	ImageConvert::BgrToJpgBase64(image.data, _width, _height,jpgBase64, _jpgBuffer, _jpgSize);
 }
 
-void EventDetector::DrawPark(std::string* jpgBase64, const unsigned char* iveBuffer, const Point& point, int frameIndex)
+void EventDetector::DrawPark(std::string* jpgBase64, const unsigned char* iveBuffer, const Point& point, unsigned int frameIndex)
 {
 	ImageConvert::IveToBgr(iveBuffer, _width, _height, _bgrBuffer);
 	cv::Mat image(_height, _width, CV_8UC3, _bgrBuffer);
@@ -329,7 +329,7 @@ void EventDetector::DrawPark(std::string* jpgBase64, const unsigned char* iveBuf
 	ImageConvert::BgrToJpgBase64(image.data, _width, _height,jpgBase64, _jpgBuffer,_jpgSize);
 }
 
-void EventDetector::DrawCongestion(string* jpgBase64, const unsigned char* iveBuffer, int frameIndex)
+void EventDetector::DrawCongestion(string* jpgBase64, const unsigned char* iveBuffer, unsigned int frameIndex)
 {
 	ImageConvert::IveToBgr(iveBuffer, _width, _height, _bgrBuffer);
 	cv::Mat image(_height, _width, CV_8UC3, _bgrBuffer);
@@ -342,7 +342,7 @@ void EventDetector::DrawCongestion(string* jpgBase64, const unsigned char* iveBu
 	ImageConvert::BgrToJpgBase64(image.data, _width, _height,jpgBase64, _jpgBuffer, _jpgSize);
 }
 
-void EventDetector::DrawRetrograde(string* jpgBase64, const unsigned char* iveBuffer, const vector<Point>& points, int frameIndex)
+void EventDetector::DrawRetrograde(string* jpgBase64, const unsigned char* iveBuffer, const vector<Point>& points, unsigned int frameIndex)
 {
 	ImageConvert::IveToBgr(iveBuffer, _width, _height, _bgrBuffer);
 	cv::Mat image(_height, _width, CV_8UC3, _bgrBuffer);
@@ -365,7 +365,7 @@ void EventDetector::DrawRetrograde(string* jpgBase64, const unsigned char* iveBu
 	ImageConvert::BgrToJpgBase64(image.data, _width, _height,jpgBase64, _jpgBuffer, _jpgSize);
 }
 
-void EventDetector::DrawDetect(const map<string, DetectItem>& detectItems, const unsigned char* iveBuffer, int frameIndex)
+void EventDetector::DrawDetect(const map<string, DetectItem>& detectItems, const unsigned char* iveBuffer, unsigned int frameIndex)
 {
 	//if (!_outputImage)
 	//{

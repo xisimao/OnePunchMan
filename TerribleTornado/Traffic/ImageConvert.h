@@ -70,7 +70,7 @@ namespace OnePunchMan
 		* @param: channelIndex Õ®µ¿–Ú∫≈
 		* @param: frameIndex ÷°–Ú∫≈
 		*/
-		static void JpgToFile(unsigned char* jpgBuffer, int jpgSize, int channelIndex, int frameIndex);
+		static void JpgToFile(unsigned char* jpgBuffer, int jpgSize, int channelIndex, unsigned int frameIndex);
 
 		/**
 		* @brief: ªÊ÷∆ºÏ≤‚«¯”Ú

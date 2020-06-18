@@ -8,10 +8,10 @@ const int FFmpegChannel::DestinationWidth = 1920;
 const int FFmpegChannel::DestinationHeight = 1080;
 
 FFmpegChannel::FFmpegChannel(int channelIndex)
-	:ThreadObject("decode"), _channelIndex(channelIndex), _frameSpan(0), _writeBmp(false)
+	:ThreadObject("decode"), _channelIndex(channelIndex)
 	, _inputUrl(), _inputFormat(NULL), _inputStream(NULL), _inputVideoIndex(-1)
 	, _outputUrl(), _outputFormat(NULL), _outputStream(NULL), _outputCodec(NULL)
-	, _channelStatus(ChannelStatus::Init), _loop(false),_options(NULL), _sourceWidth(0), _sourceHeight(0)
+	, _taskId(0), _channelStatus(ChannelStatus::Init), _loop(false),_options(NULL), _sourceWidth(0), _sourceHeight(0)
 	, _decodeContext(NULL), _yuvFrame(NULL), _bgrFrame(NULL), _bgrBuffer(NULL), _bgrSwsContext(NULL)
 	, _lastframeIndex(0),_handleSpan(0)
 {
@@ -59,7 +59,7 @@ int FFmpegChannel::HandleSpan()
 	return _handleSpan;
 }
 
-void FFmpegChannel::UpdateChannel(const std::string& inputUrl, const std::string& outputUrl, bool loop)
+unsigned char FFmpegChannel::UpdateChannel(const std::string& inputUrl, const std::string& outputUrl, bool loop)
 {
 	lock_guard<mutex> lck(_mutex);
 	_inputUrl.assign(inputUrl);
@@ -69,7 +69,8 @@ void FFmpegChannel::UpdateChannel(const std::string& inputUrl, const std::string
 #endif // _WIN32
 	_loop = loop;
 	_channelStatus = ChannelStatus::Init;
-	_writeBmp = true;
+
+	return ++_taskId;
 }
 
 void FFmpegChannel::ClearChannel()
@@ -78,11 +79,6 @@ void FFmpegChannel::ClearChannel()
 	_inputUrl.clear();
 	_outputUrl.clear();
 	_channelStatus = ChannelStatus::Init;
-}
-
-void FFmpegChannel::WriteBmp()
-{
-	_writeBmp = true;
 }
 
 ChannelStatus FFmpegChannel::InitInput(const string& inputUrl)
@@ -284,7 +280,7 @@ void FFmpegChannel::UninitDecoder()
 	}
 }
 
-DecodeResult FFmpegChannel::Decode(const AVPacket* packet, int frameIndex, int frameSpan)
+DecodeResult FFmpegChannel::Decode(const AVPacket* packet, unsigned char taskId, unsigned int frameIndex, unsigned char frameSpan)
 {
 	if (avcodec_send_packet(_decodeContext, packet) == 0)
 	{
@@ -321,7 +317,10 @@ void FFmpegChannel::StartCore()
 {
 	AVPacket* packet= av_packet_alloc();
 	long long duration = 0;
-	int frameIndex = 1;
+	unsigned char taskId = 0;
+	unsigned int frameIndex = 1;
+	unsigned char frameSpan = 0;
+	bool reportFinish = false;
 	string inputUrl;
 	while (!_cancelled)
 	{
@@ -331,7 +330,6 @@ void FFmpegChannel::StartCore()
 			int readResult = av_read_frame(_inputFormat, packet);
 			if (readResult == AVERROR_EOF)
 			{
-				Decode(NULL, 0, _frameSpan);
 				if (_loop)
 				{
 					_channelStatus = ChannelStatus::ReadEOF_Restart;
@@ -347,7 +345,7 @@ void FFmpegChannel::StartCore()
 				if (packet->stream_index == _inputVideoIndex)
 				{
 					long long timeStamp2 = DateTime::UtcNowTimeStamp();
-					DecodeResult decodeResult = Decode(packet, frameIndex, _frameSpan);
+					DecodeResult decodeResult = Decode(packet,taskId, frameIndex, frameSpan);
 					long long timeStamp3 = DateTime::UtcNowTimeStamp();
 					if (decodeResult == DecodeResult::Error)
 					{
@@ -362,19 +360,19 @@ void FFmpegChannel::StartCore()
 
 					if (_outputFormat != NULL)
 					{
-						packet->pts = packet->pts == AV_NOPTS_VALUE ? duration + frameIndex * _frameSpan : duration + av_rescale_q_rnd(packet->pts, _inputStream->time_base, _outputStream->time_base, (AVRounding)(AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
+						packet->pts = packet->pts == AV_NOPTS_VALUE ? duration + frameIndex * frameSpan : duration + av_rescale_q_rnd(packet->pts, _inputStream->time_base, _outputStream->time_base, (AVRounding)(AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
 						packet->dts = duration + av_rescale_q_rnd(packet->dts, _inputStream->time_base, _outputStream->time_base, (AVRounding)(AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
 						packet->duration = av_rescale_q(packet->duration, _inputStream->time_base, _outputStream->time_base);
 						packet->pos = -1;
 						av_interleaved_write_frame(_outputFormat, packet);
 					}
 					long long timeStamp4 = DateTime::UtcNowTimeStamp();
-					long long sleepTime = _frameSpan - (timeStamp4 - timeStamp2);
-					if (sleepTime > 0 && sleepTime <= _frameSpan)
+					long long sleepTime = frameSpan - (timeStamp4 - timeStamp2);
+					if (sleepTime > 0 && sleepTime <= frameSpan)
 					{
 						this_thread::sleep_for(chrono::milliseconds(sleepTime));
 					}
-					LogPool::Debug(LogEvent::Decode, "frame", _channelIndex, frameIndex, static_cast<int>(decodeResult),timeStamp2-timeStamp1,timeStamp3-timeStamp2,timeStamp4-timeStamp3);
+					LogPool::Debug(LogEvent::Decode, "frame", _channelIndex,static_cast<int>(taskId), frameIndex, static_cast<int>(frameSpan), static_cast<int>(decodeResult),timeStamp2-timeStamp1,timeStamp3-timeStamp2,timeStamp4-timeStamp3);
 					frameIndex += 1;
 				}
 			}
@@ -387,6 +385,12 @@ void FFmpegChannel::StartCore()
 		}
 		else
 		{
+			//播放文件结束时报一次结束
+			if (_channelStatus == ChannelStatus::ReadEOF_Stop&&!reportFinish)
+			{
+				Decode(NULL, taskId, frameIndex, frameSpan);
+				reportFinish = true;
+			}
 			unique_lock<mutex> lck(_mutex);
 			UninitDecoder();
 			//读取到结尾重新启动时不需要重置输出
@@ -434,29 +438,30 @@ void FFmpegChannel::StartCore()
 				if (inputUrl.compare(_inputUrl) == 0
 					&& oldStatus == ChannelStatus::ReadEOF_Restart)
 				{
-					duration += (frameIndex - 1) * _frameSpan;
-					frameIndex = 1;
+					duration += (frameIndex - 1) * frameSpan;
 				}
 				else
 				{
 					duration = 0;
-					frameIndex = 1;
 					if (_inputStream->avg_frame_rate.den != 0)
 					{
-						_frameSpan = 1000 / (_inputStream->avg_frame_rate.num / _inputStream->avg_frame_rate.den);
+						frameSpan = static_cast<unsigned char>(1000 / (_inputStream->avg_frame_rate.num / _inputStream->avg_frame_rate.den));
 					}
 					else if (_inputStream->r_frame_rate.den != 0)
 					{
-						_frameSpan = 1000 / (_inputStream->r_frame_rate.num / _inputStream->r_frame_rate.den);
+						frameSpan = static_cast<unsigned char>(1000 / (_inputStream->r_frame_rate.num / _inputStream->r_frame_rate.den));
 					}
 					else
 					{
-						_frameSpan = 40;
+						frameSpan = 40;
 						LogPool::Warning(LogEvent::Decode, "frame span not found", _inputUrl);
 					}
 				}
+				taskId = _taskId;
+				frameIndex = 1;
+				reportFinish = false;
 				inputUrl = _inputUrl;
-				LogPool::Information(LogEvent::Decode, "init frame channel success,inputUrl:", _inputUrl, "outputUrl:", _outputUrl,"frame span:", _frameSpan, "loop:", _loop);
+				LogPool::Information(LogEvent::Decode, "init frame channel success,inputUrl:", _inputUrl, "outputUrl:", _outputUrl,"frame span:", static_cast<int>(frameSpan), "loop:", _loop);
 				lck.unlock();
 			}
 			else

@@ -4,7 +4,7 @@ using namespace std;
 using namespace OnePunchMan;
 
 DecodeChannel::DecodeChannel(int channelIndex)
-	:FFmpegChannel(channelIndex), _frameIndex(0), _finished(false)
+	:FFmpegChannel(channelIndex), _writeBmp(false), _finished(false),_taskId(0),_frameIndex(0),_frameSpan(0)
 	, _yuvSize(static_cast<int>(DestinationWidth * DestinationHeight * 1.5)), _yuvHasValue(false), _yuv_phy_addr(0), _yuvBuffer(NULL)
 	, _iveSize(DestinationWidth* DestinationHeight * 3), _ive_phy_addr(0), _iveBuffer(NULL)
 	, _iveHandler(-1)
@@ -817,7 +817,12 @@ void DecodeChannel::UninitDecoder()
 {
 }
 
-DecodeResult DecodeChannel::Decode(const AVPacket* packet, int frameIndex, int frameSpan)
+void DecodeChannel::WriteBmp()
+{
+	_writeBmp = true;
+}
+
+DecodeResult DecodeChannel::Decode(const AVPacket* packet, unsigned char taskId,unsigned int frameIndex, unsigned char frameSpan)
 {
 	bool handled = false;
 #ifndef _WIN32
@@ -825,7 +830,14 @@ DecodeResult DecodeChannel::Decode(const AVPacket* packet, int frameIndex, int f
 	if (packet != NULL)
 	{
 		VDEC_STREAM_S stStream;
-		stStream.u64PTS = frameIndex;
+		stStream.u64PTS = 0;
+		unsigned long long temp = frameIndex;
+		stStream.u64PTS |= temp;
+		temp = taskId;
+		stStream.u64PTS |= (temp<<32);
+		temp = frameSpan;
+		stStream.u64PTS |= (temp << 40);
+
 		stStream.pu8Addr = packet->data;
 		stStream.u32Len = packet->size;
 		stStream.bEndOfFrame = HI_TRUE;
@@ -845,7 +857,7 @@ DecodeResult DecodeChannel::Decode(const AVPacket* packet, int frameIndex, int f
 		{
 			handled = true;
 			unsigned char* yuv = reinterpret_cast<unsigned char*>(HI_MPI_SYS_Mmap(frame.stVFrame.u64PhyAddr[0], _yuvSize));
-			SetTempIve(yuv, static_cast<int>(frame.stVFrame.u64PTS),packet==NULL);
+			SetTempIve(frame.stVFrame.u64PTS >> 32 & 0xFF,yuv, frame.stVFrame.u64PTS & 0xFFFFFFFF, frame.stVFrame.u64PTS >> 40 & 0xFF,false);
 			HI_MPI_SYS_Munmap(reinterpret_cast<HI_VOID*>(yuv), _yuvSize);
 			HI_MPI_VPSS_ReleaseChnFrame(_channelIndex - 1, 0, &frame);
 		}
@@ -856,6 +868,21 @@ DecodeResult DecodeChannel::Decode(const AVPacket* packet, int frameIndex, int f
 		}
 	}
 #endif // !_WIN32
+	//结束帧强制设置
+	if (packet==NULL)
+	{
+		while (true)
+		{
+			if (SetTempIve(taskId,NULL, frameIndex,frameSpan,true))
+			{
+				break;
+			}
+			else
+			{
+				this_thread::sleep_for(chrono::milliseconds(10));
+			}
+		}
+	}
 	return handled ? DecodeResult::Handle : DecodeResult::Skip;
 }
 
@@ -912,17 +939,22 @@ bool DecodeChannel::YuvToIve()
 	return true;
 }
 
-bool DecodeChannel::SetTempIve(const unsigned char* yuv, int frameIndex, bool finished)
+bool DecodeChannel::SetTempIve(unsigned char taskId,const unsigned char* yuv, unsigned int frameIndex, unsigned char frameSpan, bool finished)
 {
-	_finished = finished;
 	if (_yuvHasValue)
 	{
 		return false;
 	}
 	else
 	{
-		memcpy(_yuvBuffer, yuv, _yuvSize);
+		if (!finished)
+		{
+			memcpy(_yuvBuffer, yuv, _yuvSize);
+		}
+		_taskId = taskId;
 		_frameIndex = frameIndex;
+		_frameSpan = frameSpan;
+		_finished = finished;
 		_yuvHasValue = true;
 		return true;
 	}
@@ -931,12 +963,22 @@ bool DecodeChannel::SetTempIve(const unsigned char* yuv, int frameIndex, bool fi
 FrameItem DecodeChannel::GetTempIve()
 {
 	FrameItem item;
-	item.Finished = _finished;
-	if (_yuvHasValue && YuvToIve())
+	if (_yuvHasValue)
 	{
-		item.IveBuffer = _iveBuffer;
+		item.TaskId = _taskId;
 		item.FrameIndex = _frameIndex;
 		item.FrameSpan = _frameSpan;
+		item.Finished = _finished;
+		//只送出一次结束
+		if (_finished)
+		{
+			_finished = false;
+		}
+		else
+		{
+			YuvToIve();
+			item.IveBuffer = _iveBuffer;
+		}
 		_yuvHasValue = false;
 		if (_writeBmp)
 		{

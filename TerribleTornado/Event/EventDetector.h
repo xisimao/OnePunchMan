@@ -42,7 +42,7 @@ namespace OnePunchMan
 		*/
 		void ClearChannel();
 
-		void HandleDetect(std::map<std::string, DetectItem>* detectItems, long long timeStamp, std::string* param, const unsigned char* iveBuffer,int frameIndex,int frameSpan);
+		void HandleDetect(std::map<std::string, DetectItem>* detectItems, long long timeStamp, std::string* param, unsigned char taskId, const unsigned char* iveBuffer,unsigned int frameIndex, unsigned char frameSpan);
 
 	private:
 
@@ -110,7 +110,7 @@ namespace OnePunchMan
 		* @param: points 检测点集合
 		* @param: frameIndex 帧序号
 		*/
-		void DrawRetrograde(std::string* jpgBase64, const unsigned char* iveBuffer, const std::vector<Point>& points, int frameIndex);
+		void DrawRetrograde(std::string* jpgBase64, const unsigned char* iveBuffer, const std::vector<Point>& points, unsigned int frameIndex);
 		
 		/**
 		* @brief: 绘制逆行事件图片
@@ -119,7 +119,7 @@ namespace OnePunchMan
 		* @param: point 行人点
 		* @param: frameIndex 帧序号
 		*/
-		void DrawPedestrain(std::string* jpgBase64, const unsigned char* iveBuffer, const Point& point, int frameIndex);
+		void DrawPedestrain(std::string* jpgBase64, const unsigned char* iveBuffer, const Point& point, unsigned int frameIndex);
 		
 		/**
 		* @brief: 绘制逆行事件图片
@@ -128,7 +128,7 @@ namespace OnePunchMan
 		* @param: point 停车点
 		* @param: frameIndex 帧序号
 		*/
-		void DrawPark(std::string* jpgBase64, const unsigned char* iveBuffer, const Point& point, int frameIndex);
+		void DrawPark(std::string* jpgBase64, const unsigned char* iveBuffer, const Point& point, unsigned int frameIndex);
 		
 		/**
 		* @brief: 绘制拥堵区域
@@ -136,7 +136,7 @@ namespace OnePunchMan
 		* @param: iveBuffer ive字节流
 		* @param: frameIndex 帧序号
 		*/
-		void DrawCongestion(std::string* jpgBase64, const unsigned char* iveBuffer, int frameIndex);
+		void DrawCongestion(std::string* jpgBase64, const unsigned char* iveBuffer, unsigned int frameIndex);
 
 		/**
 		* @brief: 绘制检测区域
@@ -144,7 +144,7 @@ namespace OnePunchMan
 		* @param: iveBuffer ive字节流
 		* @param: frameIndex 帧序号
 		*/
-		void DrawDetect(const std::map<std::string, DetectItem>& detectItems, const unsigned char* iveBuffer, int frameIndex);
+		void DrawDetect(const std::map<std::string, DetectItem>& detectItems, const unsigned char* iveBuffer, unsigned int frameIndex);
 
 		//IO mqtt主题
 		static const std::string EventTopic;

@@ -147,16 +147,18 @@ namespace OnePunchMan
 		* @param: items 检测数据项集合
 		* @param: timeStamp 时间戳
 		* @param: param 检测参数
+		* @param: taskId 任务编号
 		* @param: iveBuffer 图片字节流
 		* @param: frameIndex 帧序号
 		* @param: frameSpan 帧间隔时间(毫秒)
 		*/
-		virtual void HandleDetect(std::map<std::string, DetectItem>* detectItems, long long timeStamp, std::string* param, const unsigned char* iveBuffer, int frameIndex,int frameSpan) = 0;
+		virtual void HandleDetect(std::map<std::string, DetectItem>* detectItems, long long timeStamp, std::string* param, unsigned char taskId, const unsigned char* iveBuffer, unsigned int frameIndex, unsigned char frameSpan) = 0;
 		
 		/**
 		* @brief: 结束检测
+		* @param: taskId 任务编号
 		*/
-		virtual void FinishDetect() {};
+		virtual void FinishDetect(unsigned char taskId) {};
 
 		/**
 		* @brief: 处理机动车识别数据

@@ -65,8 +65,8 @@ void FlowStartup::InitChannels()
         FlowChannel channel = data.Get(i + 1);
         if (!channel.ChannelUrl.empty())
         {
-            _decodes[i]->UpdateChannel(channel.ChannelUrl, channel.RtmpUrl("127.0.0.1"), channel.Loop);
-            _detectors[i]->UpdateChannel(channel);
+            unsigned char taskId= _decodes[i]->UpdateChannel(channel.ChannelUrl, channel.RtmpUrl("127.0.0.1"), channel.Loop);
+            _detectors[i]->UpdateChannel(taskId,channel);
         }
     }
 }
@@ -204,8 +204,8 @@ void FlowStartup::SetDevice(HttpReceivedEventArgs* e)
             }
             else
             {
-                _decodes[i]->UpdateChannel(it->second.ChannelUrl, it->second.RtmpUrl("127.0.0.1"), it->second.Loop);
-                _detectors[i]->UpdateChannel(it->second);
+                unsigned char taskId = _decodes[i]->UpdateChannel(it->second.ChannelUrl, it->second.RtmpUrl("127.0.0.1"), it->second.Loop);
+                _detectors[i]->UpdateChannel(taskId,it->second);
             }
         }
         e->Code = HttpCode::OK;
@@ -266,8 +266,8 @@ void FlowStartup::SetChannel(HttpReceivedEventArgs* e)
     FlowChannelData data;
     if (data.Set(channel))
     {
-        _decodes[channel.ChannelIndex - 1]->UpdateChannel(channel.ChannelUrl, channel.RtmpUrl("127.0.0.1"), channel.Loop);
-        _detectors[channel.ChannelIndex - 1]->UpdateChannel(channel);
+        unsigned char taskId = _decodes[channel.ChannelIndex - 1]->UpdateChannel(channel.ChannelUrl, channel.RtmpUrl("127.0.0.1"), channel.Loop);
+        _detectors[channel.ChannelIndex - 1]->UpdateChannel(taskId,channel);
         e->Code = HttpCode::OK;
     }
     else

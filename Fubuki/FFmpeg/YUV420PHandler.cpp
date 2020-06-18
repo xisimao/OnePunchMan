@@ -8,7 +8,7 @@ YUV420PHandler::YUV420PHandler(int count)
 
 }
 
-void YUV420PHandler::HandleFrame(unsigned char* yuv, int width, int height,int frameIndex)
+void YUV420PHandler::HandleFrame(unsigned char* yuv, int width, int height,unsigned int frameIndex)
 {
 	if (_index < _count)
 	{

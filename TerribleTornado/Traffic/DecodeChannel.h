@@ -60,16 +60,18 @@ namespace OnePunchMan
 	{
 	public:
 		FrameItem()
-			:IveBuffer(NULL),FrameIndex(0), FrameSpan(0), Finished(false)
+			:TaskId(0),IveBuffer(NULL),FrameIndex(0), FrameSpan(0), Finished(false)
 		{
 
 		}
+		//任务号
+		unsigned char TaskId;
 		//ive字节流
 		unsigned char* IveBuffer;
 		//帧序号
-		int FrameIndex;
+		unsigned int FrameIndex;
 		//帧率
-		int FrameSpan;
+		unsigned char FrameSpan;
 		//视频是否已经读取完成
 		bool Finished;
 	};
@@ -107,22 +109,28 @@ namespace OnePunchMan
 		*/
 		FrameItem GetTempIve();
 
+		/**
+		* @brief: 将下一帧视频写入到bmp
+		*/
+		void WriteBmp();
+
 	protected:
 		ChannelStatus InitDecoder(const std::string& inputUrl);
 
 		void UninitDecoder();
 
-		DecodeResult Decode(const AVPacket* packet, int frameIndex,int frameSpan);
+		DecodeResult Decode(const AVPacket* packet, unsigned char taskId, unsigned int frameIndex, unsigned char frameSpan);
 
 	private:
 		/**
 		* @brief: 写入临时ive数据
+		* @param: taskId 任务编号
 		* @param: yuv yuv数据
 		* @param: frameIndex 帧序号
 		* @param: finished 视频是否读取完成
 		* @return: 返回true表示成功写入，返回false表示当前已经有yuv数据
 		*/
-		bool SetTempIve(const unsigned char* yuv, int frameIndex,bool finished);
+		bool SetTempIve(unsigned char taskId, const unsigned char* yuv, unsigned int frameIndex, unsigned char frameSpan, bool finished);
 
 		/**
 		* @brief: yuv转ive
@@ -130,10 +138,17 @@ namespace OnePunchMan
 		*/
 		bool YuvToIve();
 
-		//当前写入yuv时的帧序号
-		int _frameIndex;
-		//视频是否读取完成
+		//是否需要写入bmp文件
+		bool _writeBmp;
+
+		//当前视频读取是否结束
 		bool _finished;
+		//当前yuv数据的任务号
+		unsigned char _taskId;
+		//当前yuv数据的帧序号
+		unsigned int _frameIndex;
+		//当前yuv数据的帧间隔时长
+		unsigned char _frameSpan;
 
 		//yuv420sp
 		int _yuvSize;

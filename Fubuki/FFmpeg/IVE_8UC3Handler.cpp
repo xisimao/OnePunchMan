@@ -11,7 +11,7 @@ IVE_8UC3Handler::IVE_8UC3Handler(int count)
 
 }
 
-void IVE_8UC3Handler::HandleFrame(unsigned char* ive, int width, int height, int frameIndex)
+void IVE_8UC3Handler::HandleFrame(unsigned char* ive, int width, int height, unsigned int frameIndex)
 {
 	if (_count > 0 && _index >= _count)
 	{

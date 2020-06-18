@@ -9,7 +9,7 @@ const string FlowDetector::VideoStructTopic("VideoStruct");
 const int FlowDetector::ReportMaxSpan = 60 * 1000;
 
 FlowDetector::FlowDetector(int width, int height, MqttChannel* mqtt)
-	:TrafficDetector(width,height, mqtt), _lastFrameTimeStamp(0), _currentMinuteTimeStamp(0),_nextMinuteTimeStamp(0), _outputImage(false),_report(NULL)
+	:TrafficDetector(width,height, mqtt), _taskId(0),_lastFrameTimeStamp(0), _currentMinuteTimeStamp(0),_nextMinuteTimeStamp(0), _outputImage(false),_report(NULL)
 {
 	_detectBgrBuffer = new unsigned char[_bgrSize];
 	_detectJpgBuffer = tjAlloc(_jpgSize);
@@ -26,7 +26,7 @@ FlowDetector::~FlowDetector()
 	delete[] _recognBgrBuffer;
 }
 
-void FlowDetector::UpdateChannel(const FlowChannel& channel)
+void FlowDetector::UpdateChannel(unsigned char taskId,const FlowChannel& channel)
 {
 	vector<FlowLaneCache> lanes;
 	string regionsParam;
@@ -63,6 +63,7 @@ void FlowDetector::UpdateChannel(const FlowChannel& channel)
 	}
 
 	unique_lock<mutex> detectLock(_detectLaneMutex);
+	_taskId = taskId;
 	_detectLanes.assign(lanes.begin(), lanes.end());
 	_channelUrl = channel.ChannelUrl;
 
@@ -100,7 +101,7 @@ void FlowDetector::UpdateChannel(const FlowChannel& channel)
 	_currentMinuteTimeStamp = DateTime(date.Year(), date.Month(), date.Day(), date.Hour(), date.Minute(), 0).UtcTimeStamp();
 	_nextMinuteTimeStamp = _currentMinuteTimeStamp + 60 * 1000;
 
-	LogPool::Information(LogEvent::Flow, "channel:",channel.ChannelIndex,"output image:",channel.OutputImage,"output report:",channel.OutputReport,"current:",_currentMinuteTimeStamp,"next:", _nextMinuteTimeStamp);
+	LogPool::Information(LogEvent::Flow, "channel:",channel.ChannelIndex,"task:",_taskId,"output image:",channel.OutputImage,"output report:",channel.OutputReport,"current:",_currentMinuteTimeStamp,"next:", _nextMinuteTimeStamp);
 	detectLock.unlock();
 
 	lock_guard<mutex> recognLock(_recognLaneMutex);
@@ -112,6 +113,7 @@ void FlowDetector::UpdateChannel(const FlowChannel& channel)
 void FlowDetector::ClearChannel()
 {
 	unique_lock<mutex> detectLock(_detectLaneMutex);
+	_taskId = 0;
 	_detectLanes.clear();
 	_channelUrl = string();
 	_lanesInited = false;
@@ -154,8 +156,12 @@ void FlowDetector::CalculateMinuteFlow(FlowLaneCache* laneCache)
 	}
 }
 
-void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long timeStamp, string* param, const unsigned char* iveBuffer, int frameIndex, int frameSpan)
+void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long timeStamp, string* param, unsigned char taskId, const unsigned char* iveBuffer, unsigned int frameIndex, unsigned char frameSpan)
 {
+	if (_taskId != taskId)
+	{
+		return;
+	}
 	lock_guard<mutex> detectLock(_detectLaneMutex);
 	if (!_setParam)
 	{
@@ -170,6 +176,7 @@ void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long 
 	//结算上一分钟
 	if (timeStamp > _nextMinuteTimeStamp)
 	{
+		LogPool::Information(LogEvent::Flow, "flow",timeStamp,_nextMinuteTimeStamp);
 		string flowLanesJson;
 		for (unsigned int i = 0; i < _detectLanes.size(); ++i)
 		{
@@ -350,8 +357,12 @@ void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long 
 	DrawDetect(*detectItems, iveBuffer, frameIndex);
 }
 
-void FlowDetector::FinishDetect()
+void FlowDetector::FinishDetect(unsigned char taskId)
 {
+	if (_taskId != taskId)
+	{
+		return;
+	}
 	lock_guard<mutex> lock(_detectLaneMutex);
 	for (unsigned int i = 0; i < _detectLanes.size(); ++i)
 	{
@@ -421,7 +432,7 @@ void FlowDetector::HandleRecognPedestrain(const RecognItem& recognItem, const un
 	HandleRecogn(&json, recognItem, iveBuffer);
 }
 
-void FlowDetector::DrawDetect(const map<string, DetectItem>& detectItems, const unsigned char* iveBuffer, int frameIndex)
+void FlowDetector::DrawDetect(const map<string, DetectItem>& detectItems, const unsigned char* iveBuffer, unsigned int frameIndex)
 {
 	if (!_outputImage)
 	{
