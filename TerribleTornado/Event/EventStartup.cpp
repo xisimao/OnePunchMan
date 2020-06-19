@@ -128,6 +128,10 @@ void EventStartup::SetDevice(HttpReceivedEventArgs* e)
         channel.ChannelName = jd.Get<string>(StringEx::Combine("channels:", channelIndex, ":channelName"));
         channel.ChannelUrl = jd.Get<string>(StringEx::Combine("channels:", channelIndex, ":channelUrl"));
         channel.ChannelType = jd.Get<int>(StringEx::Combine("channels:", channelIndex, ":channelType"));
+        //设置设备接口无法进行调试
+        channel.Loop = true;
+        channel.OutputImage = false;
+        channel.OutputReport = false;
         int laneIndex = 0;
         while (true)
         {
