@@ -27,7 +27,7 @@ void DetectChannel::SetRecogn(RecognChannel* recogn)
 	_recogn = recogn;
 }
 
-void DetectChannel::AddChannel(int channelIndex, DecodeChannel* decode, TrafficDetector* detector)
+void DetectChannel::AddChannel(int channelIndex, HisiDecodeChannel* decode, TrafficDetector* detector)
 {
 	LogPool::Information(LogEvent::System, "detect", _detectIndex, "add channel", channelIndex);
 	ChannelItem item;
@@ -158,6 +158,7 @@ void DetectChannel::StartCore()
 					GetDetecItems(&detectItems, detectJd, "Bikes");
 					GetDetecItems(&detectItems, detectJd, "Pedestrains");
 					channelItem.Detector->HandleDetect(&detectItems, detectTimeStamp, &channelItem.Param, frameItem.TaskId, frameItem.IveBuffer, frameItem.FrameIndex, frameItem.FrameSpan);
+		
 				}
 				long long detectTimeStamp3 = DateTime::UtcNowTimeStamp();
 				LogPool::Debug("detect", channelItem.ChannelIndex, static_cast<int>(frameItem.TaskId), frameItem.FrameIndex, static_cast<int>(frameItem.FrameSpan), result, detectTimeStamp1 - detectTimeStamp, detectTimeStamp2 - detectTimeStamp1, detectTimeStamp3 - detectTimeStamp2);

@@ -62,6 +62,25 @@ int ImageConvert::IveToJpgBase64(const unsigned char* iveBuffer,int width,int he
 	return size;
 }
 
+void ImageConvert::Mp4ToBase64(const std::string& filePath, unsigned char* videoBuffer, int videoSize, std::string* base64)
+{
+	base64->assign("data:video/mp4;base64,");
+	FILE* file = fopen(filePath.c_str(), "rb");
+	if (file != NULL)
+	{
+		size_t size = 0;
+		while ((size = fread(videoBuffer, 1, videoSize, file))!=0)
+		{
+			if (size == videoSize)
+			{
+				LogPool::Error(LogEvent::Detect, "video size over");
+			}
+			StringEx::ToBase64String(videoBuffer, static_cast<int>(size), base64);
+		}
+		fclose(file);
+	}
+}
+
 void ImageConvert::JpgToFile(unsigned char* jpgBuffer, int jpgSize, int channelIndex,unsigned int frameIndex)
 {
 	FILE* fw = NULL;

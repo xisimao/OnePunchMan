@@ -153,6 +153,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Traffic\HisiEncodeChannel.cpp" />
     <ClCompile Include="Event\EventData.cpp" />
     <ClCompile Include="Event\EventDetector.cpp" />
     <ClCompile Include="Event\EventStartup.cpp" />
@@ -162,7 +163,7 @@
     <ClCompile Include="Traffic\TrafficStartup.cpp" />
     <ClCompile Include="Traffic\TrafficDetector.cpp" />
     <ClCompile Include="Flow\FlowDetector.cpp" />
-    <ClCompile Include="Traffic\DecodeChannel.cpp" />
+    <ClCompile Include="Traffic\HisiDecodeChannel.cpp" />
     <ClCompile Include="TerribleTornado.cpp" />
     <ClCompile Include="Flow\FlowStartup.cpp" />
     <ClCompile Include="Flow\FlowData.cpp" />
@@ -171,6 +172,7 @@
     <ClCompile Include="Traffic\SeemmoSDK.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Traffic\HisiEncodeChannel.h" />
     <ClInclude Include="Event\EventData.h" />
     <ClInclude Include="Event\EventDetector.h" />
     <ClInclude Include="Event\EventStartup.h" />
@@ -180,7 +182,7 @@
     <ClInclude Include="Traffic\TrafficDetector.h" />
     <ClInclude Include="Flow\FlowDetector.h" />
     <ClInclude Include="Traffic\TrafficData.h" />
-    <ClInclude Include="Traffic\DecodeChannel.h" />
+    <ClInclude Include="Traffic\HisiDecodeChannel.h" />
     <ClInclude Include="Flow\FlowStartup.h" />
     <ClInclude Include="Flow\FlowData.h" />
     <ClInclude Include="Traffic\DetectChannel.h" />
@@ -191,7 +193,6 @@
     <None Include="appsettings.json" />
     <None Include="event.db" />
     <None Include="flow.db" />
-    <None Include="io.json" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

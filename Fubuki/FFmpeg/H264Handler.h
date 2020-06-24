@@ -1,6 +1,8 @@
 #pragma once
 #include <stdio.h>
 
+#include "StringEx.h"
+
 namespace OnePunchMan
 {
 	//h264文件写入
@@ -14,26 +16,17 @@ namespace OnePunchMan
 		H264Handler(int count=100);
 
 		/**
-		* @brief: 析构函数
-		*/
-		~H264Handler();
-
-		/**
 		* @brief: 处理视频帧
 		* @param: frame 视频帧字节流
 		* @param: size 视频帧字节流长度
+		* @param: frameIndex 视频帧序号
 		*/
 		void HandleFrame(unsigned char* frame, int size);
 
-		void Close();
-
 	private:
 		//当前写入数量
-		int _index;
+		int _frameIndex;
 		//写入总数
 		int _count;
-		//h264文件
-		FILE* _h264File;
-
 	};
 }

@@ -23,26 +23,26 @@ void FlowStartup::UpdateDb()
     data.UpdateDb();
 }
 
-void FlowStartup::InitThreads(MqttChannel* mqtt, vector<DecodeChannel*>* decodes, vector<TrafficDetector*>* detectors, vector<DetectChannel*>* detects, vector<RecognChannel*>* recogns)
+void FlowStartup::InitThreads(MqttChannel* mqtt, vector<HisiDecodeChannel*>* decodes, vector<TrafficDetector*>* detectors, vector<DetectChannel*>* detects, vector<RecognChannel*>* recogns)
 {
     for (int i = 0; i < ChannelCount; ++i)
     {
-        FlowDetector* detector = new FlowDetector(FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, mqtt);
+        FlowDetector* detector = new FlowDetector(DecodeChannel::DestinationWidth, DecodeChannel::DestinationHeight, mqtt);
         _detectors.push_back(detector);
         detectors->push_back(detector);
-        DecodeChannel* decode = new DecodeChannel(i + 1);
+        HisiDecodeChannel* decode = new HisiDecodeChannel(i + 1,NULL);
         decodes->push_back(decode);
     }
 
     for (int i = 0; i < RecognCount; ++i)
     {
-        RecognChannel* recogn = new RecognChannel(i, FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, detectors);
+        RecognChannel* recogn = new RecognChannel(i, DecodeChannel::DestinationWidth, DecodeChannel::DestinationHeight, detectors);
         recogns->push_back(recogn);
     }
 
     for (int i = 0; i < DetectCount; ++i)
     {
-        DetectChannel* detect = new DetectChannel(i,FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight);
+        DetectChannel* detect = new DetectChannel(i,DecodeChannel::DestinationWidth, DecodeChannel::DestinationHeight);
         detects->push_back(detect);
     }
 

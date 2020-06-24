@@ -176,7 +176,6 @@ void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long 
 	//结算上一分钟
 	if (timeStamp > _nextMinuteTimeStamp)
 	{
-		LogPool::Information(LogEvent::Flow, "flow",timeStamp,_nextMinuteTimeStamp);
 		string flowLanesJson;
 		for (unsigned int i = 0; i < _detectLanes.size(); ++i)
 		{

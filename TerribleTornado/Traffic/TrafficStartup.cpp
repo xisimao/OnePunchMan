@@ -188,8 +188,8 @@ void TrafficStartup::GetDevice(HttpReceivedEventArgs* e)
     JsonSerialization::SerializeValue(&deviceJson, "softwareVersion", _softwareVersion);
     JsonSerialization::SerializeValue(&deviceJson, "webVersion", webVersion);
     JsonSerialization::SerializeValue(&deviceJson, "sdkVersion", _sdkVersion);
-    JsonSerialization::SerializeValue(&deviceJson, "destinationWidth", FFmpegChannel::DestinationWidth);
-    JsonSerialization::SerializeValue(&deviceJson, "destinationHeight", FFmpegChannel::DestinationHeight);
+    JsonSerialization::SerializeValue(&deviceJson, "destinationWidth", DecodeChannel::DestinationWidth);
+    JsonSerialization::SerializeValue(&deviceJson, "destinationHeight", DecodeChannel::DestinationHeight);
     JsonSerialization::SerializeValue(&deviceJson, "mqttConnected", _mqtt==NULL?0:static_cast<int>(_mqtt->Status()));
     for (unsigned int i = 0; i < _recogns.size(); ++i)
     {
@@ -236,9 +236,9 @@ void TrafficStartup::Startup()
 {
     Socket::Init();
     MqttChannel::Init();
-    FFmpegChannel::InitFFmpeg();
-    DecodeChannel::UninitHisi(ChannelCount);
-    if (!DecodeChannel::InitHisi(ChannelCount))
+    DecodeChannel::InitFFmpeg();
+    HisiDecodeChannel::UninitHisi(ChannelCount);
+    if (!HisiDecodeChannel::InitHisi(ChannelCount))
     {
         exit(2);
     }
@@ -346,8 +346,8 @@ void TrafficStartup::Startup()
     }
 
     SeemmoSDK::Uninit();
-    DecodeChannel::UninitHisi(ChannelCount);
-    FFmpegChannel::UninitFFmpeg();
+    HisiDecodeChannel::UninitHisi(ChannelCount);
+    DecodeChannel::UninitFFmpeg();
     MqttChannel::Uninit();
     Socket::Uninit();
 }

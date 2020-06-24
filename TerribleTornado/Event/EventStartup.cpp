@@ -4,7 +4,7 @@ using namespace std;
 using namespace OnePunchMan;
 
 EventStartup::EventStartup()
-    :TrafficStartup()
+    :TrafficStartup(), _endoceChannel(ChannelCount)
 {
     TrafficData::Init("event.db");
 }
@@ -23,20 +23,20 @@ void EventStartup::UpdateDb()
     data.UpdateDb();
 }
 
-void EventStartup::InitThreads(MqttChannel* mqtt, vector<DecodeChannel*>* decodes, vector<TrafficDetector*>* detectors, vector<DetectChannel*>* detects, vector<RecognChannel*>* recogns)
+void EventStartup::InitThreads(MqttChannel* mqtt, vector<HisiDecodeChannel*>* decodes, vector<TrafficDetector*>* detectors, vector<DetectChannel*>* detects, vector<RecognChannel*>* recogns)
 {
     for (int i = 0; i < ChannelCount; ++i)
     {
-        EventDetector* detector = new EventDetector(FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight, mqtt);
+        EventDetector* detector = new EventDetector(DecodeChannel::DestinationWidth, DecodeChannel::DestinationHeight, mqtt,&_endoceChannel);
         _detectors.push_back(detector);
         detectors->push_back(detector);
-        DecodeChannel* decode = new DecodeChannel(i + 1);
+        HisiDecodeChannel* decode = new HisiDecodeChannel(i + 1,&_endoceChannel);
         decodes->push_back(decode);
     }
 
     for (int i = 0; i < DetectCount; ++i)
     {
-        DetectChannel* detect = new DetectChannel(i, FFmpegChannel::DestinationWidth, FFmpegChannel::DestinationHeight);
+        DetectChannel* detect = new DetectChannel(i, DecodeChannel::DestinationWidth, DecodeChannel::DestinationHeight);
         detects->push_back(detect);
     }
 
@@ -49,6 +49,7 @@ void EventStartup::InitThreads(MqttChannel* mqtt, vector<DecodeChannel*>* decode
             detects->at(i)->AddChannel(channelIndex, decodes->at(channelIndex - 1), detectors->at(channelIndex - 1));
         }
     }
+    _endoceChannel.Start();
 }
 
 void EventStartup::InitChannels()

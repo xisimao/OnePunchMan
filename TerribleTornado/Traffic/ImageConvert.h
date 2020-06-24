@@ -63,6 +63,8 @@ namespace OnePunchMan
 		*/
 		static int IveToJpgBase64(const unsigned char* iveBuffer, int width, int height, unsigned char* bgrBuffer, std::string* jpgBase64, unsigned char* jpgBuffer, int jpgSize);
 		
+		static void Mp4ToBase64(const std::string& filePath,unsigned char* videoBuffer,int videoSize, std::string* base64);
+
 		/**
 		* @brief: jpgÐ´Èëfile
 		* @param: jpgBuffer jpg×Ö½ÚÁ÷

@@ -1,6 +1,7 @@
 #pragma once
 #include "EventData.h"
 #include "TrafficDetector.h"
+#include "HisiEncodeChannel.h"
 
 namespace OnePunchMan
 {
@@ -23,8 +24,9 @@ namespace OnePunchMan
 		* @param: width 图片宽度
 		* @param: height 图片高度
 		* @param: mqtt mqtt
+		* @param: encodeChannel 编码通道
 		*/
-		EventDetector(int width, int height,MqttChannel* mqtt);
+		EventDetector(int width, int height,MqttChannel* mqtt, HisiEncodeChannel* encodeChannel);
 		
 		/**
 		* @brief: 析构函数
@@ -74,7 +76,7 @@ namespace OnePunchMan
 		{
 		public:
 			EventLaneCache()
-				:LaneIndex(0), LaneType(EventLaneType::None), Region(), XTrend(true), YTrend(true)
+				:LaneIndex(0), LaneType(EventLaneType::None), Region(), XTrend(true), YTrend(true), BaseAsX(false)
 				, Congestion(false),LastReportTimeStamp(0), Items()
 			{
 
@@ -101,6 +103,21 @@ namespace OnePunchMan
 			//车道内检测项集合
 			std::map<std::string, EventDetectCache> Items;
 
+		};
+
+		//事件编码缓存
+		class EventEncodeCache
+		{
+		public:
+			EventEncodeCache()
+				:Json(), EncodeIndex(-1), FilePath()
+			{
+
+			}
+
+			std::string Json;
+			int EncodeIndex;
+			std::string FilePath;
 		};
 
 		/**
@@ -167,11 +184,17 @@ namespace OnePunchMan
 		std::mutex _laneMutex;
 		//车道集合
 		std::vector<EventLaneCache> _lanes;
-
+		//等待编码的集合
+		std::vector<EventEncodeCache> _encodes;
 		//bgr字节流
 		unsigned char* _bgrBuffer;
 		//jpg字节流
 		unsigned char* _jpgBuffer;
+
+		HisiEncodeChannel* _encodeChannel;
+		int _videoSize;
+		unsigned char* _videoBuffer;
+		
 	};
 
 }

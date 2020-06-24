@@ -13,17 +13,20 @@ const int EventDetector::ReportSpan = 60*1000;
 const double EventDetector::MovePixel = 50.0;
 const int EventDetector::PointCount = 3;
 
-EventDetector::EventDetector(int width, int height, MqttChannel* mqtt)
-	:TrafficDetector(width, height, mqtt)
+EventDetector::EventDetector(int width, int height, MqttChannel* mqtt, HisiEncodeChannel* encodeChannel)
+	:TrafficDetector(width, height, mqtt), _encodeChannel(encodeChannel)
 {
 	_bgrBuffer = new unsigned char[_bgrSize];
 	_jpgBuffer = tjAlloc(_jpgSize);
+	_videoSize = 5 * 1024 * 1024;
+	_videoBuffer = new unsigned char[_videoSize];
 }
 
 EventDetector::~EventDetector()
 {
 	tjFree(_jpgBuffer);
 	delete[] _bgrBuffer;
+	delete[] _videoBuffer;
 }
 
 void EventDetector::UpdateChannel(const EventChannel& channel)
@@ -98,6 +101,30 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 	{
 		param->assign(_param);
 		_setParam = true;
+	}
+	if (_encodeChannel != NULL)
+	{
+		for (vector<EventEncodeCache>::iterator it = _encodes.begin(); it != _encodes.end();)
+		{
+			if (_encodeChannel->Finished(it->EncodeIndex))
+			{
+				LogPool::Information(LogEvent::Event, _channelIndex, it->EncodeIndex, "stop retrograde event");
+				_encodeChannel->StopEncode(it->EncodeIndex);
+				string videoBase64;
+				ImageConvert::Mp4ToBase64(it->FilePath,_videoBuffer,_videoSize, &videoBase64);
+				JsonSerialization::SerializeValue(&it->Json, "video", videoBase64);
+				if (_mqtt != NULL)
+				{
+					_mqtt->Send(EventTopic, it->Json);
+				}
+				remove(it->FilePath.c_str());
+				it = _encodes.erase(it);
+			}
+			else
+			{
+				++it;
+			}
+		}
 	}
 	for (unsigned int i = 0; i < _lanes.size(); ++i)
 	{
@@ -265,18 +292,43 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 										|| (!cache.BaseAsX && cache.YTrend != ytrend))
 									{
 										mit->second.RetrogradePoints.push_back(it->second.Region.HitPoint());
-										string laneJson;
-										JsonSerialization::SerializeValue(&laneJson, "channelUrl", _channelUrl);
-										JsonSerialization::SerializeValue(&laneJson, "laneIndex", cache.LaneIndex);
-										JsonSerialization::SerializeValue(&laneJson, "timeStamp", timeStamp);
-										JsonSerialization::SerializeValue(&laneJson, "type", (int)EventType::Retrograde);
-										string jpgBase64;
-										DrawRetrograde(&jpgBase64, iveBuffer, mit->second.RetrogradePoints, frameIndex);
-										JsonSerialization::SerializeValue(&laneJson, "image1", jpgBase64);
-										if (_mqtt != NULL)
+										if (_encodeChannel != NULL)
 										{
-											_mqtt->Send(EventTopic, laneJson);
+											string filePath= StringEx::Combine("../temp/", it->first, ".mp4");
+											int index = _encodeChannel->StartEncode(_channelIndex, filePath, _channelUrl, 125);
+											if (index == -1)
+											{
+												LogPool::Information(LogEvent::Event, _channelIndex, "retrograde event encode full");
+											}
+											else
+											{
+												LogPool::Information(LogEvent::Event, _channelIndex, index, it->first, "start retrograde event");
+												EventEncodeCache encodeCache;
+												JsonSerialization::SerializeValue(&encodeCache.Json, "channelUrl", _channelUrl);
+												JsonSerialization::SerializeValue(&encodeCache.Json, "laneIndex", cache.LaneIndex);
+												JsonSerialization::SerializeValue(&encodeCache.Json, "timeStamp", timeStamp);
+												JsonSerialization::SerializeValue(&encodeCache.Json, "type", (int)EventType::Retrograde);
+												string jpgBase64;
+												DrawRetrograde(&jpgBase64, iveBuffer, mit->second.RetrogradePoints, frameIndex);
+												JsonSerialization::SerializeValue(&encodeCache.Json, "image1", jpgBase64);
+												encodeCache.EncodeIndex = index;
+												encodeCache.FilePath = filePath;
+												_encodes.push_back(encodeCache);
+											}
 										}
+										
+										//string laneJson;
+										//JsonSerialization::SerializeValue(&laneJson, "channelUrl", _channelUrl);
+										//JsonSerialization::SerializeValue(&laneJson, "laneIndex", cache.LaneIndex);
+										//JsonSerialization::SerializeValue(&laneJson, "timeStamp", timeStamp);
+										//JsonSerialization::SerializeValue(&laneJson, "type", (int)EventType::Retrograde);
+										//string jpgBase64;
+										//DrawRetrograde(&jpgBase64, iveBuffer, mit->second.RetrogradePoints, frameIndex);
+										//JsonSerialization::SerializeValue(&laneJson, "image1", jpgBase64);
+										//if (_mqtt != NULL)
+										//{
+										//	_mqtt->Send(EventTopic, laneJson);
+										//}
 										LogPool::Debug(LogEvent::Event, _channelIndex, "retrograde event");
 									}
 								}

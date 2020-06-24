@@ -7,7 +7,7 @@
 #include "SeemmoSDK.h"
 #include "MqttChannel.h"
 #include "DetectChannel.h"
-#include "DecodeChannel.h"
+#include "HisiDecodeChannel.h"
 #include "TrafficDetector.h"
 #include "SocketMaid.h"
 #include "TrafficData.h"
@@ -60,7 +60,7 @@ namespace OnePunchMan
         * @param: detects 视频检测类集合
         * @param: recogns 视频识别类集合
         */
-        virtual void InitThreads(MqttChannel* mqtt, std::vector<DecodeChannel*>* decodes, std::vector<TrafficDetector*>* detectors, std::vector<DetectChannel*>* detects, std::vector<RecognChannel*>* recogns) = 0;
+        virtual void InitThreads(MqttChannel* mqtt, std::vector<HisiDecodeChannel*>* decodes, std::vector<TrafficDetector*>* detectors, std::vector<DetectChannel*>* detects, std::vector<RecognChannel*>* recogns) = 0;
 
         /**
         * @brief: 初始化通道集合
@@ -115,7 +115,7 @@ namespace OnePunchMan
         std::string GetErrorJson(const std::string& field, const std::string& message);
 
         //解码线程集合，等于视频总数
-        std::vector<DecodeChannel*> _decodes;
+        std::vector<HisiDecodeChannel*> _decodes;
 
     private:
         /**

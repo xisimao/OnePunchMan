@@ -31,9 +31,6 @@
     <ClCompile Include="Event\EventDetector.cpp">
       <Filter>Event</Filter>
     </ClCompile>
-    <ClCompile Include="Traffic\DecodeChannel.cpp">
-      <Filter>Traffic</Filter>
-    </ClCompile>
     <ClCompile Include="Traffic\DetectChannel.cpp">
       <Filter>Traffic</Filter>
     </ClCompile>
@@ -61,6 +58,12 @@
     <ClCompile Include="Traffic\TrafficData.cpp">
       <Filter>Traffic</Filter>
     </ClCompile>
+    <ClCompile Include="Traffic\HisiDecodeChannel.cpp">
+      <Filter>Traffic</Filter>
+    </ClCompile>
+    <ClCompile Include="Traffic\HisiEncodeChannel.cpp">
+      <Filter>Traffic</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Flow\FlowData.h">
@@ -77,9 +80,6 @@
     </ClInclude>
     <ClInclude Include="Event\EventDetector.h">
       <Filter>Event</Filter>
-    </ClInclude>
-    <ClInclude Include="Traffic\DecodeChannel.h">
-      <Filter>Traffic</Filter>
     </ClInclude>
     <ClInclude Include="Traffic\DetectChannel.h">
       <Filter>Traffic</Filter>
@@ -108,11 +108,16 @@
     <ClInclude Include="Traffic\ImageConvert.h">
       <Filter>Traffic</Filter>
     </ClInclude>
+    <ClInclude Include="Traffic\HisiDecodeChannel.h">
+      <Filter>Traffic</Filter>
+    </ClInclude>
+    <ClInclude Include="Traffic\HisiEncodeChannel.h">
+      <Filter>Traffic</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="appsettings.json" />
     <None Include="flow.db" />
     <None Include="event.db" />
-    <None Include="io.json" />
   </ItemGroup>
 </Project>

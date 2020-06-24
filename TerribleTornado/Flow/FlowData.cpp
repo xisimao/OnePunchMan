@@ -156,6 +156,6 @@ void FlowChannelData::Clear()
 void FlowChannelData::UpdateDb()
 {
 	TrafficData::UpdateDb();
-	SetParameter("Version", "2.0.0.11");
-	SetParameter("VersionValue", "20011");
+	SetParameter("Version", "2.0.0.12");
+	SetParameter("VersionValue", "20012");
 }

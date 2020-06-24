@@ -22,7 +22,13 @@
     <ClInclude Include="Mqtt\MqttChannel.h">
       <Filter>Mqtt</Filter>
     </ClInclude>
-    <ClInclude Include="FFmpeg\FFmpegChannel.h">
+    <ClInclude Include="FFmpeg\OutputHandler.h">
+      <Filter>FFmpeg</Filter>
+    </ClInclude>
+    <ClInclude Include="FFmpeg\InputHandler.h">
+      <Filter>FFmpeg</Filter>
+    </ClInclude>
+    <ClInclude Include="FFmpeg\DecodeChannel.h">
       <Filter>FFmpeg</Filter>
     </ClInclude>
   </ItemGroup>
@@ -59,7 +65,13 @@
     <ClCompile Include="Mqtt\MqttChannel.cpp">
       <Filter>Mqtt</Filter>
     </ClCompile>
-    <ClCompile Include="FFmpeg\FFmpegChannel.cpp">
+    <ClCompile Include="FFmpeg\OutputHandler.cpp">
+      <Filter>FFmpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="FFmpeg\InputHandler.cpp">
+      <Filter>FFmpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="FFmpeg\DecodeChannel.cpp">
       <Filter>FFmpeg</Filter>
     </ClCompile>
   </ItemGroup>
