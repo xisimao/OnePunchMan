@@ -11,12 +11,6 @@ using namespace OnePunchMan;
 int main(int argc, char* argv[])
 {
     LogPool::Init("appsettings.json");
-
-    string s;
-    string filePath("tt1.mp4");
-    ImageConvert::Mp4ToBase64(filePath, &s);
-    int sss = s.size();
-    LogPool::Information("videobase64", s);
      //FlowStartup startup;
     //startup.Startup();
     DecodeChannel::InitFFmpeg();

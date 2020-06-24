@@ -12,13 +12,14 @@ const int EventDetector::CarCount = 4;
 const int EventDetector::ReportSpan = 60*1000;
 const double EventDetector::MovePixel = 50.0;
 const int EventDetector::PointCount = 3;
+const int EventDetector::EncodeFrameCount = 250;
 
 EventDetector::EventDetector(int width, int height, MqttChannel* mqtt, HisiEncodeChannel* encodeChannel)
 	:TrafficDetector(width, height, mqtt), _encodeChannel(encodeChannel)
 {
 	_bgrBuffer = new unsigned char[_bgrSize];
 	_jpgBuffer = tjAlloc(_jpgSize);
-	_videoSize = 5 * 1024 * 1024;
+	_videoSize = 10 * 1024 * 1024;
 	_videoBuffer = new unsigned char[_videoSize];
 }
 
@@ -295,7 +296,7 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 										if (_encodeChannel != NULL)
 										{
 											string filePath= StringEx::Combine("../temp/", it->first, ".mp4");
-											int index = _encodeChannel->StartEncode(_channelIndex, filePath, _channelUrl, 125);
+											int index = _encodeChannel->StartEncode(_channelIndex, filePath, _channelUrl, EncodeFrameCount);
 											if (index == -1)
 											{
 												LogPool::Information(LogEvent::Event, _channelIndex, "retrograde event encode full");

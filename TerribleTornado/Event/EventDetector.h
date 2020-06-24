@@ -179,7 +179,8 @@ namespace OnePunchMan
 		static const double MovePixel;
 		//判断逆行事件的点的数量
 		static const int PointCount;
-
+		//视频编码帧数
+		static const int EncodeFrameCount;
 		//车道集合同步锁
 		std::mutex _laneMutex;
 		//车道集合
