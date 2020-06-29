@@ -299,5 +299,5 @@ bool FlowStartup::DeleteChannel(int channelIndex)
 
 void FlowStartup::GetReport(int channelIndex,HttpReceivedEventArgs* e)
 {
-    _detectors[channelIndex]->GetReportJson(&e->ResponseJson);
+    _detectors[channelIndex-1]->GetReportJson(&e->ResponseJson);
 }

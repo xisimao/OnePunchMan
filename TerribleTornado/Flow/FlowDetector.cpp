@@ -9,8 +9,8 @@ const string FlowDetector::VideoStructTopic("VideoStruct");
 const int FlowDetector::ReportMaxSpan = 60 * 1000;
 
 FlowDetector::FlowDetector(int width, int height, MqttChannel* mqtt)
-	:TrafficDetector(width,height, mqtt), _taskId(0),_lastFrameTimeStamp(0), _currentMinuteTimeStamp(0),_nextMinuteTimeStamp(0)
-	, _outputImage(false),_outputReport(false), _currentReportMinute(0),_outputRecogn(false)
+	:TrafficDetector(width, height, mqtt), _taskId(0), _lastFrameTimeStamp(0), _currentMinuteTimeStamp(0), _nextMinuteTimeStamp(0)
+	, _outputImage(false), _outputReport(false), _currentReportMinute(0), _outputRecogn(false)
 {
 	_detectBgrBuffer = new unsigned char[_bgrSize];
 	_detectJpgBuffer = tjAlloc(_jpgSize);
@@ -27,7 +27,7 @@ FlowDetector::~FlowDetector()
 	delete[] _recognBgrBuffer;
 }
 
-void FlowDetector::UpdateChannel(unsigned char taskId,const FlowChannel& channel)
+void FlowDetector::UpdateChannel(unsigned char taskId, const FlowChannel& channel)
 {
 	vector<FlowLaneCache> lanes;
 	string regionsParam;
@@ -89,7 +89,7 @@ void FlowDetector::UpdateChannel(unsigned char taskId,const FlowChannel& channel
 	_outputImage = channel.OutputImage;
 	if (_outputImage)
 	{
-		Command::Execute(StringEx::Combine("rm -rf ../temp/jpg_",channel.ChannelIndex,"*"));
+		Command::Execute(StringEx::Combine("rm -rf ../temp/jpg_", channel.ChannelIndex, "*"));
 	}
 
 	unique_lock<mutex> reportMutex(_reportMutex);
@@ -111,13 +111,13 @@ void FlowDetector::UpdateChannel(unsigned char taskId,const FlowChannel& channel
 	_currentMinuteTimeStamp = DateTime(date.Year(), date.Month(), date.Day(), date.Hour(), date.Minute(), 0).UtcTimeStamp();
 	_nextMinuteTimeStamp = _currentMinuteTimeStamp + 60 * 1000;
 	_outputRecogn = channel.OutputRecogn;
-	LogPool::Information(LogEvent::Flow, "channel:",channel.ChannelIndex,"task:",_taskId,"output report:",channel.OutputReport, "output image:", channel.OutputImage, "output recogn:", channel.OutputRecogn,"global detect:", channel.GlobalDetect, "current:",_currentMinuteTimeStamp,"next:", _nextMinuteTimeStamp);
+	LogPool::Information(LogEvent::Flow, "channel:", channel.ChannelIndex, "task:", _taskId, "output report:", channel.OutputReport, "output image:", channel.OutputImage, "output recogn:", channel.OutputRecogn, "global detect:", channel.GlobalDetect, "current:", _currentMinuteTimeStamp, "next:", _nextMinuteTimeStamp);
 	detectLock.unlock();
 
 	lock_guard<mutex> recognLock(_recognLaneMutex);
 	_recognLanes.assign(lanes.begin(), lanes.end());
 	_recognChannelUrl = channel.ChannelUrl;
-	
+
 }
 
 void FlowDetector::ClearChannel()
@@ -205,7 +205,7 @@ void FlowDetector::CalculateMinuteFlow(FlowLaneCache* laneCache)
 	//车道时距(sec)
 	laneCache->HeadDistance = laneCache->Vehicles > 1 ? static_cast<double>(laneCache->TotalSpan) / static_cast<double>(laneCache->Vehicles - 1) / 1000.0 : 0;
 	//车头间距(m)
-	laneCache->HeadSpace = laneCache->Speed * 1000 * laneCache->HeadDistance/ 3600.0;
+	laneCache->HeadSpace = laneCache->Speed * 1000 * laneCache->HeadDistance / 3600.0;
 	//时间占用率(%)
 	laneCache->TimeOccupancy = static_cast<double>(laneCache->TotalInTime) / 60000.0 * 100;
 	if (laneCache->Speed > 40)
@@ -459,14 +459,15 @@ void FlowDetector::FinishDetect(unsigned char taskId)
 	{
 		return;
 	}
-	lock_guard<mutex> lock(_detectLaneMutex);
-	_currentReportMinute += 1;
-	for (unsigned int i = 0; i < _detectLanes.size(); ++i)
+	if (_outputReport)
 	{
-		FlowLaneCache& cache = _detectLanes[i];
-		CalculateMinuteFlow(&cache);
-		if (_outputReport)
+		lock_guard<mutex> lock(_detectLaneMutex);
+		_currentReportMinute += 1;
+		for (unsigned int i = 0; i < _detectLanes.size(); ++i)
 		{
+			FlowLaneCache& cache = _detectLanes[i];
+			CalculateMinuteFlow(&cache);
+
 			FlowReportCache reportCache;
 			reportCache.Minute = _currentReportMinute;
 			reportCache.LaneId = cache.LaneId;
@@ -485,7 +486,7 @@ void FlowDetector::FinishDetect(unsigned char taskId)
 			reportCache.TimeOccupancy = cache.TimeOccupancy;
 			reportCache.TrafficStatus = cache.TrafficStatus;
 			_reportCaches.push_back(reportCache);
-		}		
+		}
 	}
 }
 
@@ -510,7 +511,7 @@ void FlowDetector::HandleRecognVehicle(const RecognItem& recognItem, const unsig
 			string image;
 			ImageConvert::IveToJpgBase64(iveBuffer, recognItem.Width, recognItem.Height, _recognBgrBuffer, &image, _recognJpgBuffer, _jpgSize);
 			JsonSerialization::SerializeValue(&json, "image", image);
-			if (_outputReport)
+			if (_outputRecogn)
 			{
 				VideoStruct_Vehicle reportCache = vehicle;
 				reportCache.LaneId = _recognLanes[i].LaneId;
@@ -525,7 +526,7 @@ void FlowDetector::HandleRecognVehicle(const RecognItem& recognItem, const unsig
 					_mqtt->Send(VideoStructTopic, json);
 				}
 			}
-		
+
 			LogPool::Debug(LogEvent::Detect, "lane:", _recognLanes[i].LaneId, "type:", recognItem.Type);
 			return;
 		}
@@ -549,7 +550,7 @@ void FlowDetector::HandleRecognBike(const RecognItem& recognItem, const unsigned
 			string image;
 			ImageConvert::IveToJpgBase64(iveBuffer, recognItem.Width, recognItem.Height, _recognBgrBuffer, &image, _recognJpgBuffer, _jpgSize);
 			JsonSerialization::SerializeValue(&json, "image", image);
-			if (_outputReport)
+			if (_outputRecogn)
 			{
 				VideoStruct_Bike reportCache = bike;
 				reportCache.LaneId = _recognLanes[i].LaneId;
@@ -564,7 +565,7 @@ void FlowDetector::HandleRecognBike(const RecognItem& recognItem, const unsigned
 					_mqtt->Send(VideoStructTopic, json);
 				}
 			}
-		
+
 			LogPool::Debug(LogEvent::Detect, "lane:", _recognLanes[i].LaneId, "type:", recognItem.Type);
 			return;
 		}
@@ -590,7 +591,7 @@ void FlowDetector::HandleRecognPedestrain(const RecognItem& recognItem, const un
 			string image;
 			ImageConvert::IveToJpgBase64(iveBuffer, recognItem.Width, recognItem.Height, _recognBgrBuffer, &image, _recognJpgBuffer, _jpgSize);
 			JsonSerialization::SerializeValue(&json, "image", image);
-			if (_outputReport)
+			if (_outputRecogn)
 			{
 				VideoStruct_Pedestrain reportCache = pedestrain;
 				reportCache.LaneId = _recognLanes[i].LaneId;

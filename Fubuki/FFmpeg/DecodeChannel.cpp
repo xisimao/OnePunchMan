@@ -9,11 +9,11 @@ const int DecodeChannel::DestinationHeight = 1080;
 
 DecodeChannel::DecodeChannel(int channelIndex)
 	:ThreadObject("decode"), _channelIndex(channelIndex)
-	,_inputUrl(), _inputHandler()
+	, _inputUrl(), _inputHandler()
 	, _outputUrl(), _outputHandler()
 	, _taskId(0), _channelStatus(ChannelStatus::Init), _loop(false), _frameSpan(0)
 	, _decodeContext(NULL), _yuvFrame(NULL), _bgrFrame(NULL), _bgrBuffer(NULL), _bgrSwsContext(NULL)
-	, _lastframeIndex(0),_handleSpan(0)
+	, _lastframeIndex(0), _handleSpan(0)
 {
 
 }
@@ -68,8 +68,8 @@ unsigned char DecodeChannel::UpdateChannel(const std::string& inputUrl, const st
 {
 	lock_guard<mutex> lck(_mutex);
 	if (_inputUrl.compare(inputUrl) != 0
-		||!loop
-		||_channelStatus!=ChannelStatus::Normal)
+		|| !loop
+		|| _channelStatus != ChannelStatus::Normal)
 	{
 		_channelStatus = ChannelStatus::Init;
 	}
@@ -193,7 +193,7 @@ DecodeResult DecodeChannel::Decode(const AVPacket* packet, unsigned char taskId,
 
 void DecodeChannel::StartCore()
 {
-	AVPacket* packet= av_packet_alloc();
+	AVPacket* packet = av_packet_alloc();
 	long long duration = 0;
 	unsigned char taskId = 0;
 	unsigned int frameIndex = 1;
@@ -222,7 +222,7 @@ void DecodeChannel::StartCore()
 				if (packet->stream_index == _inputHandler.VideoIndex())
 				{
 					long long timeStamp2 = DateTime::UtcNowTimeStamp();
-					DecodeResult decodeResult = Decode(packet,taskId, frameIndex, _frameSpan);
+					DecodeResult decodeResult = Decode(packet, taskId, frameIndex, _frameSpan);
 					long long timeStamp3 = DateTime::UtcNowTimeStamp();
 					if (decodeResult == DecodeResult::Error)
 					{
@@ -242,7 +242,7 @@ void DecodeChannel::StartCore()
 					{
 						this_thread::sleep_for(chrono::milliseconds(sleepTime));
 					}
-					LogPool::Debug(LogEvent::Decode, "frame", _channelIndex,static_cast<int>(taskId), frameIndex, static_cast<int>(_frameSpan), static_cast<int>(decodeResult),timeStamp2-timeStamp1,timeStamp3-timeStamp2,timeStamp4-timeStamp3);
+					LogPool::Debug(LogEvent::Decode, "frame", _channelIndex, static_cast<int>(taskId), frameIndex, static_cast<int>(_frameSpan), static_cast<int>(decodeResult), timeStamp2 - timeStamp1, timeStamp3 - timeStamp2, timeStamp4 - timeStamp3);
 					frameIndex += 1;
 				}
 			}
@@ -256,7 +256,7 @@ void DecodeChannel::StartCore()
 		else
 		{
 			//播放文件结束时报一次结束
-			if (_channelStatus == ChannelStatus::ReadEOF_Stop&&!reportFinish)
+			if (_channelStatus == ChannelStatus::ReadEOF_Stop && !reportFinish)
 			{
 				Decode(NULL, taskId, frameIndex, _frameSpan);
 				reportFinish = true;
@@ -284,7 +284,7 @@ void DecodeChannel::StartCore()
 					{
 						ChannelStatus decoderStatus = InitDecoder(_inputUrl);
 						if (decoderStatus == ChannelStatus::Normal)
-						{						
+						{
 							_channelStatus = ChannelStatus::Normal;
 						}
 						else
@@ -320,7 +320,7 @@ void DecodeChannel::StartCore()
 				frameIndex = 1;
 				reportFinish = false;
 				inputUrl = _inputUrl;
-				LogPool::Information(LogEvent::Decode, "init frame channel success,inputUrl:", _inputUrl, "outputUrl:", _outputUrl,"frame span:", static_cast<int>(_frameSpan), "loop:", _loop);
+				LogPool::Information(LogEvent::Decode, "init frame channel success,inputUrl:", _inputUrl, "outputUrl:", _outputUrl, "frame span:", static_cast<int>(_frameSpan), "loop:", _loop);
 				lck.unlock();
 			}
 			else
