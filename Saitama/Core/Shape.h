@@ -206,12 +206,21 @@ namespace OnePunchMan
 		* @param: height 矩形的高度
 		*/
 		Rectangle(const Point& top, int width, int height)
-			:_width(width),_height(height), _hitPoint(top.X + width / 2, top.Y + height)
+			:_top(top),_width(width),_height(height), _hitPoint(top.X + width / 2, top.Y + height)
 		{
 			_points.push_back(top);
 			_points.push_back(Point(top.X+width,top.Y));
 			_points.push_back(Point(top.X+width,top.Y+height));
 			_points.push_back(Point(top.X,top.Y+height));
+		}
+
+		/**
+		* @brief: 获取矩形宽度
+		* @return: 矩形宽度
+		*/
+		Point Top() const
+		{
+			return _top;
 		}
 
 		/**
@@ -251,6 +260,8 @@ namespace OnePunchMan
 		}
 
 	private:
+		//矩形顶点
+		Point _top;
 		//矩形宽度
 		int _width;
 		//矩形高度

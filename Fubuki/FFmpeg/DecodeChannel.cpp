@@ -11,7 +11,7 @@ DecodeChannel::DecodeChannel(int channelIndex)
 	:ThreadObject("decode"), _channelIndex(channelIndex)
 	,_inputUrl(), _inputHandler()
 	, _outputUrl(), _outputHandler()
-	, _taskId(0), _channelStatus(ChannelStatus::Init), _loop(false)
+	, _taskId(0), _channelStatus(ChannelStatus::Init), _loop(false), _frameSpan(0)
 	, _decodeContext(NULL), _yuvFrame(NULL), _bgrFrame(NULL), _bgrBuffer(NULL), _bgrSwsContext(NULL)
 	, _lastframeIndex(0),_handleSpan(0)
 {
@@ -59,14 +59,26 @@ int DecodeChannel::HandleSpan()
 	return _handleSpan;
 }
 
+int DecodeChannel::FrameSpan()
+{
+	return static_cast<int>(_frameSpan);
+}
+
 unsigned char DecodeChannel::UpdateChannel(const std::string& inputUrl, const std::string& outputUrl, bool loop)
 {
 	lock_guard<mutex> lck(_mutex);
+	if (_inputUrl.compare(inputUrl) != 0
+		||!loop
+		||_channelStatus!=ChannelStatus::Normal)
+	{
+		_channelStatus = ChannelStatus::Init;
+	}
 	_inputUrl.assign(inputUrl);
 	_outputUrl.assign(outputUrl);
+#ifdef _WIN32
+	_outputUrl.clear();
+#endif // _WIN32
 	_loop = loop;
-	_channelStatus = ChannelStatus::Init;
-
 	return ++_taskId;
 }
 
@@ -185,7 +197,6 @@ void DecodeChannel::StartCore()
 	long long duration = 0;
 	unsigned char taskId = 0;
 	unsigned int frameIndex = 1;
-	unsigned char frameSpan = 0;
 	bool reportFinish = false;
 	string inputUrl;
 	while (!_cancelled)
@@ -211,7 +222,7 @@ void DecodeChannel::StartCore()
 				if (packet->stream_index == _inputHandler.VideoIndex())
 				{
 					long long timeStamp2 = DateTime::UtcNowTimeStamp();
-					DecodeResult decodeResult = Decode(packet,taskId, frameIndex, frameSpan);
+					DecodeResult decodeResult = Decode(packet,taskId, frameIndex, _frameSpan);
 					long long timeStamp3 = DateTime::UtcNowTimeStamp();
 					if (decodeResult == DecodeResult::Error)
 					{
@@ -226,12 +237,12 @@ void DecodeChannel::StartCore()
 					_outputHandler.PushPacket(packet, frameIndex, duration);
 
 					long long timeStamp4 = DateTime::UtcNowTimeStamp();
-					long long sleepTime = frameSpan - (timeStamp4 - timeStamp2);
-					if (sleepTime > 0 && sleepTime <= frameSpan)
+					long long sleepTime = _frameSpan - (timeStamp4 - timeStamp2);
+					if (sleepTime > 0 && sleepTime <= _frameSpan)
 					{
 						this_thread::sleep_for(chrono::milliseconds(sleepTime));
 					}
-					LogPool::Debug(LogEvent::Decode, "frame", _channelIndex,static_cast<int>(taskId), frameIndex, static_cast<int>(frameSpan), static_cast<int>(decodeResult),timeStamp2-timeStamp1,timeStamp3-timeStamp2,timeStamp4-timeStamp3);
+					LogPool::Debug(LogEvent::Decode, "frame", _channelIndex,static_cast<int>(taskId), frameIndex, static_cast<int>(_frameSpan), static_cast<int>(decodeResult),timeStamp2-timeStamp1,timeStamp3-timeStamp2,timeStamp4-timeStamp3);
 					frameIndex += 1;
 				}
 			}
@@ -247,7 +258,7 @@ void DecodeChannel::StartCore()
 			//播放文件结束时报一次结束
 			if (_channelStatus == ChannelStatus::ReadEOF_Stop&&!reportFinish)
 			{
-				Decode(NULL, taskId, frameIndex, frameSpan);
+				Decode(NULL, taskId, frameIndex, _frameSpan);
 				reportFinish = true;
 			}
 			unique_lock<mutex> lck(_mutex);
@@ -298,18 +309,18 @@ void DecodeChannel::StartCore()
 				if (inputUrl.compare(_inputUrl) == 0
 					&& oldStatus == ChannelStatus::ReadEOF_Restart)
 				{
-					duration += (frameIndex - 1) * frameSpan;
+					duration += (frameIndex - 1) * _frameSpan;
 				}
 				else
 				{
 					duration = 0;
-					frameSpan = _inputHandler.FrameSpan();
+					_frameSpan = _inputHandler.FrameSpan();
 				}
 				taskId = _taskId;
 				frameIndex = 1;
 				reportFinish = false;
 				inputUrl = _inputUrl;
-				LogPool::Information(LogEvent::Decode, "init frame channel success,inputUrl:", _inputUrl, "outputUrl:", _outputUrl,"frame span:", static_cast<int>(frameSpan), "loop:", _loop);
+				LogPool::Information(LogEvent::Decode, "init frame channel success,inputUrl:", _inputUrl, "outputUrl:", _outputUrl,"frame span:", static_cast<int>(_frameSpan), "loop:", _loop);
 				lck.unlock();
 			}
 			else

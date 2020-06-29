@@ -34,6 +34,8 @@ namespace OnePunchMan
 
         bool DeleteChannel(int channelIndex);
 
+        void GetReport(int channelIndex,HttpReceivedEventArgs* e);
+
     private:
         /**
         * @brief: 校验流量通道

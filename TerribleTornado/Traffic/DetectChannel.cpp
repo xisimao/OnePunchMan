@@ -32,7 +32,7 @@ void DetectChannel::AddChannel(int channelIndex, HisiDecodeChannel* decode, Traf
 	LogPool::Information(LogEvent::System, "detect", _detectIndex, "add channel", channelIndex);
 	ChannelItem item;
 	item.ChannelIndex = channelIndex;
-	item.Param = TrafficDetector::DefaultDetectParam;
+	item.Param = detector->GetDetectParam();
 	item.Decode = decode;
 	item.Detector = detector;
 	_channelItems.push_back(item);

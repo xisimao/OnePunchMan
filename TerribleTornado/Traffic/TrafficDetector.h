@@ -4,6 +4,7 @@
 
 #include "Shape.h"
 #include "MqttChannel.h"
+#include "IVEHandler.h"
 #include "ImageConvert.h"
 
 namespace OnePunchMan
@@ -82,11 +83,12 @@ namespace OnePunchMan
 	{
 	public:
 		VideoStruct_Vehicle()
-			:CarType(0),CarColor(0),CarBrand(),PlateType(0),PlateNumber()
+			:LaneId(),LaneName(),CarType(0),CarColor(0),CarBrand(),PlateType(0),PlateNumber()
 		{
 
 		}
-
+		std::string LaneId;
+		std::string LaneName;
 		int CarType;
 		int CarColor;
 		std::string CarBrand;
@@ -98,10 +100,12 @@ namespace OnePunchMan
 	{
 	public:
 		VideoStruct_Bike()
-			:BikeType(0)
+			:LaneId(), LaneName(), BikeType(0)
 		{
 
 		}
+		std::string LaneId;
+		std::string LaneName;
 		int BikeType;
 	};
 
@@ -109,11 +113,12 @@ namespace OnePunchMan
 	{
 	public:
 		VideoStruct_Pedestrain()
-			:Sex(0),Age(0),UpperColor(0)
+			:LaneId(), LaneName(), Sex(0),Age(0),UpperColor(0)
 		{
 
 		}
-
+		std::string LaneId;
+		std::string LaneName;
 		int Sex;
 		int Age;
 		int UpperColor;
@@ -141,6 +146,17 @@ namespace OnePunchMan
 		* @return 车道是否初始化成功
 		*/
 		bool LanesInited() const;
+
+		/**
+		* @brief: 将下一帧视频写入到bmp
+		*/
+		void WriteBmp();
+
+		/**
+		* @brief: 获取默认检测参数
+		* @return: 默认检测参数
+		*/
+		std::string GetDetectParam();
 
 		/**
 		* @brief: 供子类实现的处理检测数据
@@ -184,12 +200,12 @@ namespace OnePunchMan
 		*/
 		virtual void HandleRecognPedestrain(const RecognItem& recognItem, const unsigned char* iveBuffer, const VideoStruct_Pedestrain& pedestrain) {}
 
-		//默认检测参数
-		static const std::string DefaultDetectParam;
-
 	protected:
-		
-
+		/**
+		* @brief: 获取车道检测参数
+		* @param: regions 车道区域集合，json字符串
+		* @return: 车道检测参数
+		*/
 		std::string GetDetectParam(const std::string& regions);
 
 		//视频序号
@@ -209,11 +225,16 @@ namespace OnePunchMan
 		std::string _param;
 		//是否设置过车道参数
 		bool _setParam;
+		//是否需要写入下一帧到bmp
+		bool _writeBmp;
 
 		//bgr字节流长度
 		int _bgrSize;
 		//jpg字节流长度
 		int _jpgSize;
+
+		//ive写入bmp
+		IVEHandler _iveHandler;
 
 	};
 

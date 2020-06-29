@@ -805,17 +805,11 @@ void HisiDecodeChannel::UninitHisi(int videoCount)
 
 ChannelStatus HisiDecodeChannel::InitDecoder(const string& inputUrl)
 {
-	WriteBmp();
 	return ChannelStatus::Normal;
 }
 
 void HisiDecodeChannel::UninitDecoder()
 {
-}
-
-void HisiDecodeChannel::WriteBmp()
-{
-	_writeBmp = true;
 }
 
 DecodeResult HisiDecodeChannel::Decode(const AVPacket* packet, unsigned char taskId,unsigned int frameIndex, unsigned char frameSpan)
@@ -982,11 +976,6 @@ FrameItem HisiDecodeChannel::GetTempIve()
 			item.IveBuffer = _iveBuffer;
 		}
 		_yuvHasValue = false;
-		if (_writeBmp)
-		{
-			_iveHandler.HandleFrame(_iveBuffer, DestinationWidth, DestinationHeight, _channelIndex);
-			_writeBmp = false;
-		}
 	}
 	return item;
 }

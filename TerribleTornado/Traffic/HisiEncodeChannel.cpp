@@ -9,6 +9,7 @@ HisiEncodeChannel::HisiEncodeChannel(int videoCount)
     for (int i = 0; i < videoCount; ++i)
     {
         _outputHandlers.push_back(NULL);
+        _channelIndices.push_back(-1);
     }
 }
 
@@ -22,51 +23,47 @@ int HisiEncodeChannel::StartEncode(int channelIndex,const std::string& outputUrl
             OutputHandler* handler = new OutputHandler();
             handler->Init(channelIndex,outputUrl, inputUrl,frameCount);
             _outputHandlers[i] = handler;
+            _channelIndices[i] = channelIndex;
             return static_cast<int>(i);
         }
     }
     return -1;
 }
 
-#ifndef _WIN32
-void HisiEncodeChannel::PushFrame(int channelIndex, VIDEO_FRAME_INFO_S* frame)
-{
-    lock_guard<mutex> lck(_mutex);
-    for (unsigned int i = 0; i < _outputHandlers.size(); ++i)
-    {
-        if (_outputHandlers[i] != NULL
-            && _outputHandlers[i]->ChannelIndex()==channelIndex
-            && !_outputHandlers[i]->Finished())
-        {
-            HI_MPI_VENC_SendFrame(i, frame, 0);
-        }
-    }
-}
-#endif // !_WIN32
-
-bool HisiEncodeChannel::Finished(int index)
-{
-    lock_guard<mutex> lck(_mutex);
-    if (index >= 0 
-        && index < static_cast<int>(_outputHandlers.size())
-        && _outputHandlers[index] != NULL)
-    {
-        return _outputHandlers[index]->Finished();
-    }
-    return true;
-}
-
 void HisiEncodeChannel::StopEncode(int index)
 {
     lock_guard<mutex> lck(_mutex);
-    if (index >= 0
-        && index < static_cast<int>(_outputHandlers.size())
+    if (index >= 0 && index < _videoCount
         && _outputHandlers[index] != NULL)
     {
         _outputHandlers[index]->Uninit();
         delete _outputHandlers[index];
         _outputHandlers[index] = NULL;
+        _channelIndices[index] = -1;
     }
+}
+
+
+#ifndef _WIN32
+void HisiEncodeChannel::PushFrame(int channelIndex, VIDEO_FRAME_INFO_S* frame)
+{
+    for (int encodeIndex = 0; encodeIndex < _videoCount; ++encodeIndex)
+    {
+        if (_channelIndices[encodeIndex] == channelIndex)
+        {
+            HI_MPI_VENC_SendFrame(encodeIndex, frame, 0);
+        }
+    }
+}
+#endif // !_WIN32
+
+bool HisiEncodeChannel::Finished(int encodeIndex)
+{
+    if (encodeIndex >= 0 && encodeIndex < _videoCount)
+    {
+        return _channelIndices[encodeIndex] == -1;
+    }
+    return true;
 }
 
 void HisiEncodeChannel::StartCore()
@@ -86,21 +83,21 @@ void HisiEncodeChannel::StartCore()
      step 1:  check & prepare save-file & venc-fd
     ******************************************/
 
-    for (int videoIndex = 0; videoIndex < _videoCount; videoIndex++)
+    for (int encodeIndex = 0; encodeIndex < _videoCount; encodeIndex++)
     {
         /* Set Venc Fd. */
-        vencFds[videoIndex] = HI_MPI_VENC_GetFd(videoIndex);
-        if (vencFds[videoIndex] < 0)
+        vencFds[encodeIndex] = HI_MPI_VENC_GetFd(encodeIndex);
+        if (vencFds[encodeIndex] < 0)
         {
             LogPool::Error(LogEvent::Encode, "HI_MPI_VENC_GetFd");
             return;
         }
-        if (maxfd <= vencFds[videoIndex])
+        if (maxfd <= vencFds[encodeIndex])
         {
-            maxfd = vencFds[videoIndex];
+            maxfd = vencFds[encodeIndex];
         }
 
-        s32Ret = HI_MPI_VENC_GetStreamBufInfo(videoIndex, &stStreamBufInfo[videoIndex]);
+        s32Ret = HI_MPI_VENC_GetStreamBufInfo(encodeIndex, &stStreamBufInfo[encodeIndex]);
         if (HI_SUCCESS != s32Ret)
         {
             LogPool::Error(LogEvent::Encode, "HI_MPI_VENC_GetStreamBufInfo");
@@ -114,9 +111,9 @@ void HisiEncodeChannel::StartCore()
     while (!_cancelled)
     {
         FD_ZERO(&read_fds);
-        for (int videoIndex = 0; videoIndex < _videoCount; videoIndex++)
+        for (int encodeIndex = 0; encodeIndex < _videoCount; encodeIndex++)
         {
-            FD_SET(vencFds[videoIndex], &read_fds);
+            FD_SET(vencFds[encodeIndex], &read_fds);
         }
 
         timeoutVal.tv_sec = 0;
@@ -134,9 +131,9 @@ void HisiEncodeChannel::StartCore()
         else
         {
 
-            for (int videoIndex = 0; videoIndex < _videoCount; videoIndex++)
+            for (int encodeIndex = 0; encodeIndex < _videoCount; encodeIndex++)
             {
-                if (FD_ISSET(vencFds[videoIndex], &read_fds))
+                if (FD_ISSET(vencFds[encodeIndex], &read_fds))
                 {
 
                     /*******************************************************
@@ -144,7 +141,7 @@ void HisiEncodeChannel::StartCore()
                     *******************************************************/
                     memset(&stStream, 0, sizeof(stStream));
 
-                    s32Ret = HI_MPI_VENC_QueryStatus(videoIndex, &stStat);
+                    s32Ret = HI_MPI_VENC_QueryStatus(encodeIndex, &stStat);
                     if (HI_SUCCESS != s32Ret)
                     {
                         LogPool::Error(LogEvent::Encode, "HI_MPI_VENC_QueryStatus");
@@ -171,7 +168,7 @@ void HisiEncodeChannel::StartCore()
                      step 2.4 : call mpi to get one-frame stream
                     *******************************************************/
                     stStream.u32PackCount = stStat.u32CurPacks;
-                    s32Ret = HI_MPI_VENC_GetStream(videoIndex, &stStream, HI_TRUE);
+                    s32Ret = HI_MPI_VENC_GetStream(encodeIndex, &stStream, HI_TRUE);
                     if (HI_SUCCESS != s32Ret)
                     {
                         free(stStream.pstPack);
@@ -187,16 +184,19 @@ void HisiEncodeChannel::StartCore()
                     unique_lock<mutex> lck(_mutex);
                     for (HI_U32 packetIndex = 0; packetIndex < stStream.u32PackCount; packetIndex++) 
                     {
-                        if (_outputHandlers[videoIndex] != NULL)
+                        if (_outputHandlers[encodeIndex] != NULL)
                         {
-                            _outputHandlers[videoIndex]->PushPacket((unsigned char*)(stStream.pstPack[packetIndex].pu8Addr + stStream.pstPack[packetIndex].u32Offset), stStream.pstPack[packetIndex].u32Len - stStream.pstPack[packetIndex].u32Offset);
+                            if (_outputHandlers[encodeIndex]->PushPacket((unsigned char*)(stStream.pstPack[packetIndex].pu8Addr + stStream.pstPack[packetIndex].u32Offset), stStream.pstPack[packetIndex].u32Len - stStream.pstPack[packetIndex].u32Offset))
+                            {
+                                _channelIndices[encodeIndex] = -1;
+                            }
                         }
                     }
                     lck.unlock();
                     /*******************************************************
                      step 2.6 : release stream
                      *******************************************************/
-                    s32Ret = HI_MPI_VENC_ReleaseStream(videoIndex, &stStream);
+                    s32Ret = HI_MPI_VENC_ReleaseStream(encodeIndex, &stStream);
                     if (HI_SUCCESS != s32Ret)
                     {
                         LogPool::Error(LogEvent::Encode, "HI_MPI_VENC_ReleaseStream");

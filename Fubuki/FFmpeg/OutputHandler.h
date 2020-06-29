@@ -21,15 +21,11 @@ namespace OnePunchMan
 
 		ChannelStatus Init(int channelIndex,const std::string& outputUrl,const std::string& inputUrl,int frameCount);
 
-		int ChannelIndex();
-
-		bool Finished();
-
 		void Uninit();
 
 		void PushPacket(AVPacket* packet, unsigned int frameIndex,long long duration);
 
-		void PushPacket(unsigned char* data,int size);
+		bool PushPacket(unsigned char* data,int size);
 
 	private:
 		//视频输出相关

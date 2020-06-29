@@ -1,7 +1,7 @@
 #pragma once
 #include "DecodeChannel.h"
 #include "HisiEncodeChannel.h"
-#include "IVE_8UC3Handler.h"
+#include "IVEHandler.h"
 
 extern "C"
 {
@@ -110,11 +110,6 @@ namespace OnePunchMan
 		*/
 		FrameItem GetTempIve();
 
-		/**
-		* @brief: 将下一帧视频写入到bmp
-		*/
-		void WriteBmp();
-
 	protected:
 		ChannelStatus InitDecoder(const std::string& inputUrl);
 
@@ -164,7 +159,7 @@ namespace OnePunchMan
 		unsigned long long _ive_phy_addr;
 		uint8_t* _iveBuffer;
 
-		IVE_8UC3Handler _iveHandler;
+		IVEHandler _iveHandler;
 		HisiEncodeChannel* _encodeChannel;
 	};
 

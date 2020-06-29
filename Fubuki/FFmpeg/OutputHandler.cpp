@@ -115,16 +115,6 @@ void OutputHandler::Uninit()
 	}
 }
 
-int OutputHandler::ChannelIndex()
-{
-	return _channelIndex;
-}
-
-bool OutputHandler::Finished()
-{
-	return _frameIndex > _frameCount;
-}
-
 void OutputHandler::PushPacket(AVPacket* packet, unsigned int frameIndex, long long duration)
 {
 	if (_outputFormat != NULL)
@@ -147,11 +137,11 @@ void OutputHandler::PushPacket(AVPacket* packet, unsigned int frameIndex, long l
 	}
 }
 
-void OutputHandler::PushPacket(unsigned char* data, int size)
+bool OutputHandler::PushPacket(unsigned char* data, int size)
 {
-	if (Finished())
+	if (_frameIndex > _frameCount)
 	{
-		return;
+		return true;
 	}
 	AVPacket* packet = av_packet_alloc();
 	unsigned char* temp=(unsigned char*)av_malloc(size);
@@ -159,4 +149,5 @@ void OutputHandler::PushPacket(unsigned char* data, int size)
 	av_packet_from_data(packet, temp,size);
 	PushPacket(packet, _frameIndex, 0);
 	_frameIndex += 1;
+	return false;
 }

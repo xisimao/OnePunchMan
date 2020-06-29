@@ -60,10 +60,9 @@ namespace OnePunchMan
         void PushFrame(int channelIndex, VIDEO_FRAME_INFO_S* frame);
 #endif // !_WIN32
 
-        void StopEncode(int index);
+        void StopEncode(int encodeIndex);
 
-        bool Finished(int index);
-
+        bool Finished(int encodeIndex);
     protected:
         void StartCore();
 
@@ -71,6 +70,8 @@ namespace OnePunchMan
         int _videoCount;
         std::mutex _mutex;
         std::vector<OutputHandler*> _outputHandlers;
+
+        std::vector<int> _channelIndices;
     };
 
 }

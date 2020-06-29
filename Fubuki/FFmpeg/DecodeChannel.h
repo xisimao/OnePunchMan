@@ -69,6 +69,12 @@ namespace OnePunchMan
 		ChannelStatus Status();
 
 		/**
+		* @brief: 获取帧率
+		* @return: 帧率
+		*/
+		int FrameSpan();
+
+		/**
 		* @brief: 获取处理帧间隔
 		* @return: 处理帧间隔
 		*/
@@ -139,6 +145,8 @@ namespace OnePunchMan
 		ChannelStatus _channelStatus;
 		//是否循环播放
 		bool _loop;
+		//帧率
+		unsigned char _frameSpan;
 
 		//debug
 		//解码相关

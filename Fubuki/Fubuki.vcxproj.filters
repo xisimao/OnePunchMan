@@ -7,9 +7,6 @@
     <ClInclude Include="FFmpeg\H264Handler.h">
       <Filter>FFmpeg</Filter>
     </ClInclude>
-    <ClInclude Include="FFmpeg\IVE_8UC3Handler.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
     <ClInclude Include="FFmpeg\YUV420PHandler.h">
       <Filter>FFmpeg</Filter>
     </ClInclude>
@@ -31,6 +28,9 @@
     <ClInclude Include="FFmpeg\DecodeChannel.h">
       <Filter>FFmpeg</Filter>
     </ClInclude>
+    <ClInclude Include="FFmpeg\IVEHandler.h">
+      <Filter>FFmpeg</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="FFmpeg">
@@ -48,9 +48,6 @@
       <Filter>FFmpeg</Filter>
     </ClCompile>
     <ClCompile Include="FFmpeg\H264Handler.cpp">
-      <Filter>FFmpeg</Filter>
-    </ClCompile>
-    <ClCompile Include="FFmpeg\IVE_8UC3Handler.cpp">
       <Filter>FFmpeg</Filter>
     </ClCompile>
     <ClCompile Include="FFmpeg\YUV420PHandler.cpp">
@@ -72,6 +69,9 @@
       <Filter>FFmpeg</Filter>
     </ClCompile>
     <ClCompile Include="FFmpeg\DecodeChannel.cpp">
+      <Filter>FFmpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="FFmpeg\IVEHandler.cpp">
       <Filter>FFmpeg</Filter>
     </ClCompile>
   </ItemGroup>

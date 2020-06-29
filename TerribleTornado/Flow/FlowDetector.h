@@ -34,6 +34,12 @@ namespace OnePunchMan
 		*/
 		void ClearChannel();
 
+		/**
+		* @brief: 获取报告json数据
+		* @param: json 用于存放json数据的字符串
+		*/
+		void GetReportJson(std::string* json);
+
 		void HandleDetect(std::map<std::string, DetectItem>* detectItems, long long timeStamp, std::string* param, unsigned char taskId, const unsigned char* iveBuffer, unsigned int frameIndex,unsigned char frameSpan);
 		
 		void FinishDetect(unsigned char taskId);
@@ -64,7 +70,7 @@ namespace OnePunchMan
 		{
 		public:
 			FlowLaneCache()
-				: LaneId(), Region(),MeterPerPixel(0.0)
+				: LaneId(),LaneName(), Region(),MeterPerPixel(0.0)
 				, Persons(0), Bikes(0), Motorcycles(0), Cars(0), Tricycles(0), Buss(0), Vans(0), Trucks(0)
 				, TotalDistance(0.0), TotalTime(0), Speed(0.0)
 				, TotalInTime(0), TimeOccupancy(0.0)
@@ -76,6 +82,8 @@ namespace OnePunchMan
 
 			//车道编号
 			std::string LaneId;
+			//车道名称
+			std::string LaneName;
 			//当前检测区域
 			Polygon Region;
 			//每个像素代表的米数
@@ -163,70 +171,51 @@ namespace OnePunchMan
 			}
 		};
 
-		//检测报告写入
-		class ReportWriter
+		//流量报告缓存
+		class FlowReportCache
 		{
 		public:
-			ReportWriter(int channelIndex,int laneCount)
-				:_laneCount(laneCount), _minute(0)
+			FlowReportCache()
+				: LaneId(),LaneName(), Minute(0)
+				, Persons(0), Bikes(0), Motorcycles(0), Cars(0), Tricycles(0), Buss(0), Vans(0), Trucks(0)
+				, Speed(0.0), TimeOccupancy(0.0), HeadDistance(0.0), HeadSpace(0.0), TrafficStatus(0)
 			{
-				_file.open(StringEx::Combine("../logs/report_", channelIndex, ".txt"), std::ofstream::out);
-				_file << std::setiosflags(std::ios::left) << std::setw(10) << "分钟"
-					<< std::setiosflags(std::ios::left) << std::setw(10) << "车道"
-					<< std::setiosflags(std::ios::left) << std::setw(10) << "轿车"
-					<< std::setiosflags(std::ios::left) << std::setw(10) << "卡车"
-					<< std::setiosflags(std::ios::left) << std::setw(10) << "客车"
-					<< std::setiosflags(std::ios::left) << std::setw(10) << "面包车"
-					<< std::setiosflags(std::ios::left) << std::setw(10) << "三轮车"
-					<< std::setiosflags(std::ios::left) << std::setw(10) << "自行车"
-					<< std::setiosflags(std::ios::left) << std::setw(10) << "摩托车"
-					<< std::setiosflags(std::ios::left) << std::setw(10) << "行人"
-					<< std::setiosflags(std::ios::left) << std::setw(15) << "平均速度(km/h)"
-					<< std::setiosflags(std::ios::left) << std::setw(15) << "车头时距(sec)"
-					<< std::setiosflags(std::ios::left) << std::setw(15) << "车头间距(m)"
-					<< std::setiosflags(std::ios::left) << std::setw(15) << "时间占有率(%)"
-					<< std::setiosflags(std::ios::left) << std::setw(15) << "交通状态(1-5)"
-					<< std::endl;
-				_file.flush();
+
 			}
 
-			~ReportWriter()
-			{
-				if (_file.is_open())
-				{
-					_file.close();
-				}
-			}
+			//车道编号
+			std::string LaneId;
+			//车道名称
+			std::string LaneName;
+			//第几分钟
+			int Minute;
+			//行人流量
+			int Persons;
+			//自行车流量
+			int Bikes;
+			//摩托车流量
+			int Motorcycles;
+			//轿车流量
+			int Cars;
+			//三轮车流量
+			int Tricycles;
+			//公交车流量
+			int Buss;
+			//面包车流量
+			int Vans;
+			//卡车流量
+			int Trucks;
 
-			void Write(const FlowLaneCache& cache)
-			{
-				_file << std::setiosflags(std::ios::left) << std::setw(10) << _minute/_laneCount+1
-					<< std::setiosflags(std::ios::left) << std::setw(10) << cache.LaneId
-					<< std::setiosflags(std::ios::left) << std::setw(10) << cache.Cars
-					<< std::setiosflags(std::ios::left) << std::setw(10) << cache.Trucks
-					<< std::setiosflags(std::ios::left) << std::setw(10) << cache.Buss
-					<< std::setiosflags(std::ios::left) << std::setw(10) << cache.Vans
-					<< std::setiosflags(std::ios::left) << std::setw(10) << cache.Tricycles
-					<< std::setiosflags(std::ios::left) << std::setw(10) << cache.Bikes
-					<< std::setiosflags(std::ios::left) << std::setw(10) << cache.Motorcycles
-					<< std::setiosflags(std::ios::left) << std::setw(10) << cache.Persons
-					<< std::setiosflags(std::ios::left) << std::setw(15) << cache.Speed
-					<< std::setiosflags(std::ios::left) << std::setw(15) << cache.HeadDistance
-					<< std::setiosflags(std::ios::left) << std::setw(15) << cache.HeadSpace
-					<< std::setiosflags(std::ios::left) << std::setw(15) << cache.TimeOccupancy
-					<< std::setiosflags(std::ios::left) << std::setw(15) << cache.TrafficStatus
-					<< std::endl;
-				_file.flush();
-				_minute += 1;
-			}
-
-		private:
-			//文件流 
-			std::ofstream _file;
-			//车道数量
-			int _laneCount;
-			//分钟
-			int _minute;
+			//平均速度(km/h)
+			double Speed;
+			//时间占用率(%)
+			double TimeOccupancy;
+			//车道时距(sec)
+			double HeadDistance;
+			//车头间距(m)
+			double HeadSpace;
+			//交通状态
+			int TrafficStatus;
 		};
 
 		/**
@@ -234,14 +223,6 @@ namespace OnePunchMan
 		* @param: laneCache 车道缓存
 		*/
 		void CalculateMinuteFlow(FlowLaneCache* laneCache);
-
-		/**
-		* @brief: 判断检测项所在车道，如果有车道则发送数据
-		* @param: json json字符串
-		* @param: recognItem 识别项
-		* @param: iveBuffer ive字节流
-		*/
-		void HandleRecogn(std::string* json,const RecognItem& recognItem, const unsigned char* iveBuffer);
 
 		/**
 		* @brief: 绘制检测区域
@@ -281,6 +262,13 @@ namespace OnePunchMan
 		//识别车道集合
 		std::vector<FlowLaneCache> _recognLanes;
 
+		//上报缓存
+		std::mutex _reportMutex;
+		std::vector<FlowReportCache> _reportCaches;
+		std::vector<VideoStruct_Vehicle> _vehicleReportCaches;
+		std::vector<VideoStruct_Bike> _bikeReportCaches;
+		std::vector<VideoStruct_Pedestrain> _pedestrainReportCaches;
+
 		//监测时用到的bgr字节流
 		unsigned char* _detectBgrBuffer;
 		//监测时用到的jpg字节流
@@ -292,8 +280,12 @@ namespace OnePunchMan
 
 		//是否输出图片
 		bool _outputImage;
-		//用于输出检测报告
-		ReportWriter* _report;
+		//是否输出检测报告
+		bool _outputReport;
+		//当前报告的分钟
+		int _currentReportMinute;
+		//是否输出识别项
+		bool _outputRecogn;
 	};
 
 }

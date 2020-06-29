@@ -37,7 +37,7 @@ namespace OnePunchMan
         * @brief: http消息接收事件函数
         * @param: e http消息接收事件参数
         */
-        void Update(HttpReceivedEventArgs* e);
+        virtual void Update(HttpReceivedEventArgs* e);
 
         /**
         * @brief: mqtt断开事件函数
@@ -98,6 +98,8 @@ namespace OnePunchMan
         * @return: 删除成功返回true，否则返回false
         */
         virtual bool DeleteChannel(int channelIndex)=0;
+
+        virtual void GetReport(int channelIndex,HttpReceivedEventArgs* e){}
 
         /**
         * @brief: 判断通道序号是否可用

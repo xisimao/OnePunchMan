@@ -63,6 +63,13 @@ namespace OnePunchMan
 		*/
 		static int IveToJpgBase64(const unsigned char* iveBuffer, int width, int height, unsigned char* bgrBuffer, std::string* jpgBase64, unsigned char* jpgBuffer, int jpgSize);
 		
+		/**
+		* @brief: mp4文件 base64
+		* @param: filePath MP4文件路径
+		* @param: videoBuffer 用于临时存放MP4文件字节流
+		* @param: videoSize 用于临时存放MP4文件字节流的长度
+		* @param: base64 用于写入base64字符串
+		*/
 		static void Mp4ToBase64(const std::string& filePath,unsigned char* videoBuffer,int videoSize, std::string* base64);
 
 		/**
@@ -75,11 +82,18 @@ namespace OnePunchMan
 		static void JpgToFile(unsigned char* jpgBuffer, int jpgSize, int channelIndex, unsigned int frameIndex);
 
 		/**
-		* @brief: 绘制检测区域
+		* @brief: 绘制多边形区域
 		* @param: image 绘制的图片
 		* @param: polygon 多边形
 		*/
 		static void DrawPolygon(cv::Mat* image, const Polygon& polygon, const cv::Scalar& scalar);
+
+		/**
+		* @brief: 绘制矩形区域
+		* @param: image 绘制的图片
+		* @param: rectangle 矩形
+		*/
+		static void DrawRectangle(cv::Mat* image, const Rectangle& rectangle, const cv::Scalar& scalar);
 
 		/**
 		* @brief: 绘制检测点

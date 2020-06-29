@@ -5,7 +5,7 @@
 #include "SeemmoSDK.h"
 #include "Thread.h"
 #include "TrafficDetector.h"
-#include "IVE_8UC3Handler.h"
+#include "IVEHandler.h"
 
 namespace OnePunchMan
 {

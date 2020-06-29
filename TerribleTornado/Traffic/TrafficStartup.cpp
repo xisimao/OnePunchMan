@@ -47,6 +47,7 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
             {
                 JsonSerialization::SerializeValue(&channelJson, "channelStatus", static_cast<int>(_decodes[channelIndex - 1]->Status()));
                 JsonSerialization::SerializeValue(&channelJson, "handleSpan",  _decodes[channelIndex - 1]->HandleSpan());
+                JsonSerialization::SerializeValue(&channelJson, "frameSpan",  _decodes[channelIndex - 1]->FrameSpan());
                 JsonSerialization::SerializeValue(&channelJson, "sourceWidth", _decodes[channelIndex - 1]->SourceWidth());
                 JsonSerialization::SerializeValue(&channelJson, "sourceHeight",  _decodes[channelIndex - 1]->SourceHeight());
                 e->ResponseJson = channelJson;
@@ -77,7 +78,7 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
         int channelIndex = StringEx::Convert<int>(id);
         if (ChannelIndexEnable(channelIndex))
         {
-            _decodes[channelIndex - 1]->WriteBmp();
+            _detectors[channelIndex - 1]->WriteBmp();
             e->Code = HttpCode::OK;
         }
         else
@@ -114,6 +115,21 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
         string ls = Command::Execute("cd ../logs;tar cf logs.tar *.log");
         e->ResponseJson = "logs.tar";
         e->Code = HttpCode::OK;
+    }
+    else if (UrlStartWith(e->Url, "/api/report"))
+    {
+        string id = GetId(e->Url, "/api/report");
+        int channelIndex = StringEx::Convert<int>(id);
+        if (ChannelIndexEnable(channelIndex))
+        {
+            GetReport(channelIndex, e);
+            e->Code = HttpCode::OK;
+        }
+        else
+        {
+            e->Code = HttpCode::NotFound;
+        }
+
     }
 }
 

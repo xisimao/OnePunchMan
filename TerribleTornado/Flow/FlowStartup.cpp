@@ -83,6 +83,11 @@ string FlowStartup::GetChannelJson(const string& host,int channelIndex)
         JsonSerialization::SerializeValue(&channelJson, "channelUrl", channel.ChannelUrl);
         JsonSerialization::SerializeValue(&channelJson, "rtmpUrl", channel.RtmpUrl(host));
         JsonSerialization::SerializeValue(&channelJson, "channelType", channel.ChannelType);
+        JsonSerialization::SerializeValue(&channelJson, "loop", channel.Loop);
+        JsonSerialization::SerializeValue(&channelJson, "outputReport", channel.OutputReport);
+        JsonSerialization::SerializeValue(&channelJson, "outputImage", channel.OutputImage);
+        JsonSerialization::SerializeValue(&channelJson, "outputRecogn", channel.OutputRecogn);
+        JsonSerialization::SerializeValue(&channelJson, "globalDetect", channel.GlobalDetect);
         if (ChannelIndexEnable(channel.ChannelIndex))
         {
             JsonSerialization::SerializeValue(&channelJson, "lanesInited", _detectors[channel.ChannelIndex - 1]->LanesInited());
@@ -124,6 +129,8 @@ string FlowStartup::CheckChannel(FlowChannel* channel)
         {
             channel->OutputImage = false;
             channel->OutputReport = false;
+            channel->OutputRecogn = false;
+            channel->GlobalDetect = false;
         }
         return string();
     }
@@ -217,7 +224,6 @@ void FlowStartup::SetDevice(HttpReceivedEventArgs* e)
 void FlowStartup::SetChannel(HttpReceivedEventArgs* e)
 {
     JsonDeserialization jd(e->RequestJson);
-
     FlowChannel channel;
     channel.ChannelIndex = jd.Get<int>("channelIndex");
     channel.ChannelName = jd.Get<string>("channelName");
@@ -226,6 +232,8 @@ void FlowStartup::SetChannel(HttpReceivedEventArgs* e)
     channel.Loop = jd.Get<bool>("loop");
     channel.OutputImage = jd.Get<bool>("outputImage");
     channel.OutputReport = jd.Get<bool>("outputReport");
+    channel.OutputRecogn = jd.Get<bool>("outputRecogn");
+    channel.GlobalDetect = jd.Get<bool>("globalDetect");
     int laneIndex = 0;
     while (true)
     {
@@ -287,4 +295,9 @@ bool FlowStartup::DeleteChannel(int channelIndex)
     {
         return false;
     }
+}
+
+void FlowStartup::GetReport(int channelIndex,HttpReceivedEventArgs* e)
+{
+    _detectors[channelIndex]->GetReportJson(&e->ResponseJson);
 }

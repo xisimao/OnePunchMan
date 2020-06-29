@@ -47,7 +47,6 @@ namespace OnePunchMan
 		void HandleDetect(std::map<std::string, DetectItem>* detectItems, long long timeStamp, std::string* param, unsigned char taskId, const unsigned char* iveBuffer,unsigned int frameIndex, unsigned char frameSpan);
 
 	private:
-
 		//事件检测缓存
 		class EventDetectCache
 		{
@@ -121,47 +120,23 @@ namespace OnePunchMan
 		};
 
 		/**
-		* @brief: 绘制逆行事件图片
+		* @brief: 绘制车辆事件图片
 		* @param: jpgBase64 用于写入的字符串
 		* @param: iveBuffer ive字节流
-		* @param: points 检测点集合
+		* @param: laneRegion 检测区域
+		* @param: detectRegion 检测项区域
 		* @param: frameIndex 帧序号
 		*/
-		void DrawRetrograde(std::string* jpgBase64, const unsigned char* iveBuffer, const std::vector<Point>& points, unsigned int frameIndex);
-		
-		/**
-		* @brief: 绘制逆行事件图片
-		* @param: jpgBase64 用于写入的字符串
-		* @param: iveBuffer ive字节流
-		* @param: point 行人点
-		* @param: frameIndex 帧序号
-		*/
-		void DrawPedestrain(std::string* jpgBase64, const unsigned char* iveBuffer, const Point& point, unsigned int frameIndex);
-		
-		/**
-		* @brief: 绘制逆行事件图片
-		* @param: jpgBase64 用于写入的字符串
-		* @param: iveBuffer ive字节流
-		* @param: point 停车点
-		* @param: frameIndex 帧序号
-		*/
-		void DrawPark(std::string* jpgBase64, const unsigned char* iveBuffer, const Point& point, unsigned int frameIndex);
-		
+		void DrawRegion(std::string* jpgBase64,const unsigned char* iveBuffer, const Polygon& laneRegion, const Rectangle& detectRegion, unsigned int frameIndex);
+	
 		/**
 		* @brief: 绘制拥堵区域
 		* @param: jpgBase64 用于写入的字符串
 		* @param: iveBuffer ive字节流
+		* @param: laneRegion 检测区域
 		* @param: frameIndex 帧序号
 		*/
-		void DrawCongestion(std::string* jpgBase64, const unsigned char* iveBuffer, unsigned int frameIndex);
-
-		/**
-		* @brief: 绘制检测区域
-		* @param: detectItems 检测项集合
-		* @param: iveBuffer ive字节流
-		* @param: frameIndex 帧序号
-		*/
-		void DrawDetect(const std::map<std::string, DetectItem>& detectItems, const unsigned char* iveBuffer, unsigned int frameIndex);
+		void DrawRegion(std::string* jpgBase64, const unsigned char* iveBuffer, const Polygon& laneRegion, unsigned int frameIndex);
 
 		//IO mqtt主题
 		static const std::string EventTopic;

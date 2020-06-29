@@ -42,6 +42,11 @@ FlowChannel FlowChannelData::FillChannel(const SqliteReader& sqlite)
 	channel.ChannelName = sqlite.GetString(1);
 	channel.ChannelUrl = sqlite.GetString(2);
 	channel.ChannelType = sqlite.GetInt(3);
+	channel.Loop = sqlite.GetInt(4);
+	channel.OutputReport = sqlite.GetInt(5);
+	channel.OutputImage = sqlite.GetInt(6);
+	channel.OutputRecogn = sqlite.GetInt(7);
+	channel.GlobalDetect = sqlite.GetInt(8);
 
 	SqliteReader laneSqlite(_dbName);
 	string laneSql(StringEx::Combine("Select * From Flow_Lane Where ChannelIndex=", channel.ChannelIndex," Order By LaneIndex"));
@@ -75,11 +80,16 @@ FlowChannel FlowChannelData::FillChannel(const SqliteReader& sqlite)
 
 bool FlowChannelData::Insert(const FlowChannel& channel)
 {
-	string channelSql(StringEx::Combine("Insert Into Flow_Channel (ChannelIndex,ChannelName,ChannelUrl,ChannelType) Values ("
+	string channelSql(StringEx::Combine("Insert Into Flow_Channel (ChannelIndex,ChannelName,ChannelUrl,ChannelType,Loop,OutputImage,OutputReport,OutputRecogn,GlobalDetect) Values ("
 		, channel.ChannelIndex, ","
 		, "'", channel.ChannelName, "',"
 		, "'", channel.ChannelUrl, "',"
-		, channel.ChannelType
+		, channel.ChannelType, ","
+		, channel.Loop, ","
+		, channel.OutputImage, ","
+		, channel.OutputReport, ","
+		, channel.OutputRecogn, ","
+		, channel.GlobalDetect
 		, ")"));
 	if (_sqlite.ExecuteRowCount(channelSql)==1)
 	{
@@ -156,6 +166,15 @@ void FlowChannelData::Clear()
 void FlowChannelData::UpdateDb()
 {
 	TrafficData::UpdateDb();
-	SetParameter("Version", "2.0.0.12");
-	SetParameter("VersionValue", "20012");
+	int versionValue = StringEx::Convert<int>(GetParameter("VersionValue"));
+	if (versionValue < 20013)
+	{
+		_sqlite.ExecuteRowCount("ALTER TABLE[Flow_Channel] ADD COLUMN[Loop] INTEGER NULL;");
+		_sqlite.ExecuteRowCount("ALTER TABLE[Flow_Channel] ADD COLUMN[OutputReport] INTEGER NULL;");
+		_sqlite.ExecuteRowCount("ALTER TABLE[Flow_Channel] ADD COLUMN[OutputImage] INTEGER NULL;");
+		_sqlite.ExecuteRowCount("ALTER TABLE[Flow_Channel] ADD COLUMN[OutputRecogn] INTEGER NULL;");
+		_sqlite.ExecuteRowCount("ALTER TABLE[Flow_Channel] ADD COLUMN[GlobalDetect] INTEGER NULL;");
+	}
+	SetParameter("Version", "2.0.0.13");
+	SetParameter("VersionValue", "20013");
 }

@@ -42,7 +42,7 @@ namespace OnePunchMan
 	public:
 		TrafficChannel()
 			:ChannelIndex(0), ChannelName(), ChannelUrl(), ChannelType(0), ChannelStatus(0)
-			, Loop(true), OutputImage(false), OutputReport(false)
+			, Loop(true), OutputImage(false), OutputReport(false), OutputRecogn(false), GlobalDetect(false)
 		{
 
 		}
@@ -62,6 +62,10 @@ namespace OnePunchMan
 		bool OutputImage;
 		//是否输出检测报告
 		bool OutputReport;
+		//是否输出识别数据
+		bool OutputRecogn;
+		//是否全局检测
+		bool GlobalDetect;
 
 		/**
 		* @brief: 获取通道rtmp地址

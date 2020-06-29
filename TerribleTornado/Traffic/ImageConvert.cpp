@@ -71,7 +71,7 @@ void ImageConvert::Mp4ToBase64(const std::string& filePath, unsigned char* video
 		size_t size = 0;
 		while ((size = fread(videoBuffer, 1, videoSize, file))!=0)
 		{
-			if (size == videoSize)
+			if (static_cast<int>(size) == videoSize)
 			{
 				LogPool::Error(LogEvent::Detect, "video size over");
 			}
@@ -101,6 +101,12 @@ void ImageConvert::DrawPolygon(cv::Mat* image, const Polygon& polygon, const cv:
 	}
 	polygons.push_back(points);
 	cv::polylines(*image, polygons, true, scalar, 3);
+}
+
+void ImageConvert::DrawRectangle(cv::Mat* image, const Rectangle& rectangle, const cv::Scalar& scalar)
+{
+	cv::Rect rect(rectangle.Top().X, rectangle.Top().Y, rectangle.Width(), rectangle.Height());
+	cv::rectangle(*image, rect,scalar, 3);
 }
 
 void ImageConvert::DrawPoint(cv::Mat* image, const Point& point, const cv::Scalar& scalar)
