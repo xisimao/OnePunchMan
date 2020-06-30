@@ -15,5 +15,6 @@ enum class LogEvent :int
 	Flow=9,
 	Event=10,
 	Adapter=11,
-	Http=12
+	Http=12,
+	Monitor=13
 };

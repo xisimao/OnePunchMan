@@ -10,9 +10,19 @@ using namespace OnePunchMan;
 
 int main(int argc, char* argv[])
 {
+    vector<string> columns = StringEx::Split(" 1629  1626 root     S    2116m141.8   3 73.3 ./Genos.out flow", " ", true);
+    if (columns.size() >= 5)
+    {
+        vector<string> datas=StringEx::Split(columns[4], "m", true);
+        if (!datas.empty())
+        {
+            cout << datas[0] << endl;
+        }
+    }
     LogPool::Init("appsettings.json");
     FlowStartup startup;
-    startup.Startup();
+    startup.Start();
+    startup.Join();
     //DecodeChannel::InitFFmpeg();
 
     //HisiDecodeChannel channel(1);

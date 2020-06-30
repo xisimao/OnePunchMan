@@ -61,7 +61,7 @@ void DetectChannel::GetDetecItems(map<string, DetectItem>* items, const JsonDese
 	}
 }
 
-void DetectChannel::GetRecognItems(vector<RecognItem>* items, const JsonDeserialization& jd, const string& key,int channelIndex)
+void DetectChannel::GetRecognItems(vector<RecognItem>* items, const JsonDeserialization& jd, const string& key,int channelIndex,int frameIndex,unsigned char frameSpan,unsigned char taskId)
 {
 	int itemIndex = 0;
 	while (true)
@@ -76,6 +76,9 @@ void DetectChannel::GetRecognItems(vector<RecognItem>* items, const JsonDeserial
 		{
 			RecognItem item;
 			item.ChannelIndex = channelIndex;
+			item.FrameIndex = frameIndex;
+			item.FrameSpan = frameSpan;
+			item.TaskId = taskId;
 			item.Guid = id;
 			item.Type = jd.Get<int>(StringEx::Combine("FilterResults", ":0:", key, ":", itemIndex, ":Type"));
 			item.Width = jd.Get<int>(StringEx::Combine("FilterResults", ":0:", key, ":", itemIndex, ":Detect:Body:Width"));
@@ -145,9 +148,9 @@ void DetectChannel::StartCore()
 					if (_recogn != NULL)
 					{
 						vector<RecognItem> recognItems;
-						GetRecognItems(&recognItems, detectJd, "Vehicles", channelItem.ChannelIndex);
-						GetRecognItems(&recognItems, detectJd, "Bikes", channelItem.ChannelIndex);
-						GetRecognItems(&recognItems, detectJd, "Pedestrains", channelItem.ChannelIndex);
+						GetRecognItems(&recognItems, detectJd, "Vehicles", channelItem.ChannelIndex, frameItem.FrameIndex, frameItem.FrameSpan,frameItem.TaskId);
+						GetRecognItems(&recognItems, detectJd, "Bikes", channelItem.ChannelIndex, frameItem.FrameIndex, frameItem.FrameSpan, frameItem.TaskId);
+						GetRecognItems(&recognItems, detectJd, "Pedestrains", channelItem.ChannelIndex, frameItem.FrameIndex, frameItem.FrameSpan, frameItem.TaskId);
 						if (!recognItems.empty())
 						{
 							_recogn->PushItems(recognItems);
@@ -158,7 +161,6 @@ void DetectChannel::StartCore()
 					GetDetecItems(&detectItems, detectJd, "Bikes");
 					GetDetecItems(&detectItems, detectJd, "Pedestrains");
 					channelItem.Detector->HandleDetect(&detectItems, detectTimeStamp, &channelItem.Param, frameItem.TaskId, frameItem.IveBuffer, frameItem.FrameIndex, frameItem.FrameSpan);
-		
 				}
 				long long detectTimeStamp3 = DateTime::UtcNowTimeStamp();
 				LogPool::Debug("detect", channelItem.ChannelIndex, static_cast<int>(frameItem.TaskId), frameItem.FrameIndex, static_cast<int>(frameItem.FrameSpan), result, detectTimeStamp1 - detectTimeStamp, detectTimeStamp2 - detectTimeStamp1, detectTimeStamp3 - detectTimeStamp2);

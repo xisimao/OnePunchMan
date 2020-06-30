@@ -4,6 +4,7 @@ using namespace std;
 using namespace OnePunchMan;
 
 const int DecodeChannel::ConnectSpan = 5000;
+const int DecodeChannel::MaxHandleSpan = 1000;
 const int DecodeChannel::DestinationWidth = 1920;
 const int DecodeChannel::DestinationHeight = 1080;
 
@@ -224,15 +225,22 @@ void DecodeChannel::StartCore()
 					long long timeStamp2 = DateTime::UtcNowTimeStamp();
 					DecodeResult decodeResult = Decode(packet, taskId, frameIndex, _frameSpan);
 					long long timeStamp3 = DateTime::UtcNowTimeStamp();
-					if (decodeResult == DecodeResult::Error)
-					{
-						LogPool::Error(LogEvent::Decode, "decode error", _channelIndex, frameIndex);
-						_channelStatus = ChannelStatus::DecodeError;
-					}
-					else if (decodeResult == DecodeResult::Handle)
+					if (decodeResult == DecodeResult::Handle)
 					{
 						_handleSpan = frameIndex - _lastframeIndex;
 						_lastframeIndex = frameIndex;
+					}
+					else if (decodeResult == DecodeResult::Skip)
+					{
+						if (frameIndex - _lastframeIndex > MaxHandleSpan)
+						{
+							_channelStatus = ChannelStatus::NotHandle;
+						}
+					}
+					else
+					{
+						LogPool::Error(LogEvent::Decode, "decode error", _channelIndex, frameIndex);
+						_channelStatus = ChannelStatus::DecodeError;
 					}
 					_outputHandler.PushPacket(packet, frameIndex, duration);
 
@@ -274,6 +282,7 @@ void DecodeChannel::StartCore()
 
 			//循环停止和解码错误时不再重新打开视频
 			if (_channelStatus != ChannelStatus::ReadEOF_Stop
+				&& _channelStatus != ChannelStatus::NotHandle
 				&& _channelStatus != ChannelStatus::DecodeError)
 			{
 				ChannelStatus inputStatus = _inputHandler.Init(_inputUrl);
@@ -316,6 +325,7 @@ void DecodeChannel::StartCore()
 					duration = 0;
 					_frameSpan = _inputHandler.FrameSpan();
 				}
+				_lastframeIndex = 0;
 				taskId = _taskId;
 				frameIndex = 1;
 				reportFinish = false;

@@ -32,14 +32,16 @@ int main(int argc, char* argv[])
         if (arg.compare("flow") == 0)
         {
             LogPool::Init("appsettings.json");
-            FlowStartup channel;
-            channel.Startup();
+            FlowStartup startup;
+            startup.Start();
+            startup.Join();
         }
         else if (arg.compare("event") == 0)
         {
             LogPool::Init("appsettings.json");
-            EventStartup channel;
-            channel.Startup();
+            EventStartup startup;
+            startup.Start();
+            startup.Join();
         }
         else if (arg.compare("io") == 0)
         {

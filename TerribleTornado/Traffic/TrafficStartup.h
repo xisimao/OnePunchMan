@@ -16,7 +16,8 @@ namespace OnePunchMan
 {
     //流量系统启动线程
     class TrafficStartup 
-        : public IObserver<HttpReceivedEventArgs>
+        : public ThreadObject
+        , public IObserver<HttpReceivedEventArgs>
         , public IObserver<MqttDisconnectedEventArgs>
     {
     public:
@@ -45,12 +46,8 @@ namespace OnePunchMan
         */
         void Update(MqttDisconnectedEventArgs* e);
 
-        /**
-        * @brief: 启动系统
-        */
-        void Startup();
-
     protected:
+        void StartCore();
 
         /**
         * @brief: 初始化线程集合

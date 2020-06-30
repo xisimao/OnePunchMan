@@ -85,6 +85,7 @@ void FlowDetector::UpdateChannel(unsigned char taskId, const FlowChannel& channe
 	}
 	_setParam = false;
 	_writeBmp = true;
+	remove(StringEx::Combine("../images/channel_", channel.ChannelIndex, ".bmp").c_str());
 	//输出图片时先删除旧的
 	_outputImage = channel.OutputImage;
 	if (_outputImage)
@@ -163,8 +164,9 @@ void FlowDetector::GetReportJson(string* json)
 	for (vector<VideoStruct_Vehicle>::iterator it = _vehicleReportCaches.begin(); it != _vehicleReportCaches.end(); ++it)
 	{
 		string vehicleJson;
+		JsonSerialization::SerializeValue(&vehicleJson, "time", StringEx::Combine(it->Minute, ":", it->Second));
 		JsonSerialization::SerializeValue(&vehicleJson, "laneId", it->LaneId);
-		JsonSerialization::SerializeValue(&vehicleJson, "laneName", it->LaneName);
+		JsonSerialization::SerializeValue(&vehicleJson, "laneName", it->LaneName);		
 		JsonSerialization::SerializeValue(&vehicleJson, "carType", it->CarType);
 		JsonSerialization::SerializeValue(&vehicleJson, "carColor", it->CarColor);
 		JsonSerialization::SerializeValue(&vehicleJson, "carBrand", it->CarBrand);
@@ -176,6 +178,7 @@ void FlowDetector::GetReportJson(string* json)
 	for (vector<VideoStruct_Bike>::iterator it = _bikeReportCaches.begin(); it != _bikeReportCaches.end(); ++it)
 	{
 		string bikeJson;
+		JsonSerialization::SerializeValue(&bikeJson, "time", StringEx::Combine(it->Minute, ":", it->Second));
 		JsonSerialization::SerializeValue(&bikeJson, "laneId", it->LaneId);
 		JsonSerialization::SerializeValue(&bikeJson, "laneName", it->LaneName);
 		JsonSerialization::SerializeValue(&bikeJson, "bikeType", it->BikeType);
@@ -185,6 +188,7 @@ void FlowDetector::GetReportJson(string* json)
 	for (vector<VideoStruct_Pedestrain>::iterator it = _pedestrainReportCaches.begin(); it != _pedestrainReportCaches.end(); ++it)
 	{
 		string pedestrainJson;
+		JsonSerialization::SerializeValue(&pedestrainJson, "time", StringEx::Combine(it->Minute, ":", it->Second));
 		JsonSerialization::SerializeValue(&pedestrainJson, "laneId", it->LaneId);
 		JsonSerialization::SerializeValue(&pedestrainJson, "laneName", it->LaneName);
 		JsonSerialization::SerializeValue(&pedestrainJson, "sex", it->Sex);
@@ -492,16 +496,19 @@ void FlowDetector::FinishDetect(unsigned char taskId)
 
 void FlowDetector::HandleRecognVehicle(const RecognItem& recognItem, const unsigned char* iveBuffer, const VideoStruct_Vehicle& vehicle)
 {
-	long long timeStamp = DateTime::UtcNowTimeStamp();
-	lock_guard<mutex> recognLock(_recognLaneMutex);
-	for (unsigned int i = 0; i < _recognLanes.size(); ++i)
+	if (_taskId != recognItem.TaskId)
 	{
-		if (_recognLanes[i].Region.Contains(recognItem.Region.HitPoint()))
+		return;
+	}
+	lock_guard<mutex> recognLock(_recognLaneMutex);
+	for (vector<FlowLaneCache>::iterator it = _recognLanes.begin(); it != _recognLanes.end(); ++it)
+	{
+		if (it->Region.Contains(recognItem.Region.HitPoint()))
 		{
 			string json;
 			JsonSerialization::SerializeValue(&json, "channelUrl", _recognChannelUrl);
-			JsonSerialization::SerializeValue(&json, "laneId", _recognLanes[i].LaneId);
-			JsonSerialization::SerializeValue(&json, "timeStamp", timeStamp);
+			JsonSerialization::SerializeValue(&json, "laneId", it->LaneId);
+			JsonSerialization::SerializeValue(&json, "timeStamp", DateTime::UtcNowTimeStamp());
 			JsonSerialization::SerializeValue(&json, "videoStructType", (int)VideoStructType::Vehicle);
 			JsonSerialization::SerializeValue(&json, "carType", vehicle.CarType);
 			JsonSerialization::SerializeValue(&json, "carColor", vehicle.CarColor);
@@ -514,8 +521,10 @@ void FlowDetector::HandleRecognVehicle(const RecognItem& recognItem, const unsig
 			if (_outputRecogn)
 			{
 				VideoStruct_Vehicle reportCache = vehicle;
-				reportCache.LaneId = _recognLanes[i].LaneId;
-				reportCache.LaneName = _recognLanes[i].LaneName;
+				reportCache.LaneId = it->LaneId;
+				reportCache.LaneName = it->LaneName;
+				reportCache.Minute = recognItem.FrameIndex * recognItem.FrameSpan / 60000;
+				reportCache.Second = recognItem.FrameIndex * recognItem.FrameSpan % 60000 / 1000;
 				lock_guard<mutex> reportMutex(_reportMutex);
 				_vehicleReportCaches.push_back(reportCache);
 			}
@@ -527,7 +536,7 @@ void FlowDetector::HandleRecognVehicle(const RecognItem& recognItem, const unsig
 				}
 			}
 
-			LogPool::Debug(LogEvent::Detect, "lane:", _recognLanes[i].LaneId, "type:", recognItem.Type);
+			LogPool::Debug(LogEvent::Detect, "lane:", it->LaneId, "type:", recognItem.Type);
 			return;
 		}
 	}
@@ -535,16 +544,19 @@ void FlowDetector::HandleRecognVehicle(const RecognItem& recognItem, const unsig
 
 void FlowDetector::HandleRecognBike(const RecognItem& recognItem, const unsigned char* iveBuffer, const VideoStruct_Bike& bike)
 {
-	long long timeStamp = DateTime::UtcNowTimeStamp();
-	lock_guard<mutex> recognLock(_recognLaneMutex);
-	for (unsigned int i = 0; i < _recognLanes.size(); ++i)
+	if (_taskId != recognItem.TaskId)
 	{
-		if (_recognLanes[i].Region.Contains(recognItem.Region.HitPoint()))
+		return;
+	}
+	lock_guard<mutex> recognLock(_recognLaneMutex);
+	for (vector<FlowLaneCache>::iterator it=_recognLanes.begin();it!=_recognLanes.end();++it)
+	{
+		if (it->Region.Contains(recognItem.Region.HitPoint()))
 		{
 			string json;
 			JsonSerialization::SerializeValue(&json, "channelUrl", _recognChannelUrl);
-			JsonSerialization::SerializeValue(&json, "laneId", _recognLanes[i].LaneId);
-			JsonSerialization::SerializeValue(&json, "timeStamp", timeStamp);
+			JsonSerialization::SerializeValue(&json, "laneId", it->LaneId);
+			JsonSerialization::SerializeValue(&json, "timeStamp", DateTime::UtcNowTimeStamp());
 			JsonSerialization::SerializeValue(&json, "videoStructType", (int)VideoStructType::Bike);
 			JsonSerialization::SerializeValue(&json, "bikeType", bike.BikeType);
 			string image;
@@ -553,8 +565,10 @@ void FlowDetector::HandleRecognBike(const RecognItem& recognItem, const unsigned
 			if (_outputRecogn)
 			{
 				VideoStruct_Bike reportCache = bike;
-				reportCache.LaneId = _recognLanes[i].LaneId;
-				reportCache.LaneName = _recognLanes[i].LaneName;
+				reportCache.LaneId = it->LaneId;
+				reportCache.LaneName = it->LaneName;
+				reportCache.Minute = recognItem.FrameIndex * recognItem.FrameSpan / 60000;
+				reportCache.Second = recognItem.FrameIndex * recognItem.FrameSpan %60000/1000;
 				lock_guard<mutex> reportMutex(_reportMutex);
 				_bikeReportCaches.push_back(reportCache);
 			}
@@ -566,7 +580,7 @@ void FlowDetector::HandleRecognBike(const RecognItem& recognItem, const unsigned
 				}
 			}
 
-			LogPool::Debug(LogEvent::Detect, "lane:", _recognLanes[i].LaneId, "type:", recognItem.Type);
+			LogPool::Debug(LogEvent::Detect, "lane:",it->LaneId, "type:", recognItem.Type);
 			return;
 		}
 	}
@@ -574,16 +588,19 @@ void FlowDetector::HandleRecognBike(const RecognItem& recognItem, const unsigned
 
 void FlowDetector::HandleRecognPedestrain(const RecognItem& recognItem, const unsigned char* iveBuffer, const VideoStruct_Pedestrain& pedestrain)
 {
-	long long timeStamp = DateTime::UtcNowTimeStamp();
-	lock_guard<mutex> recognLock(_recognLaneMutex);
-	for (unsigned int i = 0; i < _recognLanes.size(); ++i)
+	if (_taskId != recognItem.TaskId)
 	{
-		if (_recognLanes[i].Region.Contains(recognItem.Region.HitPoint()))
+		return;
+	}
+	lock_guard<mutex> recognLock(_recognLaneMutex);
+	for (vector<FlowLaneCache>::iterator it = _recognLanes.begin(); it != _recognLanes.end(); ++it)
+	{
+		if (it->Region.Contains(recognItem.Region.HitPoint()))
 		{
 			string json;
 			JsonSerialization::SerializeValue(&json, "channelUrl", _recognChannelUrl);
-			JsonSerialization::SerializeValue(&json, "laneId", _recognLanes[i].LaneId);
-			JsonSerialization::SerializeValue(&json, "timeStamp", timeStamp);
+			JsonSerialization::SerializeValue(&json, "laneId", it->LaneId);
+			JsonSerialization::SerializeValue(&json, "timeStamp", DateTime::UtcNowTimeStamp());
 			JsonSerialization::SerializeValue(&json, "videoStructType", (int)VideoStructType::Pedestrain);
 			JsonSerialization::SerializeValue(&json, "sex", pedestrain.Sex);
 			JsonSerialization::SerializeValue(&json, "age", pedestrain.Age);
@@ -594,8 +611,10 @@ void FlowDetector::HandleRecognPedestrain(const RecognItem& recognItem, const un
 			if (_outputRecogn)
 			{
 				VideoStruct_Pedestrain reportCache = pedestrain;
-				reportCache.LaneId = _recognLanes[i].LaneId;
-				reportCache.LaneName = _recognLanes[i].LaneName;
+				reportCache.LaneId = it->LaneId;
+				reportCache.LaneName = it->LaneName;
+				reportCache.Minute = recognItem.FrameIndex * recognItem.FrameSpan / 60000;
+				reportCache.Second = recognItem.FrameIndex * recognItem.FrameSpan % 60000 / 1000;
 				lock_guard<mutex> reportMutex(_reportMutex);
 				_pedestrainReportCaches.push_back(reportCache);
 			}
@@ -606,7 +625,7 @@ void FlowDetector::HandleRecognPedestrain(const RecognItem& recognItem, const un
 					_mqtt->Send(VideoStructTopic, json);
 				}
 			}
-			LogPool::Debug(LogEvent::Detect, "lane:", _recognLanes[i].LaneId, "type:", recognItem.Type);
+			LogPool::Debug(LogEvent::Detect, "lane:", it->LaneId, "type:", recognItem.Type);
 			return;
 		}
 	}

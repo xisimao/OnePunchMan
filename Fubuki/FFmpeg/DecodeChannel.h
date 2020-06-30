@@ -126,8 +126,10 @@ namespace OnePunchMan
 		int _channelIndex;
 
 	private:
-		//重连时间(秒)
+		//重连时间(豪秒)
 		static const int ConnectSpan;
+		//最长的处理帧间隔，如果超过这个间隔就会修改通道状态
+		static const int MaxHandleSpan;
 
 		//视频状态同步锁
 		std::mutex _mutex;

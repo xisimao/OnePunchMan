@@ -8,7 +8,7 @@ const int TrafficStartup::DetectCount = 4;
 const int TrafficStartup::RecognCount = 2;
 
 TrafficStartup::TrafficStartup()
-    :_startTime(DateTime::Now()), _sdkInited(false), _socketMaid(NULL), _mqtt(NULL)
+    :ThreadObject("startup"),_startTime(DateTime::Now()), _sdkInited(false), _socketMaid(NULL), _mqtt(NULL)
 {
 
 }
@@ -248,7 +248,7 @@ string TrafficStartup::GetErrorJson(const string& field, const string& message)
     return StringEx::Combine("{\"", field, "\":[\"", message, "\"]}");
 }
 
-void TrafficStartup::Startup()
+void TrafficStartup::StartCore()
 {
     Socket::Init();
     MqttChannel::Init();
@@ -336,7 +336,26 @@ void TrafficStartup::Startup()
     }
     InitChannels();
     _socketMaid->Start();
-    _socketMaid->Join();
+  
+    while (!_cancelled)
+    {
+        string ps = Command::Execute("top -n 1|grep Genos.out");
+        vector<string> psRows = StringEx::Split(ps, "\n", true);
+        if (!psRows.empty())
+        {
+            vector<string> columns = StringEx::Split(psRows[0], " ", true);
+            if (columns.size() >= 5)
+            {
+                vector<string> datas = StringEx::Split(columns[4], "m", true);
+                if (!datas.empty())
+                {
+                    LogPool::Information(LogEvent::Monitor, "memory:", datas[0]);
+                }
+            }
+        }
+        this_thread::sleep_for(chrono::minutes(1));
+    }
+
     _socketMaid->Stop();
     delete _socketMaid;
 

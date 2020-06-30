@@ -57,8 +57,19 @@ namespace OnePunchMan
 	class RecognItem
 	{
 	public:
+		RecognItem()
+			:ChannelIndex(0), FrameIndex(0), FrameSpan(0), TaskId(0),Guid(),Type(0),Region(),Width(0),Height(0)
+		{
+
+		}
 		//通道序号
 		int ChannelIndex;
+		//帧序号
+		int FrameIndex;
+		//帧间隔时间(毫秒)
+		unsigned char FrameSpan;
+		//任务号
+		unsigned char TaskId;
 		//guid
 		std::string Guid;
 		//检测项类型
@@ -83,12 +94,14 @@ namespace OnePunchMan
 	{
 	public:
 		VideoStruct_Vehicle()
-			:LaneId(),LaneName(),CarType(0),CarColor(0),CarBrand(),PlateType(0),PlateNumber()
+			:LaneId(),LaneName(), Minute(0), Second(0), CarType(0),CarColor(0),CarBrand(),PlateType(0),PlateNumber()
 		{
 
 		}
 		std::string LaneId;
 		std::string LaneName;
+		int Minute;
+		int Second;
 		int CarType;
 		int CarColor;
 		std::string CarBrand;
@@ -100,12 +113,14 @@ namespace OnePunchMan
 	{
 	public:
 		VideoStruct_Bike()
-			:LaneId(), LaneName(), BikeType(0)
+			:LaneId(), LaneName(), Minute(0), Second(0), BikeType(0)
 		{
 
 		}
 		std::string LaneId;
 		std::string LaneName;
+		int Minute;
+		int Second;
 		int BikeType;
 	};
 
@@ -113,12 +128,14 @@ namespace OnePunchMan
 	{
 	public:
 		VideoStruct_Pedestrain()
-			:LaneId(), LaneName(), Sex(0),Age(0),UpperColor(0)
+			:LaneId(), LaneName(),Minute(0), Second(0), Sex(0),Age(0),UpperColor(0)
 		{
 
 		}
 		std::string LaneId;
 		std::string LaneName;
+		int Minute;
+		int Second;
 		int Sex;
 		int Age;
 		int UpperColor;

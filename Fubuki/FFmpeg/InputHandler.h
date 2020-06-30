@@ -30,7 +30,15 @@ namespace OnePunchMan
 		//文件播放结束
 		ReadEOF_Stop = 8,
 		//正在初始化
-		Init = 9
+		Init = 9,
+		//网络异常(中心)
+		Disconnect = 10,
+		//通道不同步(中心)
+		NotFoundChannel = 11,
+		//车道不同步(中心)
+		NotFoundLane = 12,
+		//过多帧没有处理
+		NotHandle = 13
 	};
 
 	class InputHandler

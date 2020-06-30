@@ -76,8 +76,11 @@ namespace OnePunchMan
 		* @param: jd json解析
 		* @param: key 检测类型，机动车，非机动和和行人
 		* @param: channelIndex 通道序号
+		* @param: frameIndex 帧序号
+		* @param: frameSpan 帧间隔时间(毫秒)
+		* @param: taskId 任务号
 		*/
-		void GetRecognItems(std::vector<RecognItem>* items, const JsonDeserialization& jd, const std::string& key,int channelIndex);
+		void GetRecognItems(std::vector<RecognItem>* items, const JsonDeserialization& jd, const std::string& key,int channelIndex, int frameIndex,unsigned char frameSpan,unsigned char taskId);
 
 		//轮询中睡眠时间(毫秒)
 		static const int SleepTime;
