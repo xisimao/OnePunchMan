@@ -54,6 +54,21 @@ namespace OnePunchMan
     public:
         HisiEncodeChannel(int videoCount);
 
+        /**
+        * @brief: 初始化hisi sdk
+        * @param: videoCount 通道总数
+        * @param: width 编码宽度
+        * @param: height 编码高度
+        * @return: 初始化成功返回true，否则返回false
+        */
+        static bool InitHisi(int videoCount, int width, int height);
+
+        /**
+        * @brief: 卸载hisi sdk
+        * @param: videoCount 通道总数
+        */
+        static void UninitHisi(int videoCount);
+
         int StartEncode(int channelIndex,const std::string& outputUrl,const std::string& inputUrl, int frameCount);
 
 #ifndef _WIN32

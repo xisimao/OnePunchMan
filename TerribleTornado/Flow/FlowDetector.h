@@ -70,7 +70,7 @@ namespace OnePunchMan
 		{
 		public:
 			FlowLaneCache()
-				: LaneId(),LaneName(), Region(),MeterPerPixel(0.0)
+				: LaneId(),LaneName(), Direction(), Region(),MeterPerPixel(0.0)
 				, Persons(0), Bikes(0), Motorcycles(0), Cars(0), Tricycles(0), Buss(0), Vans(0), Trucks(0)
 				, TotalDistance(0.0), TotalTime(0), Speed(0.0)
 				, TotalInTime(0), TimeOccupancy(0.0)
@@ -84,6 +84,8 @@ namespace OnePunchMan
 			std::string LaneId;
 			//车道名称
 			std::string LaneName;
+			//车道方向
+			int Direction;
 			//当前检测区域
 			Polygon Region;
 			//每个像素代表的米数
@@ -176,7 +178,7 @@ namespace OnePunchMan
 		{
 		public:
 			FlowReportCache()
-				: LaneId(),LaneName(), Minute(0)
+				: LaneId(),LaneName(), Direction(0), Minute(0)
 				, Persons(0), Bikes(0), Motorcycles(0), Cars(0), Tricycles(0), Buss(0), Vans(0), Trucks(0)
 				, Speed(0.0), TimeOccupancy(0.0), HeadDistance(0.0), HeadSpace(0.0), TrafficStatus(0)
 			{
@@ -187,6 +189,8 @@ namespace OnePunchMan
 			std::string LaneId;
 			//车道名称
 			std::string LaneName;
+			//车道方向
+			int Direction;
 			//第几分钟
 			int Minute;
 			//行人流量

@@ -6,7 +6,7 @@
 
 namespace OnePunchMan
 {
-	enum OutputType
+	enum class OutputType
 	{
 		None,
 		Rtmp,

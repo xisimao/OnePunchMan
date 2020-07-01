@@ -4,7 +4,7 @@ using namespace std;
 using namespace OnePunchMan;
 
 EventStartup::EventStartup()
-    :TrafficStartup(), _endoceChannel(ChannelCount)
+    :TrafficStartup(), _encode(ChannelCount)
 {
     TrafficData::Init("event.db");
 }
@@ -27,10 +27,10 @@ void EventStartup::InitThreads(MqttChannel* mqtt, vector<HisiDecodeChannel*>* de
 {
     for (int i = 0; i < ChannelCount; ++i)
     {
-        EventDetector* detector = new EventDetector(DecodeChannel::DestinationWidth, DecodeChannel::DestinationHeight, mqtt,&_endoceChannel);
+        EventDetector* detector = new EventDetector(DecodeChannel::DestinationWidth, DecodeChannel::DestinationHeight, mqtt,&_encode);
         _detectors.push_back(detector);
         detectors->push_back(detector);
-        HisiDecodeChannel* decode = new HisiDecodeChannel(i + 1,&_endoceChannel);
+        HisiDecodeChannel* decode = new HisiDecodeChannel(i + 1,&_encode);
         decodes->push_back(decode);
     }
 
@@ -49,7 +49,7 @@ void EventStartup::InitThreads(MqttChannel* mqtt, vector<HisiDecodeChannel*>* de
             detects->at(i)->AddChannel(channelIndex, decodes->at(channelIndex - 1), detectors->at(channelIndex - 1));
         }
     }
-    _endoceChannel.Start();
+    _encode.Start();
 }
 
 void EventStartup::InitChannels()

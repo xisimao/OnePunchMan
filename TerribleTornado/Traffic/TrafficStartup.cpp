@@ -253,8 +253,10 @@ void TrafficStartup::StartCore()
     Socket::Init();
     MqttChannel::Init();
     DecodeChannel::InitFFmpeg();
+
     HisiDecodeChannel::UninitHisi(ChannelCount);
-    if (!HisiDecodeChannel::InitHisi(ChannelCount))
+    if (!HisiDecodeChannel::InitHisi(ChannelCount)
+        ||!HisiEncodeChannel::InitHisi(ChannelCount, HisiDecodeChannel::DestinationWidth,HisiDecodeChannel::DestinationHeight))
     {
         exit(2);
     }
@@ -379,8 +381,8 @@ void TrafficStartup::StartCore()
         _mqtt->Stop();
         delete _mqtt;
     }
-
     SeemmoSDK::Uninit();
+    HisiEncodeChannel::UninitHisi(ChannelCount);
     HisiDecodeChannel::UninitHisi(ChannelCount);
     DecodeChannel::UninitFFmpeg();
     MqttChannel::Uninit();

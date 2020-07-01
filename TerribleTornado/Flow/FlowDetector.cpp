@@ -49,6 +49,7 @@ void FlowDetector::UpdateChannel(unsigned char taskId, const FlowChannel& channe
 			double pixels = detectLine.Middle().Distance(stopLine.Middle());
 			cache.LaneId = lit->LaneId;
 			cache.LaneName = lit->LaneName;
+			cache.Direction = lit->Direction;
 			cache.MeterPerPixel = lit->Length / pixels;
 			lanes.push_back(cache);
 			regionsParam.append(lit->Region);
@@ -115,10 +116,10 @@ void FlowDetector::UpdateChannel(unsigned char taskId, const FlowChannel& channe
 	LogPool::Information(LogEvent::Flow, "channel:", channel.ChannelIndex, "task:", _taskId, "output report:", channel.OutputReport, "output image:", channel.OutputImage, "output recogn:", channel.OutputRecogn, "global detect:", channel.GlobalDetect, "current:", _currentMinuteTimeStamp, "next:", _nextMinuteTimeStamp);
 	detectLock.unlock();
 
-	lock_guard<mutex> recognLock(_recognLaneMutex);
+	unique_lock<mutex> recognLock(_recognLaneMutex);
 	_recognLanes.assign(lanes.begin(), lanes.end());
 	_recognChannelUrl = channel.ChannelUrl;
-
+	recognLock.unlock();
 }
 
 void FlowDetector::ClearChannel()
@@ -130,9 +131,10 @@ void FlowDetector::ClearChannel()
 	_lanesInited = false;
 	detectLock.unlock();
 
-	lock_guard<mutex> recognLock(_recognLaneMutex);
+	unique_lock<mutex> recognLock(_recognLaneMutex);
 	_recognLanes.clear();
 	_recognChannelUrl = string();
+	recognLock.unlock();
 }
 
 void FlowDetector::GetReportJson(string* json)
@@ -145,6 +147,7 @@ void FlowDetector::GetReportJson(string* json)
 		JsonSerialization::SerializeValue(&flowJson, "minute", it->Minute);
 		JsonSerialization::SerializeValue(&flowJson, "laneId", it->LaneId);
 		JsonSerialization::SerializeValue(&flowJson, "laneName", it->LaneName);
+		JsonSerialization::SerializeValue(&flowJson, "direction", it->Direction);
 		JsonSerialization::SerializeValue(&flowJson, "persons", it->Persons);
 		JsonSerialization::SerializeValue(&flowJson, "bikes", it->Bikes);
 		JsonSerialization::SerializeValue(&flowJson, "motorcycles", it->Motorcycles);
@@ -167,6 +170,7 @@ void FlowDetector::GetReportJson(string* json)
 		JsonSerialization::SerializeValue(&vehicleJson, "time", StringEx::Combine(it->Minute, ":", it->Second));
 		JsonSerialization::SerializeValue(&vehicleJson, "laneId", it->LaneId);
 		JsonSerialization::SerializeValue(&vehicleJson, "laneName", it->LaneName);		
+		JsonSerialization::SerializeValue(&vehicleJson, "direction", it->Direction);		
 		JsonSerialization::SerializeValue(&vehicleJson, "carType", it->CarType);
 		JsonSerialization::SerializeValue(&vehicleJson, "carColor", it->CarColor);
 		JsonSerialization::SerializeValue(&vehicleJson, "carBrand", it->CarBrand);
@@ -181,6 +185,7 @@ void FlowDetector::GetReportJson(string* json)
 		JsonSerialization::SerializeValue(&bikeJson, "time", StringEx::Combine(it->Minute, ":", it->Second));
 		JsonSerialization::SerializeValue(&bikeJson, "laneId", it->LaneId);
 		JsonSerialization::SerializeValue(&bikeJson, "laneName", it->LaneName);
+		JsonSerialization::SerializeValue(&bikeJson, "direction", it->Direction);
 		JsonSerialization::SerializeValue(&bikeJson, "bikeType", it->BikeType);
 		JsonSerialization::AddClassItem(&bikesJson, bikeJson);
 	}
@@ -191,6 +196,7 @@ void FlowDetector::GetReportJson(string* json)
 		JsonSerialization::SerializeValue(&pedestrainJson, "time", StringEx::Combine(it->Minute, ":", it->Second));
 		JsonSerialization::SerializeValue(&pedestrainJson, "laneId", it->LaneId);
 		JsonSerialization::SerializeValue(&pedestrainJson, "laneName", it->LaneName);
+		JsonSerialization::SerializeValue(&pedestrainJson, "direction", it->Direction);
 		JsonSerialization::SerializeValue(&pedestrainJson, "sex", it->Sex);
 		JsonSerialization::SerializeValue(&pedestrainJson, "age", it->Age);
 		JsonSerialization::SerializeValue(&pedestrainJson, "upperColor", it->UpperColor);
@@ -292,6 +298,7 @@ void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long 
 				reportCache.Minute = _currentReportMinute;
 				reportCache.LaneId = cache.LaneId;
 				reportCache.LaneName = cache.LaneName;
+				reportCache.Direction = cache.Direction;
 				reportCache.Bikes = cache.Bikes;
 				reportCache.Buss = cache.Buss;
 				reportCache.Cars = cache.Cars;
@@ -476,6 +483,7 @@ void FlowDetector::FinishDetect(unsigned char taskId)
 			reportCache.Minute = _currentReportMinute;
 			reportCache.LaneId = cache.LaneId;
 			reportCache.LaneName = cache.LaneName;
+			reportCache.Direction = cache.Direction;
 			reportCache.Bikes = cache.Bikes;
 			reportCache.Buss = cache.Buss;
 			reportCache.Cars = cache.Cars;
@@ -523,6 +531,7 @@ void FlowDetector::HandleRecognVehicle(const RecognItem& recognItem, const unsig
 				VideoStruct_Vehicle reportCache = vehicle;
 				reportCache.LaneId = it->LaneId;
 				reportCache.LaneName = it->LaneName;
+				reportCache.Direction = it->Direction;
 				reportCache.Minute = recognItem.FrameIndex * recognItem.FrameSpan / 60000;
 				reportCache.Second = recognItem.FrameIndex * recognItem.FrameSpan % 60000 / 1000;
 				lock_guard<mutex> reportMutex(_reportMutex);
@@ -567,6 +576,7 @@ void FlowDetector::HandleRecognBike(const RecognItem& recognItem, const unsigned
 				VideoStruct_Bike reportCache = bike;
 				reportCache.LaneId = it->LaneId;
 				reportCache.LaneName = it->LaneName;
+				reportCache.Direction = it->Direction;
 				reportCache.Minute = recognItem.FrameIndex * recognItem.FrameSpan / 60000;
 				reportCache.Second = recognItem.FrameIndex * recognItem.FrameSpan %60000/1000;
 				lock_guard<mutex> reportMutex(_reportMutex);
@@ -613,6 +623,7 @@ void FlowDetector::HandleRecognPedestrain(const RecognItem& recognItem, const un
 				VideoStruct_Pedestrain reportCache = pedestrain;
 				reportCache.LaneId = it->LaneId;
 				reportCache.LaneName = it->LaneName;
+				reportCache.Direction = it->Direction;
 				reportCache.Minute = recognItem.FrameIndex * recognItem.FrameSpan / 60000;
 				reportCache.Second = recognItem.FrameIndex * recognItem.FrameSpan % 60000 / 1000;
 				lock_guard<mutex> reportMutex(_reportMutex);

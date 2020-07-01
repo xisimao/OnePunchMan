@@ -13,6 +13,114 @@ HisiEncodeChannel::HisiEncodeChannel(int videoCount)
     }
 }
 
+bool HisiEncodeChannel::InitHisi(int videoCount,int width,int height)
+{
+#ifndef _WIN32
+	//venc
+    SIZE_S stDispSize;
+    stDispSize.u32Width = width;
+    stDispSize.u32Height = height;
+	VENC_GOP_ATTR_S stGopAttr;
+
+	memset(&stGopAttr, 0, sizeof(VENC_GOP_ATTR_S));
+
+	stGopAttr.enGopMode = VENC_GOPMODE_NORMALP;
+	stGopAttr.stNormalP.s32IPQpDelta = 3;
+	for (int i = 0; i < videoCount; i++)
+	{
+		HI_S32 s32Ret;
+
+
+		/******************************************
+		 step 1:  Creat Encode Chnl
+		******************************************/
+
+		VENC_CHN_ATTR_S        stVencChnAttr;
+		HI_U32                 u32FrameRate = 25;
+		HI_U32                 u32StatTime;
+		HI_U32                 u32Gop = 40;
+
+		/******************************************
+		 step 1:  Create Venc Channel
+		******************************************/
+		stVencChnAttr.stVencAttr.enType = PT_H264;
+		stVencChnAttr.stVencAttr.u32MaxPicWidth = stDispSize.u32Width;
+		stVencChnAttr.stVencAttr.u32MaxPicHeight = stDispSize.u32Height;
+		stVencChnAttr.stVencAttr.u32PicWidth = stDispSize.u32Width;/*the picture width*/
+		stVencChnAttr.stVencAttr.u32PicHeight = stDispSize.u32Height;/*the picture height*/
+		stVencChnAttr.stVencAttr.u32BufSize = stDispSize.u32Width * stDispSize.u32Height * 2;/*stream buffer size*/
+		stVencChnAttr.stVencAttr.u32Profile = 0;
+		stVencChnAttr.stVencAttr.bByFrame = HI_TRUE;/*get stream mode is slice mode or frame mode?*/
+
+		if (VENC_GOPMODE_ADVSMARTP == stGopAttr.enGopMode)
+		{
+			u32StatTime = stGopAttr.stAdvSmartP.u32BgInterval / u32Gop;
+		}
+		else if (VENC_GOPMODE_SMARTP == stGopAttr.enGopMode)
+		{
+			u32StatTime = stGopAttr.stSmartP.u32BgInterval / u32Gop;
+		}
+		else
+		{
+			u32StatTime = 1;
+		}
+
+		stVencChnAttr.stVencAttr.stAttrH264e.bRcnRefShareBuf = HI_FALSE;
+		VENC_H264_CBR_S    stH264Cbr;
+
+		stVencChnAttr.stRcAttr.enRcMode = VENC_RC_MODE_H264CBR;
+		stH264Cbr.u32Gop = u32Gop; /*the interval of IFrame*/
+		stH264Cbr.u32StatTime = u32StatTime; /* stream rate statics time(s) */
+		stH264Cbr.u32SrcFrameRate = u32FrameRate; /* input (vi) frame rate */
+		stH264Cbr.fr32DstFrameRate = u32FrameRate; /* target frame rate */
+		stH264Cbr.u32BitRate = 1024 * 2 + 2048;
+
+		memcpy(&stVencChnAttr.stRcAttr.stH264Cbr, &stH264Cbr, sizeof(VENC_H264_CBR_S));
+
+		memcpy(&stVencChnAttr.stGopAttr, &stGopAttr, sizeof(VENC_GOP_ATTR_S));
+
+
+		s32Ret = HI_MPI_VENC_CreateChn(i, &stVencChnAttr);
+		if (HI_SUCCESS != s32Ret)
+		{
+			return false;
+		}
+
+		/******************************************
+		 step 2:  Start Recv Venc Pictures
+		******************************************/
+		VENC_RECV_PIC_PARAM_S  stRecvParam;
+		stRecvParam.s32RecvPicNum = -1;
+		s32Ret = HI_MPI_VENC_StartRecvFrame(i, &stRecvParam);
+		if (HI_SUCCESS != s32Ret)
+		{
+			return false;
+		}
+	}
+#endif
+	LogPool::Information(LogEvent::Decode, "init hisi encode");
+	return true;
+}
+
+void HisiEncodeChannel::UninitHisi(int videoCount)
+{
+#ifndef _WIN32
+	//venc
+	for (int i = 0; i < videoCount; ++i)
+	{
+		/******************************************
+		 step 1:  Stop Recv Pictures
+		******************************************/
+		HI_MPI_VENC_StopRecvFrame(i);
+		/******************************************
+		 step 2:  Distroy Venc Channel
+		******************************************/
+		HI_MPI_VENC_DestroyChn(i);
+	}
+#endif // !_WIN32
+	LogPool::Information(LogEvent::Decode, "uninit hisi encode");
+}
+
 int HisiEncodeChannel::StartEncode(int channelIndex,const std::string& outputUrl, const std::string& inputUrl,int frameCount)
 {
     lock_guard<mutex> lck(_mutex);
@@ -30,16 +138,16 @@ int HisiEncodeChannel::StartEncode(int channelIndex,const std::string& outputUrl
     return -1;
 }
 
-void HisiEncodeChannel::StopEncode(int index)
+void HisiEncodeChannel::StopEncode(int encodeIndex)
 {
     lock_guard<mutex> lck(_mutex);
-    if (index >= 0 && index < _videoCount
-        && _outputHandlers[index] != NULL)
+    if (encodeIndex >= 0 && encodeIndex < _videoCount
+        && _outputHandlers[encodeIndex] != NULL)
     {
-        _outputHandlers[index]->Uninit();
-        delete _outputHandlers[index];
-        _outputHandlers[index] = NULL;
-        _channelIndices[index] = -1;
+        _outputHandlers[encodeIndex]->Uninit();
+        delete _outputHandlers[encodeIndex];
+        _outputHandlers[encodeIndex] = NULL;
+        _channelIndices[encodeIndex] = -1;
     }
 }
 

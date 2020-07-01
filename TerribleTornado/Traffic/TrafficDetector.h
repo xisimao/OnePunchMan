@@ -94,12 +94,13 @@ namespace OnePunchMan
 	{
 	public:
 		VideoStruct_Vehicle()
-			:LaneId(),LaneName(), Minute(0), Second(0), CarType(0),CarColor(0),CarBrand(),PlateType(0),PlateNumber()
+			:LaneId(),LaneName(),Direction(0), Minute(0), Second(0), CarType(0),CarColor(0),CarBrand(),PlateType(0),PlateNumber()
 		{
 
 		}
 		std::string LaneId;
 		std::string LaneName;
+		int Direction;
 		int Minute;
 		int Second;
 		int CarType;
@@ -113,12 +114,13 @@ namespace OnePunchMan
 	{
 	public:
 		VideoStruct_Bike()
-			:LaneId(), LaneName(), Minute(0), Second(0), BikeType(0)
+			:LaneId(), LaneName(), Direction(0), Minute(0), Second(0), BikeType(0)
 		{
 
 		}
 		std::string LaneId;
 		std::string LaneName;
+		int Direction;
 		int Minute;
 		int Second;
 		int BikeType;
@@ -128,12 +130,13 @@ namespace OnePunchMan
 	{
 	public:
 		VideoStruct_Pedestrain()
-			:LaneId(), LaneName(),Minute(0), Second(0), Sex(0),Age(0),UpperColor(0)
+			:LaneId(), LaneName(), Direction(0), Minute(0), Second(0), Sex(0),Age(0),UpperColor(0)
 		{
 
 		}
 		std::string LaneId;
 		std::string LaneName;
+		int Direction;
 		int Minute;
 		int Second;
 		int Sex;
