@@ -10,19 +10,37 @@ using namespace OnePunchMan;
 
 int main(int argc, char* argv[])
 {
-    vector<string> columns = StringEx::Split(" 1629  1626 root     S    2116m141.8   3 73.3 ./Genos.out flow", " ", true);
-    if (columns.size() >= 5)
+    DecodeChannel::InitFFmpeg();
+    OutputHandler handler;
+    handler.Init(1, "temp.mp4", "600w.mp4",1);
+    int size = 1024;
+    while(true)
     {
-        vector<string> datas=StringEx::Split(columns[4], "m", true);
-        if (!datas.empty())
-        {
-            cout << datas[0] << endl;
-        }
+        AVPacket* packet = av_packet_alloc();
+        unsigned char* temp = (unsigned char*)av_malloc(size);
+        memset(temp, 1, size);
+        av_packet_from_data(packet, temp, size);
+        av_write_frame(handler._outputFormat, packet);
+        av_packet_unref(packet);
+        //av_interleaved_write_frame(handler._outputFormat, packet);
+        av_packet_free(&packet);
+        //this_thread::sleep_for(chrono::milliseconds(10));
     }
-    LogPool::Init("appsettings.json");
-    FlowStartup startup;
-    startup.Start();
-    startup.Join();
+    handler.Uninit();
+    system("pause");
+    //vector<string> columns = StringEx::Split(" 1629  1626 root     S    2116m141.8   3 73.3 ./Genos.out flow", " ", true);
+    //if (columns.size() >= 5)
+    //{
+    //    vector<string> datas=StringEx::Split(columns[4], "m", true);
+    //    if (!datas.empty())
+    //    {
+    //        cout << datas[0] << endl;
+    //    }
+    //}
+    //LogPool::Init("appsettings.json");
+    //FlowStartup startup;
+    //startup.Start();
+    //startup.Join();
     //DecodeChannel::InitFFmpeg();
 
     //HisiDecodeChannel channel(1);

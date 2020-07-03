@@ -4,7 +4,7 @@ using namespace std;
 using namespace OnePunchMan;
 
 OutputHandler::OutputHandler()
-	:_outputFormat(NULL), _outputStream(NULL), _outputCodec(NULL), _inputTimeBase(),_type(OutputType::None), _channelIndex(0),_frameIndex(1), _frameSpan(0),_frameCount(0), _ptsBase(0)
+	:_outputFormat(NULL), _outputStream(NULL), _outputCodec(NULL), _inputTimeBase(), _channelIndex(0),_frameIndex(1),_frameCount(0), _frameSpan(0), _ptsBase(0)
 {
 }
 
@@ -14,12 +14,10 @@ ChannelStatus OutputHandler::Init(const string& outputUrl, const InputHandler& i
 	{
 		if (outputUrl.size() >= 4 && outputUrl.substr(0, 4).compare("rtmp") == 0)
 		{
-			_type = OutputType::Rtmp;
 			avformat_alloc_output_context2(&_outputFormat, NULL, "flv", outputUrl.c_str());
 		}
 		else
 		{
-			_type = OutputType::Mp4;
 			avformat_alloc_output_context2(&_outputFormat, NULL, NULL, outputUrl.c_str());
 		}
 		if (_outputFormat == NULL) {
@@ -115,18 +113,11 @@ void OutputHandler::Uninit()
 	}
 }
 
-void OutputHandler::PushPacket(AVPacket* packet, unsigned int frameIndex, long long duration)
+void OutputHandler::PushRtmpPacket(AVPacket* packet, unsigned int frameIndex, long long duration)
 {
 	if (_outputFormat != NULL)
 	{
-		if (_type == OutputType::Rtmp)
-		{
-			packet->pts = packet->pts == AV_NOPTS_VALUE ? duration + frameIndex * _frameSpan : duration + av_rescale_q_rnd(packet->pts, _inputTimeBase, _outputStream->time_base, (AVRounding)(AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
-		}
-		else
-		{
-			packet->pts = _frameIndex * _ptsBase;
-		}
+		packet->pts = packet->pts == AV_NOPTS_VALUE ? duration + frameIndex * _frameSpan : duration + av_rescale_q_rnd(packet->pts, _inputTimeBase, _outputStream->time_base, (AVRounding)(AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
 		if (packet->dts!= AV_NOPTS_VALUE)
 		{
 			packet->dts = duration + av_rescale_q_rnd(packet->dts, _inputTimeBase, _outputStream->time_base, (AVRounding)(AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
@@ -137,17 +128,24 @@ void OutputHandler::PushPacket(AVPacket* packet, unsigned int frameIndex, long l
 	}
 }
 
-bool OutputHandler::PushPacket(unsigned char* data, int size)
+bool OutputHandler::PushMp4Packet(unsigned char* data, int size)
 {
-	if (_frameIndex > _frameCount)
+	if (_frameIndex <= _frameCount&&_outputFormat!=NULL)
+	{
+		AVPacket* packet = av_packet_alloc();
+		unsigned char* temp = (unsigned char*)av_malloc(size);
+		memcpy(temp, data, size);
+		av_packet_from_data(packet, temp, size);
+		packet->pts = _frameIndex * _ptsBase;
+		packet->duration = av_rescale_q(packet->duration, _inputTimeBase, _outputStream->time_base);
+		packet->pos = -1;
+		av_interleaved_write_frame(_outputFormat, packet);
+		av_packet_free(&packet);
+		_frameIndex += 1;
+		return false;
+	}
+	else
 	{
 		return true;
 	}
-	AVPacket* packet = av_packet_alloc();
-	unsigned char* temp=(unsigned char*)av_malloc(size);
-	memcpy(temp, data, size);
-	av_packet_from_data(packet, temp,size);
-	PushPacket(packet, _frameIndex, 0);
-	_frameIndex += 1;
-	return false;
 }

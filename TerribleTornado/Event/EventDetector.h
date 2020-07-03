@@ -113,9 +113,11 @@ namespace OnePunchMan
 			{
 
 			}
-
+			//事件json数据
 			std::string Json;
+			//编码器序号
 			int EncodeIndex;
+			//输出mp4文件地址
 			std::string FilePath;
 		};
 
@@ -166,9 +168,11 @@ namespace OnePunchMan
 		unsigned char* _bgrBuffer;
 		//jpg字节流
 		unsigned char* _jpgBuffer;
-
+		//编码线程
 		HisiEncodeChannel* _encodeChannel;
+		//视频文件临时存放字节流长度
 		int _videoSize;
+		//视频文件临时存放字节流
 		unsigned char* _videoBuffer;
 		
 	};

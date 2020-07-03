@@ -242,7 +242,7 @@ void DecodeChannel::StartCore()
 						LogPool::Error(LogEvent::Decode, "decode error", _channelIndex, frameIndex);
 						_channelStatus = ChannelStatus::DecodeError;
 					}
-					_outputHandler.PushPacket(packet, frameIndex, duration);
+					_outputHandler.PushRtmpPacket(packet, frameIndex, duration);
 
 					long long timeStamp4 = DateTime::UtcNowTimeStamp();
 					long long sleepTime = _frameSpan - (timeStamp4 - timeStamp2);

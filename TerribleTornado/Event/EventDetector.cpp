@@ -136,14 +136,20 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 	{
 		EventLaneCache& laneCache = _lanes[i];
 		//É¾³ý³¬Ê±Êý¾Ý
-		map<string, EventDetectCache>::iterator it = laneCache.Items.begin();
-		while (it != laneCache.Items.end()) {
-			if (timeStamp - it->second.LastTimeStamp > DeleteSpan) {
+		for (map<string, EventDetectCache>::iterator it = laneCache.Items.begin(); it != laneCache.Items.end();)
+		{
+			if (timeStamp - it->second.LastTimeStamp > DeleteSpan)
+			{
 				laneCache.Items.erase(it++);
 			}
-			else {
+			else
+			{
 				++it;
 			}
+		}
+		if (laneCache.Items.size() > 100)
+		{
+			LogPool::Warning("too many cache", _channelIndex, i, laneCache.Items.size());
 		}
 		int carsInLane = 0;
 		for (map<string, DetectItem>::iterator dit = detectItems->begin(); dit != detectItems->end(); ++dit)

@@ -52,40 +52,68 @@ namespace OnePunchMan
     class HisiEncodeChannel :public ThreadObject
     {
     public:
-        HisiEncodeChannel(int videoCount);
+        /**
+        * @brief: 构造函数
+        * @param: encodeCount 编码器总数
+        */
+        HisiEncodeChannel(int encodeCount);
 
         /**
         * @brief: 初始化hisi sdk
-        * @param: videoCount 通道总数
+        * @param: encodeCount 编码器总数
         * @param: width 编码宽度
         * @param: height 编码高度
         * @return: 初始化成功返回true，否则返回false
         */
-        static bool InitHisi(int videoCount, int width, int height);
+        static bool InitHisi(int encodeCount, int width, int height);
 
         /**
         * @brief: 卸载hisi sdk
-        * @param: videoCount 通道总数
+        * @param: encodeCount 编码器总数
         */
-        static void UninitHisi(int videoCount);
+        static void UninitHisi(int encodeCount);
 
+        /**
+        * @brief: 开始编码
+        * @param: channelIndex 输入通道序号
+        * @param: outputUrl 输出视频地址
+        * @param: inputUrl 输入视频地址
+        * @param: frameCount 输出的总帧数
+        * @return: 初始化成功返回编码器的序号，否则返回-1
+        */
         int StartEncode(int channelIndex,const std::string& outputUrl,const std::string& inputUrl, int frameCount);
 
 #ifndef _WIN32
+        /**
+        * @brief: 向编码器推送视频帧
+        * @param: channelIndex 通道序号
+        * @param: frame 视频帧
+        */
         void PushFrame(int channelIndex, VIDEO_FRAME_INFO_S* frame);
 #endif // !_WIN32
 
+        /**
+        * @brief: 停止编码
+        * @param: encodeIndex 编码器序号
+        */
         void StopEncode(int encodeIndex);
 
+        /**
+        * @brief: 获取解码器是否已经输出了足够的视频帧
+        * @param: encodeIndex 编码器序号
+        */
         bool Finished(int encodeIndex);
+
     protected:
         void StartCore();
 
     private:
-        int _videoCount;
+        //编码器总数
+        int _encodeCount;
+        //视频输出集合
         std::mutex _mutex;
         std::vector<OutputHandler*> _outputHandlers;
-
+        //解码器对应的输入通道序号
         std::vector<int> _channelIndices;
     };
 

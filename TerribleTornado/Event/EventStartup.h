@@ -45,7 +45,8 @@ namespace OnePunchMan
 
         //通道检测集合，等于视频总数
         std::vector<EventDetector*> _detectors;
-        //编码
+
+        //编码线程
         HisiEncodeChannel _encode;
     };
 }

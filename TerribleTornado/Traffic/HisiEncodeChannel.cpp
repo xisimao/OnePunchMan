@@ -3,17 +3,17 @@
 using namespace std;
 using namespace OnePunchMan;
 
-HisiEncodeChannel::HisiEncodeChannel(int videoCount)
-    :ThreadObject("encode"), _videoCount(videoCount)
+HisiEncodeChannel::HisiEncodeChannel(int encodeCount)
+    :ThreadObject("encode"), _encodeCount(encodeCount)
 {
-    for (int i = 0; i < videoCount; ++i)
+    for (int i = 0; i < encodeCount; ++i)
     {
         _outputHandlers.push_back(NULL);
         _channelIndices.push_back(-1);
     }
 }
 
-bool HisiEncodeChannel::InitHisi(int videoCount,int width,int height)
+bool HisiEncodeChannel::InitHisi(int encodeCount,int width,int height)
 {
 #ifndef _WIN32
 	//venc
@@ -26,7 +26,7 @@ bool HisiEncodeChannel::InitHisi(int videoCount,int width,int height)
 
 	stGopAttr.enGopMode = VENC_GOPMODE_NORMALP;
 	stGopAttr.stNormalP.s32IPQpDelta = 3;
-	for (int i = 0; i < videoCount; i++)
+	for (int i = 0; i < encodeCount; i++)
 	{
 		HI_S32 s32Ret;
 
@@ -102,11 +102,11 @@ bool HisiEncodeChannel::InitHisi(int videoCount,int width,int height)
 	return true;
 }
 
-void HisiEncodeChannel::UninitHisi(int videoCount)
+void HisiEncodeChannel::UninitHisi(int encodeCount)
 {
 #ifndef _WIN32
 	//venc
-	for (int i = 0; i < videoCount; ++i)
+	for (int i = 0; i < encodeCount; ++i)
 	{
 		/******************************************
 		 step 1:  Stop Recv Pictures
@@ -141,7 +141,7 @@ int HisiEncodeChannel::StartEncode(int channelIndex,const std::string& outputUrl
 void HisiEncodeChannel::StopEncode(int encodeIndex)
 {
     lock_guard<mutex> lck(_mutex);
-    if (encodeIndex >= 0 && encodeIndex < _videoCount
+    if (encodeIndex >= 0 && encodeIndex < _encodeCount
         && _outputHandlers[encodeIndex] != NULL)
     {
         _outputHandlers[encodeIndex]->Uninit();
@@ -155,7 +155,7 @@ void HisiEncodeChannel::StopEncode(int encodeIndex)
 #ifndef _WIN32
 void HisiEncodeChannel::PushFrame(int channelIndex, VIDEO_FRAME_INFO_S* frame)
 {
-    for (int encodeIndex = 0; encodeIndex < _videoCount; ++encodeIndex)
+    for (int encodeIndex = 0; encodeIndex < _encodeCount; ++encodeIndex)
     {
         if (_channelIndices[encodeIndex] == channelIndex)
         {
@@ -167,7 +167,7 @@ void HisiEncodeChannel::PushFrame(int channelIndex, VIDEO_FRAME_INFO_S* frame)
 
 bool HisiEncodeChannel::Finished(int encodeIndex)
 {
-    if (encodeIndex >= 0 && encodeIndex < _videoCount)
+    if (encodeIndex >= 0 && encodeIndex < _encodeCount)
     {
         return _channelIndices[encodeIndex] == -1;
     }
@@ -191,7 +191,7 @@ void HisiEncodeChannel::StartCore()
      step 1:  check & prepare save-file & venc-fd
     ******************************************/
 
-    for (int encodeIndex = 0; encodeIndex < _videoCount; encodeIndex++)
+    for (int encodeIndex = 0; encodeIndex < _encodeCount; encodeIndex++)
     {
         /* Set Venc Fd. */
         vencFds[encodeIndex] = HI_MPI_VENC_GetFd(encodeIndex);
@@ -219,7 +219,7 @@ void HisiEncodeChannel::StartCore()
     while (!_cancelled)
     {
         FD_ZERO(&read_fds);
-        for (int encodeIndex = 0; encodeIndex < _videoCount; encodeIndex++)
+        for (int encodeIndex = 0; encodeIndex < _encodeCount; encodeIndex++)
         {
             FD_SET(vencFds[encodeIndex], &read_fds);
         }
@@ -239,7 +239,7 @@ void HisiEncodeChannel::StartCore()
         else
         {
 
-            for (int encodeIndex = 0; encodeIndex < _videoCount; encodeIndex++)
+            for (int encodeIndex = 0; encodeIndex < _encodeCount; encodeIndex++)
             {
                 if (FD_ISSET(vencFds[encodeIndex], &read_fds))
                 {
@@ -294,7 +294,7 @@ void HisiEncodeChannel::StartCore()
                     {
                         if (_outputHandlers[encodeIndex] != NULL)
                         {
-                            if (_outputHandlers[encodeIndex]->PushPacket((unsigned char*)(stStream.pstPack[packetIndex].pu8Addr + stStream.pstPack[packetIndex].u32Offset), stStream.pstPack[packetIndex].u32Len - stStream.pstPack[packetIndex].u32Offset))
+                            if (_outputHandlers[encodeIndex]->PushMp4Packet((unsigned char*)(stStream.pstPack[packetIndex].pu8Addr + stStream.pstPack[packetIndex].u32Offset), stStream.pstPack[packetIndex].u32Len - stStream.pstPack[packetIndex].u32Offset))
                             {
                                 _channelIndices[encodeIndex] = -1;
                             }
