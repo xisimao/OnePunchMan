@@ -101,6 +101,7 @@ void FlowDetector::UpdateChannel(unsigned char taskId, const FlowChannel& channe
 	_pedestrainReportCaches.clear();
 	reportMutex.unlock();
 	_outputReport = channel.OutputReport;
+	_currentReportMinute = 0;
 	DateTime date;
 	if (channel.OutputReport)
 	{

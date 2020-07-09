@@ -75,6 +75,15 @@ namespace OnePunchMan
 		{
 			return StringEx::Combine("rtmp://", ip, ":1935/live/", ChannelIndex);
 		}
+
+		/**
+		* @brief: 获取通道http-flv地址
+		* @return: 通道http-flv地址
+		*/
+		std::string FlvUrl(const std::string ip) const
+		{
+			return StringEx::Combine("http://",ip,":1936/live?port=1935&app=live&stream=", ChannelIndex);
+		}
 	};
 
 	//数据库
@@ -85,6 +94,11 @@ namespace OnePunchMan
 		* @brief: 构造函数
 		*/
 		TrafficData();
+
+		/**
+		* @brief: 析构函数
+		*/
+		virtual ~TrafficData()= default;
 
 		/**
 		* @brief: 初始化数据库名称

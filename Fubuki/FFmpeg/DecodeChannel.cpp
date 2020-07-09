@@ -76,9 +76,9 @@ unsigned char DecodeChannel::UpdateChannel(const std::string& inputUrl, const st
 	}
 	_inputUrl.assign(inputUrl);
 	_outputUrl.assign(outputUrl);
-#ifdef _WIN32
-	_outputUrl.clear();
-#endif // _WIN32
+//#ifdef _WIN32
+//	_outputUrl.clear();
+//#endif // _WIN32
 	_loop = loop;
 	return ++_taskId;
 }

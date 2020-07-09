@@ -77,6 +77,7 @@ string EventStartup::GetChannelJson(const string& host,int channelIndex)
         JsonSerialization::SerializeValue(&channelJson, "channelName", channel.ChannelName);
         JsonSerialization::SerializeValue(&channelJson, "channelUrl", channel.ChannelUrl);
         JsonSerialization::SerializeValue(&channelJson, "rtmpUrl", channel.RtmpUrl(host));
+        JsonSerialization::SerializeValue(&channelJson, "flvUrl", channel.FlvUrl(host));
         JsonSerialization::SerializeValue(&channelJson, "channelType", channel.ChannelType);
         if (ChannelIndexEnable(channel.ChannelIndex))
         {
