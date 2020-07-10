@@ -73,6 +73,7 @@ unsigned char DecodeChannel::UpdateChannel(const std::string& inputUrl, const st
 		|| _channelStatus != ChannelStatus::Normal)
 	{
 		_channelStatus = ChannelStatus::Init;
+		++_taskId;
 	}
 	_inputUrl.assign(inputUrl);
 	_outputUrl.assign(outputUrl);
@@ -80,7 +81,7 @@ unsigned char DecodeChannel::UpdateChannel(const std::string& inputUrl, const st
 //	_outputUrl.clear();
 //#endif // _WIN32
 	_loop = loop;
-	return ++_taskId;
+	return _taskId;
 }
 
 void DecodeChannel::ClearChannel()
@@ -272,11 +273,10 @@ void DecodeChannel::StartCore()
 			unique_lock<mutex> lck(_mutex);
 			UninitDecoder();
 			//读取到结尾重新启动时不需要重置输出
-			if (_channelStatus != ChannelStatus::ReadEOF_Restart)
-			{
-				//UninitOutput();
+			/*if (_channelStatus != ChannelStatus::ReadEOF_Restart)
+			{*/
 				_outputHandler.Uninit();
-			}
+			//}
 			_inputHandler.Uninit();
 			ChannelStatus oldStatus = _channelStatus;
 
