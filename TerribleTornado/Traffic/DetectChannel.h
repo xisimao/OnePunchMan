@@ -84,8 +84,6 @@ namespace OnePunchMan
 
 		//轮询中睡眠时间(毫秒)
 		static const int SleepTime;
-		//检测主题
-		static const std::string DetectTopic;
 
 		//线程是否初始化完成
 		bool _inited;

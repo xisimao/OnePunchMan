@@ -91,6 +91,17 @@ void ImageConvert::JpgToFile(unsigned char* jpgBuffer, int jpgSize, int channelI
 	fclose(fw);
 }
 
+void ImageConvert::DrawPoint(cv::Mat* image, const Point& point, const cv::Scalar& scalar)
+{
+	cv::circle(*image, cv::Point(point.X, point.Y), 10, scalar, -1);
+}
+
+void ImageConvert::DrawRectangle(cv::Mat* image, const Rectangle& rectangle, const cv::Scalar& scalar)
+{
+	cv::Rect rect(rectangle.Top().X, rectangle.Top().Y, rectangle.Width(), rectangle.Height());
+	cv::rectangle(*image, rect, scalar, 10);
+}
+
 void ImageConvert::DrawPolygon(cv::Mat* image, const Polygon& polygon, const cv::Scalar& scalar)
 {
 	vector<vector<cv::Point>> polygons;
@@ -103,13 +114,8 @@ void ImageConvert::DrawPolygon(cv::Mat* image, const Polygon& polygon, const cv:
 	cv::polylines(*image, polygons, true, scalar, 3);
 }
 
-void ImageConvert::DrawRectangle(cv::Mat* image, const Rectangle& rectangle, const cv::Scalar& scalar)
+void ImageConvert::DrawText(cv::Mat* image, const std::string& text, const Point& point, const cv::Scalar& scalar)
 {
-	cv::Rect rect(rectangle.Top().X, rectangle.Top().Y, rectangle.Width(), rectangle.Height());
-	cv::rectangle(*image, rect,scalar, 3);
-}
-
-void ImageConvert::DrawPoint(cv::Mat* image, const Point& point, const cv::Scalar& scalar)
-{
-	cv::circle(*image, cv::Point(point.X, point.Y), 10, scalar, -1);
+	cv::Point cvPoint(point.X, point.Y);
+	cv::putText(*image, text, cvPoint, cv::FONT_HERSHEY_COMPLEX, 2, scalar, 2);
 }

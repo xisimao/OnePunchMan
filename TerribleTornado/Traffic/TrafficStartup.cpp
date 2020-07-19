@@ -185,6 +185,7 @@ void TrafficStartup::GetDevice(HttpReceivedEventArgs* e)
         {
             JsonSerialization::SerializeValue(&channelJson, "channelStatus", static_cast<int>(_decodes[i]->Status()));
             JsonSerialization::SerializeValue(&channelJson, "handleSpan", _decodes[i]->HandleSpan());
+            JsonSerialization::SerializeValue(&channelJson, "frameSpan", _decodes[i]->FrameSpan());
             JsonSerialization::SerializeValue(&channelJson, "sourceWidth", _decodes[i]->SourceWidth());
             JsonSerialization::SerializeValue(&channelJson, "sourceHeight", _decodes[i]->SourceHeight());
             JsonSerialization::AddClassItem(&channelsJson, channelJson);

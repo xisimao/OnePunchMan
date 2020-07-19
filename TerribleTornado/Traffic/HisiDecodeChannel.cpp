@@ -116,8 +116,8 @@ bool HisiDecodeChannel::InitHisi(int videoCount)
 	pastSampleVdec.resize(videoCount);
 	for (int i = 0; i < videoCount; ++i) {
 		pastSampleVdec[i].enType = PT_H264;
-		pastSampleVdec[i].u32Width = 3072;
-		pastSampleVdec[i].u32Height = 2210;
+		pastSampleVdec[i].u32Width = 4096;
+		pastSampleVdec[i].u32Height = 2160;
 		pastSampleVdec[i].enMode = VIDEO_MODE_FRAME;
 		pastSampleVdec[i].stSapmleVdecVideo.enDecMode = VIDEO_DEC_MODE_IPB;
 		pastSampleVdec[i].stSapmleVdecVideo.enBitWidth = DATA_BITWIDTH_8;

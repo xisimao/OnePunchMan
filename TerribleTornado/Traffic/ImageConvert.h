@@ -82,26 +82,37 @@ namespace OnePunchMan
 		static void JpgToFile(unsigned char* jpgBuffer, int jpgSize, int channelIndex, unsigned int frameIndex);
 
 		/**
-		* @brief: 绘制多边形区域
+		* @brief: 绘制检测点
 		* @param: image 绘制的图片
-		* @param: polygon 多边形
+		* @param: point 点
+		* @param: scalar 颜色
 		*/
-		static void DrawPolygon(cv::Mat* image, const Polygon& polygon, const cv::Scalar& scalar);
+		static void DrawPoint(cv::Mat* image, const Point& point, const cv::Scalar& scalar);
 
 		/**
 		* @brief: 绘制矩形区域
 		* @param: image 绘制的图片
 		* @param: rectangle 矩形
+		* @param: scalar 颜色
 		*/
 		static void DrawRectangle(cv::Mat* image, const Rectangle& rectangle, const cv::Scalar& scalar);
 
 		/**
+		* @brief: 绘制多边形区域
+		* @param: image 绘制的图片
+		* @param: polygon 多边形
+		* @param: scalar 颜色
+		*/
+		static void DrawPolygon(cv::Mat* image, const Polygon& polygon, const cv::Scalar& scalar);
+
+		/**
 		* @brief: 绘制检测点
 		* @param: image 绘制的图片
-		* @param: point 点
+		* @param: text 绘制的文本
+		* @param: point 文本基于的绘制点
+		* @param: scalar 颜色
 		*/
-		static void DrawPoint(cv::Mat* image, const Point& point, const cv::Scalar& scalar);
-
+		static void DrawText(cv::Mat* image, const std::string& text,const Point& point, const cv::Scalar& scalar);
 	};
 
 }

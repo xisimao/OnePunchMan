@@ -231,6 +231,7 @@ namespace OnePunchMan
 		/**
 		* @brief: 绘制检测区域
 		* @param: detectItems 检测项集合
+		* @param: ioChanged 是否是io变化的帧
 		* @param: iveBuffer ive字节流
 		* @param: frameIndex 帧序号
 		*/

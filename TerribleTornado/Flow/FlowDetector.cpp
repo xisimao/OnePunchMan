@@ -550,6 +550,7 @@ void FlowDetector::HandleRecognVehicle(const RecognItem& recognItem, const unsig
 			return;
 		}
 	}
+	LogPool::Information(LogEvent::Detect, "recogin miss", recognItem.Guid, recognItem.Type, recognItem.FrameIndex);
 }
 
 void FlowDetector::HandleRecognBike(const RecognItem& recognItem, const unsigned char* iveBuffer, const VideoStruct_Bike& bike)
@@ -595,6 +596,7 @@ void FlowDetector::HandleRecognBike(const RecognItem& recognItem, const unsigned
 			return;
 		}
 	}
+	LogPool::Information(LogEvent::Detect, "recogin miss", recognItem.Guid, recognItem.Type, recognItem.FrameIndex);
 }
 
 void FlowDetector::HandleRecognPedestrain(const RecognItem& recognItem, const unsigned char* iveBuffer, const VideoStruct_Pedestrain& pedestrain)
@@ -641,24 +643,25 @@ void FlowDetector::HandleRecognPedestrain(const RecognItem& recognItem, const un
 			return;
 		}
 	}
+	LogPool::Information(LogEvent::Detect, "recogin miss", recognItem.Guid, recognItem.Type, recognItem.FrameIndex);
 }
 
-void FlowDetector::DrawDetect(const map<string, DetectItem>& detectItems, const unsigned char* iveBuffer, unsigned int frameIndex)
+void FlowDetector::DrawDetect(const map<string, DetectItem>& detectItems,const unsigned char* iveBuffer, unsigned int frameIndex)
 {
 	if (!_outputImage)
 	{
 		return;
 	}
-	bool hasNew = false;
+	bool isKeyFrame = false;
 	for (map<string, DetectItem>::const_iterator it = detectItems.begin(); it != detectItems.end(); ++it)
 	{
 		if (it->second.Status == DetectStatus::New)
 		{
-			hasNew = true;
+			isKeyFrame = true;
 			break;
 		}
 	}
-	if (hasNew)
+	if (isKeyFrame)
 	{
 		ImageConvert::IveToBgr(iveBuffer, _width, _height, _detectBgrBuffer);
 		cv::Mat image(_height, _width, CV_8UC3, _detectBgrBuffer);
@@ -669,12 +672,12 @@ void FlowDetector::DrawDetect(const map<string, DetectItem>& detectItems, const 
 		}
 		for (map<string, DetectItem>::const_iterator it = detectItems.begin(); it != detectItems.end(); ++it)
 		{
-			cv::Point point(it->second.Region.HitPoint().X, it->second.Region.HitPoint().Y);
 			cv::Scalar scalar;
 			//绿色新车
 			if (it->second.Status == DetectStatus::New)
 			{
 				scalar = cv::Scalar(0, 255, 0);
+				ImageConvert::DrawText(&image, it->first.substr(it->first.size() - 4, 4), it->second.Region.HitPoint(), scalar);
 			}
 			//黄色在区域
 			else if (it->second.Status == DetectStatus::In)
@@ -686,12 +689,12 @@ void FlowDetector::DrawDetect(const map<string, DetectItem>& detectItems, const 
 			{
 				scalar = cv::Scalar(255, 0, 0);
 			}
-			cv::circle(image, point, 10, scalar, -1);
+			ImageConvert::DrawPoint(&image, it->second.Region.HitPoint(), scalar);
+			
 		}
-
 		int jpgSize = ImageConvert::BgrToJpg(image.data, _width, _height, _detectJpgBuffer, _jpgSize);
 		ImageConvert::JpgToFile(_detectJpgBuffer, jpgSize, _channelIndex, frameIndex);
 	}
-
 }
+
 
