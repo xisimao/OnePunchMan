@@ -56,13 +56,14 @@ namespace OnePunchMan
 		{
 		public:
 			FlowDetectCache()
-				:HitPoint()
+				:LastTimeStamp(0),LastHitPoint()
 			{
 
 			}
-
-			//检测点
-			Point HitPoint;
+			//检测项最后一次出现的时间戳
+			long long LastTimeStamp;
+			//检测项最后一次检测点
+			Point LastHitPoint;
 		};
 
 		//流量车道缓存
@@ -75,7 +76,7 @@ namespace OnePunchMan
 				, TotalDistance(0.0), TotalTime(0), Speed(0.0)
 				, TotalInTime(0), TimeOccupancy(0.0)
 				, LastInRegion(0), Vehicles(0), TotalSpan(0), HeadDistance(0.0),HeadSpace(0.0)
-				, TrafficStatus(0),IoStatus(false), Flag(false)
+				, TrafficStatus(0),IoStatus(false),Items()
 			{
 
 			}
@@ -140,37 +141,8 @@ namespace OnePunchMan
 			//io状态
 			bool IoStatus;
 
-			//指针指向实际位置的交替变化标志
-			bool Flag;
 			//车道内检测项集合
-			std::map<std::string, FlowDetectCache> Items1;
-			std::map<std::string, FlowDetectCache> Items2;
-
-			/**
-			* @brief: 获取本次检测项的集合指针
-			* @return: 本次检测项的集合指针
-			*/
-			std::map<std::string, FlowDetectCache>* CurrentItems()
-			{
-				return Flag ? &Items1 : &Items2;
-			}
-
-			/**
-			* @brief: 获取上一次检测项的集合指针
-			* @return: 上一次检测项的集合指针
-			*/
-			std::map<std::string, FlowDetectCache>* LastItems()
-			{
-				return Flag ? &Items2 : &Items1;
-			}
-
-			/**
-			* @brief: 交换当前和上一次的指针
-			*/
-			void SwitchFlag()
-			{
-				Flag = !Flag;
-			}
+			std::map<std::string, FlowDetectCache> Items;
 		};
 
 		//流量报告缓存
@@ -178,7 +150,7 @@ namespace OnePunchMan
 		{
 		public:
 			FlowReportCache()
-				: LaneId(),LaneName(), Direction(0), Minute(0)
+				: LaneId(), LaneName(), Direction(0), Minute(0)
 				, Persons(0), Bikes(0), Motorcycles(0), Cars(0), Tricycles(0), Buss(0), Vans(0), Trucks(0)
 				, Speed(0.0), TimeOccupancy(0.0), HeadDistance(0.0), HeadSpace(0.0), TrafficStatus(0)
 			{
@@ -245,6 +217,8 @@ namespace OnePunchMan
 		static const std::string VideoStructTopic;
 		//上报的最大时长(毫秒)
 		static const int ReportMaxSpan;
+		//数据移除的时间间隔(毫秒)
+		static const int DeleteSpan;
 
 		//任务编号
 		int _taskId;
@@ -257,18 +231,10 @@ namespace OnePunchMan
 		long long _nextMinuteTimeStamp;
 
 		//检测车道集合同步锁
-		std::mutex _detectLaneMutex;
+		std::mutex _laneMutex;
 		//检测车道集合
-		std::vector<FlowLaneCache> _detectLanes;
-		//识别车道集合同步锁
-		std::mutex _recognLaneMutex;
-		//通道地址
-		std::string _recognChannelUrl;
-		//识别车道集合
-		std::vector<FlowLaneCache> _recognLanes;
-
+		std::vector<FlowLaneCache> _laneCaches;
 		//上报缓存
-		std::mutex _reportMutex;
 		std::vector<FlowReportCache> _reportCaches;
 		std::vector<VideoStruct_Vehicle> _vehicleReportCaches;
 		std::vector<VideoStruct_Bike> _bikeReportCaches;
