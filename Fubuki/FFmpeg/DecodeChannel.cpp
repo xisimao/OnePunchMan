@@ -201,6 +201,7 @@ void DecodeChannel::StartCore()
 	unsigned int frameIndex = 1;
 	bool reportFinish = false;
 	string inputUrl;
+	AVBitStreamFilterContext* h264bsfc = av_bitstream_filter_init("h264_mp4toannexb");
 	while (!_cancelled)
 	{
 		if (_channelStatus == ChannelStatus::Normal)
@@ -223,6 +224,8 @@ void DecodeChannel::StartCore()
 			{
 				if (packet->stream_index == _inputHandler.VideoIndex())
 				{
+					_outputHandler.PushRtmpPacket(packet, frameIndex, duration);
+					av_bitstream_filter_filter(h264bsfc, _inputHandler.Stream()->codec, NULL, &packet->data, &packet->size, packet->data, packet->size, 0);
 					long long timeStamp2 = DateTime::UtcNowTimeStamp();
 					DecodeResult decodeResult = Decode(packet, taskId, frameIndex, _frameSpan);
 					long long timeStamp3 = DateTime::UtcNowTimeStamp();
@@ -243,8 +246,7 @@ void DecodeChannel::StartCore()
 						LogPool::Error(LogEvent::Decode, "decode error", _channelIndex, frameIndex);
 						_channelStatus = ChannelStatus::DecodeError;
 					}
-					_outputHandler.PushRtmpPacket(packet, frameIndex, duration);
-
+				
 					long long timeStamp4 = DateTime::UtcNowTimeStamp();
 					long long sleepTime = _frameSpan - (timeStamp4 - timeStamp2);
 					if (sleepTime > 0 && sleepTime <= _frameSpan)
@@ -340,6 +342,7 @@ void DecodeChannel::StartCore()
 			}
 		}
 	}
+	av_bitstream_filter_close(h264bsfc);
 	av_packet_free(&packet);
 	UninitDecoder();
 	_inputHandler.Uninit();

@@ -124,7 +124,7 @@ void OutputHandler::PushRtmpPacket(AVPacket* packet, unsigned int frameIndex, lo
 		}
 		packet->duration = av_rescale_q(packet->duration, _inputTimeBase, _outputStream->time_base);
 		packet->pos = -1;
-		av_interleaved_write_frame(_outputFormat, packet);
+		av_write_frame(_outputFormat, packet);
 	}
 }
 

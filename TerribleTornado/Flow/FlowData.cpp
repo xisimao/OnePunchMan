@@ -175,6 +175,6 @@ void FlowChannelData::UpdateDb()
 		_sqlite.ExecuteRowCount("ALTER TABLE[Flow_Channel] ADD COLUMN[OutputRecogn] INTEGER NULL;");
 		_sqlite.ExecuteRowCount("ALTER TABLE[Flow_Channel] ADD COLUMN[GlobalDetect] INTEGER NULL;");
 	}
-	SetParameter("Version", "2.0.0.18");
-	SetParameter("VersionValue", "20018");
+	SetParameter("Version", "2.0.0.19");
+	SetParameter("VersionValue", "20019");
 }
