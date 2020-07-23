@@ -196,6 +196,7 @@ DecodeResult DecodeChannel::Decode(const AVPacket* packet, unsigned char taskId,
 void DecodeChannel::StartCore()
 {
 	AVPacket* packet = av_packet_alloc();
+	AVPacket* tempPacket = av_packet_alloc();
 	long long duration = 0;
 	unsigned char taskId = 0;
 	unsigned int frameIndex = 1;
@@ -224,37 +225,48 @@ void DecodeChannel::StartCore()
 			{
 				if (packet->stream_index == _inputHandler.VideoIndex())
 				{
-					_outputHandler.PushRtmpPacket(packet, frameIndex, duration);
-					av_bitstream_filter_filter(h264bsfc, _inputHandler.Stream()->codec, NULL, &packet->data, &packet->size, packet->data, packet->size, 0);
-					long long timeStamp2 = DateTime::UtcNowTimeStamp();
-					DecodeResult decodeResult = Decode(packet, taskId, frameIndex, _frameSpan);
-					long long timeStamp3 = DateTime::UtcNowTimeStamp();
-					if (decodeResult == DecodeResult::Handle)
+					_outputHandler.PushRtmpPacket(packet, frameIndex, duration);			
+					int filterResult=av_bitstream_filter_filter(h264bsfc, _inputHandler.Stream()->codec, NULL, &tempPacket->data, &tempPacket->size, packet->data, packet->size, 0);
+					if (filterResult < 0)
 					{
-						_handleSpan = frameIndex - _lastframeIndex;
-						_lastframeIndex = frameIndex;
-					}
-					else if (decodeResult == DecodeResult::Skip)
-					{
-						if (frameIndex - _lastframeIndex > MaxHandleSpan)
-						{
-							_channelStatus = ChannelStatus::NotHandle;
-						}
+						LogPool::Error(LogEvent::Decode, "av_bitstream_filter_filter", _channelIndex, frameIndex, filterResult);
+						_channelStatus = ChannelStatus::FilterError;
 					}
 					else
 					{
-						LogPool::Error(LogEvent::Decode, "decode error", _channelIndex, frameIndex);
-						_channelStatus = ChannelStatus::DecodeError;
-					}
-				
-					long long timeStamp4 = DateTime::UtcNowTimeStamp();
-					long long sleepTime = _frameSpan - (timeStamp4 - timeStamp2);
-					if (sleepTime > 0 && sleepTime <= _frameSpan)
-					{
-						this_thread::sleep_for(chrono::milliseconds(sleepTime));
-					}
-					LogPool::Debug(LogEvent::Decode, "frame", _channelIndex, static_cast<int>(taskId), frameIndex, static_cast<int>(_frameSpan), static_cast<int>(decodeResult), timeStamp2 - timeStamp1, timeStamp3 - timeStamp2, timeStamp4 - timeStamp3);
-					frameIndex += 1;
+						long long timeStamp2 = DateTime::UtcNowTimeStamp();
+						DecodeResult decodeResult = Decode(tempPacket, taskId, frameIndex, _frameSpan);
+						long long timeStamp3 = DateTime::UtcNowTimeStamp();
+						if (decodeResult == DecodeResult::Handle)
+						{
+							_handleSpan = frameIndex - _lastframeIndex;
+							_lastframeIndex = frameIndex;
+						}
+						else if (decodeResult == DecodeResult::Skip)
+						{
+							if (frameIndex - _lastframeIndex > MaxHandleSpan)
+							{
+								_channelStatus = ChannelStatus::NotHandle;
+							}
+						}
+						else
+						{
+							LogPool::Error(LogEvent::Decode, "decode error", _channelIndex, frameIndex);
+							_channelStatus = ChannelStatus::DecodeError;
+						}
+						long long timeStamp4 = DateTime::UtcNowTimeStamp();
+						long long sleepTime = _frameSpan - (timeStamp4 - timeStamp2);
+						if (sleepTime > 0 && sleepTime <= _frameSpan)
+						{
+							this_thread::sleep_for(chrono::milliseconds(sleepTime));
+						}
+						if (filterResult > 0)
+						{
+							av_free(tempPacket->data);
+						}
+						LogPool::Debug(LogEvent::Decode, "frame", _channelIndex, static_cast<int>(taskId), frameIndex, static_cast<int>(_frameSpan), static_cast<int>(decodeResult), timeStamp2 - timeStamp1, timeStamp3 - timeStamp2, timeStamp4 - timeStamp3);
+						frameIndex += 1;
+					}	
 				}
 			}
 			else
@@ -275,10 +287,10 @@ void DecodeChannel::StartCore()
 			unique_lock<mutex> lck(_mutex);
 			UninitDecoder();
 			//读取到结尾重新启动时不需要重置输出
-			/*if (_channelStatus != ChannelStatus::ReadEOF_Restart)
-			{*/
+			if (_channelStatus != ChannelStatus::ReadEOF_Restart)
+			{
 				_outputHandler.Uninit();
-			//}
+			}
 			_inputHandler.Uninit();
 			ChannelStatus oldStatus = _channelStatus;
 
@@ -343,6 +355,7 @@ void DecodeChannel::StartCore()
 		}
 	}
 	av_bitstream_filter_close(h264bsfc);
+	av_packet_free(&tempPacket);
 	av_packet_free(&packet);
 	UninitDecoder();
 	_inputHandler.Uninit();

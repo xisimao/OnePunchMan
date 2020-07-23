@@ -38,7 +38,9 @@ namespace OnePunchMan
 		//车道不同步(中心)
 		NotFoundLane = 12,
 		//过多帧没有处理
-		NotHandle = 13
+		NotHandle = 13,
+		//过滤avc1格式错误
+		FilterError=14
 	};
 
 	//视频输入

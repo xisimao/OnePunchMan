@@ -14,7 +14,7 @@ int main(int argc, char* argv[])
     LogPool::Init("appsettings.json");
     DecodeChannel::InitFFmpeg();
     DecodeChannel channel(1);
-    channel.UpdateChannel("600w.mp4", string(), true);
+    channel.UpdateChannel("600w1.mp4", string(), true);
     channel.Start();
     system("pause");
 

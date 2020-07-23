@@ -284,6 +284,7 @@ void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long 
 				FlowReportCache reportCache;
 				reportCache.Minute = _currentReportMinute;
 				reportCache.LaneId = laneCache.LaneId;
+				reportCache.LaneName = laneCache.LaneName;
 				reportCache.Direction = laneCache.Direction;
 				reportCache.Bikes = laneCache.Bikes;
 				reportCache.Buss = laneCache.Buss;
@@ -297,8 +298,7 @@ void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long 
 				reportCache.HeadSpace = laneCache.HeadSpace;
 				reportCache.Speed = laneCache.Speed;
 				reportCache.TimeOccupancy = laneCache.TimeOccupancy;
-				reportCache.TrafficStatus = laneCache.TrafficStatus;
-				//reportCache.LaneName = laneCache.LaneName;
+				reportCache.TrafficStatus = laneCache.TrafficStatus;		
 				_reportCaches.push_back(reportCache);
 			}
 			laneCache.Persons = 0;
