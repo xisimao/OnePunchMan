@@ -119,6 +119,9 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 				string videoBase64;
 				ImageConvert::Mp4ToBase64(it->FilePath,_videoBuffer,_videoSize, &videoBase64);
 				JsonSerialization::SerializeValue(&it->Json, "video", videoBase64);
+				string jpgBase64;
+				ImageConvert::IveToJpgBase64(iveBuffer, _width, _height, _bgrBuffer, &jpgBase64, _jpgBuffer, _jpgSize);
+				JsonSerialization::SerializeValue(&it->Json, "image2", jpgBase64);
 				if (_mqtt != NULL)
 				{
 					_mqtt->Send(EventTopic, it->Json);

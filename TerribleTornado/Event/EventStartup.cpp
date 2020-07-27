@@ -105,6 +105,15 @@ string EventStartup::CheckChannel(EventChannel* channel)
 {
     if (ChannelIndexEnable(channel->ChannelIndex))
     {
+        if (channel->ChannelType != static_cast<int>(ChannelType::File)
+            || channel->Loop)
+        {
+            channel->Loop = true;
+            channel->OutputImage = false;
+            channel->OutputReport = false;
+            channel->OutputRecogn = false;
+            channel->GlobalDetect = false;
+        }
         return string();
     }
     else

@@ -134,9 +134,6 @@ namespace OnePunchMan
 		*/
 		bool YuvToIve();
 
-		//是否需要写入bmp文件
-		bool _writeBmp;
-
 		//当前视频读取是否结束
 		bool _finished;
 		//当前yuv数据的任务号

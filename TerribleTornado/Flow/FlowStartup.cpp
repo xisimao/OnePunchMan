@@ -128,6 +128,7 @@ string FlowStartup::CheckChannel(FlowChannel* channel)
         if (channel->ChannelType != static_cast<int>(ChannelType::File)
             || channel->Loop)
         {
+            channel->Loop = true;
             channel->OutputImage = false;
             channel->OutputReport = false;
             channel->OutputRecogn = false;

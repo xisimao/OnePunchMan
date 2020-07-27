@@ -4,7 +4,7 @@ using namespace std;
 using namespace OnePunchMan;
 
 HisiDecodeChannel::HisiDecodeChannel(int channelIndex, HisiEncodeChannel* encodeChannel)
-	:DecodeChannel(channelIndex), _writeBmp(false), _finished(false),_taskId(0),_frameIndex(0),_frameSpan(0)
+	:DecodeChannel(channelIndex), _finished(false),_taskId(0),_frameIndex(0),_frameSpan(0)
 	, _yuvSize(static_cast<int>(DestinationWidth * DestinationHeight * 1.5)), _yuvHasValue(false), _yuv_phy_addr(0), _yuvBuffer(NULL)
 	, _iveSize(DestinationWidth* DestinationHeight * 3), _ive_phy_addr(0), _iveBuffer(NULL)
 	, _iveHandler(-1),_encodeChannel(encodeChannel)
