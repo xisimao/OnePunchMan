@@ -136,6 +136,6 @@ void EventChannelData::Clear()
 void EventChannelData::UpdateDb()
 {
 	TrafficData::UpdateDb();
-	SetParameter("Version", "1.0.0.11");
-	SetParameter("VersionValue", "10011");
+	SetParameter("Version", "1.0.0.12");
+	SetParameter("VersionValue", "10012");
 }

@@ -12,10 +12,8 @@ using namespace OnePunchMan;
 int main(int argc, char* argv[])
 {
     LogPool::Init("appsettings.json");
-    DecodeChannel::InitFFmpeg();
-    DecodeChannel channel(1);
-    channel.UpdateChannel("600w1.mp4", string(), true);
-    channel.Start();
+    FlowStartup flow;
+    flow.Start();
     system("pause");
 
     return 0;

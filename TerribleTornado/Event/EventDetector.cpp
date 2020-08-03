@@ -189,7 +189,7 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 							JsonSerialization::SerializeValue(&encodeCache.Json, "timeStamp", timeStamp);
 							JsonSerialization::SerializeValue(&encodeCache.Json, "type", (int)EventType::Pedestrain);
 							string jpgBase64;
-							DrawRegion(&jpgBase64, iveBuffer, laneCache.Region, dit->second.Region, frameIndex);
+							ImageConvert::IveToJpgBase64(iveBuffer, _width, _height, _bgrBuffer,&jpgBase64,_jpgBuffer,_jpgSize);
 							JsonSerialization::SerializeValue(&encodeCache.Json, "image1", jpgBase64);
 							encodeCache.EncodeIndex = index;
 							encodeCache.FilePath = filePath;
@@ -245,7 +245,7 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 										JsonSerialization::SerializeValue(&encodeCache.Json, "timeStamp", timeStamp);
 										JsonSerialization::SerializeValue(&encodeCache.Json, "type", (int)EventType::Park);
 										string jpgBase64;
-										DrawRegion(&jpgBase64, iveBuffer, laneCache.Region,dit->second.Region, frameIndex);
+										ImageConvert::IveToJpgBase64(iveBuffer, _width, _height, _bgrBuffer, &jpgBase64, _jpgBuffer, _jpgSize);
 										JsonSerialization::SerializeValue(&encodeCache.Json, "image1", jpgBase64);
 										encodeCache.EncodeIndex = index;
 										encodeCache.FilePath = filePath;
@@ -261,7 +261,7 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 							if (mit->second.LastTimeStamp - mit->second.FirstTimeStamp > ParkStartSpan)
 							{
 								mit->second.StartPark = true;
-								DrawRegion(&mit->second.StartParkImage, iveBuffer, laneCache.Region, dit->second.Region, frameIndex);
+								ImageConvert::IveToJpgBase64(iveBuffer, _width, _height, _bgrBuffer, &mit->second.StartParkImage, _jpgBuffer, _jpgSize);
 							}
 						}
 					}
@@ -290,7 +290,7 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 									JsonSerialization::SerializeValue(&encodeCache.Json, "timeStamp", timeStamp);
 									JsonSerialization::SerializeValue(&encodeCache.Json, "type", (int)EventType::Congestion);
 									string jpgBase64;
-									DrawRegion(&jpgBase64, iveBuffer,laneCache.Region, frameIndex);
+									ImageConvert::IveToJpgBase64(iveBuffer, _width, _height, _bgrBuffer, &jpgBase64, _jpgBuffer, _jpgSize);
 									JsonSerialization::SerializeValue(&encodeCache.Json, "image1", jpgBase64);
 									encodeCache.EncodeIndex = index;
 									encodeCache.FilePath = filePath;
@@ -359,7 +359,7 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 												JsonSerialization::SerializeValue(&encodeCache.Json, "timeStamp", timeStamp);
 												JsonSerialization::SerializeValue(&encodeCache.Json, "type", (int)EventType::Retrograde);
 												string jpgBase64;
-												DrawRegion(&jpgBase64, iveBuffer,laneCache.Region,dit->second.Region, frameIndex);
+												ImageConvert::IveToJpgBase64(iveBuffer, _width, _height, _bgrBuffer, &jpgBase64, _jpgBuffer, _jpgSize);
 												JsonSerialization::SerializeValue(&encodeCache.Json, "image1", jpgBase64);
 												encodeCache.EncodeIndex = index;
 												encodeCache.FilePath = filePath;
