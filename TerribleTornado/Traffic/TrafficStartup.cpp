@@ -72,6 +72,126 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
             }
         }
     }
+    else if (UrlStartWith(e->Url, "/api/gbParameter"))
+    {
+        TrafficData data;
+        if (e->Function.compare(HttpFunction::Get) == 0)
+        {
+            GbParameter parameter=data.GetGbPrameter();
+            string json;
+            JsonSerialization::SerializeValue(&json, "serverIp", parameter.ServerIp);
+            JsonSerialization::SerializeValue(&json, "serverPort", parameter.ServerPort);
+            JsonSerialization::SerializeValue(&json, "sipPort", parameter.SipPort);
+            JsonSerialization::SerializeValue(&json, "sipType", parameter.SipType);
+            JsonSerialization::SerializeValue(&json, "gbId", parameter.GbId);
+            JsonSerialization::SerializeValue(&json, "domainId", parameter.DomainId);
+            JsonSerialization::SerializeValue(&json, "userName", parameter.UserName);
+            JsonSerialization::SerializeValue(&json, "password", parameter.Password);
+            e->ResponseJson = json;
+            e->Code = HttpCode::OK;
+        }
+        else if (e->Function.compare(HttpFunction::Post) == 0)
+        {
+            JsonDeserialization jd(e->RequestJson);
+            GbParameter parameter;
+            parameter.ServerIp = jd.Get<string>("serverIp");
+            parameter.SipPort = jd.Get<int>("sipPort");
+            parameter.SipType = jd.Get<int>("sipType");
+            parameter.GbId = jd.Get<string>("gbId");
+            parameter.DomainId = jd.Get<string>("domainId");
+            parameter.UserName = jd.Get<string>("userName");
+            parameter.Password = jd.Get<string>("password");  
+            data.SetGbPrameter(parameter);
+            e->Code = HttpCode::OK;
+        }
+    }
+    else if (UrlStartWith(e->Url, "/api/gbDevices"))
+    {
+        TrafficData data;
+        if (e->Function.compare(HttpFunction::Get) == 0)
+        {
+            vector<GbDevice> devices = data.GetGbDeviceList();
+            for (vector<GbDevice>::iterator it = devices.begin();it!=devices.end();++it)
+            {
+                string deviceJson;
+                JsonSerialization::SerializeValue(&deviceJson, "deviceId", it->DeviceId);
+                JsonSerialization::SerializeValue(&deviceJson, "deviceName", it->DeviceName);
+                JsonSerialization::SerializeValue(&deviceJson, "deviceIp", it->DeviceIp);
+                JsonSerialization::SerializeValue(&deviceJson, "devicePort", it->DevicePort);
+                JsonSerialization::SerializeValue(&deviceJson, "gbId", it->GbId);
+                JsonSerialization::SerializeValue(&deviceJson, "userName", it->UserName);
+                JsonSerialization::SerializeValue(&deviceJson, "password", it->Password);
+                JsonSerialization::AddClassItem(&e->ResponseJson, deviceJson);
+            }
+            e->Code = HttpCode::OK;
+        }
+        else if (e->Function.compare(HttpFunction::Post) == 0)
+        {
+            JsonDeserialization jd(e->RequestJson);
+            GbDevice device;
+            device.DeviceName = jd.Get<string>("deviceName");
+            device.DeviceIp = jd.Get<string>("deviceIp");
+            device.DevicePort = jd.Get<int>("devicePort");
+            device.GbId = jd.Get<string>("gbId");
+            device.UserName = jd.Get<string>("userName");
+            device.Password = jd.Get<string>("password");
+            data.InsertGbDevice(device);
+            e->Code = HttpCode::OK;
+        }
+        else if (e->Function.compare(HttpFunction::Put) == 0)
+        {
+            JsonDeserialization jd(e->RequestJson);
+            GbDevice device;
+            device.DeviceId = jd.Get<int>("deviceId");
+            device.DeviceName = jd.Get<string>("deviceName");
+            device.DeviceIp = jd.Get<string>("deviceIp");
+            device.DevicePort = jd.Get<int>("devicePort");
+            device.GbId = jd.Get<string>("gbId");
+            device.UserName = jd.Get<string>("userName");
+            device.Password = jd.Get<string>("password");
+            if (data.UpdateGbDevice(device))
+            {
+
+                e->Code = HttpCode::OK;
+            }
+            else
+            {
+                e->Code = HttpCode::NotFound;
+            }
+        }
+        else if (e->Function.compare(HttpFunction::Delete) == 0)
+        {
+            string id = GetId(e->Url, "/api/gbDevices");
+            int deviceId = StringEx::Convert<int>(id);
+            if (data.DeleteGbDevice(deviceId))
+            {
+                e->Code = HttpCode::OK;
+            }
+            else
+            {
+                e->Code = HttpCode::NotFound;
+            }
+        }
+    }
+    else if (UrlStartWith(e->Url, "/api/gbChannels"))
+    {
+        if (e->Function.compare(HttpFunction::Get) == 0)
+        {
+            string gbId = GetId(e->Url, "/api/gbChannels");
+            TrafficData data;
+            vector<GbChannel> channels=data.GetGbChannelList(gbId);
+            for (vector<GbChannel>::iterator it = channels.begin(); it != channels.end(); ++it)
+            {
+                string channelJson;
+                JsonSerialization::SerializeValue(&channelJson, "id", it->Id);
+                JsonSerialization::SerializeValue(&channelJson, "channelId", it->ChannelId);
+                JsonSerialization::SerializeValue(&channelJson, "channelName", it->ChannelName);
+                JsonSerialization::SerializeValue(&channelJson, "deviceId", it->DeviceId);
+                JsonSerialization::AddClassItem(&e->ResponseJson, channelJson);
+            }
+            e->Code = HttpCode::OK;
+        }
+    }
     else if (UrlStartWith(e->Url, "/api/images"))
     {
         string id = GetId(e->Url, "/api/images");
@@ -222,6 +342,27 @@ bool TrafficStartup::ChannelIndexEnable(int channelIndex)
     return channelIndex >= 1 && channelIndex <= ChannelCount;
 }
 
+string TrafficStartup::CheckChannel(TrafficChannel* channel)
+{
+    if (ChannelIndexEnable(channel->ChannelIndex))
+    {
+        if (channel->ChannelType != static_cast<int>(ChannelType::File)
+            || channel->Loop)
+        {
+            channel->Loop = true;
+            channel->OutputImage = false;
+            channel->OutputReport = false;
+            channel->OutputRecogn = false;
+            channel->GlobalDetect = false;
+        }
+        return string();
+    }
+    else
+    {
+        return GetErrorJson("channelIndex", StringEx::Combine("channelIndex is limited to 1-", ChannelCount));
+    }
+}
+
 bool TrafficStartup::UrlStartWith(const string& url, const string& key)
 {
     if (url.size() == key.size())
@@ -249,15 +390,51 @@ string TrafficStartup::GetErrorJson(const string& field, const string& message)
     return StringEx::Combine("{\"", field, "\":[\"", message, "\"]}");
 }
 
+void TrafficStartup::FillChannelJson(string* channelJson,const TrafficChannel* channel,const string& host)
+{
+    JsonSerialization::SerializeValue(channelJson, "channelIndex", channel->ChannelIndex);
+    JsonSerialization::SerializeValue(channelJson, "channelName", channel->ChannelName);
+    JsonSerialization::SerializeValue(channelJson, "channelUrl", channel->ChannelUrl);
+    JsonSerialization::SerializeValue(channelJson, "rtmpUrl", channel->RtmpUrl(host));
+    JsonSerialization::SerializeValue(channelJson, "flvUrl", channel->FlvUrl(host));
+    JsonSerialization::SerializeValue(channelJson, "channelType", channel->ChannelType);
+    JsonSerialization::SerializeValue(channelJson, "loop", channel->Loop);
+    JsonSerialization::SerializeValue(channelJson, "outputReport", channel->OutputReport);
+    JsonSerialization::SerializeValue(channelJson, "outputImage", channel->OutputImage);
+    JsonSerialization::SerializeValue(channelJson, "outputRecogn", channel->OutputRecogn);
+    JsonSerialization::SerializeValue(channelJson, "globalDetect", channel->GlobalDetect);
+}
+
+void TrafficStartup::FillChannel(TrafficChannel* channel,const JsonDeserialization& jd)
+{
+    channel->ChannelIndex = jd.Get<int>("channelIndex");
+    channel->ChannelName = jd.Get<string>("channelName");
+    channel->ChannelUrl = jd.Get<string>("channelUrl");
+    channel->ChannelType = jd.Get<int>("channelType");
+    channel->Loop = jd.Get<bool>("loop");
+    channel->OutputImage = jd.Get<bool>("outputImage");
+    channel->OutputReport = jd.Get<bool>("outputReport");
+    channel->OutputRecogn = jd.Get<bool>("outputRecogn");
+    channel->GlobalDetect = jd.Get<bool>("globalDetect");
+}
+
+void TrafficStartup::FillChannel(TrafficChannel* channel, const JsonDeserialization& jd, int itemIndex)
+{
+    channel->ChannelIndex = jd.Get<int>(StringEx::Combine("channels:", itemIndex, ":channelIndex"));
+    channel->ChannelName = jd.Get<string>(StringEx::Combine("channels:", itemIndex, ":channelName"));
+    channel->ChannelUrl = jd.Get<string>(StringEx::Combine("channels:", itemIndex, ":channelUrl"));
+    channel->ChannelType = jd.Get<int>(StringEx::Combine("channels:", itemIndex, ":channelType"));
+}
+
 void TrafficStartup::StartCore()
 {
     Socket::Init();
     MqttChannel::Init();
-    DecodeChannel::InitFFmpeg();
+    FFmpegInput::InitFFmpeg();
 
-    HisiDecodeChannel::UninitHisi(ChannelCount);
-    if (!HisiDecodeChannel::InitHisi(ChannelCount)
-        ||!HisiEncodeChannel::InitHisi(ChannelCount, HisiDecodeChannel::DestinationWidth,HisiDecodeChannel::DestinationHeight))
+    DecodeChannel::UninitHisi(ChannelCount);
+    if (!DecodeChannel::InitHisi(ChannelCount)
+        ||!EncodeChannel::InitHisi(ChannelCount, DecodeChannel::DestinationWidth,DecodeChannel::DestinationHeight))
     {
         exit(2);
     }
@@ -277,20 +454,52 @@ void TrafficStartup::StartCore()
     //升级数据库
     UpdateDb();
 
+    //软件版本
+    TrafficData data;
+    _softwareVersion = data.GetParameter("Version");
+
     //初始化sdk
     _sdkInited = SeemmoSDK::Init();
     if (SeemmoSDK::seemmo_version != NULL)
     {
         _sdkVersion = SeemmoSDK::seemmo_version();
     }
+    int loginHandler = -1;
+#ifndef _WIN32
+    int gbResult = vas_sdk_startup();
+    if (gbResult == 0)
+    {
+        LogPool::Information(LogEvent::System, "国标sdk初始化成功");
+    }
+    else
+    {
+        LogPool::Information(LogEvent::System, "国标sdk初始化失败,错误代码:", gbResult);
+    }
 
-    //软件版本
-    TrafficData data;
-    _softwareVersion=data.GetParameter("Version");
+    GbParameter gbParameter = data.GetGbPrameter();
+    if (gbParameter.ServerIp.empty())
+    {
+        LogPool::Information(LogEvent::System, "国标服务地址未配置，略过登陆");
+    }
+    else
+    {
+        loginHandler = vas_sdk_login(const_cast<char*>(gbParameter.ServerIp.c_str()), gbParameter.ServerPort, const_cast<char*>(gbParameter.UserName.c_str()), const_cast<char*>(gbParameter.Password.c_str()));
+        if (loginHandler >= 0)
+        {
+            LogPool::Information(LogEvent::System, "国标sdk登陆成功");
+        }
+        else
+        {
+            LogPool::Information(LogEvent::System, "国标sdk登陆失败,错误代码:", loginHandler);
+        }
+    }
+#endif // !_WIN32
+
+
 
     _mqtt = new MqttChannel("127.0.0.1", 1883);
     _mqtt->MqttDisconnected.Subscribe(this);
-    InitThreads(_mqtt, &_decodes,&_detectors,&_detects, &_recogns);
+    InitThreads(_mqtt, &_decodes,&_detectors,&_detects, &_recogns, loginHandler);
     if (_sdkInited)
     {
         _mqtt->Start();
@@ -383,9 +592,9 @@ void TrafficStartup::StartCore()
         delete _mqtt;
     }
     SeemmoSDK::Uninit();
-    HisiEncodeChannel::UninitHisi(ChannelCount);
-    HisiDecodeChannel::UninitHisi(ChannelCount);
-    DecodeChannel::UninitFFmpeg();
+    EncodeChannel::UninitHisi(ChannelCount);
+    DecodeChannel::UninitHisi(ChannelCount);
+    FFmpegInput::UninitFFmpeg();
     MqttChannel::Uninit();
     Socket::Uninit();
 }

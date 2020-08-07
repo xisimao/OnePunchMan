@@ -27,7 +27,7 @@ void DetectChannel::SetRecogn(RecognChannel* recogn)
 	_recogn = recogn;
 }
 
-void DetectChannel::AddChannel(int channelIndex, HisiDecodeChannel* decode, TrafficDetector* detector)
+void DetectChannel::AddChannel(int channelIndex, DecodeChannel* decode, TrafficDetector* detector)
 {
 	LogPool::Information(LogEvent::System, "detect", _detectIndex, "add channel", channelIndex);
 	ChannelItem item;

@@ -1,27 +1,16 @@
 #include "FlowStartup.h"
 #include "EventStartup.h"
 #include "IoAdapter.h"
-#include "HisiEncodeChannel.h"
+#include "EncodeChannel.h"
+//#include "clientsdk.h"
 
 using namespace std;
 using namespace OnePunchMan;
 
 int main1()
 {
-    LogPool::Init("appsettings.json");
-    HisiDecodeChannel::InitFFmpeg();
-    HisiDecodeChannel::UninitHisi(8);
-    HisiDecodeChannel::InitHisi(8);
-    HisiEncodeChannel encode(8);
-    HisiDecodeChannel channel(1,&encode);
-    channel.UpdateChannel("/root/service/video/600w.mp4", string(), true);
-
-    encode.Start();
-    channel.Start();
-    while (true)
-    {
-        this_thread::sleep_for(chrono::seconds(1));
-    }
+    //int r=vas_sdk_startup();
+    //cout << r << endl;
     return 0;
 }
 int main(int argc, char* argv[])

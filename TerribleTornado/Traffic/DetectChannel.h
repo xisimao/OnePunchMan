@@ -1,7 +1,7 @@
 #pragma once
 #include "SeemmoSDK.h"
 #include "MqttChannel.h"
-#include "HisiDecodeChannel.h"
+#include "DecodeChannel.h"
 #include "RecognChannel.h"
 #include "TrafficDetector.h"
 
@@ -35,7 +35,7 @@ namespace OnePunchMan
 		* @brief: 添加需要检测的通道序号
 		* @param: channelIndex 通道序号
 		*/
-		void AddChannel(int channelIndex,HisiDecodeChannel* decode,TrafficDetector* detector);
+		void AddChannel(int channelIndex,DecodeChannel* decode,TrafficDetector* detector);
 
 	protected:
 		void StartCore();
@@ -56,7 +56,7 @@ namespace OnePunchMan
 			//车道参数
 			std::string Param;
 			//解码
-			HisiDecodeChannel* Decode;
+			DecodeChannel* Decode;
 			//检测
 			TrafficDetector* Detector;
 		};

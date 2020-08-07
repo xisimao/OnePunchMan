@@ -6,9 +6,8 @@ using namespace OnePunchMan;
 vector<EventChannel> EventChannelData::GetList()
 {
 	vector<EventChannel> channels;
-	string channelSql("Select * From Event_Channel Order By ChannelIndex");
 	SqliteReader sqlite(_dbName);
-	if (sqlite.BeginQuery(channelSql))
+	if (sqlite.BeginQuery(GetChannelList()))
 	{
 		while (sqlite.HasRow()) 
 		{
@@ -22,9 +21,8 @@ vector<EventChannel> EventChannelData::GetList()
 EventChannel EventChannelData::Get(int channelIndex)
 {
 	EventChannel channel;
-	string sql(StringEx::Combine("Select * From Event_Channel Where ChannelIndex=", channelIndex));
 	SqliteReader sqlite(_dbName);
-	if (sqlite.BeginQuery(sql))
+	if (sqlite.BeginQuery(GetChannel(channelIndex)))
 	{
 		if (sqlite.HasRow()) 
 		{
@@ -38,11 +36,7 @@ EventChannel EventChannelData::Get(int channelIndex)
 EventChannel EventChannelData::FillChannel(const SqliteReader& sqlite)
 {
 	EventChannel channel;
-	channel.ChannelIndex = sqlite.GetInt(0);
-	channel.ChannelName = sqlite.GetString(1);
-	channel.ChannelUrl = sqlite.GetString(2);
-	channel.ChannelType = sqlite.GetInt(3);
-
+	TrafficData::FillChannel(sqlite, &channel);
 	SqliteReader laneSqlite(_dbName);
 	string laneSql(StringEx::Combine("Select * From Event_Lane Where ChannelIndex=", channel.ChannelIndex," Order By LaneIndex"));
 	if (laneSqlite.BeginQuery(laneSql))
@@ -65,13 +59,7 @@ EventChannel EventChannelData::FillChannel(const SqliteReader& sqlite)
 
 bool EventChannelData::Insert(const EventChannel& channel)
 {
-	string channelSql(StringEx::Combine("Insert Into Event_Channel (ChannelIndex,ChannelName,ChannelUrl,ChannelType) Values ("
-		, channel.ChannelIndex, ","
-		, "'", channel.ChannelName, "',"
-		, "'", channel.ChannelUrl, "',"
-		, channel.ChannelType
-		, ")"));
-	if (_sqlite.ExecuteRowCount(channelSql)==1)
+	if (_sqlite.ExecuteRowCount(InsertChannel(&channel))==1)
 	{
 		for (vector<EventLane>::const_iterator it = channel.Lanes.begin(); it != channel.Lanes.end(); ++it)
 		{
@@ -118,7 +106,7 @@ bool EventChannelData::SetList(const vector<EventChannel>& channels)
 
 bool EventChannelData::Delete(int channelIndex)
 {
-	int result = _sqlite.ExecuteRowCount(StringEx::Combine("Delete From Event_Channel Where ChannelIndex=", channelIndex));
+	int result = _sqlite.ExecuteRowCount(DeleteChannel(channelIndex));
 	if (result==1)
 	{
 		_sqlite.ExecuteRowCount(StringEx::Combine("Delete From Event_Lane Where ChannelIndex=", channelIndex));
@@ -129,13 +117,25 @@ bool EventChannelData::Delete(int channelIndex)
 
 void EventChannelData::Clear()
 {
-	_sqlite.ExecuteRowCount(StringEx::Combine("Delete From Event_Channel"));
+	_sqlite.ExecuteRowCount(ClearChannel());
 	_sqlite.ExecuteRowCount(StringEx::Combine("Delete From Event_Lane"));
 }
 
 void EventChannelData::UpdateDb()
 {
 	TrafficData::UpdateDb();
+	int versionValue = StringEx::Convert<int>(GetParameter("VersionValue"));
+	if (versionValue < 10012)
+	{
+		_sqlite.ExecuteRowCount("ALTER TABLE[Event_Channel] RENAME TO [System_Channel];");
+		_sqlite.ExecuteRowCount("ALTER TABLE[System_Channel] ADD COLUMN[Loop] INTEGER NULL;");
+		_sqlite.ExecuteRowCount("ALTER TABLE[System_Channel] ADD COLUMN[OutputReport] INTEGER NULL;");
+		_sqlite.ExecuteRowCount("ALTER TABLE[System_Channel] ADD COLUMN[OutputImage] INTEGER NULL;");
+		_sqlite.ExecuteRowCount("ALTER TABLE[System_Channel] ADD COLUMN[OutputRecogn] INTEGER NULL;");
+		_sqlite.ExecuteRowCount("ALTER TABLE[System_Channel] ADD COLUMN[GlobalDetect] INTEGER NULL;");
+		_sqlite.ExecuteRowCount("ALTER TABLE[System_Channel] ADD COLUMN[DeviceId] TEXT NULL;");
+		_sqlite.ExecuteRowCount("ALTER TABLE[System_Channel] ADD COLUMN[ChannelId] TEXT NULL;");
+	}
 	SetParameter("Version", "1.0.0.12");
 	SetParameter("VersionValue", "10012");
 }

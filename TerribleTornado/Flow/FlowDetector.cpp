@@ -672,7 +672,20 @@ void FlowDetector::DrawDetect(const map<string, DetectItem>& detectItems,const u
 			if (it->second.Status == DetectStatus::New)
 			{
 				scalar = cv::Scalar(0, 255, 0);
-				ImageConvert::DrawText(&image, it->first.substr(it->first.size() - 4, 4), it->second.Region.HitPoint(), scalar);
+				cv::Scalar textScalar;
+				if (it->second.Type == DetectType::Pedestrain)
+				{
+					textScalar = cv::Scalar(220, 20, 60);
+				}
+				else if(it->second.Type==DetectType::Bike || it->second.Type == DetectType::Motobike)
+				{
+					textScalar = cv::Scalar(255, 255, 0);
+				}
+				else
+				{
+					textScalar = cv::Scalar(124, 252, 0);
+				}
+				ImageConvert::DrawText(&image, it->first.substr(it->first.size() - 4, 4), it->second.Region.HitPoint(), textScalar);
 			}
 			//»ÆÉ«ÔÚÇøÓò
 			else if (it->second.Status == DetectStatus::In)

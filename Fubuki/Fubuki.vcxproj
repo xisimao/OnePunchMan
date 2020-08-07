@@ -142,26 +142,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="FFmpeg\BGR24Handler.cpp" />
-    <ClCompile Include="FFmpeg\DecodeChannel.cpp" />
-    <ClCompile Include="FFmpeg\H264Handler.cpp" />
-    <ClCompile Include="FFmpeg\IVEHandler.cpp" />
-    <ClCompile Include="FFmpeg\OutputHandler.cpp" />
-    <ClCompile Include="FFmpeg\YUV420PHandler.cpp" />
-    <ClCompile Include="FFmpeg\YUV420SPHandler.cpp" />
-    <ClCompile Include="FFmpeg\InputHandler.cpp" />
+    <ClCompile Include="FFmpeg\FFmpegOutput.cpp" />
+    <ClCompile Include="FFmpeg\FFmpegInput.cpp" />
     <ClCompile Include="Mqtt\MqttChannel.cpp" />
     <ClCompile Include="Sqlite\Sqlite.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="FFmpeg\BGR24Handler.h" />
-    <ClInclude Include="FFmpeg\DecodeChannel.h" />
-    <ClInclude Include="FFmpeg\H264Handler.h" />
-    <ClInclude Include="FFmpeg\IVEHandler.h" />
-    <ClInclude Include="FFmpeg\OutputHandler.h" />
-    <ClInclude Include="FFmpeg\YUV420PHandler.h" />
-    <ClInclude Include="FFmpeg\YUV420SPHandler.h" />
-    <ClInclude Include="FFmpeg\InputHandler.h" />
+    <ClInclude Include="FFmpeg\FFmpegOutput.h" />
+    <ClInclude Include="FFmpeg\FFmpegInput.h" />
     <ClInclude Include="Mqtt\MqttChannel.h" />
     <ClInclude Include="Sqlite\Sqlite.h" />
   </ItemGroup>

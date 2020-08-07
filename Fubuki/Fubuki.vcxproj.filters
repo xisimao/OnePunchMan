@@ -1,34 +1,16 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClInclude Include="FFmpeg\BGR24Handler.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\H264Handler.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\YUV420PHandler.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\YUV420SPHandler.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
     <ClInclude Include="Sqlite\Sqlite.h">
       <Filter>Sqlite</Filter>
     </ClInclude>
     <ClInclude Include="Mqtt\MqttChannel.h">
       <Filter>Mqtt</Filter>
     </ClInclude>
-    <ClInclude Include="FFmpeg\OutputHandler.h">
+    <ClInclude Include="FFmpeg\FFmpegOutput.h">
       <Filter>FFmpeg</Filter>
     </ClInclude>
-    <ClInclude Include="FFmpeg\InputHandler.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\DecodeChannel.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\IVEHandler.h">
+    <ClInclude Include="FFmpeg\FFmpegInput.h">
       <Filter>FFmpeg</Filter>
     </ClInclude>
   </ItemGroup>
@@ -44,34 +26,16 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="FFmpeg\BGR24Handler.cpp">
-      <Filter>FFmpeg</Filter>
-    </ClCompile>
-    <ClCompile Include="FFmpeg\H264Handler.cpp">
-      <Filter>FFmpeg</Filter>
-    </ClCompile>
-    <ClCompile Include="FFmpeg\YUV420PHandler.cpp">
-      <Filter>FFmpeg</Filter>
-    </ClCompile>
-    <ClCompile Include="FFmpeg\YUV420SPHandler.cpp">
-      <Filter>FFmpeg</Filter>
-    </ClCompile>
     <ClCompile Include="Sqlite\Sqlite.cpp">
       <Filter>Sqlite</Filter>
     </ClCompile>
     <ClCompile Include="Mqtt\MqttChannel.cpp">
       <Filter>Mqtt</Filter>
     </ClCompile>
-    <ClCompile Include="FFmpeg\OutputHandler.cpp">
+    <ClCompile Include="FFmpeg\FFmpegOutput.cpp">
       <Filter>FFmpeg</Filter>
     </ClCompile>
-    <ClCompile Include="FFmpeg\InputHandler.cpp">
-      <Filter>FFmpeg</Filter>
-    </ClCompile>
-    <ClCompile Include="FFmpeg\DecodeChannel.cpp">
-      <Filter>FFmpeg</Filter>
-    </ClCompile>
-    <ClCompile Include="FFmpeg\IVEHandler.cpp">
+    <ClCompile Include="FFmpeg\FFmpegInput.cpp">
       <Filter>FFmpeg</Filter>
     </ClCompile>
   </ItemGroup>

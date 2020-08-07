@@ -23,14 +23,14 @@ void EventStartup::UpdateDb()
     data.UpdateDb();
 }
 
-void EventStartup::InitThreads(MqttChannel* mqtt, vector<HisiDecodeChannel*>* decodes, vector<TrafficDetector*>* detectors, vector<DetectChannel*>* detects, vector<RecognChannel*>* recogns)
+void EventStartup::InitThreads(MqttChannel* mqtt, vector<DecodeChannel*>* decodes, vector<TrafficDetector*>* detectors, vector<DetectChannel*>* detects, vector<RecognChannel*>* recogns,int loginHandler)
 {
     for (int i = 0; i < ChannelCount; ++i)
     {
         EventDetector* detector = new EventDetector(DecodeChannel::DestinationWidth, DecodeChannel::DestinationHeight, mqtt,&_encode);
         _detectors.push_back(detector);
         detectors->push_back(detector);
-        HisiDecodeChannel* decode = new HisiDecodeChannel(i + 1,&_encode);
+        DecodeChannel* decode = new DecodeChannel(i + 1, loginHandler ,&_encode);
         decodes->push_back(decode);
     }
 
@@ -60,7 +60,7 @@ void EventStartup::InitChannels()
         EventChannel channel = data.Get(i + 1);
         if (!channel.ChannelUrl.empty())
         {
-            _decodes[i]->UpdateChannel(channel.ChannelUrl, channel.RtmpUrl("127.0.0.1"), channel.Loop);
+            _decodes[i]->UpdateChannel(channel.ChannelUrl, channel.RtmpUrl("127.0.0.1"),static_cast<ChannelType>(channel.ChannelType), channel.Loop);
             _detectors[i]->UpdateChannel(channel);
         }
     }
@@ -73,12 +73,7 @@ string EventStartup::GetChannelJson(const string& host,int channelIndex)
     EventChannel channel=data.Get(channelIndex);
     if (!channel.ChannelUrl.empty())
     {
-        JsonSerialization::SerializeValue(&channelJson, "channelIndex", channel.ChannelIndex);
-        JsonSerialization::SerializeValue(&channelJson, "channelName", channel.ChannelName);
-        JsonSerialization::SerializeValue(&channelJson, "channelUrl", channel.ChannelUrl);
-        JsonSerialization::SerializeValue(&channelJson, "rtmpUrl", channel.RtmpUrl(host));
-        JsonSerialization::SerializeValue(&channelJson, "flvUrl", channel.FlvUrl(host));
-        JsonSerialization::SerializeValue(&channelJson, "channelType", channel.ChannelType);
+        FillChannelJson(&channelJson, &channel, host);
         if (ChannelIndexEnable(channel.ChannelIndex))
         {
             JsonSerialization::SerializeValue(&channelJson, "lanesInited", _detectors[channel.ChannelIndex - 1]->LanesInited());
@@ -101,58 +96,34 @@ string EventStartup::GetChannelJson(const string& host,int channelIndex)
     return channelJson;
 }
 
-string EventStartup::CheckChannel(EventChannel* channel)
-{
-    if (ChannelIndexEnable(channel->ChannelIndex))
-    {
-        if (channel->ChannelType != static_cast<int>(ChannelType::File)
-            || channel->Loop)
-        {
-            channel->Loop = true;
-            channel->OutputImage = false;
-            channel->OutputReport = false;
-            channel->OutputRecogn = false;
-            channel->GlobalDetect = false;
-        }
-        return string();
-    }
-    else
-    {
-        return GetErrorJson("channelIndex", StringEx::Combine("channelIndex is limited to 1-", ChannelCount));
-    }
-}
-
 void EventStartup::SetDevice(HttpReceivedEventArgs* e)
 {
     JsonDeserialization jd(e->RequestJson);
-    int channelIndex = 0;
+    int itemIndex = 0;
     vector<EventChannel> channels;
     map<int, EventChannel> tempChannels;
     while (true)
     {
         EventChannel channel;
-        channel.ChannelIndex = jd.Get<int>(StringEx::Combine("channels:", channelIndex, ":channelIndex"));
+        FillChannel(&channel, jd, itemIndex);
         if (channel.ChannelIndex == 0)
         {
             break;
         }
-        channel.ChannelName = jd.Get<string>(StringEx::Combine("channels:", channelIndex, ":channelName"));
-        channel.ChannelUrl = jd.Get<string>(StringEx::Combine("channels:", channelIndex, ":channelUrl"));
-        channel.ChannelType = jd.Get<int>(StringEx::Combine("channels:", channelIndex, ":channelType"));
         int laneIndex = 0;
         while (true)
         {
             EventLane lane;
-            lane.LaneIndex = jd.Get<int>(StringEx::Combine("channels:", channelIndex, ":lanes:", laneIndex, ":laneIndex"));
+            lane.LaneIndex = jd.Get<int>(StringEx::Combine("channels:", itemIndex, ":lanes:", laneIndex, ":laneIndex"));
             if (lane.LaneIndex==0)
             {
                 break;
             }
             lane.ChannelIndex = channel.ChannelIndex;
-            lane.LaneName = jd.Get<string>(StringEx::Combine("channels:", channelIndex, ":lanes:", laneIndex, ":laneName"));
-            lane.LaneType = jd.Get<int>(StringEx::Combine("channels:", channelIndex, ":lanes:", laneIndex, ":laneType"));
-            lane.Region = jd.Get<string>(StringEx::Combine("channels:", channelIndex, ":lanes:", laneIndex, ":region"));
-            lane.Line = jd.Get<string>(StringEx::Combine("channels:", channelIndex, ":lanes:", laneIndex, ":line"));
+            lane.LaneName = jd.Get<string>(StringEx::Combine("channels:", itemIndex, ":lanes:", laneIndex, ":laneName"));
+            lane.LaneType = jd.Get<int>(StringEx::Combine("channels:", itemIndex, ":lanes:", laneIndex, ":laneType"));
+            lane.Region = jd.Get<string>(StringEx::Combine("channels:", itemIndex, ":lanes:", laneIndex, ":region"));
+            lane.Line = jd.Get<string>(StringEx::Combine("channels:", itemIndex, ":lanes:", laneIndex, ":line"));
             channel.Lanes.push_back(lane);
             laneIndex += 1;
         }
@@ -165,7 +136,7 @@ void EventStartup::SetDevice(HttpReceivedEventArgs* e)
         }
         channels.push_back(channel);
         tempChannels.insert(pair<int, EventChannel>(channel.ChannelIndex, channel));
-        channelIndex += 1;
+        itemIndex += 1;
     }
     EventChannelData data;
     if (data.SetList(channels))
@@ -180,7 +151,7 @@ void EventStartup::SetDevice(HttpReceivedEventArgs* e)
             }
             else
             {
-                _decodes[i]->UpdateChannel(it->second.ChannelUrl, it->second.RtmpUrl("127.0.0.1"), it->second.Loop);
+                _decodes[i]->UpdateChannel(it->second.ChannelUrl, it->second.RtmpUrl("127.0.0.1"), static_cast<ChannelType>(it->second.ChannelType), it->second.Loop);
                 _detectors[i]->UpdateChannel(it->second);
             }
         }
@@ -198,10 +169,7 @@ void EventStartup::SetChannel(HttpReceivedEventArgs* e)
     JsonDeserialization jd(e->RequestJson);
 
     EventChannel channel;
-    channel.ChannelIndex = jd.Get<int>("channelIndex");
-    channel.ChannelName = jd.Get<string>("channelName");
-    channel.ChannelUrl = jd.Get<string>("channelUrl");
-    channel.ChannelType = jd.Get<int>("channelType");
+    FillChannel(&channel, jd);
     int laneIndex = 0;
     while (true)
     {
@@ -229,7 +197,7 @@ void EventStartup::SetChannel(HttpReceivedEventArgs* e)
     EventChannelData data;
     if (data.Set(channel))
     {
-        _decodes[channel.ChannelIndex - 1]->UpdateChannel(channel.ChannelUrl, channel.RtmpUrl("127.0.0.1"),channel.Loop);
+        _decodes[channel.ChannelIndex - 1]->UpdateChannel(channel.ChannelUrl, channel.RtmpUrl("127.0.0.1"), static_cast<ChannelType>(channel.ChannelType),channel.Loop);
         _detectors[channel.ChannelIndex - 1]->UpdateChannel(channel);
         e->Code = HttpCode::OK;
     }

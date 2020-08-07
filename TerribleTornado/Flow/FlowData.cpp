@@ -6,9 +6,8 @@ using namespace OnePunchMan;
 vector<FlowChannel> FlowChannelData::GetList()
 {
 	vector<FlowChannel> channels;
-	string channelSql("Select * From Flow_Channel Order By ChannelIndex");
 	SqliteReader sqlite(_dbName);
-	if (sqlite.BeginQuery(channelSql))
+	if (sqlite.BeginQuery(GetChannelList()))
 	{
 		while (sqlite.HasRow()) 
 		{
@@ -22,9 +21,8 @@ vector<FlowChannel> FlowChannelData::GetList()
 FlowChannel FlowChannelData::Get(int channelIndex)
 {
 	FlowChannel channel;
-	string sql(StringEx::Combine("Select * From Flow_Channel Where ChannelIndex=", channelIndex));
 	SqliteReader sqlite(_dbName);
-	if (sqlite.BeginQuery(sql))
+	if (sqlite.BeginQuery(GetChannel(channelIndex)))
 	{
 		if (sqlite.HasRow()) 
 		{
@@ -38,15 +36,7 @@ FlowChannel FlowChannelData::Get(int channelIndex)
 FlowChannel FlowChannelData::FillChannel(const SqliteReader& sqlite)
 {
 	FlowChannel channel;
-	channel.ChannelIndex = sqlite.GetInt(0);
-	channel.ChannelName = sqlite.GetString(1);
-	channel.ChannelUrl = sqlite.GetString(2);
-	channel.ChannelType = sqlite.GetInt(3);
-	channel.Loop = sqlite.GetInt(4);
-	channel.OutputReport = sqlite.GetInt(5);
-	channel.OutputImage = sqlite.GetInt(6);
-	channel.OutputRecogn = sqlite.GetInt(7);
-	channel.GlobalDetect = sqlite.GetInt(8);
+	TrafficData::FillChannel(sqlite, &channel);
 
 	SqliteReader laneSqlite(_dbName);
 	string laneSql(StringEx::Combine("Select * From Flow_Lane Where ChannelIndex=", channel.ChannelIndex," Order By LaneIndex"));
@@ -80,18 +70,7 @@ FlowChannel FlowChannelData::FillChannel(const SqliteReader& sqlite)
 
 bool FlowChannelData::Insert(const FlowChannel& channel)
 {
-	string channelSql(StringEx::Combine("Insert Into Flow_Channel (ChannelIndex,ChannelName,ChannelUrl,ChannelType,Loop,OutputImage,OutputReport,OutputRecogn,GlobalDetect) Values ("
-		, channel.ChannelIndex, ","
-		, "'", channel.ChannelName, "',"
-		, "'", channel.ChannelUrl, "',"
-		, channel.ChannelType, ","
-		, channel.Loop, ","
-		, channel.OutputImage, ","
-		, channel.OutputReport, ","
-		, channel.OutputRecogn, ","
-		, channel.GlobalDetect
-		, ")"));
-	if (_sqlite.ExecuteRowCount(channelSql)==1)
+	if (_sqlite.ExecuteRowCount(InsertChannel(&channel))==1)
 	{
 		for (vector<FlowLane>::const_iterator it = channel.Lanes.begin(); it != channel.Lanes.end(); ++it)
 		{
@@ -148,7 +127,7 @@ bool FlowChannelData::SetList(const vector<FlowChannel>& channels)
 
 bool FlowChannelData::Delete(int channelIndex)
 {
-	int result = _sqlite.ExecuteRowCount(StringEx::Combine("Delete From Flow_Channel Where ChannelIndex=", channelIndex));
+	int result = _sqlite.ExecuteRowCount(DeleteChannel(channelIndex));
 	if (result==1)
 	{
 		_sqlite.ExecuteRowCount(StringEx::Combine("Delete From Flow_Lane Where ChannelIndex=", channelIndex));
@@ -159,7 +138,7 @@ bool FlowChannelData::Delete(int channelIndex)
 
 void FlowChannelData::Clear()
 {
-	_sqlite.ExecuteRowCount(StringEx::Combine("Delete From Flow_Channel"));
+	_sqlite.ExecuteRowCount(ClearChannel());
 	_sqlite.ExecuteRowCount(StringEx::Combine("Delete From Flow_Lane"));
 }
 
@@ -175,6 +154,12 @@ void FlowChannelData::UpdateDb()
 		_sqlite.ExecuteRowCount("ALTER TABLE[Flow_Channel] ADD COLUMN[OutputRecogn] INTEGER NULL;");
 		_sqlite.ExecuteRowCount("ALTER TABLE[Flow_Channel] ADD COLUMN[GlobalDetect] INTEGER NULL;");
 	}
-	SetParameter("Version", "2.0.0.20");
-	SetParameter("VersionValue", "20020");
+	if (versionValue < 20021)
+	{
+		_sqlite.ExecuteRowCount("ALTER TABLE[Flow_Channel] RENAME TO [System_Channel];");
+		_sqlite.ExecuteRowCount("ALTER TABLE[System_Channel] ADD COLUMN[DeviceId] TEXT NULL;");
+		_sqlite.ExecuteRowCount("ALTER TABLE[System_Channel] ADD COLUMN[ChannelId] TEXT NULL;");
+	}
+	SetParameter("Version", "2.0.0.23");
+	SetParameter("VersionValue", "20023");
 }

@@ -1,7 +1,7 @@
 #pragma once
 #include "EventData.h"
 #include "EventDetector.h"
-#include "HisiEncodeChannel.h"
+#include "EncodeChannel.h"
 #include "TrafficStartup.h"
 
 namespace OnePunchMan
@@ -23,7 +23,7 @@ namespace OnePunchMan
     protected:
         void UpdateDb();
 
-        void InitThreads(MqttChannel* mqtt, std::vector<HisiDecodeChannel*>* decodes, std::vector<TrafficDetector*>* detectors, std::vector<DetectChannel*>* detects, std::vector<RecognChannel*>* recogns);
+        void InitThreads(MqttChannel* mqtt, std::vector<DecodeChannel*>* decodes, std::vector<TrafficDetector*>* detectors, std::vector<DetectChannel*>* detects, std::vector<RecognChannel*>* recogns,int loginHandler);
 
         void InitChannels();
 
@@ -36,18 +36,11 @@ namespace OnePunchMan
         bool DeleteChannel(int channelIndex);
 
     private:
-        /**
-        * @brief: 校验流量通道
-        * @param: 流量通道
-        * @return: 检查成功返回空字符串，否则返回错误原因
-        */
-        std::string CheckChannel(EventChannel* channel);
-
         //通道检测集合，等于视频总数
         std::vector<EventDetector*> _detectors;
 
         //编码线程
-        HisiEncodeChannel _encode;
+        EncodeChannel _encode;
     };
 }
 

@@ -7,10 +7,13 @@
 #include "SeemmoSDK.h"
 #include "MqttChannel.h"
 #include "DetectChannel.h"
-#include "HisiDecodeChannel.h"
+#include "DecodeChannel.h"
 #include "TrafficDetector.h"
 #include "SocketMaid.h"
 #include "TrafficData.h"
+#ifndef _WIN32
+#include "clientsdk.h"
+#endif // !_WIN32
 
 namespace OnePunchMan
 {
@@ -56,8 +59,9 @@ namespace OnePunchMan
         * @param: detectors 交通检测类集合
         * @param: detects 视频检测类集合
         * @param: recogns 视频识别类集合
+        * @param: loginHandler 登陆句柄
         */
-        virtual void InitThreads(MqttChannel* mqtt, std::vector<HisiDecodeChannel*>* decodes, std::vector<TrafficDetector*>* detectors, std::vector<DetectChannel*>* detects, std::vector<RecognChannel*>* recogns) = 0;
+        virtual void InitThreads(MqttChannel* mqtt, std::vector<DecodeChannel*>* decodes, std::vector<TrafficDetector*>* detectors, std::vector<DetectChannel*>* detects, std::vector<RecognChannel*>* recogns,int loginHandler) = 0;
 
         /**
         * @brief: 初始化通道集合
@@ -111,15 +115,45 @@ namespace OnePunchMan
         bool ChannelIndexEnable(int channelIndex);
 
         /**
+        * @brief: 检查通道数据项
+        * @param: channel 通道数据
+        * @return: 返回空字符串表示检查通过，否则返回错误原因
+        */
+        std::string CheckChannel(TrafficChannel* channel);
+
+        /**
         * @brief: 获取错误信息json数据
         * @param: field 字段名
         * @param: message 错误信息
         * @return: json数据
         */
         std::string GetErrorJson(const std::string& field, const std::string& message);
+        
+        /**
+        * @brief: 根据通道填充Json字符串
+        * @param: channelJson 要填充的json字符串
+        * @param: channel 通道数据
+        * @param: host 本机地址
+        */
+        void FillChannelJson(std::string* channelJson, const TrafficChannel* channel, const std::string& host);
+        
+        /**
+        * @brief: 根据通道json填充通道数据
+        * @param: channel 要填充的通道数据
+        * @param: jd json字符串
+        */
+        void FillChannel(TrafficChannel* channel, const JsonDeserialization& jd);
+        
+        /**
+        * @brief: 根据通道数组json填充通道数据
+        * @param: channel 要填充的通道数据
+        * @param: jd json字符串
+        * @param: itemIndex 通道所在数组的序号
+        */
+        void FillChannel(TrafficChannel* channel, const JsonDeserialization& jd, int itemIndex);
 
         //解码线程集合，等于视频总数
-        std::vector<HisiDecodeChannel*> _decodes;
+        std::vector<DecodeChannel*> _decodes;
 
     private:
         /**

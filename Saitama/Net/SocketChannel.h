@@ -111,6 +111,7 @@ namespace OnePunchMan
 			SocketHandler* Handler;
 
 			SocketItem()
+				:Socket(0), Type(SocketType::None),Operation(SocketOperation::Error),Handler(NULL)
 			{
 
 			}

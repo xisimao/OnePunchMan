@@ -1,7 +1,7 @@
 #pragma once
 #include "EventData.h"
 #include "TrafficDetector.h"
-#include "HisiEncodeChannel.h"
+#include "EncodeChannel.h"
 
 namespace OnePunchMan
 {
@@ -26,7 +26,7 @@ namespace OnePunchMan
 		* @param: mqtt mqtt
 		* @param: encodeChannel 编码通道
 		*/
-		EventDetector(int width, int height,MqttChannel* mqtt, HisiEncodeChannel* encodeChannel);
+		EventDetector(int width, int height,MqttChannel* mqtt, EncodeChannel* encodeChannel);
 		
 		/**
 		* @brief: 析构函数
@@ -169,7 +169,7 @@ namespace OnePunchMan
 		//jpg字节流
 		unsigned char* _jpgBuffer;
 		//编码线程
-		HisiEncodeChannel* _encodeChannel;
+		EncodeChannel* _encodeChannel;
 		//视频文件临时存放字节流长度
 		int _videoSize;
 		//视频文件临时存放字节流

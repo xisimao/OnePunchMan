@@ -13,9 +13,11 @@
     <Filter Include="Adapter">
       <UniqueIdentifier>{f79af6b7-945c-4374-8e16-4c607f69036b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Image">
+      <UniqueIdentifier>{dba4bd3d-dc77-4194-9a41-1fbb91d77a63}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="TerribleTornado.cpp" />
     <ClCompile Include="Flow\FlowData.cpp">
       <Filter>Flow</Filter>
     </ClCompile>
@@ -52,16 +54,32 @@
     <ClCompile Include="Adapter\IoAdapter.cpp">
       <Filter>Adapter</Filter>
     </ClCompile>
-    <ClCompile Include="Traffic\ImageConvert.cpp">
-      <Filter>Traffic</Filter>
-    </ClCompile>
     <ClCompile Include="Traffic\TrafficData.cpp">
       <Filter>Traffic</Filter>
     </ClCompile>
-    <ClCompile Include="Traffic\HisiDecodeChannel.cpp">
+    <ClCompile Include="TerribleTornado.cpp" />
+    <ClCompile Include="Image\ImageConvert.cpp">
+      <Filter>Image</Filter>
+    </ClCompile>
+    <ClCompile Include="Image\H264Handler.cpp">
+      <Filter>Image</Filter>
+    </ClCompile>
+    <ClCompile Include="Image\IVEHandler.cpp">
+      <Filter>Image</Filter>
+    </ClCompile>
+    <ClCompile Include="Image\YUV420PHandler.cpp">
+      <Filter>Image</Filter>
+    </ClCompile>
+    <ClCompile Include="Image\YUV420SPHandler.cpp">
+      <Filter>Image</Filter>
+    </ClCompile>
+    <ClCompile Include="Image\BGR24Handler.cpp">
+      <Filter>Image</Filter>
+    </ClCompile>
+    <ClCompile Include="Traffic\DecodeChannel.cpp">
       <Filter>Traffic</Filter>
     </ClCompile>
-    <ClCompile Include="Traffic\HisiEncodeChannel.cpp">
+    <ClCompile Include="Traffic\EncodeChannel.cpp">
       <Filter>Traffic</Filter>
     </ClCompile>
   </ItemGroup>
@@ -105,13 +123,28 @@
     <ClInclude Include="Adapter\IoAdapter.h">
       <Filter>Adapter</Filter>
     </ClInclude>
-    <ClInclude Include="Traffic\ImageConvert.h">
+    <ClInclude Include="Image\ImageConvert.h">
+      <Filter>Image</Filter>
+    </ClInclude>
+    <ClInclude Include="Image\YUV420SPHandler.h">
+      <Filter>Image</Filter>
+    </ClInclude>
+    <ClInclude Include="Image\H264Handler.h">
+      <Filter>Image</Filter>
+    </ClInclude>
+    <ClInclude Include="Image\IVEHandler.h">
+      <Filter>Image</Filter>
+    </ClInclude>
+    <ClInclude Include="Image\YUV420PHandler.h">
+      <Filter>Image</Filter>
+    </ClInclude>
+    <ClInclude Include="Image\BGR24Handler.h">
+      <Filter>Image</Filter>
+    </ClInclude>
+    <ClInclude Include="Traffic\DecodeChannel.h">
       <Filter>Traffic</Filter>
     </ClInclude>
-    <ClInclude Include="Traffic\HisiDecodeChannel.h">
-      <Filter>Traffic</Filter>
-    </ClInclude>
-    <ClInclude Include="Traffic\HisiEncodeChannel.h">
+    <ClInclude Include="Traffic\EncodeChannel.h">
       <Filter>Traffic</Filter>
     </ClInclude>
   </ItemGroup>

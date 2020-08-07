@@ -14,7 +14,7 @@ const double EventDetector::MovePixel = 50.0;
 const int EventDetector::PointCount = 3;
 const int EventDetector::EncodeFrameCount = 250;
 
-EventDetector::EventDetector(int width, int height, MqttChannel* mqtt, HisiEncodeChannel* encodeChannel)
+EventDetector::EventDetector(int width, int height, MqttChannel* mqtt, EncodeChannel* encodeChannel)
 	:TrafficDetector(width, height, mqtt), _encodeChannel(encodeChannel)
 {
 	_bgrBuffer = new unsigned char[_bgrSize];

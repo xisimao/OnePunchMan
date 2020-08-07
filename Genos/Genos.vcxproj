@@ -35,14 +35,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\Fubuki\FFmpeg\BGR24Handler.cpp" />
-    <ClCompile Include="..\Fubuki\FFmpeg\DecodeChannel.cpp" />
-    <ClCompile Include="..\Fubuki\FFmpeg\H264Handler.cpp" />
-    <ClCompile Include="..\Fubuki\FFmpeg\InputHandler.cpp" />
-    <ClCompile Include="..\Fubuki\FFmpeg\IVEHandler.cpp" />
-    <ClCompile Include="..\Fubuki\FFmpeg\OutputHandler.cpp" />
-    <ClCompile Include="..\Fubuki\FFmpeg\YUV420PHandler.cpp" />
-    <ClCompile Include="..\Fubuki\FFmpeg\YUV420SPHandler.cpp" />
+    <ClCompile Include="..\Fubuki\FFmpeg\FFmpegInput.cpp" />
+    <ClCompile Include="..\Fubuki\FFmpeg\FFmpegOutput.cpp" />
     <ClCompile Include="..\Fubuki\Mqtt\MqttChannel.cpp" />
     <ClCompile Include="..\Fubuki\Sqlite\Sqlite.cpp" />
     <ClCompile Include="..\Saitama\Convert\JsonFormatter.cpp" />
@@ -72,10 +66,15 @@
     <ClCompile Include="..\TerribleTornado\Flow\FlowData.cpp" />
     <ClCompile Include="..\TerribleTornado\Flow\FlowDetector.cpp" />
     <ClCompile Include="..\TerribleTornado\Flow\FlowStartup.cpp" />
+    <ClCompile Include="..\TerribleTornado\Image\BGR24Handler.cpp" />
+    <ClCompile Include="..\TerribleTornado\Image\H264Handler.cpp" />
+    <ClCompile Include="..\TerribleTornado\Image\ImageConvert.cpp" />
+    <ClCompile Include="..\TerribleTornado\Image\IVEHandler.cpp" />
+    <ClCompile Include="..\TerribleTornado\Image\YUV420PHandler.cpp" />
+    <ClCompile Include="..\TerribleTornado\Image\YUV420SPHandler.cpp" />
+    <ClCompile Include="..\TerribleTornado\Traffic\DecodeChannel.cpp" />
     <ClCompile Include="..\TerribleTornado\Traffic\DetectChannel.cpp" />
-    <ClCompile Include="..\TerribleTornado\Traffic\HisiDecodeChannel.cpp" />
-    <ClCompile Include="..\TerribleTornado\Traffic\HisiEncodeChannel.cpp" />
-    <ClCompile Include="..\TerribleTornado\Traffic\ImageConvert.cpp" />
+    <ClCompile Include="..\TerribleTornado\Traffic\EncodeChannel.cpp" />
     <ClCompile Include="..\TerribleTornado\Traffic\RecognChannel.cpp" />
     <ClCompile Include="..\TerribleTornado\Traffic\SeemmoSDK.cpp" />
     <ClCompile Include="..\TerribleTornado\Traffic\TrafficData.cpp" />
@@ -84,14 +83,8 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\Fubuki\FFmpeg\BGR24Handler.h" />
-    <ClInclude Include="..\Fubuki\FFmpeg\DecodeChannel.h" />
-    <ClInclude Include="..\Fubuki\FFmpeg\H264Handler.h" />
-    <ClInclude Include="..\Fubuki\FFmpeg\InputHandler.h" />
-    <ClInclude Include="..\Fubuki\FFmpeg\IVEHandler.h" />
-    <ClInclude Include="..\Fubuki\FFmpeg\OutputHandler.h" />
-    <ClInclude Include="..\Fubuki\FFmpeg\YUV420PHandler.h" />
-    <ClInclude Include="..\Fubuki\FFmpeg\YUV420SPHandler.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\FFmpegInput.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\FFmpegOutput.h" />
     <ClInclude Include="..\Fubuki\Mqtt\MqttChannel.h" />
     <ClInclude Include="..\Fubuki\Sqlite\Sqlite.h" />
     <ClInclude Include="..\Saitama\Convert\JsonFormatter.h" />
@@ -125,10 +118,15 @@
     <ClInclude Include="..\TerribleTornado\Flow\FlowData.h" />
     <ClInclude Include="..\TerribleTornado\Flow\FlowDetector.h" />
     <ClInclude Include="..\TerribleTornado\Flow\FlowStartup.h" />
+    <ClInclude Include="..\TerribleTornado\Image\BGR24Handler.h" />
+    <ClInclude Include="..\TerribleTornado\Image\H264Handler.h" />
+    <ClInclude Include="..\TerribleTornado\Image\ImageConvert.h" />
+    <ClInclude Include="..\TerribleTornado\Image\IVEHandler.h" />
+    <ClInclude Include="..\TerribleTornado\Image\YUV420PHandler.h" />
+    <ClInclude Include="..\TerribleTornado\Image\YUV420SPHandler.h" />
+    <ClInclude Include="..\TerribleTornado\Traffic\DecodeChannel.h" />
     <ClInclude Include="..\TerribleTornado\Traffic\DetectChannel.h" />
-    <ClInclude Include="..\TerribleTornado\Traffic\HisiDecodeChannel.h" />
-    <ClInclude Include="..\TerribleTornado\Traffic\HisiEncodeChannel.h" />
-    <ClInclude Include="..\TerribleTornado\Traffic\ImageConvert.h" />
+    <ClInclude Include="..\TerribleTornado\Traffic\EncodeChannel.h" />
     <ClInclude Include="..\TerribleTornado\Traffic\RecognChannel.h" />
     <ClInclude Include="..\TerribleTornado\Traffic\SeemmoSDK.h" />
     <ClInclude Include="..\TerribleTornado\Traffic\TrafficData.h" />
@@ -193,11 +191,11 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>/usr/local/include;../TerribleTornado/Adapter;../TerribleTornado/Event;../TerribleTornado/Traffic;../TerribleTornado/Flow;../Fubuki/Mqtt;../Fubuki/Sqlite;../Fubuki/FFmpeg;../Saitama/Text;../Saitama/Net;../Saitama/Logger;../Saitama/Core;../Saitama/Convert;./Genos;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>/usr/local/include;../TerribleTornado/Image;../TerribleTornado/Adapter;../TerribleTornado/Event;../TerribleTornado/Traffic;../TerribleTornado/Flow;../Fubuki/Mqtt;../Fubuki/Sqlite;../Fubuki/FFmpeg;../Saitama/Text;../Saitama/Net;../Saitama/Logger;../Saitama/Core;../Saitama/Convert;./Genos;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link />
     <Link>
-      <LibraryDependencies>turbojpeg;dsp;isp;ive;hdmi;mpi;nnie;sns_imx277_slvs;sns_imx290;sns_imx334;sns_imx334_slave;sns_imx477;dnvqe;upvqe;VoiceEngine;securec;_hiae;_hiawb;_hidehaze;_hidrc;_hildci;opencv_highgui;opencv_core;opencv_imgproc;opencv_flann;opencv_calib3d;opencv_features2d;avcodec;avdevice;avfilter;avformat;avutil;swresample;swscale;postproc;sqlite3;mosquitto;dl;pthread;%(LibraryDependencies)</LibraryDependencies>
+      <LibraryDependencies>clientsdk;turbojpeg;dsp;isp;ive;hdmi;mpi;nnie;sns_imx277_slvs;sns_imx290;sns_imx334;sns_imx334_slave;sns_imx477;dnvqe;upvqe;VoiceEngine;securec;_hiae;_hiawb;_hidehaze;_hidrc;_hildci;opencv_highgui;opencv_core;opencv_imgproc;opencv_flann;opencv_calib3d;opencv_features2d;avcodec;avdevice;avfilter;avformat;avutil;swresample;swscale;postproc;sqlite3;mosquitto;dl;pthread;%(LibraryDependencies)</LibraryDependencies>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
