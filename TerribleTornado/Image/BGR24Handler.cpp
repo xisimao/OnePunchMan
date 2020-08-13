@@ -16,7 +16,7 @@ void BGR24Handler::HandleFrame(unsigned char* bgr24, int width, int height, unsi
 	}
 
 	FILE* fw = NULL;
-	if ((fw = fopen(StringEx::Combine("../images/bgr24_", frameIndex, ".bmp").c_str(), "wb")) == NULL) {
+	if ((fw = fopen(StringEx::Combine("../temp/bgr24_", frameIndex, ".bmp").c_str(), "wb")) == NULL) {
 		return;
 	}
 	

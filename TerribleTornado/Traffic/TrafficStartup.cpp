@@ -114,11 +114,11 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
             for (vector<GbDevice>::iterator it = devices.begin();it!=devices.end();++it)
             {
                 string deviceJson;
+                JsonSerialization::SerializeValue(&deviceJson, "id", it->Id);
                 JsonSerialization::SerializeValue(&deviceJson, "deviceId", it->DeviceId);
                 JsonSerialization::SerializeValue(&deviceJson, "deviceName", it->DeviceName);
                 JsonSerialization::SerializeValue(&deviceJson, "deviceIp", it->DeviceIp);
                 JsonSerialization::SerializeValue(&deviceJson, "devicePort", it->DevicePort);
-                JsonSerialization::SerializeValue(&deviceJson, "gbId", it->GbId);
                 JsonSerialization::SerializeValue(&deviceJson, "userName", it->UserName);
                 JsonSerialization::SerializeValue(&deviceJson, "password", it->Password);
                 JsonSerialization::AddClassItem(&e->ResponseJson, deviceJson);
@@ -129,10 +129,10 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
         {
             JsonDeserialization jd(e->RequestJson);
             GbDevice device;
+            device.DeviceId = jd.Get<string>("deviceId");
             device.DeviceName = jd.Get<string>("deviceName");
             device.DeviceIp = jd.Get<string>("deviceIp");
-            device.DevicePort = jd.Get<int>("devicePort");
-            device.GbId = jd.Get<string>("gbId");
+            device.DevicePort = jd.Get<int>("devicePort");      
             device.UserName = jd.Get<string>("userName");
             device.Password = jd.Get<string>("password");
             data.InsertGbDevice(device);
@@ -142,11 +142,11 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
         {
             JsonDeserialization jd(e->RequestJson);
             GbDevice device;
-            device.DeviceId = jd.Get<int>("deviceId");
+            device.Id = jd.Get<int>("id");
+            device.DeviceId = jd.Get<string>("deviceId");
             device.DeviceName = jd.Get<string>("deviceName");
             device.DeviceIp = jd.Get<string>("deviceIp");
-            device.DevicePort = jd.Get<int>("devicePort");
-            device.GbId = jd.Get<string>("gbId");
+            device.DevicePort = jd.Get<int>("devicePort");   
             device.UserName = jd.Get<string>("userName");
             device.Password = jd.Get<string>("password");
             if (data.UpdateGbDevice(device))
@@ -162,8 +162,7 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
         else if (e->Function.compare(HttpFunction::Delete) == 0)
         {
             string id = GetId(e->Url, "/api/gbDevices");
-            int deviceId = StringEx::Convert<int>(id);
-            if (data.DeleteGbDevice(deviceId))
+            if (data.DeleteGbDevice(StringEx::Convert<int>(id)))
             {
                 e->Code = HttpCode::OK;
             }
@@ -186,7 +185,6 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
                 JsonSerialization::SerializeValue(&channelJson, "id", it->Id);
                 JsonSerialization::SerializeValue(&channelJson, "channelId", it->ChannelId);
                 JsonSerialization::SerializeValue(&channelJson, "channelName", it->ChannelName);
-                JsonSerialization::SerializeValue(&channelJson, "deviceId", it->DeviceId);
                 JsonSerialization::AddClassItem(&e->ResponseJson, channelJson);
             }
             e->Code = HttpCode::OK;
@@ -398,6 +396,7 @@ void TrafficStartup::FillChannelJson(string* channelJson,const TrafficChannel* c
     JsonSerialization::SerializeValue(channelJson, "rtmpUrl", channel->RtmpUrl(host));
     JsonSerialization::SerializeValue(channelJson, "flvUrl", channel->FlvUrl(host));
     JsonSerialization::SerializeValue(channelJson, "channelType", channel->ChannelType);
+    JsonSerialization::SerializeValue(channelJson, "deviceId", channel->DeviceId);
     JsonSerialization::SerializeValue(channelJson, "loop", channel->Loop);
     JsonSerialization::SerializeValue(channelJson, "outputReport", channel->OutputReport);
     JsonSerialization::SerializeValue(channelJson, "outputImage", channel->OutputImage);
@@ -411,6 +410,7 @@ void TrafficStartup::FillChannel(TrafficChannel* channel,const JsonDeserializati
     channel->ChannelName = jd.Get<string>("channelName");
     channel->ChannelUrl = jd.Get<string>("channelUrl");
     channel->ChannelType = jd.Get<int>("channelType");
+    channel->DeviceId = jd.Get<string>("deviceId");
     channel->Loop = jd.Get<bool>("loop");
     channel->OutputImage = jd.Get<bool>("outputImage");
     channel->OutputReport = jd.Get<bool>("outputReport");
@@ -424,6 +424,7 @@ void TrafficStartup::FillChannel(TrafficChannel* channel, const JsonDeserializat
     channel->ChannelName = jd.Get<string>(StringEx::Combine("channels:", itemIndex, ":channelName"));
     channel->ChannelUrl = jd.Get<string>(StringEx::Combine("channels:", itemIndex, ":channelUrl"));
     channel->ChannelType = jd.Get<int>(StringEx::Combine("channels:", itemIndex, ":channelType"));
+    channel->DeviceId = jd.Get<string>(StringEx::Combine("channels:", itemIndex, ":deviceId"));
 }
 
 void TrafficStartup::StartCore()
@@ -467,9 +468,9 @@ void TrafficStartup::StartCore()
     int loginHandler = -1;
 #ifndef _WIN32
     int gbResult = vas_sdk_startup();
-    if (gbResult == 0)
+    if (gbResult >= 0)
     {
-        LogPool::Information(LogEvent::System, "国标sdk初始化成功");
+        LogPool::Information(LogEvent::System, "国标sdk初始化成功，登陆句柄:",gbResult);
     }
     else
     {
@@ -494,8 +495,6 @@ void TrafficStartup::StartCore()
         }
     }
 #endif // !_WIN32
-
-
 
     _mqtt = new MqttChannel("127.0.0.1", 1883);
     _mqtt->MqttDisconnected.Subscribe(this);

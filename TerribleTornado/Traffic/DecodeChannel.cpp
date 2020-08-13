@@ -12,11 +12,11 @@ const int DecodeChannel::DestinationHeight = 1080;
 DecodeChannel::DecodeChannel(int channelIndex,int loginId, EncodeChannel* encodeChannel)
 	:ThreadObject("decode"), _channelIndex(channelIndex), _loginId(loginId)
 	, _inputUrl(), _outputUrl(), _channelType(ChannelType::None), _channelStatus(ChannelStatus::Init), _taskId(0), _loop(false)
-	, _inputHandler(), _outputHandler(), _frameSpan(0), _frameIndex(1), _lastframeIndex(0), _handleSpan(0), _duration(0),_currentTaskId(0), _playHandler(0)
+	, _inputHandler(), _outputHandler(), _frameSpan(0), _frameIndex(1), _lastframeIndex(0), _handleSpan(0), _duration(0),_currentTaskId(0), _playHandler(-1)
 	, _decodeContext(NULL), _yuvFrame(NULL), _bgrFrame(NULL), _bgrBuffer(NULL), _bgrSwsContext(NULL), _bgrHandler(3)
 	, _finished(false), _tempTaskId(0), _tempFrameIndex(0), _tempFrameSpan(0)
 	, _yuvSize(static_cast<int>(DestinationWidth* DestinationHeight * 1.5)), _yuvHasValue(false), _yuv_phy_addr(0), _yuvBuffer(NULL), _iveSize(DestinationWidth* DestinationHeight * 3), _ive_phy_addr(0), _iveBuffer(NULL)
-	, _gbPacket(NULL), _encodeChannel(encodeChannel),_h264Handler(channelIndex,-1), _gotIFrame(false), _yuvHandler(-1)
+	, _gbPacket(NULL), _encodeChannel(encodeChannel), _gotIFrame(false)
 {
 	_gbPacket = av_packet_alloc();
 #ifndef _WIN32
@@ -1075,7 +1075,7 @@ void DecodeChannel::ReceivePacket(int playFd, int frameType, char* buffer, unsig
 		}
 		long long timeStamp1 = DateTime::UtcNowTimeStamp();
 		channel->_gotIFrame = true;
-		channel->_h264Handler.HandleFrame(channel->_frameIndex,reinterpret_cast<unsigned char*>(buffer), size);
+		//channel->_h264Handler.HandleFrame(channel->_frameIndex,reinterpret_cast<unsigned char*>(buffer), size);
 		channel->_gbPacket->flags = frameType == 0 ? 1 : 0;
 		av_packet_from_data(channel->_gbPacket, reinterpret_cast<unsigned char*>(buffer), size);
 		channel->_outputHandler.PushRtmpPacket(channel->_gbPacket, channel->_frameIndex, channel->_duration);
@@ -1219,7 +1219,9 @@ void DecodeChannel::StartCore()
 #ifndef _WIN32	
 				if (_playHandler >= 0)
 				{
-					vas_sdk_stop_realplay(_playHandler);
+					int result=vas_sdk_stop_realplay(_playHandler);
+					LogPool::Information(LogEvent::Decode, "关闭国标视频,播放句柄:", _playHandler, result,_inputUrl);
+					_playHandler = -1;
 				}
 #endif // !_WIN32
 			}
@@ -1242,7 +1244,11 @@ void DecodeChannel::StartCore()
 #ifdef _WIN32				
 					inputStatus = ChannelStatus::InputError;
 #else					
-					if (_loginId < 0)
+					if (_inputUrl.empty())
+					{
+						inputStatus = ChannelStatus::Init;
+					}
+					else if (_loginId < 0)
 					{
 						inputStatus = ChannelStatus::InputError;
 					}
@@ -1252,14 +1258,14 @@ void DecodeChannel::StartCore()
 						if (_playHandler >= 0)
 						{
 							inputStatus = ChannelStatus::Normal;
-							LogPool::Information(LogEvent::Decode, "打开国标视频成功", _inputUrl);
+							LogPool::Information(LogEvent::Decode, "打开国标视频成功,播放句柄:", _playHandler, _inputUrl);
 						}
 						else
 						{
 							inputStatus = ChannelStatus::Init;
 							LogPool::Error(LogEvent::Decode, "打开国标视频失败,错误代码:", _playHandler, _inputUrl);
 						}
-					}					
+					}			
 #endif // !_WIN32
 				}
 				else
@@ -1305,6 +1311,7 @@ void DecodeChannel::StartCore()
 					_duration = 0;
 					_frameSpan = _inputHandler.FrameSpan();
 				}
+				_gotIFrame = false;
 				_frameIndex = 1;
 				_lastframeIndex = 0;
 				_handleSpan = 0;

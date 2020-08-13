@@ -42,7 +42,7 @@ namespace OnePunchMan
 	public:
 		TrafficChannel()
 			:ChannelIndex(0), ChannelName(), ChannelUrl(), ChannelType(0), ChannelStatus(0)
-			, Loop(true), OutputImage(false), OutputReport(false), OutputRecogn(false), GlobalDetect(false)
+			, Loop(true), OutputImage(false), OutputReport(false), OutputRecogn(false), GlobalDetect(false), DeviceId()
 		{
 
 		}
@@ -66,6 +66,8 @@ namespace OnePunchMan
 		bool OutputRecogn;
 		//是否全局检测
 		bool GlobalDetect;
+		//国标设备编号
+		std::string DeviceId;
 
 		/**
 		* @brief: 获取通道rtmp地址
@@ -112,13 +114,13 @@ namespace OnePunchMan
 	{
 	public:
 		GbDevice()
-			:DeviceId(0),DeviceName(),GbId(),DeviceIp(),DevicePort(0),UserName(),Password()
+			:Id(0), DeviceId(),DeviceName(),DeviceIp(),DevicePort(0),UserName(),Password()
 		{
 
 		}
-		int DeviceId;
-		std::string DeviceName;
-		std::string GbId;
+		int Id;
+		std::string DeviceId;
+		std::string DeviceName;	
 		std::string DeviceIp;
 		int DevicePort;
 		std::string UserName;
@@ -130,14 +132,13 @@ namespace OnePunchMan
 	{
 	public:
 		GbChannel()
-			:Id(0),ChannelId(),ChannelName(),DeviceId()
+			:Id(0),ChannelId(),ChannelName()
 		{
 
 		}
 		int Id;
 		std::string ChannelId;
 		std::string ChannelName;
-		std::string DeviceId;
 	};
 
 	//数据库
@@ -221,7 +222,12 @@ namespace OnePunchMan
 		*/
 		bool DeleteGbDevice(int deviceId);
 
-		std::vector<GbChannel> GetGbChannelList(const std::string& gbId);
+		/**
+		* @brief: 查询国标通道集合
+		* @param: deviceId 国标设备编号
+		* @return: 查询结果
+		*/
+		std::vector<GbChannel> GetGbChannelList(const std::string& deviceId);
 
 		/**
 		* @brief: 更新数据库

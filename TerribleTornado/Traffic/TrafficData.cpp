@@ -32,6 +32,7 @@ void TrafficData::FillChannel(const SqliteReader& sqlite, TrafficChannel* channe
 	channel->OutputImage = sqlite.GetInt(6);
 	channel->OutputRecogn = sqlite.GetInt(7);
 	channel->GlobalDetect = sqlite.GetInt(8);
+	channel->DeviceId = sqlite.GetString(9);
 }
 string TrafficData::GetChannelList()
 {
@@ -45,7 +46,7 @@ string TrafficData::GetChannel(int channelIndex)
 
 string TrafficData::InsertChannel(const TrafficChannel* channel)
 {
-	return StringEx::Combine("Insert Into System_Channel (ChannelIndex,ChannelName,ChannelUrl,ChannelType,Loop,OutputImage,OutputReport,OutputRecogn,GlobalDetect) Values ("
+	return StringEx::Combine("Insert Into System_Channel (ChannelIndex,ChannelName,ChannelUrl,ChannelType,Loop,OutputImage,OutputReport,OutputRecogn,GlobalDetect,DeviceId) Values ("
 		, channel->ChannelIndex, ","
 		, "'", channel->ChannelName, "',"
 		, "'", channel->ChannelUrl, "',"
@@ -54,7 +55,8 @@ string TrafficData::InsertChannel(const TrafficChannel* channel)
 		, channel->OutputImage, ","
 		, channel->OutputReport, ","
 		, channel->OutputRecogn, ","
-		, channel->GlobalDetect
+		, channel->GlobalDetect, ","
+		, "'",channel->DeviceId,"'"
 		, ")");
 }
 
@@ -119,7 +121,7 @@ bool TrafficData::SetGbPrameter(const GbParameter& parameter)
 	string sql = StringEx::Combine("Insert Into GB_Config (ServerId,ServerIp,ServerPort,SipPort,SipType,GbId,DomainId,UserName,Password) Values ("
 		, 1, ","
 		, "'", parameter.ServerIp, "',"
-		, parameter.ServerPort, ","
+		, "8000,"
 		, parameter.SipPort, ","
 		, parameter.SipType, ","
 		, "'", parameter.GbId, "',"
@@ -134,16 +136,16 @@ vector<GbDevice> TrafficData::GetGbDeviceList()
 {
 	vector<GbDevice> devices;
 	SqliteReader sqlite(_dbName);
-	if (sqlite.BeginQuery("Select * From GB_Device"))
+	if (sqlite.BeginQuery("Select DeviceId,GbId,DeviceName,DeviceIp,DevicePort,UserName,Password From GB_Device"))
 	{
 		while (sqlite.HasRow())
 		{
 			GbDevice device;
-			device.DeviceId = sqlite.GetInt(0);
-			device.DeviceName = sqlite.GetString(1);
-			device.DeviceIp = sqlite.GetString(2);
-			device.DevicePort = sqlite.GetInt(3);
-			device.GbId = sqlite.GetString(4);
+			device.Id = sqlite.GetInt(0);
+			device.DeviceId = sqlite.GetString(1);
+			device.DeviceName = sqlite.GetString(2);
+			device.DeviceIp = sqlite.GetString(3);
+			device.DevicePort = sqlite.GetInt(4);
 			device.UserName = sqlite.GetString(5);
 			device.Password = sqlite.GetString(6);
 			devices.push_back(device);
@@ -155,12 +157,12 @@ vector<GbDevice> TrafficData::GetGbDeviceList()
 
 int TrafficData::InsertGbDevice(const GbDevice& device)
 {
-	string sql = StringEx::Combine("Insert Into GB_Device (DeviceId,DeviceName,DeviceIp,DevicePort,GbId,UserName,Password) Values ("
+	string sql = StringEx::Combine("Insert Into GB_Device (DeviceId,GbId,DeviceName,DeviceIp,DevicePort,UserName,Password) Values ("
 		,"NULL,"
+		, "'", device.DeviceId, "',"
 		, "'", device.DeviceName, "',"
 		, "'", device.DeviceIp, "',"
 		, device.DevicePort, ","
-		, "'", device.GbId, "',"
 		, "'", device.UserName, "',"
 		, "'", device.Password, "')"
 	);
@@ -170,13 +172,13 @@ int TrafficData::InsertGbDevice(const GbDevice& device)
 bool TrafficData::UpdateGbDevice(const GbDevice& device)
 {
 	string sql = StringEx::Combine("Update GB_Device Set "
+		, "GbId='", device.DeviceId, "',"
 		, "DeviceName='", device.DeviceName, "',"
 		, "DeviceIp='", device.DeviceIp, "',"
 		, "DevicePort=", device.DevicePort, ","
-		, "GbId='", device.GbId, "',"
 		, "Username='", device.UserName, "',"
 		, "Password='", device.Password, "' Where DeviceId="
-		,device.DeviceId
+		,device.Id
 	);
 	return _sqlite.ExecuteRowCount(sql) == 1;
 }
@@ -187,9 +189,9 @@ bool TrafficData::DeleteGbDevice(int deviceId)
 	return _sqlite.ExecuteRowCount(sql) == 1;
 }
 
-vector<GbChannel> TrafficData::GetGbChannelList(const string& gbId)
+vector<GbChannel> TrafficData::GetGbChannelList(const string& deviceId)
 {
-	string sql(StringEx::Combine("Select * From GB_Channel Where DeviceId='", gbId,"'"));
+	string sql(StringEx::Combine("Select Id,ChannelId,ChannelName From GB_Channel Where DeviceId='", deviceId,"'"));
 	SqliteReader sqlite(_dbName);
 	vector<GbChannel> channels;
 	if (sqlite.BeginQuery(sql))
@@ -200,7 +202,6 @@ vector<GbChannel> TrafficData::GetGbChannelList(const string& gbId)
 			channel.Id = sqlite.GetInt(0);
 			channel.ChannelId = sqlite.GetString(1);
 			channel.ChannelName = sqlite.GetString(2);
-			channel.DeviceId = sqlite.GetString(3);
 			channels.push_back(channel);
 		}
 		sqlite.EndQuery();
@@ -225,6 +226,7 @@ void TrafficData::UpdateDb()
 	{
 		_sqlite.ExecuteRowCount("CREATE TABLE[GB_Config]([ServerId] text NOT NULL, [ServerIp] text NOT NULL, [ServerPort] bigint NOT NULL, [SipPort] bigint NOT NULL, [SipType] bigint NOT NULL, [GbId] text NOT NULL, [DomainId] text NOT NULL, [UserName] text NOT NULL, [Password] text NOT NULL, CONSTRAINT[sqlite_autoindex_GB_Config] PRIMARY KEY([ServerId]));");
 		_sqlite.ExecuteRowCount("CREATE TABLE[GB_Device]([DeviceId] INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, [DeviceName] text NOT NULL, [DeviceIp] text NOT NULL, [DevicePort] bigint NOT NULL, [GbId] text NOT NULL, [UserName] text NOT NULL, [Password] text NOT NULL);");	
+		_sqlite.ExecuteRowCount("CREATE TABLE[GB_Channel]([Id] INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, [ChannelId] text NOT NULL, [ChannelName] text NOT NULL, [DeviceId] text NOT NULL);CREATE UNIQUE INDEX[GB_Channel_GB_Channel_ChannelId] ON[GB_Channel]([ChannelId] ASC);");	
 	}
 
 }

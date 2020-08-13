@@ -8,8 +8,6 @@
 #include "EncodeChannel.h"
 #include "BGR24Handler.h"
 #include "TrafficData.h"
-#include "H264Handler.h"
-#include "YUV420SPHandler.h"
 
 #ifndef _WIN32
 #include "clientsdk.h"
@@ -324,12 +322,9 @@ namespace OnePunchMan
 
 		//编码
 		EncodeChannel* _encodeChannel;
-
-		H264Handler _h264Handler;
-
+		//是否已经有了i帧
 		bool _gotIFrame;
 
-		YUV420SPHandler _yuvHandler;
 	};
 
 }

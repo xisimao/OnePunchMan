@@ -17,7 +17,7 @@ void IVEHandler::HandleFrame(const unsigned char* ive, int width, int height, un
 	{
 		return;
 	}
-	FILE* fw = fopen(StringEx::Combine("../temp/channel_", frameIndex, ".bmp").c_str(), "wb");
+	FILE* fw = fopen(StringEx::Combine("../images/channel_", frameIndex, ".bmp").c_str(), "wb");
 	if (fw ==NULL) {
 		return;
 	}
