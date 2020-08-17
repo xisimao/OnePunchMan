@@ -21,7 +21,7 @@ namespace OnePunchMan
 		* @param: inputHandler 视频输入操作类
 		* @return: 视频状态
 		*/
-		ChannelStatus Init(const std::string& outputUrl,const FFmpegInput& inputHandler);
+		ChannelStatus Init(const std::string& outputUrl,const FFmpegInput* inputHandler);
 		/**
 		* @brief: 初始化视频输入
 		* @param: channelIndex 通道序号

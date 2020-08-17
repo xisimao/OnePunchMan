@@ -8,7 +8,7 @@ FFmpegOutput::FFmpegOutput()
 {
 }
 
-ChannelStatus FFmpegOutput::Init(const string& outputUrl, const FFmpegInput& inputHandler)
+ChannelStatus FFmpegOutput::Init(const string& outputUrl, const FFmpegInput* inputHandler)
 {
 	if (_outputFormat == NULL && !outputUrl.empty())
 	{
@@ -103,9 +103,18 @@ ChannelStatus FFmpegOutput::Init(const string& outputUrl, const FFmpegInput& inp
 		b.extradata[29] = 222;
 		b.extradata[30] = 56;
 		b.extradata[31] = 128;
+		AVCodecParameters* codecPara;
+		if (inputHandler == NULL)
+		{
+			codecPara = &b;
+		}
+		else
+		{
+			codecPara = inputHandler->Stream()->codecpar;
+		}
 
 		_outputCodec = avcodec_alloc_context3(decode);
-		if (avcodec_parameters_to_context(_outputCodec, &b) < 0) {
+		if (avcodec_parameters_to_context(_outputCodec, codecPara) < 0) {
 			LogPool::Error(LogEvent::Decode, "avcodec_parameters_to_context", outputUrl);
 			Uninit();
 			return ChannelStatus::OutputError;
@@ -136,14 +145,21 @@ ChannelStatus FFmpegOutput::Init(const string& outputUrl, const FFmpegInput& inp
 			return ChannelStatus::OutputError;
 		}
 	}
-	_inputTimeBase.den = 90000;
-	_inputTimeBase.num = 1;
-	//_inputTimeBase = inputHandler.Stream()->time_base;
 	_frameIndex = 1;
-	_frameSpan = 40;
-	_ptsBase = 3600;
-	//_frameSpan = inputHandler.FrameSpan();
-	//_ptsBase = (inputHandler.Stream()->time_base.den) / inputHandler.Stream()->time_base.num / (1000 / inputHandler.FrameSpan());
+	if (inputHandler == NULL)
+	{
+		_inputTimeBase.den = 90000;
+		_inputTimeBase.num = 1;
+		_frameSpan = 40;
+		_ptsBase = 3600;
+	}
+	else
+	{
+		_inputTimeBase = inputHandler->Stream()->time_base;
+		_frameSpan = inputHandler->FrameSpan();
+		_ptsBase = (inputHandler->Stream()->time_base.den) / inputHandler->Stream()->time_base.num / (1000 / inputHandler->FrameSpan());
+	}
+	
 	return ChannelStatus::Normal;
 }
 
@@ -153,7 +169,7 @@ ChannelStatus FFmpegOutput::Init(int channelIndex, const string& outputUrl, cons
 	ChannelStatus status=handler.Init(inputUrl);
 	if (status == ChannelStatus::Normal)
 	{
-		status =Init(outputUrl, handler);
+		status =Init(outputUrl, &handler);
 	}
 	handler.Uninit();
 	_channelIndex = channelIndex;

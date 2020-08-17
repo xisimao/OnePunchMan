@@ -1274,7 +1274,15 @@ void DecodeChannel::StartCore()
 				}
 				if (inputStatus == ChannelStatus::Normal)
 				{
-					ChannelStatus outputStatus = _outputHandler.Init(_outputUrl, _inputHandler);
+					ChannelStatus outputStatus;
+					if (_channelType == ChannelType::GB28181)
+					{
+						outputStatus = _outputHandler.Init(_outputUrl, NULL);
+					}
+					else
+					{
+						outputStatus=_outputHandler.Init(_outputUrl, &_inputHandler);
+					}
 					if (outputStatus == ChannelStatus::Normal)
 					{
 						ChannelStatus decoderStatus = InitDecoder(_inputUrl);
