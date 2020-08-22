@@ -17,8 +17,6 @@ namespace OnePunchMan
 		Normal = 1,
 		//无法打开视频源
 		InputError = 2,
-		//Rtmp输出异常
-		OutputError = 3,
 		//解码器异常
 		DecoderError = 4,
 		//无法读取视频数据

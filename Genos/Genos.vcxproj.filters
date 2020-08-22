@@ -46,9 +46,8 @@
     <ClCompile Include="..\TerribleTornado\Image\YUV420SPHandler.cpp" />
     <ClCompile Include="..\TerribleTornado\Traffic\DecodeChannel.cpp" />
     <ClCompile Include="..\TerribleTornado\Traffic\EncodeChannel.cpp" />
-    <ClCompile Include="..\Fubuki\FFmpeg\Mp4Output.cpp" />
-    <ClCompile Include="..\Fubuki\FFmpeg\RtmpOutput.cpp" />
     <ClCompile Include="..\Fubuki\FFmpeg\H264Cache.cpp" />
+    <ClCompile Include="..\Fubuki\FFmpeg\FFmpegOutput.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Saitama\Convert\JsonFormatter.h" />
@@ -99,8 +98,7 @@
     <ClInclude Include="..\TerribleTornado\Image\YUV420SPHandler.h" />
     <ClInclude Include="..\TerribleTornado\Traffic\DecodeChannel.h" />
     <ClInclude Include="..\TerribleTornado\Traffic\EncodeChannel.h" />
-    <ClInclude Include="..\Fubuki\FFmpeg\Mp4Output.h" />
-    <ClInclude Include="..\Fubuki\FFmpeg\RtmpOutput.h" />
     <ClInclude Include="..\Fubuki\FFmpeg\H264Cache.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\FFmpegOutput.h" />
   </ItemGroup>
 </Project>

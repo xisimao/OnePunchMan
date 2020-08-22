@@ -75,6 +75,8 @@ namespace OnePunchMan
 
         bool AddOutput(int channelIndex,const std::string& outputUrl, int frameCount);
 
+        void RemoveOutput(int channelIndex, const std::string& outputUrl);
+
         bool OutputFinished(int channelIndex, const std::string& outputUrl);
 
 
@@ -93,7 +95,8 @@ namespace OnePunchMan
     private:
         //编码器总数
         int _encodeCount;
-        std::vector<H264Cache*> _cache;
+        //视频包缓存集合
+        std::vector<H264Cache*> _caches;
     };
 
 }

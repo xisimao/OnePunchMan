@@ -8,7 +8,7 @@ EncodeChannel::EncodeChannel(int encodeCount)
 {
     for (int i = 0; i < encodeCount; ++i)
     {
-        _cache.push_back(new H264Cache(i + 1));
+        _caches.push_back(new H264Cache(i + 1));
     }
 }
 
@@ -124,7 +124,7 @@ bool EncodeChannel::AddOutput(int channelIndex, const std::string& outputUrl, in
 {
     if (channelIndex >= 1 && channelIndex <= _encodeCount)
     {
-        return _cache[channelIndex - 1]->AddOutputUrl(outputUrl, frameCount);
+        return _caches[channelIndex - 1]->AddOutputUrl(outputUrl, frameCount);
     }
     else
     {
@@ -133,11 +133,23 @@ bool EncodeChannel::AddOutput(int channelIndex, const std::string& outputUrl, in
     }
 }
 
+void EncodeChannel::RemoveOutput(int channelIndex, const std::string& outputUrl)
+{
+    if (channelIndex >= 1 && channelIndex <= _encodeCount)
+    {
+        return _caches[channelIndex - 1]->RemoveOutputUrl(outputUrl);
+    }
+    else
+    {
+        LogPool::Warning(LogEvent::Encode, "删除视频输出结果出错,视频序号：", channelIndex);
+    }
+}
+
 bool EncodeChannel::OutputFinished(int channelIndex, const std::string& outputUrl)
 {
     if (channelIndex >= 1 && channelIndex <= _encodeCount)
     {
-        return _cache[channelIndex - 1]->OutputFinished(outputUrl);
+        return _caches[channelIndex - 1]->OutputFinished(outputUrl);
     }
     else
     {
@@ -271,7 +283,7 @@ void EncodeChannel::StartCore()
                     *******************************************************/
                     for (HI_U32 packetIndex = 0; packetIndex < stStream.u32PackCount; packetIndex++)
                     {
-                        _cache[encodeIndex]->PushPacket((unsigned char*)(stStream.pstPack[packetIndex].pu8Addr + stStream.pstPack[packetIndex].u32Offset), stStream.pstPack[packetIndex].u32Len - stStream.pstPack[packetIndex].u32Offset);
+                        _caches[encodeIndex]->PushPacket((unsigned char*)(stStream.pstPack[packetIndex].pu8Addr + stStream.pstPack[packetIndex].u32Offset), stStream.pstPack[packetIndex].u32Len - stStream.pstPack[packetIndex].u32Offset);
                     }
                     /*******************************************************
                      step 2.6 : release stream

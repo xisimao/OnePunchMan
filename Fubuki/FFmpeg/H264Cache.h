@@ -3,7 +3,7 @@
 
 #include "LogPool.h"
 #include "FFmpegInput.h"
-#include "Mp4Output.h"
+#include "FFmpegOutput.h"
 
 namespace OnePunchMan
 {
@@ -30,16 +30,13 @@ namespace OnePunchMan
 		void PushPacket(unsigned char* data, int size);
 
 		/**
-		* @brief: 清空视频帧缓存
-		*/
-		void ClearCache();
-
-		/**
 		* @brief: 添加视频输出
 		* @param: outputUrl 视频输出地址
 		* @param: iFrameCount 输出I帧数量
 		*/
 		bool AddOutputUrl(const std::string& outputUrl, int iFrameCount);
+
+		void RemoveOutputUrl(const std::string& outputUrl);
 
 		bool OutputFinished(const std::string& outputUrl);
 
@@ -81,21 +78,17 @@ namespace OnePunchMan
 
 		//输出视频参数
 		AVCodecParameters _avParameters;
-		//sps+pps
-		unsigned char* _extradata;
-		//sps数据长度
-		int _spsSize;
-		//pps数据长度
-		int _ppsSize;
+		//是否已经获取到sps帧
+		int _gotSPS;
+		//是否已经获取到pps帧
+		int _gotPPS;
 
 		//帧缓存
 		std::vector<FrameItem> _frameCache;
 
 		//输出集合
 		std::mutex _mutex;
-		std::map<std::string, Mp4Output*> _outputItems;
-
-		Mp4Output _rtmpOutput;
+		std::map<std::string, FFmpegOutput*> _outputItems;
 	};
 }
 

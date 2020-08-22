@@ -7,7 +7,7 @@
 namespace OnePunchMan
 {
 	//视频输出
-	class Mp4Output
+	class FFmpegOutput
 	{
 	public:
 		/**
@@ -15,7 +15,7 @@ namespace OnePunchMan
 		* @param: outputUrl 输出文件地址
 		* @param: iFrameCount 需要输出的i帧的数量
 		*/
-		Mp4Output(const std::string& outputUrl,int iFrameCount);
+		FFmpegOutput(const std::string& outputUrl,int iFrameCount);
 
 		/**
 		* @brief: 初始化视频输出
@@ -27,10 +27,11 @@ namespace OnePunchMan
 
 		/**
 		* @brief: 构造函数
-		* @param: packet h264视频包
+		* @param: data h264视频包字节流
+		* @param: size h264视频包长度
 		* @param: frameType 帧类型
 		*/
-		void WritePacket(AVPacket* packet, int frameType);
+		void WritePacket(const unsigned char* data, int size, int frameType);
 
 		/**
 		* @brief: 获取输出视频是否已经结束

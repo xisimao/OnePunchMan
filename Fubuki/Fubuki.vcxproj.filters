@@ -10,13 +10,10 @@
     <ClInclude Include="FFmpeg\FFmpegInput.h">
       <Filter>FFmpeg</Filter>
     </ClInclude>
-    <ClInclude Include="FFmpeg\Mp4Output.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="FFmpeg\RtmpOutput.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
     <ClInclude Include="FFmpeg\H264Cache.h">
+      <Filter>FFmpeg</Filter>
+    </ClInclude>
+    <ClInclude Include="FFmpeg\FFmpegOutput.h">
       <Filter>FFmpeg</Filter>
     </ClInclude>
   </ItemGroup>
@@ -41,13 +38,10 @@
     <ClCompile Include="FFmpeg\FFmpegInput.cpp">
       <Filter>FFmpeg</Filter>
     </ClCompile>
-    <ClCompile Include="FFmpeg\Mp4Output.cpp">
-      <Filter>FFmpeg</Filter>
-    </ClCompile>
-    <ClCompile Include="FFmpeg\RtmpOutput.cpp">
-      <Filter>FFmpeg</Filter>
-    </ClCompile>
     <ClCompile Include="FFmpeg\H264Cache.cpp">
+      <Filter>FFmpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="FFmpeg\FFmpegOutput.cpp">
       <Filter>FFmpeg</Filter>
     </ClCompile>
   </ItemGroup>

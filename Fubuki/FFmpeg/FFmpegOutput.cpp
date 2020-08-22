@@ -1,20 +1,20 @@
-#include "Mp4Output.h"
+#include "FFmpegOutput.h"
 
 using namespace std;
 using namespace OnePunchMan;
 
-Mp4Output::Mp4Output(const std::string& outputUrl, int iFrameCount)
+FFmpegOutput::FFmpegOutput(const std::string& outputUrl, int iFrameCount)
 	: _outputUrl(outputUrl),_outputFormat(NULL), _outputStream(NULL), _outputCodec(NULL)
 	, _iFrameIndex(0),_iFrameCount(iFrameCount), _frameIndex(0), _frameSpan(0)
 {
 
 }
 
-bool Mp4Output::Init(const AVCodecParameters* parameters)
+bool FFmpegOutput::Init(const AVCodecParameters* parameters)
 {
 	if (_outputFormat != NULL)
 	{
-		LogPool::Warning(LogEvent::Decode, "已经初始化了输出文件", _outputUrl);
+		LogPool::Warning(LogEvent::Encode, "已经初始化了输出文件", _outputUrl);
 		return false;
 	}
 	if (_outputUrl.size() >= 4 && _outputUrl.substr(0, 4).compare("rtmp") == 0)
@@ -29,25 +29,25 @@ bool Mp4Output::Init(const AVCodecParameters* parameters)
 	}
 
 	if (_outputFormat == NULL) {
-		LogPool::Error(LogEvent::Decode, "avformat_alloc_output_context2", _outputUrl);
+		LogPool::Error(LogEvent::Encode, "avformat_alloc_output_context2", _outputUrl);
 		Uninit();
 		return false;
 	}
 	AVCodec* decode = avcodec_find_decoder(AV_CODEC_ID_H264);
 	if (decode == NULL) {
-		LogPool::Error(LogEvent::Decode, "avcodec_find_decoder", _outputUrl);
+		LogPool::Error(LogEvent::Encode, "avcodec_find_decoder", _outputUrl);
 		Uninit();
 		return false;
 	}
 	_outputStream = avformat_new_stream(_outputFormat, decode);
 	if (_outputStream == NULL) {
-		LogPool::Error(LogEvent::Decode, "avformat_new_stream", _outputUrl);
+		LogPool::Error(LogEvent::Encode, "avformat_new_stream", _outputUrl);
 		Uninit();
 		return false;
 	}
 	_outputCodec = avcodec_alloc_context3(decode);
 	if (avcodec_parameters_to_context(_outputCodec, parameters) < 0) {
-		LogPool::Error(LogEvent::Decode, "avcodec_parameters_to_context", _outputUrl);
+		LogPool::Error(LogEvent::Encode, "avcodec_parameters_to_context", _outputUrl);
 		Uninit();
 		return false;
 	}
@@ -57,7 +57,7 @@ bool Mp4Output::Init(const AVCodecParameters* parameters)
 		_outputCodec->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
 	}
 	if (avcodec_parameters_from_context(_outputStream->codecpar, _outputCodec) < 0) {
-		LogPool::Error(LogEvent::Decode, "avcodec_parameters_to_context", _outputUrl);
+		LogPool::Error(LogEvent::Encode, "avcodec_parameters_to_context", _outputUrl);
 		Uninit();
 		return false;
 	}
@@ -65,21 +65,21 @@ bool Mp4Output::Init(const AVCodecParameters* parameters)
 	{
 		if (avio_open(&_outputFormat->pb, _outputUrl.c_str(), AVIO_FLAG_WRITE))
 		{
-			LogPool::Error(LogEvent::Decode, "avio_open", _outputUrl);
+			LogPool::Error(LogEvent::Encode, "avio_open", _outputUrl);
 			Uninit();
 			return false;
 		}
 	}
 	if (avformat_write_header(_outputFormat, NULL) < 0) {
-		LogPool::Error(LogEvent::Decode, "avformat_write_header", _outputUrl);
+		LogPool::Error(LogEvent::Encode, "avformat_write_header", _outputUrl);
 		Uninit();
 		return false;
 	}
-	LogPool::Information(LogEvent::Decode, "初始化输出文件:", _outputUrl);
+	LogPool::Information(LogEvent::Encode, "初始化输出文件:", _outputUrl);
 	return true;
 }
 
-void Mp4Output::Uninit()
+void FFmpegOutput::Uninit()
 {
 	if (_outputFormat != NULL)
 	{
@@ -100,12 +100,12 @@ void Mp4Output::Uninit()
 	LogPool::Information("结束输出文件:",_outputUrl,"共输出:", _frameIndex,"帧");
 }
 
-bool Mp4Output::Finished()
+bool FFmpegOutput::Finished()
 {
 	return _outputFormat == NULL;
 }
 
-void Mp4Output::WritePacket(AVPacket* packet,int frameType)
+void FFmpegOutput::WritePacket(const unsigned char* data,int size,int frameType)
 {
 	if (_outputFormat == NULL)
 	{
@@ -122,10 +122,24 @@ void Mp4Output::WritePacket(AVPacket* packet,int frameType)
 				return;
 			}
 		}
+		//packet->pts = packet->pts == AV_NOPTS_VALUE ? duration + frameIndex * _frameSpan : duration + av_rescale_q_rnd(packet->pts, _inputTimeBase, _outputStream->time_base, (AVRounding)(AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
+		//if (packet->dts!= AV_NOPTS_VALUE)
+		//{
+		//	packet->dts = duration + av_rescale_q_rnd(packet->dts, _inputTimeBase, _outputStream->time_base, (AVRounding)(AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
+		//}
+		//packet->duration = av_rescale_q(packet->duration, _inputTimeBase, _outputStream->time_base);
+
+		AVPacket* packet = av_packet_alloc();
+		unsigned char* temp = (unsigned char*)av_malloc(size);
+		memcpy(temp, data, size);
+		av_packet_from_data(packet, temp, size);
+		packet->flags = frameType == 5 ? 1 : 0;
+		packet->pos = -1;
 		packet->pts = _frameIndex * _frameSpan;
 		packet->dts = packet->pts;
 		packet->duration = _frameSpan;
-		av_write_frame(_outputFormat, packet);
+		av_interleaved_write_frame(_outputFormat, packet);
+		av_packet_free(&packet);
 		_frameIndex += 1;
 	}
 }

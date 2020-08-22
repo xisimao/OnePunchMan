@@ -12,7 +12,8 @@ const int EventDetector::CarCount = 4;
 const int EventDetector::ReportSpan = 60*1000;
 const double EventDetector::MovePixel = 50.0;
 const int EventDetector::PointCount = 3;
-const int EventDetector::EncodeFrameCount = 250;
+const int EventDetector::EncodeIFrameCount = 10;
+const int EventDetector::MaxCacheCount = 100;
 
 EventDetector::EventDetector(int width, int height, MqttChannel* mqtt, EncodeChannel* encodeChannel)
 	:TrafficDetector(width, height, mqtt), _taskId(0), _encodeChannel(encodeChannel)
@@ -86,6 +87,7 @@ void EventDetector::UpdateChannel(const unsigned char taskId, const EventChannel
 	_param = GetDetectParam(regionsParam);
 	_setParam = false;
 	_writeBmp = true;
+	LogPool::Information(LogEvent::Event, "channel:", channel.ChannelIndex, "task:", _taskId, "loop:", channel.Loop);
 }
 
 void EventDetector::ClearChannel()
@@ -96,8 +98,8 @@ void EventDetector::ClearChannel()
 	{
 		for (vector<EventEncodeCache>::iterator it = _encodes.begin(); it != _encodes.end();++it)
 		{
-			LogPool::Information(LogEvent::Event, _channelIndex, it->EncodeIndex, "stop event");
-			//_encodeChannel->StopEncode(it->EncodeIndex);
+			LogPool::Information(LogEvent::Event, _channelIndex, it->FilePath, "清除缓存事件");
+			_encodeChannel->RemoveOutput(_channelIndex,it->FilePath);
 			remove(it->FilePath.c_str());
 		}
 		_encodes.clear();
@@ -110,290 +112,285 @@ void EventDetector::ClearChannel()
 
 void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long timeStamp, string* param, unsigned char taskId, const unsigned char* iveBuffer, unsigned int frameIndex, unsigned char frameSpan)
 {
-	//if (_taskId != taskId)
-	//{
-	//	return;
-	//}
-	//lock_guard<mutex> lck(_laneMutex);
-	//if (!_setParam)
-	//{
-	//	param->assign(_param);
-	//	_setParam = true;
-	//}
-	//if (_writeBmp)
-	//{
-	//	_iveHandler.HandleFrame(iveBuffer, _width, _height, _channelIndex);
-	//	_writeBmp = false;
-	//}
-	//if (_encodeChannel != NULL)
-	//{
-	//	for (vector<EventEncodeCache>::iterator it = _encodes.begin(); it != _encodes.end();)
-	//	{
-	//		if (_encodeChannel->Finished(it->EncodeIndex))
-	//		{
-	//			LogPool::Information(LogEvent::Event, _channelIndex, it->EncodeIndex, "stop event");
-	//			_encodeChannel->StopEncode(it->EncodeIndex);
-	//			string videoBase64;
-	//			ImageConvert::Mp4ToBase64(it->FilePath,_videoBuffer,_videoSize, &videoBase64);
-	//			JsonSerialization::SerializeValue(&it->Json, "video", videoBase64);
-	//			string jpgBase64;
-	//			ImageConvert::IveToJpgBase64(iveBuffer, _width, _height, _bgrBuffer, &jpgBase64, _jpgBuffer, _jpgSize);
-	//			JsonSerialization::SerializeValue(&it->Json, "image2", jpgBase64);
-	//			if (_mqtt != NULL)
-	//			{
-	//				_mqtt->Send(EventTopic, it->Json);
-	//			}
-	//			remove(it->FilePath.c_str());
-	//			it = _encodes.erase(it);
-	//		}
-	//		else
-	//		{
-	//			++it;
-	//		}
-	//	}
-	//}
-	//for (unsigned int i = 0; i < _lanes.size(); ++i)
-	//{
-	//	EventLaneCache& laneCache = _lanes[i];
-	//	//删除超时数据
-	//	for (map<string, EventDetectCache>::iterator it = laneCache.Items.begin(); it != laneCache.Items.end();)
-	//	{
-	//		if (timeStamp - it->second.LastTimeStamp > DeleteSpan)
-	//		{
-	//			laneCache.Items.erase(it++);
-	//		}
-	//		else
-	//		{
-	//			++it;
-	//		}
-	//	}
-	//	if (laneCache.Items.size() > 100)
-	//	{
-	//		LogPool::Warning("too many cache", _channelIndex, i, laneCache.Items.size());
-	//	}
-	//	int carsInLane = 0;
-	//	for (map<string, DetectItem>::iterator dit = detectItems->begin(); dit != detectItems->end(); ++dit)
-	//	{
-	//		if (dit->second.Status != DetectStatus::Out)
-	//		{
-	//			continue;
-	//		}
-	//		if (dit->second.Type == DetectType::Pedestrain
-	//			&& laneCache.LaneType == EventLaneType::Pedestrain
-	//			&& laneCache.Region.Contains(dit->second.Region.HitPoint()))
-	//		{
-	//			map<string, EventDetectCache>::iterator mit = laneCache.Items.find(dit->first);
-	//			if (mit == laneCache.Items.end())
-	//			{
-	//				dit->second.Status = DetectStatus::New;
-	//				EventDetectCache eventItem;
-	//				eventItem.LastTimeStamp = timeStamp;
-	//				laneCache.Items.insert(pair<string, EventDetectCache>(dit->first, eventItem));
-	//				if (_encodeChannel != NULL)
-	//				{
-	//					string filePath = StringEx::Combine("../temp/", dit->first, ".mp4");
-	//					int index = _encodeChannel->StartEncode(_channelIndex, filePath, _channelUrl, EncodeFrameCount);
-	//					if (index == -1)
-	//					{
-	//						LogPool::Information(LogEvent::Event, _channelIndex, "pedestrain event encode full");
-	//					}
-	//					else
-	//					{
-	//						LogPool::Information(LogEvent::Event, _channelIndex, index, dit->first, "start pedestrain event");
-	//						EventEncodeCache encodeCache;
-	//						JsonSerialization::SerializeValue(&encodeCache.Json, "channelUrl", _channelUrl);
-	//						JsonSerialization::SerializeValue(&encodeCache.Json, "laneIndex", laneCache.LaneIndex);
-	//						JsonSerialization::SerializeValue(&encodeCache.Json, "timeStamp", timeStamp);
-	//						JsonSerialization::SerializeValue(&encodeCache.Json, "type", (int)EventType::Pedestrain);
-	//						string jpgBase64;
-	//						ImageConvert::IveToJpgBase64(iveBuffer, _width, _height, _bgrBuffer,&jpgBase64,_jpgBuffer,_jpgSize);
-	//						JsonSerialization::SerializeValue(&encodeCache.Json, "image1", jpgBase64);
-	//						encodeCache.EncodeIndex = index;
-	//						encodeCache.FilePath = filePath;
-	//						_encodes.push_back(encodeCache);
-	//					}
-	//				}
-	//				LogPool::Debug(LogEvent::Event, _channelIndex,dit->first, "pedestrain event");
-	//			}
-	//			else
-	//			{
-	//				dit->second.Status = DetectStatus::In;
-	//				mit->second.LastTimeStamp = timeStamp;
-	//			}
-	//		}
-	//		else if (dit->second.Type > DetectType::Motobike
-	//			&& laneCache.Region.Contains(dit->second.Region.HitPoint()))
-	//		{
-	//			if (laneCache.LaneType == EventLaneType::Park)
-	//			{
-	//				map<string, EventDetectCache>::iterator mit = laneCache.Items.find(dit->first);
-	//				if (mit == laneCache.Items.end())
-	//				{
-	//					dit->second.Status = DetectStatus::New;
-	//					EventDetectCache eventItem;
-	//					eventItem.FirstTimeStamp = timeStamp;
-	//					eventItem.LastTimeStamp = timeStamp;
-	//					laneCache.Items.insert(pair<string, EventDetectCache>(dit->first, eventItem));
-	//				}
-	//				else
-	//				{
-	//					dit->second.Status = DetectStatus::In;
-	//					mit->second.LastTimeStamp = timeStamp;
-	//					if (mit->second.StartPark)
-	//					{
-	//						if (!mit->second.StopPark
-	//							&& mit->second.LastTimeStamp - mit->second.FirstTimeStamp > ParkEndSpan)
-	//						{
-	//							mit->second.StopPark = true;
-	//							if (_encodeChannel != NULL)
-	//							{
-	//								string filePath = StringEx::Combine("../temp/", dit->first, ".mp4");
-	//								int index = _encodeChannel->StartEncode(_channelIndex, filePath, _channelUrl, EncodeFrameCount);
-	//								if (index == -1)
-	//								{
-	//									LogPool::Information(LogEvent::Event, _channelIndex, "park event encode full");
-	//								}
-	//								else
-	//								{
-	//									LogPool::Information(LogEvent::Event, _channelIndex, index, dit->first, "start park event");
-	//									EventEncodeCache encodeCache;
-	//									JsonSerialization::SerializeValue(&encodeCache.Json, "channelUrl", _channelUrl);
-	//									JsonSerialization::SerializeValue(&encodeCache.Json, "laneIndex", laneCache.LaneIndex);
-	//									JsonSerialization::SerializeValue(&encodeCache.Json, "timeStamp", timeStamp);
-	//									JsonSerialization::SerializeValue(&encodeCache.Json, "type", (int)EventType::Park);
-	//									string jpgBase64;
-	//									ImageConvert::IveToJpgBase64(iveBuffer, _width, _height, _bgrBuffer, &jpgBase64, _jpgBuffer, _jpgSize);
-	//									JsonSerialization::SerializeValue(&encodeCache.Json, "image1", jpgBase64);
-	//									encodeCache.EncodeIndex = index;
-	//									encodeCache.FilePath = filePath;
-	//									_encodes.push_back(encodeCache);
-	//								}
-	//							}
-	//							LogPool::Debug(LogEvent::Event, _channelIndex, "park event");
-	//						}
-	//					}
-	//					else
-	//					{
+	if (_taskId != taskId)
+	{
+		LogPool::Information(LogEvent::Event, "id fuck", _taskId,taskId);
+		return;
+	}
+	lock_guard<mutex> lck(_laneMutex);
+	if (!_setParam)
+	{
+		param->assign(_param);
+		_setParam = true;
+	}
+	if (_writeBmp)
+	{
+		_iveHandler.HandleFrame(iveBuffer, _width, _height, _channelIndex);
+		_writeBmp = false;
+	}
+	if (_encodeChannel != NULL)
+	{
+		for (vector<EventEncodeCache>::iterator it = _encodes.begin(); it != _encodes.end();)
+		{
+			if (_encodeChannel->OutputFinished(_channelIndex,it->FilePath))
+			{
+				LogPool::Information(LogEvent::Event, _channelIndex, it->FilePath, "停止事件");
+				string videoBase64;
+				ImageConvert::Mp4ToBase64(it->FilePath,_videoBuffer,_videoSize, &videoBase64);
+				JsonSerialization::SerializeValue(&it->Json, "video", videoBase64);
+				string jpgBase64;
+				ImageConvert::IveToJpgBase64(iveBuffer, _width, _height, _bgrBuffer, &jpgBase64, _jpgBuffer, _jpgSize);
+				JsonSerialization::SerializeValue(&it->Json, "image2", jpgBase64);
+				if (_mqtt != NULL)
+				{
+					_mqtt->Send(EventTopic, it->Json);
+				}
+				remove(it->FilePath.c_str());
+				it = _encodes.erase(it);
+			}
+			else
+			{
+				++it;
+			}
+		}
+	}
+	for (unsigned int i = 0; i < _lanes.size(); ++i)
+	{
+		EventLaneCache& laneCache = _lanes[i];
+		//删除超时数据
+		for (map<string, EventDetectCache>::iterator it = laneCache.Items.begin(); it != laneCache.Items.end();)
+		{
+			if (timeStamp - it->second.LastTimeStamp > DeleteSpan)
+			{
+				laneCache.Items.erase(it++);
+			}
+			else
+			{
+				++it;
+			}
+		}
+		if (laneCache.Items.size() > MaxCacheCount)
+		{
+			LogPool::Warning("too many cache", _channelIndex, i, laneCache.Items.size());
+		}
+		int carsInLane = 0;
+		for (map<string, DetectItem>::iterator dit = detectItems->begin(); dit != detectItems->end(); ++dit)
+		{
+			if (dit->second.Status != DetectStatus::Out)
+			{
+				continue;
+			}
+			if (dit->second.Type == DetectType::Pedestrain
+				&& laneCache.LaneType == EventLaneType::Pedestrain
+				&& laneCache.Region.Contains(dit->second.Region.HitPoint()))
+			{
+				map<string, EventDetectCache>::iterator mit = laneCache.Items.find(dit->first);
+				if (mit == laneCache.Items.end())
+				{
+					dit->second.Status = DetectStatus::New;
+					EventDetectCache eventItem;
+					eventItem.LastTimeStamp = timeStamp;
+					laneCache.Items.insert(pair<string, EventDetectCache>(dit->first, eventItem));
+					if (_encodeChannel != NULL)
+					{
+						string filePath = StringEx::Combine("../temp/", dit->first, ".mp4");
+						if (_encodeChannel->AddOutput(_channelIndex, filePath, EncodeIFrameCount))
+						{
+							LogPool::Information(LogEvent::Event,"开始行人事件编码", _channelIndex, dit->first);
+							EventEncodeCache encodeCache;
+							JsonSerialization::SerializeValue(&encodeCache.Json, "channelUrl", _channelUrl);
+							JsonSerialization::SerializeValue(&encodeCache.Json, "laneIndex", laneCache.LaneIndex);
+							JsonSerialization::SerializeValue(&encodeCache.Json, "timeStamp", timeStamp);
+							JsonSerialization::SerializeValue(&encodeCache.Json, "type", (int)EventType::Pedestrain);
+							string jpgBase64;
+							ImageConvert::IveToJpgBase64(iveBuffer, _width, _height, _bgrBuffer, &jpgBase64, _jpgBuffer, _jpgSize);
+							JsonSerialization::SerializeValue(&encodeCache.Json, "image1", jpgBase64);
+							encodeCache.FilePath = filePath;
+							_encodes.push_back(encodeCache);
+							
+						}
+						else
+						{
+							LogPool::Information(LogEvent::Event,"行人事件无法编码", _channelIndex);
+						}
+					}
+					LogPool::Debug(LogEvent::Event, _channelIndex,dit->first, "pedestrain event");
+				}
+				else
+				{
+					dit->second.Status = DetectStatus::In;
+					mit->second.LastTimeStamp = timeStamp;
+				}
+			}
+			else if (dit->second.Type > DetectType::Motobike
+				&& laneCache.Region.Contains(dit->second.Region.HitPoint()))
+			{
+				if (laneCache.LaneType == EventLaneType::Park)
+				{
+					map<string, EventDetectCache>::iterator mit = laneCache.Items.find(dit->first);
+					if (mit == laneCache.Items.end())
+					{
+						dit->second.Status = DetectStatus::New;
+						EventDetectCache eventItem;
+						eventItem.FirstTimeStamp = timeStamp;
+						eventItem.LastTimeStamp = timeStamp;
+						laneCache.Items.insert(pair<string, EventDetectCache>(dit->first, eventItem));
+					}
+					else
+					{
+						dit->second.Status = DetectStatus::In;
+						mit->second.LastTimeStamp = timeStamp;
+						if (mit->second.StartPark)
+						{
+							if (!mit->second.StopPark
+								&& mit->second.LastTimeStamp - mit->second.FirstTimeStamp > ParkEndSpan)
+							{
+								mit->second.StopPark = true;
+								if (_encodeChannel != NULL)
+								{
+									string filePath = StringEx::Combine("../temp/", dit->first, ".mp4");
+									if (_encodeChannel->AddOutput(_channelIndex, filePath, EncodeIFrameCount))
+									{
+										LogPool::Information(LogEvent::Event,"开始停车事件编码", _channelIndex, dit->first);
+										EventEncodeCache encodeCache;
+										JsonSerialization::SerializeValue(&encodeCache.Json, "channelUrl", _channelUrl);
+										JsonSerialization::SerializeValue(&encodeCache.Json, "laneIndex", laneCache.LaneIndex);
+										JsonSerialization::SerializeValue(&encodeCache.Json, "timeStamp", timeStamp);
+										JsonSerialization::SerializeValue(&encodeCache.Json, "type", (int)EventType::Park);
+										string jpgBase64;
+										ImageConvert::IveToJpgBase64(iveBuffer, _width, _height, _bgrBuffer, &jpgBase64, _jpgBuffer, _jpgSize);
+										JsonSerialization::SerializeValue(&encodeCache.Json, "image1", jpgBase64);
+										encodeCache.FilePath = filePath;
+										_encodes.push_back(encodeCache);
+										
+									}
+									else
+									{
+										LogPool::Information(LogEvent::Event,"停车事件无法编码", _channelIndex);
+									}
+								}
+								LogPool::Debug(LogEvent::Event, _channelIndex, "park event");
+							}
+						}
+						else
+						{
 
-	//						if (mit->second.LastTimeStamp - mit->second.FirstTimeStamp > ParkStartSpan)
-	//						{
-	//							mit->second.StartPark = true;
-	//							ImageConvert::IveToJpgBase64(iveBuffer, _width, _height, _bgrBuffer, &mit->second.StartParkImage, _jpgBuffer, _jpgSize);
-	//						}
-	//					}
-	//				}
-	//			}
-	//			else if (laneCache.LaneType == EventLaneType::Lane)
-	//			{
-	//				++carsInLane;
-	//				if (carsInLane == CarCount)
-	//				{
-	//					if (timeStamp - laneCache.LastReportTimeStamp > ReportSpan)
-	//					{
-	//						if (_encodeChannel != NULL)
-	//						{
-	//							string filePath = StringEx::Combine("../temp/", dit->first, ".mp4");
-	//							int index = _encodeChannel->StartEncode(_channelIndex, filePath, _channelUrl, EncodeFrameCount);
-	//							if (index == -1)
-	//							{
-	//								LogPool::Information(LogEvent::Event, _channelIndex, "congestion event encode full");
-	//							}
-	//							else
-	//							{
-	//								LogPool::Information(LogEvent::Event, _channelIndex, index, dit->first, "start congestion event");
-	//								EventEncodeCache encodeCache;
-	//								JsonSerialization::SerializeValue(&encodeCache.Json, "channelUrl", _channelUrl);
-	//								JsonSerialization::SerializeValue(&encodeCache.Json, "laneIndex", laneCache.LaneIndex);
-	//								JsonSerialization::SerializeValue(&encodeCache.Json, "timeStamp", timeStamp);
-	//								JsonSerialization::SerializeValue(&encodeCache.Json, "type", (int)EventType::Congestion);
-	//								string jpgBase64;
-	//								ImageConvert::IveToJpgBase64(iveBuffer, _width, _height, _bgrBuffer, &jpgBase64, _jpgBuffer, _jpgSize);
-	//								JsonSerialization::SerializeValue(&encodeCache.Json, "image1", jpgBase64);
-	//								encodeCache.EncodeIndex = index;
-	//								encodeCache.FilePath = filePath;
-	//								_encodes.push_back(encodeCache);
-	//							}
-	//						}
-	//						laneCache.LastReportTimeStamp = timeStamp;
-	//						LogPool::Debug(LogEvent::Event, _channelIndex, "congestion event");
-	//					}
-	//				}
-	//				//处于拥堵状态不检测逆行
-	//				if (!laneCache.Congestion)
-	//				{
-	//					map<string, EventDetectCache>::iterator cit = laneCache.Items.find(dit->first);
-	//					if (cit == laneCache.Items.end())
-	//					{
-	//						dit->second.Status = DetectStatus::New;
-	//						EventDetectCache eventItem;
-	//						eventItem.LastTimeStamp = timeStamp;
-	//						eventItem.RetrogradePoints.push_back(dit->second.Region.HitPoint());
-	//						laneCache.Items.insert(pair<string, EventDetectCache>(dit->first, eventItem));
-	//					}
-	//					else
-	//					{
-	//						dit->second.Status = DetectStatus::In;
-	//						cit->second.LastTimeStamp = timeStamp;
-	//						if (cit->second.RetrogradePoints.size() < PointCount)
-	//						{								
-	//							double distance = dit->second.Region.HitPoint().Distance(cit->second.RetrogradePoints.back());
-	//							if (distance > MovePixel)
-	//							{
-	//								bool xtrend = dit->second.Region.HitPoint().X > cit->second.RetrogradePoints.back().X;
-	//								bool ytrend = dit->second.Region.HitPoint().Y > cit->second.RetrogradePoints.back().Y;
-	//								if ((laneCache.BaseAsX && laneCache.XTrend!= xtrend)
-	//									||(!laneCache.BaseAsX && laneCache.YTrend != ytrend))
-	//								{
-	//									cit->second.RetrogradePoints.push_back(dit->second.Region.HitPoint());
-	//								}
-	//							}
-	//						}
-	//						else if (cit->second.RetrogradePoints.size() == PointCount)
-	//						{
-	//							double distance = dit->second.Region.HitPoint().Distance(cit->second.RetrogradePoints.back());
-	//							if (distance > MovePixel)
-	//							{
-	//								bool xtrend = dit->second.Region.HitPoint().X > cit->second.RetrogradePoints.back().X;
-	//								bool ytrend = dit->second.Region.HitPoint().Y > cit->second.RetrogradePoints.back().Y;
-	//								if ((laneCache.BaseAsX && laneCache.XTrend != xtrend)
-	//									|| (!laneCache.BaseAsX && laneCache.YTrend != ytrend))
-	//								{
-	//									cit->second.RetrogradePoints.push_back(dit->second.Region.HitPoint());
-	//									if (_encodeChannel != NULL)
-	//									{
-	//										string filePath= StringEx::Combine("../temp/", dit->first, ".mp4");
-	//										int index = _encodeChannel->StartEncode(_channelIndex, filePath, _channelUrl, EncodeFrameCount);
-	//										if (index == -1)
-	//										{
-	//											LogPool::Information(LogEvent::Event, _channelIndex, "retrograde event encode full");
-	//										}
-	//										else
-	//										{
-	//											LogPool::Information(LogEvent::Event, _channelIndex, index, dit->first, "start retrograde event");
-	//											EventEncodeCache encodeCache;
-	//											JsonSerialization::SerializeValue(&encodeCache.Json, "channelUrl", _channelUrl);
-	//											JsonSerialization::SerializeValue(&encodeCache.Json, "laneIndex", laneCache.LaneIndex);
-	//											JsonSerialization::SerializeValue(&encodeCache.Json, "timeStamp", timeStamp);
-	//											JsonSerialization::SerializeValue(&encodeCache.Json, "type", (int)EventType::Retrograde);
-	//											string jpgBase64;
-	//											ImageConvert::IveToJpgBase64(iveBuffer, _width, _height, _bgrBuffer, &jpgBase64, _jpgBuffer, _jpgSize);
-	//											JsonSerialization::SerializeValue(&encodeCache.Json, "image1", jpgBase64);
-	//											encodeCache.EncodeIndex = index;
-	//											encodeCache.FilePath = filePath;
-	//											_encodes.push_back(encodeCache);
-	//										}
-	//									}
-	//									LogPool::Debug(LogEvent::Event, _channelIndex, "retrograde event");
-	//								}
-	//							}
-	//						}
-	//					}
-	//				}
-	//			}
-	//		}
-	//	}
-	//	laneCache.Congestion = carsInLane >= CarCount;
-	//}
+							if (mit->second.LastTimeStamp - mit->second.FirstTimeStamp > ParkStartSpan)
+							{
+								mit->second.StartPark = true;
+								ImageConvert::IveToJpgBase64(iveBuffer, _width, _height, _bgrBuffer, &mit->second.StartParkImage, _jpgBuffer, _jpgSize);
+							}
+						}
+					}
+				}
+				else if (laneCache.LaneType == EventLaneType::Lane)
+				{
+					++carsInLane;
+					if (carsInLane == CarCount)
+					{
+						if (timeStamp - laneCache.LastReportTimeStamp > ReportSpan)
+						{
+							if (_encodeChannel != NULL)
+							{
+								string filePath = StringEx::Combine("../temp/", dit->first, ".mp4");
+								if (_encodeChannel->AddOutput(_channelIndex, filePath, EncodeIFrameCount))
+								{
+									LogPool::Information(LogEvent::Event,"开始拥堵事件编码", _channelIndex, dit->first);
+									EventEncodeCache encodeCache;
+									JsonSerialization::SerializeValue(&encodeCache.Json, "channelUrl", _channelUrl);
+									JsonSerialization::SerializeValue(&encodeCache.Json, "laneIndex", laneCache.LaneIndex);
+									JsonSerialization::SerializeValue(&encodeCache.Json, "timeStamp", timeStamp);
+									JsonSerialization::SerializeValue(&encodeCache.Json, "type", (int)EventType::Congestion);
+									string jpgBase64;
+									ImageConvert::IveToJpgBase64(iveBuffer, _width, _height, _bgrBuffer, &jpgBase64, _jpgBuffer, _jpgSize);
+									JsonSerialization::SerializeValue(&encodeCache.Json, "image1", jpgBase64);
+									encodeCache.FilePath = filePath;
+									_encodes.push_back(encodeCache);
+								}
+								else
+								{
+									LogPool::Information(LogEvent::Event,"拥堵事件无法编码", _channelIndex);
+								}
+							}
+							laneCache.LastReportTimeStamp = timeStamp;
+							LogPool::Debug(LogEvent::Event, _channelIndex, "congestion event");
+						}
+					}
+					//处于拥堵状态不检测逆行
+					if (!laneCache.Congestion)
+					{
+						map<string, EventDetectCache>::iterator cit = laneCache.Items.find(dit->first);
+						if (cit == laneCache.Items.end())
+						{
+							dit->second.Status = DetectStatus::New;
+							EventDetectCache eventItem;
+							eventItem.LastTimeStamp = timeStamp;
+							eventItem.RetrogradePoints.push_back(dit->second.Region.HitPoint());
+							laneCache.Items.insert(pair<string, EventDetectCache>(dit->first, eventItem));
+						}
+						else
+						{
+							dit->second.Status = DetectStatus::In;
+							cit->second.LastTimeStamp = timeStamp;
+							if (cit->second.RetrogradePoints.size() < PointCount)
+							{								
+								double distance = dit->second.Region.HitPoint().Distance(cit->second.RetrogradePoints.back());
+								if (distance > MovePixel)
+								{
+									bool xtrend = dit->second.Region.HitPoint().X > cit->second.RetrogradePoints.back().X;
+									bool ytrend = dit->second.Region.HitPoint().Y > cit->second.RetrogradePoints.back().Y;
+									if ((laneCache.BaseAsX && laneCache.XTrend!= xtrend)
+										||(!laneCache.BaseAsX && laneCache.YTrend != ytrend))
+									{
+										cit->second.RetrogradePoints.push_back(dit->second.Region.HitPoint());
+									}
+								}
+							}
+							else if (cit->second.RetrogradePoints.size() == PointCount)
+							{
+								double distance = dit->second.Region.HitPoint().Distance(cit->second.RetrogradePoints.back());
+								if (distance > MovePixel)
+								{
+									bool xtrend = dit->second.Region.HitPoint().X > cit->second.RetrogradePoints.back().X;
+									bool ytrend = dit->second.Region.HitPoint().Y > cit->second.RetrogradePoints.back().Y;
+									if ((laneCache.BaseAsX && laneCache.XTrend != xtrend)
+										|| (!laneCache.BaseAsX && laneCache.YTrend != ytrend))
+									{
+										cit->second.RetrogradePoints.push_back(dit->second.Region.HitPoint());
+										if (_encodeChannel != NULL)
+										{
+											string filePath= StringEx::Combine("../temp/", dit->first, ".mp4");
+											if (_encodeChannel->AddOutput(_channelIndex, filePath, EncodeIFrameCount))
+											{
+												LogPool::Information(LogEvent::Event, "开始逆行事件编码", _channelIndex, dit->first);
+												EventEncodeCache encodeCache;
+												JsonSerialization::SerializeValue(&encodeCache.Json, "channelUrl", _channelUrl);
+												JsonSerialization::SerializeValue(&encodeCache.Json, "laneIndex", laneCache.LaneIndex);
+												JsonSerialization::SerializeValue(&encodeCache.Json, "timeStamp", timeStamp);
+												JsonSerialization::SerializeValue(&encodeCache.Json, "type", (int)EventType::Retrograde);
+												string jpgBase64;
+												ImageConvert::IveToJpgBase64(iveBuffer, _width, _height, _bgrBuffer, &jpgBase64, _jpgBuffer, _jpgSize);
+												JsonSerialization::SerializeValue(&encodeCache.Json, "image1", jpgBase64);
+												encodeCache.FilePath = filePath;
+												_encodes.push_back(encodeCache);
+												
+											}
+											else
+											{
+												LogPool::Information(LogEvent::Event, "逆行事件无法编码", _channelIndex);
+											}
+										}
+										LogPool::Debug(LogEvent::Event, _channelIndex, "retrograde event");
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		laneCache.Congestion = carsInLane >= CarCount;
+	}
 }
 
 void EventDetector::DrawRegion(string* jpgBase64, const unsigned char* iveBuffer, const Polygon& laneRegion, unsigned int frameIndex)

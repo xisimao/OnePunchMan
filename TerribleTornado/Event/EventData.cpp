@@ -136,6 +136,6 @@ void EventChannelData::UpdateDb()
 		_sqlite.ExecuteRowCount("ALTER TABLE[System_Channel] ADD COLUMN[DeviceId] TEXT NULL;");
 		_sqlite.ExecuteRowCount("ALTER TABLE[System_Channel] ADD COLUMN[ChannelId] TEXT NULL;");
 	}
-	SetParameter("Version", "1.0.0.12");
-	SetParameter("VersionValue", "10012");
+	SetParameter("Version", "1.0.0.13");
+	SetParameter("VersionValue", "10013");
 }

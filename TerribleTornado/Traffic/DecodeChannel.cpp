@@ -12,7 +12,7 @@ const int DecodeChannel::DestinationHeight = 1080;
 DecodeChannel::DecodeChannel(int channelIndex,int loginId, EncodeChannel* encodeChannel)
 	:ThreadObject("decode"), _channelIndex(channelIndex), _loginId(loginId)
 	, _inputUrl(), _outputUrl(), _channelType(ChannelType::None), _channelStatus(ChannelStatus::Init), _taskId(0), _loop(false)
-	, _inputHandler(), _outputHandler(), _frameSpan(0), _frameIndex(1), _lastframeIndex(0), _handleSpan(0), _duration(0),_currentTaskId(0), _playHandler(-1)
+	, _inputHandler(), _frameSpan(0), _frameIndex(1), _lastframeIndex(0), _handleSpan(0), _duration(0),_currentTaskId(0), _playHandler(-1)
 	, _decodeContext(NULL), _yuvFrame(NULL), _bgrFrame(NULL), _bgrBuffer(NULL), _bgrSwsContext(NULL), _bgrHandler(3)
 	, _finished(false), _tempTaskId(0), _tempFrameIndex(0), _tempFrameSpan(0)
 	, _yuvSize(static_cast<int>(DestinationWidth* DestinationHeight * 1.5)), _yuvHasValue(false), _yuv_phy_addr(0), _yuvBuffer(NULL), _iveSize(DestinationWidth* DestinationHeight * 3), _ive_phy_addr(0), _iveBuffer(NULL)
@@ -861,7 +861,6 @@ void DecodeChannel::UninitDecoder()
 DecodeResult DecodeChannel::Decode(const AVPacket* packet, unsigned char taskId, unsigned int frameIndex, unsigned char frameSpan)
 {
 #ifdef _WIN32
-
 	if (avcodec_send_packet(_decodeContext, packet) == 0)
 	{
 		while (true)
@@ -1075,10 +1074,8 @@ void DecodeChannel::ReceivePacket(int playFd, int frameType, char* buffer, unsig
 		}
 		long long timeStamp1 = DateTime::UtcNowTimeStamp();
 		channel->_gotIFrame = true;
-		//channel->_h264Handler.HandleFrame(channel->_frameIndex,reinterpret_cast<unsigned char*>(buffer), size);
 		channel->_gbPacket->flags = frameType == 0 ? 1 : 0;
 		av_packet_from_data(channel->_gbPacket, reinterpret_cast<unsigned char*>(buffer), size);
-		channel->_outputHandler.PushRtmpPacket(channel->_gbPacket, channel->_frameIndex, channel->_duration);
 		DecodeResult decodeResult = channel->Decode(channel->_gbPacket, channel->_currentTaskId, channel->_frameIndex, channel->_frameSpan);
 		LogPool::Information(LogEvent::Decode, "收到国标数据", channel->_frameIndex,static_cast<int>(channel->_channelStatus),static_cast<int>(decodeResult), frameType,size);
 		if (decodeResult == DecodeResult::Handle)
@@ -1146,7 +1143,6 @@ void DecodeChannel::StartCore()
 				{
 					if (packet->stream_index == _inputHandler.VideoIndex())
 					{
-						_outputHandler.PushRtmpPacket(packet, _frameIndex, _duration);
 						int filterResult = av_bitstream_filter_filter(h264bsfc, _inputHandler.Stream()->codec, NULL, &tempPacket->data, &tempPacket->size, packet->data, packet->size, 0);
 						if (filterResult < 0)
 						{
@@ -1209,11 +1205,6 @@ void DecodeChannel::StartCore()
 			unique_lock<mutex> lck(_mutex);
 			channelType = _channelType;
 			UninitDecoder();
-			//读取到结尾重新启动时不需要重置输出
-			if (_channelStatus != ChannelStatus::ReadEOF_Restart)
-			{
-				_outputHandler.Uninit();
-			}
 			if (channelType == ChannelType::GB28181)
 			{
 #ifndef _WIN32	
@@ -1274,30 +1265,14 @@ void DecodeChannel::StartCore()
 				}
 				if (inputStatus == ChannelStatus::Normal)
 				{
-					ChannelStatus outputStatus;
-					if (_channelType == ChannelType::GB28181)
+					ChannelStatus decoderStatus = InitDecoder(_inputUrl);
+					if (decoderStatus == ChannelStatus::Normal)
 					{
-						outputStatus = _outputHandler.Init(_outputUrl, NULL);
+						_channelStatus = ChannelStatus::Normal;
 					}
 					else
 					{
-						outputStatus=_outputHandler.Init(_outputUrl, &_inputHandler);
-					}
-					if (outputStatus == ChannelStatus::Normal)
-					{
-						ChannelStatus decoderStatus = InitDecoder(_inputUrl);
-						if (decoderStatus == ChannelStatus::Normal)
-						{
-							_channelStatus = ChannelStatus::Normal;
-						}
-						else
-						{
-							_channelStatus = decoderStatus;
-						}
-					}
-					else
-					{
-						_channelStatus = ChannelStatus::OutputError;
+						_channelStatus = decoderStatus;
 					}
 				}
 				else
@@ -1341,6 +1316,5 @@ void DecodeChannel::StartCore()
 	av_packet_free(&packet);
 	UninitDecoder();
 	_inputHandler.Uninit();
-	_outputHandler.Uninit();
 }
 

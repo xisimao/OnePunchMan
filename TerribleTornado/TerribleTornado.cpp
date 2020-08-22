@@ -2,7 +2,6 @@
 #include "EventStartup.h"
 #include "IoAdapter.h"
 #include "EncodeChannel.h"
-#include "RtmpOutput.h"
 #include "DecodeChannel.h"
 
 using namespace std;

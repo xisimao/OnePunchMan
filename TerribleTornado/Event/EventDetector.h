@@ -110,14 +110,12 @@ namespace OnePunchMan
 		{
 		public:
 			EventEncodeCache()
-				:Json(), EncodeIndex(-1), FilePath()
+				:Json(), FilePath()
 			{
 
 			}
 			//事件json数据
 			std::string Json;
-			//编码器序号
-			int EncodeIndex;
 			//输出mp4文件地址
 			std::string FilePath;
 		};
@@ -158,7 +156,9 @@ namespace OnePunchMan
 		//判断逆行事件的点的数量
 		static const int PointCount;
 		//视频编码帧数
-		static const int EncodeFrameCount;
+		static const int EncodeIFrameCount;
+		//最多缓存的检测项缓存数量
+		static const int MaxCacheCount;
 
 		//任务编号
 		int _taskId;
