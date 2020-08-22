@@ -1,0 +1,102 @@
+#pragma once
+#include <string>
+
+#include "LogPool.h"
+#include "FFmpegInput.h"
+#include "Mp4Output.h"
+
+namespace OnePunchMan
+{
+	//视频输出
+	class H264Cache
+	{
+	public:
+		/**
+		* @brief: 构造函数
+		* @param: channelIndex 通道序号
+		*/
+		H264Cache(int channelIndex);
+
+		/**
+		* @brief: 析构函数
+		*/
+		~H264Cache();
+
+		/**
+		* @brief: 推送h264视频包
+		* @param: data 视频包字节流
+		* @param: size 视频包字节流长度
+		*/
+		void PushPacket(unsigned char* data, int size);
+
+		/**
+		* @brief: 清空视频帧缓存
+		*/
+		void ClearCache();
+
+		/**
+		* @brief: 添加视频输出
+		* @param: outputUrl 视频输出地址
+		* @param: iFrameCount 输出I帧数量
+		*/
+		bool AddOutputUrl(const std::string& outputUrl, int iFrameCount);
+
+		bool OutputFinished(const std::string& outputUrl);
+
+		//I帧间隔
+		const static int Gop;
+
+	private:
+
+		class FrameItem
+		{
+		public:
+			unsigned char* Data;
+			unsigned int Size;
+		};
+		/**
+		* @brief: 将h264视频包写入缓存
+		* @param: data 视频包字节流
+		* @param: size 视频包字节流长度
+		* @param: frameIndex 视频包对应的帧序号
+		* @param: frameType 视频包对应的帧类型
+		* @return: 表示是否写入缓存成功
+		*/
+		bool WriteCache(unsigned char* data, int size, int frameIndex, int frameType);
+
+		//同时最多输出数量
+		const static int MaxOutputCount;
+		//帧的最大长度
+		const static int FrameSize;
+
+		//通道序号
+		int _channelIndex;
+
+		//当前i帧的序号
+		int _iFrameIndex;
+		//当前p帧的序号
+		int _pFrameIndex;
+		//当前缓存帧的数量
+		unsigned int _frameCount;
+
+		//输出视频参数
+		AVCodecParameters _avParameters;
+		//sps+pps
+		unsigned char* _extradata;
+		//sps数据长度
+		int _spsSize;
+		//pps数据长度
+		int _ppsSize;
+
+		//帧缓存
+		std::vector<FrameItem> _frameCache;
+
+		//输出集合
+		std::mutex _mutex;
+		std::map<std::string, Mp4Output*> _outputItems;
+
+		Mp4Output _rtmpOutput;
+	};
+}
+
+
