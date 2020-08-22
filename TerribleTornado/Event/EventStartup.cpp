@@ -4,7 +4,7 @@ using namespace std;
 using namespace OnePunchMan;
 
 EventStartup::EventStartup()
-    :TrafficStartup(), _encode(ChannelCount)
+    :TrafficStartup()
 {
     TrafficData::Init("event.db");
 }
@@ -23,14 +23,14 @@ void EventStartup::UpdateDb()
     data.UpdateDb();
 }
 
-void EventStartup::InitThreads(MqttChannel* mqtt, vector<DecodeChannel*>* decodes, vector<TrafficDetector*>* detectors, vector<DetectChannel*>* detects, vector<RecognChannel*>* recogns,int loginHandler)
+void EventStartup::InitThreads(MqttChannel* mqtt, vector<DecodeChannel*>* decodes, EncodeChannel* encode,  vector<TrafficDetector*>* detectors, vector<DetectChannel*>* detects, vector<RecognChannel*>* recogns,int loginHandler)
 {
     for (int i = 0; i < ChannelCount; ++i)
     {
-        EventDetector* detector = new EventDetector(DecodeChannel::DestinationWidth, DecodeChannel::DestinationHeight, mqtt,&_encode);
+        EventDetector* detector = new EventDetector(DecodeChannel::DestinationWidth, DecodeChannel::DestinationHeight, mqtt, encode);
         _detectors.push_back(detector);
         detectors->push_back(detector);
-        DecodeChannel* decode = new DecodeChannel(i + 1, loginHandler ,&_encode);
+        DecodeChannel* decode = new DecodeChannel(i + 1, loginHandler , encode);
         decodes->push_back(decode);
     }
 
@@ -49,7 +49,7 @@ void EventStartup::InitThreads(MqttChannel* mqtt, vector<DecodeChannel*>* decode
             detects->at(i)->AddChannel(channelIndex, decodes->at(channelIndex - 1), detectors->at(channelIndex - 1));
         }
     }
-    _encode.Start();
+    
 }
 
 void EventStartup::InitChannels()
@@ -60,8 +60,8 @@ void EventStartup::InitChannels()
         EventChannel channel = data.Get(i + 1);
         if (!channel.ChannelUrl.empty())
         {
-            _decodes[i]->UpdateChannel(channel.ChannelUrl, channel.RtmpUrl("127.0.0.1"),static_cast<ChannelType>(channel.ChannelType), channel.Loop);
-            _detectors[i]->UpdateChannel(channel);
+            unsigned char taskId=_decodes[i]->UpdateChannel(channel.ChannelUrl, channel.RtmpUrl("127.0.0.1"),static_cast<ChannelType>(channel.ChannelType), channel.Loop);
+            _detectors[i]->UpdateChannel(taskId,channel);
         }
     }
 }
@@ -151,8 +151,8 @@ void EventStartup::SetDevice(HttpReceivedEventArgs* e)
             }
             else
             {
-                _decodes[i]->UpdateChannel(it->second.ChannelUrl, it->second.RtmpUrl("127.0.0.1"), static_cast<ChannelType>(it->second.ChannelType), it->second.Loop);
-                _detectors[i]->UpdateChannel(it->second);
+                unsigned char taskId=_decodes[i]->UpdateChannel(it->second.ChannelUrl, it->second.RtmpUrl("127.0.0.1"), static_cast<ChannelType>(it->second.ChannelType), it->second.Loop);
+                _detectors[i]->UpdateChannel(taskId,it->second);
             }
         }
         e->Code = HttpCode::OK;
@@ -197,8 +197,8 @@ void EventStartup::SetChannel(HttpReceivedEventArgs* e)
     EventChannelData data;
     if (data.Set(channel))
     {
-        _decodes[channel.ChannelIndex - 1]->UpdateChannel(channel.ChannelUrl, channel.RtmpUrl("127.0.0.1"), static_cast<ChannelType>(channel.ChannelType),channel.Loop);
-        _detectors[channel.ChannelIndex - 1]->UpdateChannel(channel);
+        unsigned char taskId=_decodes[channel.ChannelIndex - 1]->UpdateChannel(channel.ChannelUrl, channel.RtmpUrl("127.0.0.1"), static_cast<ChannelType>(channel.ChannelType),channel.Loop);
+        _detectors[channel.ChannelIndex - 1]->UpdateChannel(taskId,channel);
         e->Code = HttpCode::OK;
     }
     else

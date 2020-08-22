@@ -1,6 +1,6 @@
 #pragma once
 #include "Thread.h"
-#include "FFmpegOutput.h"
+#include "H264Cache.h"
 
 #ifndef _WIN32
 #include "hi_common.h"
@@ -73,15 +73,10 @@ namespace OnePunchMan
         */
         static void UninitHisi(int encodeCount);
 
-        /**
-        * @brief: 开始编码
-        * @param: channelIndex 输入通道序号
-        * @param: outputUrl 输出视频地址
-        * @param: inputUrl 输入视频地址
-        * @param: frameCount 输出的总帧数
-        * @return: 初始化成功返回编码器的序号，否则返回-1
-        */
-        int StartEncode(int channelIndex,const std::string& outputUrl,const std::string& inputUrl, int frameCount);
+        bool AddOutput(int channelIndex,const std::string& outputUrl, int frameCount);
+
+        bool OutputFinished(int channelIndex, const std::string& outputUrl);
+
 
 #ifndef _WIN32
         /**
@@ -92,29 +87,13 @@ namespace OnePunchMan
         void PushFrame(int channelIndex, VIDEO_FRAME_INFO_S* frame);
 #endif // !_WIN32
 
-        /**
-        * @brief: 停止编码
-        * @param: encodeIndex 编码器序号
-        */
-        void StopEncode(int encodeIndex);
-
-        /**
-        * @brief: 获取解码器是否已经输出了足够的视频帧
-        * @param: encodeIndex 编码器序号
-        */
-        bool Finished(int encodeIndex);
-
     protected:
         void StartCore();
 
     private:
         //编码器总数
         int _encodeCount;
-        //视频输出集合
-        std::mutex _mutex;
-        std::vector<FFmpegOutput*> _outputHandlers;
-        //解码器对应的输入通道序号
-        std::vector<int> _channelIndices;
+        std::vector<H264Cache*> _cache;
     };
 
 }

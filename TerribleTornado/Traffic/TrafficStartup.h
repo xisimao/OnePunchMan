@@ -56,12 +56,13 @@ namespace OnePunchMan
         * @brief: 初始化线程集合
         * @param: mqtt mqtt
         * @param: decodes 解码类集合
+        * @param: encodeChannel 编码线程
         * @param: detectors 交通检测类集合
         * @param: detects 视频检测类集合
         * @param: recogns 视频识别类集合
         * @param: loginHandler 登陆句柄
         */
-        virtual void InitThreads(MqttChannel* mqtt, std::vector<DecodeChannel*>* decodes, std::vector<TrafficDetector*>* detectors, std::vector<DetectChannel*>* detects, std::vector<RecognChannel*>* recogns,int loginHandler) = 0;
+        virtual void InitThreads(MqttChannel* mqtt, std::vector<DecodeChannel*>* decodes,EncodeChannel* encodeChannel, std::vector<TrafficDetector*>* detectors, std::vector<DetectChannel*>* detects, std::vector<RecognChannel*>* recogns,int loginHandler) = 0;
 
         /**
         * @brief: 初始化通道集合
@@ -192,6 +193,9 @@ namespace OnePunchMan
         HttpHandler _handler;
         //mqtt
         MqttChannel* _mqtt;
+
+        //编码
+        EncodeChannel* _encode;
 
         //交通检测类集合，等于视频总数
         std::vector<TrafficDetector*> _detectors;

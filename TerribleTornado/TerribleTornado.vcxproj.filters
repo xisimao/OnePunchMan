@@ -87,9 +87,6 @@
     <ClInclude Include="Flow\FlowData.h">
       <Filter>Flow</Filter>
     </ClInclude>
-    <ClInclude Include="Flow\FlowStartup.h">
-      <Filter>Flow</Filter>
-    </ClInclude>
     <ClInclude Include="Flow\FlowDetector.h">
       <Filter>Flow</Filter>
     </ClInclude>
@@ -146,6 +143,9 @@
     </ClInclude>
     <ClInclude Include="Traffic\EncodeChannel.h">
       <Filter>Traffic</Filter>
+    </ClInclude>
+    <ClInclude Include="Flow\FlowStartup.h">
+      <Filter>Flow</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

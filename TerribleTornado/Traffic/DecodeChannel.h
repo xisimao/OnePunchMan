@@ -4,7 +4,7 @@
 
 #include "Thread.h"
 #include "FFmpegInput.h"
-#include "FFmpegOutput.h"
+#include "RtmpOutput.h"
 #include "EncodeChannel.h"
 #include "BGR24Handler.h"
 #include "TrafficData.h"
@@ -264,7 +264,7 @@ namespace OnePunchMan
 		//视频输入
 		FFmpegInput _inputHandler;
 		//视频输出
-		FFmpegOutput _outputHandler;
+		RtmpOutput _outputHandler;
 		//帧间隔时长(毫秒)
 		unsigned char _frameSpan;
 		//帧数

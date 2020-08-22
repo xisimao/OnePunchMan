@@ -22,7 +22,7 @@ namespace OnePunchMan
     protected:
         void UpdateDb();
 
-        void InitThreads(MqttChannel* mqtt, std::vector<DecodeChannel*>* decodes, std::vector<TrafficDetector*>* detectors, std::vector<DetectChannel*>* detects, std::vector<RecognChannel*>* recogns,int loginHandler);
+        void InitThreads(MqttChannel* mqtt, std::vector<DecodeChannel*>* decodes,EncodeChannel* encode, std::vector<TrafficDetector*>* detectors, std::vector<DetectChannel*>* detects, std::vector<RecognChannel*>* recogns,int loginHandler);
 
         void InitChannels();
 

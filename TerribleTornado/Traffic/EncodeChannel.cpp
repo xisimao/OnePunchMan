@@ -8,171 +8,153 @@ EncodeChannel::EncodeChannel(int encodeCount)
 {
     for (int i = 0; i < encodeCount; ++i)
     {
-        _outputHandlers.push_back(NULL);
-        _channelIndices.push_back(-1);
+        _cache.push_back(new H264Cache(i + 1));
     }
 }
 
-bool EncodeChannel::InitHisi(int encodeCount,int width,int height)
+bool EncodeChannel::InitHisi(int encodeCount, int width, int height)
 {
 #ifndef _WIN32
-	//venc
+    //venc
     SIZE_S stDispSize;
     stDispSize.u32Width = width;
     stDispSize.u32Height = height;
-	VENC_GOP_ATTR_S stGopAttr;
+    VENC_GOP_ATTR_S stGopAttr;
 
-	memset(&stGopAttr, 0, sizeof(VENC_GOP_ATTR_S));
+    memset(&stGopAttr, 0, sizeof(VENC_GOP_ATTR_S));
 
-	stGopAttr.enGopMode = VENC_GOPMODE_NORMALP;
-	stGopAttr.stNormalP.s32IPQpDelta = 3;
-	for (int i = 0; i < encodeCount; i++)
-	{
-		HI_S32 s32Ret;
-
-
-		/******************************************
-		 step 1:  Creat Encode Chnl
-		******************************************/
-
-		VENC_CHN_ATTR_S        stVencChnAttr;
-		HI_U32                 u32FrameRate = 25;
-		HI_U32                 u32StatTime;
-		HI_U32                 u32Gop = 40;
-
-		/******************************************
-		 step 1:  Create Venc Channel
-		******************************************/
-		stVencChnAttr.stVencAttr.enType = PT_H264;
-		stVencChnAttr.stVencAttr.u32MaxPicWidth = stDispSize.u32Width;
-		stVencChnAttr.stVencAttr.u32MaxPicHeight = stDispSize.u32Height;
-		stVencChnAttr.stVencAttr.u32PicWidth = stDispSize.u32Width;/*the picture width*/
-		stVencChnAttr.stVencAttr.u32PicHeight = stDispSize.u32Height;/*the picture height*/
-		stVencChnAttr.stVencAttr.u32BufSize = stDispSize.u32Width * stDispSize.u32Height * 2;/*stream buffer size*/
-		stVencChnAttr.stVencAttr.u32Profile = 0;
-		stVencChnAttr.stVencAttr.bByFrame = HI_TRUE;/*get stream mode is slice mode or frame mode?*/
-
-		if (VENC_GOPMODE_ADVSMARTP == stGopAttr.enGopMode)
-		{
-			u32StatTime = stGopAttr.stAdvSmartP.u32BgInterval / u32Gop;
-		}
-		else if (VENC_GOPMODE_SMARTP == stGopAttr.enGopMode)
-		{
-			u32StatTime = stGopAttr.stSmartP.u32BgInterval / u32Gop;
-		}
-		else
-		{
-			u32StatTime = 1;
-		}
-
-		stVencChnAttr.stVencAttr.stAttrH264e.bRcnRefShareBuf = HI_FALSE;
-		VENC_H264_CBR_S    stH264Cbr;
-
-		stVencChnAttr.stRcAttr.enRcMode = VENC_RC_MODE_H264CBR;
-		stH264Cbr.u32Gop = u32Gop; /*the interval of IFrame*/
-		stH264Cbr.u32StatTime = u32StatTime; /* stream rate statics time(s) */
-		stH264Cbr.u32SrcFrameRate = u32FrameRate; /* input (vi) frame rate */
-		stH264Cbr.fr32DstFrameRate = u32FrameRate; /* target frame rate */
-		stH264Cbr.u32BitRate = 1024 * 2 + 2048;
-
-		memcpy(&stVencChnAttr.stRcAttr.stH264Cbr, &stH264Cbr, sizeof(VENC_H264_CBR_S));
-
-		memcpy(&stVencChnAttr.stGopAttr, &stGopAttr, sizeof(VENC_GOP_ATTR_S));
+    stGopAttr.enGopMode = VENC_GOPMODE_NORMALP;
+    stGopAttr.stNormalP.s32IPQpDelta = 3;
+    for (int i = 0; i < encodeCount; i++)
+    {
+        HI_S32 s32Ret;
 
 
-		s32Ret = HI_MPI_VENC_CreateChn(i, &stVencChnAttr);
-		if (HI_SUCCESS != s32Ret)
-		{
-			return false;
-		}
+        /******************************************
+         step 1:  Creat Encode Chnl
+        ******************************************/
 
-		/******************************************
-		 step 2:  Start Recv Venc Pictures
-		******************************************/
-		VENC_RECV_PIC_PARAM_S  stRecvParam;
-		stRecvParam.s32RecvPicNum = -1;
-		s32Ret = HI_MPI_VENC_StartRecvFrame(i, &stRecvParam);
-		if (HI_SUCCESS != s32Ret)
-		{
-			return false;
-		}
-	}
+        VENC_CHN_ATTR_S        stVencChnAttr;
+        HI_U32                 u32FrameRate = 25;
+        HI_U32                 u32StatTime;
+        HI_U32                 u32Gop = H264Cache::Gop;
+
+        /******************************************
+         step 1:  Create Venc Channel
+        ******************************************/
+        stVencChnAttr.stVencAttr.enType = PT_H264;
+        stVencChnAttr.stVencAttr.u32MaxPicWidth = stDispSize.u32Width;
+        stVencChnAttr.stVencAttr.u32MaxPicHeight = stDispSize.u32Height;
+        stVencChnAttr.stVencAttr.u32PicWidth = stDispSize.u32Width;/*the picture width*/
+        stVencChnAttr.stVencAttr.u32PicHeight = stDispSize.u32Height;/*the picture height*/
+        stVencChnAttr.stVencAttr.u32BufSize = stDispSize.u32Width * stDispSize.u32Height * 2;/*stream buffer size*/
+        stVencChnAttr.stVencAttr.u32Profile = 0;
+        stVencChnAttr.stVencAttr.bByFrame = HI_TRUE;/*get stream mode is slice mode or frame mode?*/
+
+        if (VENC_GOPMODE_ADVSMARTP == stGopAttr.enGopMode)
+        {
+            u32StatTime = stGopAttr.stAdvSmartP.u32BgInterval / u32Gop;
+        }
+        else if (VENC_GOPMODE_SMARTP == stGopAttr.enGopMode)
+        {
+            u32StatTime = stGopAttr.stSmartP.u32BgInterval / u32Gop;
+        }
+        else
+        {
+            u32StatTime = 1;
+        }
+
+        stVencChnAttr.stVencAttr.stAttrH264e.bRcnRefShareBuf = HI_FALSE;
+        VENC_H264_CBR_S    stH264Cbr;
+
+        stVencChnAttr.stRcAttr.enRcMode = VENC_RC_MODE_H264CBR;
+        stH264Cbr.u32Gop = u32Gop; /*the interval of IFrame*/
+        stH264Cbr.u32StatTime = u32StatTime; /* stream rate statics time(s) */
+        stH264Cbr.u32SrcFrameRate = u32FrameRate; /* input (vi) frame rate */
+        stH264Cbr.fr32DstFrameRate = u32FrameRate; /* target frame rate */
+        stH264Cbr.u32BitRate = 1024 * 2 + 2048;
+
+        memcpy(&stVencChnAttr.stRcAttr.stH264Cbr, &stH264Cbr, sizeof(VENC_H264_CBR_S));
+
+        memcpy(&stVencChnAttr.stGopAttr, &stGopAttr, sizeof(VENC_GOP_ATTR_S));
+
+
+        s32Ret = HI_MPI_VENC_CreateChn(i, &stVencChnAttr);
+        if (HI_SUCCESS != s32Ret)
+        {
+            return false;
+        }
+
+        /******************************************
+         step 2:  Start Recv Venc Pictures
+        ******************************************/
+        VENC_RECV_PIC_PARAM_S  stRecvParam;
+        stRecvParam.s32RecvPicNum = -1;
+        s32Ret = HI_MPI_VENC_StartRecvFrame(i, &stRecvParam);
+        if (HI_SUCCESS != s32Ret)
+        {
+            return false;
+        }
+    }
 #endif
-	LogPool::Information(LogEvent::Decode, "init hisi encode");
-	return true;
+    LogPool::Information(LogEvent::Decode, "init hisi encode");
+    return true;
 }
 
 void EncodeChannel::UninitHisi(int encodeCount)
 {
 #ifndef _WIN32
-	//venc
-	for (int i = 0; i < encodeCount; ++i)
-	{
-		/******************************************
-		 step 1:  Stop Recv Pictures
-		******************************************/
-		HI_MPI_VENC_StopRecvFrame(i);
-		/******************************************
-		 step 2:  Distroy Venc Channel
-		******************************************/
-		HI_MPI_VENC_DestroyChn(i);
-	}
+    //venc
+    for (int i = 0; i < encodeCount; ++i)
+    {
+        /******************************************
+         step 1:  Stop Recv Pictures
+        ******************************************/
+        HI_MPI_VENC_StopRecvFrame(i);
+        /******************************************
+         step 2:  Distroy Venc Channel
+        ******************************************/
+        HI_MPI_VENC_DestroyChn(i);
+    }
 #endif // !_WIN32
-	LogPool::Information(LogEvent::Decode, "uninit hisi encode");
+    LogPool::Information(LogEvent::Decode, "uninit hisi encode");
 }
 
-int EncodeChannel::StartEncode(int channelIndex,const std::string& outputUrl, const std::string& inputUrl,int frameCount)
+bool EncodeChannel::AddOutput(int channelIndex, const std::string& outputUrl, int frameCount)
 {
-    lock_guard<mutex> lck(_mutex);
-    for (unsigned int i = 0; i < _outputHandlers.size(); ++i)
+    if (channelIndex >= 1 && channelIndex <= _encodeCount)
     {
-        if (_outputHandlers[i]==NULL)
-        {
-            FFmpegOutput* handler = new FFmpegOutput();
-            handler->Init(channelIndex,outputUrl, inputUrl,frameCount);
-            _outputHandlers[i] = handler;
-            _channelIndices[i] = channelIndex;
-            return static_cast<int>(i);
-        }
+        return _cache[channelIndex - 1]->AddOutputUrl(outputUrl, frameCount);
     }
-    return -1;
-}
-
-void EncodeChannel::StopEncode(int encodeIndex)
-{
-    lock_guard<mutex> lck(_mutex);
-    if (encodeIndex >= 0 && encodeIndex < _encodeCount
-        && _outputHandlers[encodeIndex] != NULL)
+    else
     {
-        _outputHandlers[encodeIndex]->Uninit();
-        delete _outputHandlers[encodeIndex];
-        _outputHandlers[encodeIndex] = NULL;
-        _channelIndices[encodeIndex] = -1;
+        LogPool::Warning(LogEvent::Encode, "添加视频输出出错,视频序号：", channelIndex);
+        return false;
     }
 }
 
+bool EncodeChannel::OutputFinished(int channelIndex, const std::string& outputUrl)
+{
+    if (channelIndex >= 1 && channelIndex <= _encodeCount)
+    {
+        return _cache[channelIndex - 1]->OutputFinished(outputUrl);
+    }
+    else
+    {
+        LogPool::Warning(LogEvent::Encode, "查询视频输出结果出错,视频序号：", channelIndex);
+        return true;
+    }
+}
 
 #ifndef _WIN32
 void EncodeChannel::PushFrame(int channelIndex, VIDEO_FRAME_INFO_S* frame)
 {
-    for (int encodeIndex = 0; encodeIndex < _encodeCount; ++encodeIndex)
+    if (channelIndex >= 1 && channelIndex <= _encodeCount)
     {
-        if (_channelIndices[encodeIndex] == channelIndex)
-        {
-            HI_MPI_VENC_SendFrame(encodeIndex, frame, 0);
-        }
+        HI_MPI_VENC_SendFrame(channelIndex - 1, frame, 0);
     }
 }
 #endif // !_WIN32
-
-bool EncodeChannel::Finished(int encodeIndex)
-{
-    if (encodeIndex >= 0 && encodeIndex < _encodeCount)
-    {
-        return _channelIndices[encodeIndex] == -1;
-    }
-    return true;
-}
 
 void EncodeChannel::StartCore()
 {
@@ -190,7 +172,6 @@ void EncodeChannel::StartCore()
     /******************************************
      step 1:  check & prepare save-file & venc-fd
     ******************************************/
-
     for (int encodeIndex = 0; encodeIndex < _encodeCount; encodeIndex++)
     {
         /* Set Venc Fd. */
@@ -285,22 +266,13 @@ void EncodeChannel::StartCore()
                         break;
                     }
 
-
                     /*******************************************************
                      step 2.5 : save frame to file
                     *******************************************************/
-                    unique_lock<mutex> lck(_mutex);
-                    for (HI_U32 packetIndex = 0; packetIndex < stStream.u32PackCount; packetIndex++) 
+                    for (HI_U32 packetIndex = 0; packetIndex < stStream.u32PackCount; packetIndex++)
                     {
-                        if (_outputHandlers[encodeIndex] != NULL)
-                        {
-                            if (_outputHandlers[encodeIndex]->PushMp4Packet((unsigned char*)(stStream.pstPack[packetIndex].pu8Addr + stStream.pstPack[packetIndex].u32Offset), stStream.pstPack[packetIndex].u32Len - stStream.pstPack[packetIndex].u32Offset))
-                            {
-                                _channelIndices[encodeIndex] = -1;
-                            }
-                        }
+                        _cache[encodeIndex]->PushPacket((unsigned char*)(stStream.pstPack[packetIndex].pu8Addr + stStream.pstPack[packetIndex].u32Offset), stStream.pstPack[packetIndex].u32Len - stStream.pstPack[packetIndex].u32Offset);
                     }
-                    lck.unlock();
                     /*******************************************************
                      step 2.6 : release stream
                      *******************************************************/

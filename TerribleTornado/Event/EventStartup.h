@@ -23,7 +23,7 @@ namespace OnePunchMan
     protected:
         void UpdateDb();
 
-        void InitThreads(MqttChannel* mqtt, std::vector<DecodeChannel*>* decodes, std::vector<TrafficDetector*>* detectors, std::vector<DetectChannel*>* detects, std::vector<RecognChannel*>* recogns,int loginHandler);
+        void InitThreads(MqttChannel* mqtt, std::vector<DecodeChannel*>* decodes,EncodeChannel* encode, std::vector<TrafficDetector*>* detectors, std::vector<DetectChannel*>* detects, std::vector<RecognChannel*>* recogns,int loginHandler);
 
         void InitChannels();
 
@@ -39,8 +39,6 @@ namespace OnePunchMan
         //通道检测集合，等于视频总数
         std::vector<EventDetector*> _detectors;
 
-        //编码线程
-        EncodeChannel _encode;
     };
 }
 

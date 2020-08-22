@@ -35,9 +35,10 @@ namespace OnePunchMan
 
 		/**
 		* @brief: 更新通道
+		* @param: taskId 任务号
 		* @param: channel 通道
 		*/
-		void UpdateChannel(const EventChannel& channel);
+		void UpdateChannel(const unsigned char taskId, const EventChannel& channel);
 
 		/**
 		* @brief: 清空通道
@@ -158,6 +159,10 @@ namespace OnePunchMan
 		static const int PointCount;
 		//视频编码帧数
 		static const int EncodeFrameCount;
+
+		//任务编号
+		int _taskId;
+
 		//车道集合同步锁
 		std::mutex _laneMutex;
 		//车道集合

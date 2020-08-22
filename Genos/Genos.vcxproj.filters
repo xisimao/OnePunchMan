@@ -38,7 +38,6 @@
     <ClCompile Include="..\TerribleTornado\Adapter\IoAdapter.cpp" />
     <ClCompile Include="..\TerribleTornado\Traffic\TrafficData.cpp" />
     <ClCompile Include="..\Fubuki\FFmpeg\FFmpegInput.cpp" />
-    <ClCompile Include="..\Fubuki\FFmpeg\FFmpegOutput.cpp" />
     <ClCompile Include="..\TerribleTornado\Image\BGR24Handler.cpp" />
     <ClCompile Include="..\TerribleTornado\Image\H264Handler.cpp" />
     <ClCompile Include="..\TerribleTornado\Image\ImageConvert.cpp" />
@@ -47,6 +46,9 @@
     <ClCompile Include="..\TerribleTornado\Image\YUV420SPHandler.cpp" />
     <ClCompile Include="..\TerribleTornado\Traffic\DecodeChannel.cpp" />
     <ClCompile Include="..\TerribleTornado\Traffic\EncodeChannel.cpp" />
+    <ClCompile Include="..\Fubuki\FFmpeg\Mp4Output.cpp" />
+    <ClCompile Include="..\Fubuki\FFmpeg\RtmpOutput.cpp" />
+    <ClCompile Include="..\Fubuki\FFmpeg\H264Cache.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Saitama\Convert\JsonFormatter.h" />
@@ -89,7 +91,6 @@
     <ClInclude Include="..\TerribleTornado\Event\EventStartup.h" />
     <ClInclude Include="..\TerribleTornado\Adapter\IoAdapter.h" />
     <ClInclude Include="..\Fubuki\FFmpeg\FFmpegInput.h" />
-    <ClInclude Include="..\Fubuki\FFmpeg\FFmpegOutput.h" />
     <ClInclude Include="..\TerribleTornado\Image\BGR24Handler.h" />
     <ClInclude Include="..\TerribleTornado\Image\H264Handler.h" />
     <ClInclude Include="..\TerribleTornado\Image\ImageConvert.h" />
@@ -98,5 +99,8 @@
     <ClInclude Include="..\TerribleTornado\Image\YUV420SPHandler.h" />
     <ClInclude Include="..\TerribleTornado\Traffic\DecodeChannel.h" />
     <ClInclude Include="..\TerribleTornado\Traffic\EncodeChannel.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\Mp4Output.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\RtmpOutput.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\H264Cache.h" />
   </ItemGroup>
 </Project>

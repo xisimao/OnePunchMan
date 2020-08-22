@@ -27,7 +27,7 @@ namespace OnePunchMan
 		* @param: taskId 任务编号
 		* @param: channel 通道
 		*/
-		void UpdateChannel(unsigned char taskId,const FlowChannel& channel);
+		void UpdateChannel(const unsigned char taskId,const FlowChannel& channel);
 
 		/**
 		* @brief: 清空通道

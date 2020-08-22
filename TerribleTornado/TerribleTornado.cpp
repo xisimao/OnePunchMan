@@ -2,7 +2,7 @@
 #include "EventStartup.h"
 #include "IoAdapter.h"
 #include "EncodeChannel.h"
-#include "FFmpegOutput.h"
+#include "RtmpOutput.h"
 #include "DecodeChannel.h"
 
 using namespace std;
@@ -16,11 +16,15 @@ int main(int argc, char* argv[])
     TrafficData::Init("flow.db");
     FFmpegInput::InitFFmpeg();
 
-    //DecodeChannel channel(1, 1, NULL);
-    //channel.UpdateChannel("C:\\Users\\Administrator\\Desktop\\temp\\h264_1.h264", string("rtmp://192.168.1.65:1935/live/9"), ChannelType::File, false);
-    //channel.Start();
+    H264Cache cache1(1);
+    cache1.AddOutputUrl("1.mp4", 8);
+    cache1.AddOutputUrl("2.mp4", 8);
 
-    //FFmpegOutput output;
+    DecodeChannel channel(1, 1, NULL);
+    channel.UpdateChannel("600w.mp4", string("rtmp://192.168.1.65:1935/live/9"), ChannelType::File, false);
+    channel.Start();
+
+    //RtmpOutput output;
     //FFmpegInput input;
     ////input.Init("600w.mp4");
     //output.Init("rtmp://192.168.1.65:1935/live/9", input);
@@ -55,8 +59,6 @@ int main(int argc, char* argv[])
     //av_packet_free(&packet);
     //delete[] buffer;
     //fclose(fw);
-    FlowStartup startUp;
-    startUp.Start();
     system("pause");
 
     return 0;

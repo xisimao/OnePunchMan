@@ -28,7 +28,7 @@ FlowDetector::~FlowDetector()
 	delete[] _recognBgrBuffer;
 }
 
-void FlowDetector::UpdateChannel(unsigned char taskId, const FlowChannel& channel)
+void FlowDetector::UpdateChannel(const unsigned char taskId, const FlowChannel& channel)
 {
 	vector<FlowLaneCache> lanes;
 	string regionsParam;

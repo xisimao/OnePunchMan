@@ -36,7 +36,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Fubuki\FFmpeg\FFmpegInput.cpp" />
-    <ClCompile Include="..\Fubuki\FFmpeg\FFmpegOutput.cpp" />
+    <ClCompile Include="..\Fubuki\FFmpeg\H264Cache.cpp" />
+    <ClCompile Include="..\Fubuki\FFmpeg\Mp4Output.cpp" />
+    <ClCompile Include="..\Fubuki\FFmpeg\RtmpOutput.cpp" />
     <ClCompile Include="..\Fubuki\Mqtt\MqttChannel.cpp" />
     <ClCompile Include="..\Fubuki\Sqlite\Sqlite.cpp" />
     <ClCompile Include="..\Saitama\Convert\JsonFormatter.cpp" />
@@ -84,7 +86,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Fubuki\FFmpeg\FFmpegInput.h" />
-    <ClInclude Include="..\Fubuki\FFmpeg\FFmpegOutput.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\H264Cache.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\Mp4Output.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\RtmpOutput.h" />
     <ClInclude Include="..\Fubuki\Mqtt\MqttChannel.h" />
     <ClInclude Include="..\Fubuki\Sqlite\Sqlite.h" />
     <ClInclude Include="..\Saitama\Convert\JsonFormatter.h" />
