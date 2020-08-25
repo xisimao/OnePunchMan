@@ -13,7 +13,7 @@ int main(int argc, char* argv[])
 
     LogPool::Init("appsettings.json");
     TrafficData::Init("flow.db");
-    FFmpegInput::InitFFmpeg();
+    DecodeChannel::InitFFmpeg();
 
     H264Cache cache1(1);
     cache1.AddOutputUrl("1.mp4", 8);

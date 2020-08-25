@@ -35,7 +35,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\Fubuki\FFmpeg\FFmpegInput.cpp" />
     <ClCompile Include="..\Fubuki\FFmpeg\FFmpegOutput.cpp" />
     <ClCompile Include="..\Fubuki\FFmpeg\H264Cache.cpp" />
     <ClCompile Include="..\Fubuki\Mqtt\MqttChannel.cpp" />
@@ -84,7 +83,6 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\Fubuki\FFmpeg\FFmpegInput.h" />
     <ClInclude Include="..\Fubuki\FFmpeg\FFmpegOutput.h" />
     <ClInclude Include="..\Fubuki\FFmpeg\H264Cache.h" />
     <ClInclude Include="..\Fubuki\Mqtt\MqttChannel.h" />

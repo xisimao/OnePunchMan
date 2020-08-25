@@ -3,7 +3,6 @@
 #include <bitset>
 
 #include "Thread.h"
-#include "FFmpegInput.h"
 #include "FFmpegOutput.h"
 #include "EncodeChannel.h"
 #include "BGR24Handler.h"
@@ -104,6 +103,16 @@ namespace OnePunchMan
 		~DecodeChannel();
 
 		/**
+		* @brief: 初始化ffmpeg sdk
+		*/
+		static void InitFFmpeg();
+
+		/**
+		* @brief: 卸载ffmpeg sdk
+		*/
+		static void UninitFFmpeg();
+
+		/**
 		* @brief: 初始化hisi sdk
 		* @param: videoCount 通道总数
 		* @return: 初始化成功返回true，否则返回false
@@ -194,6 +203,18 @@ namespace OnePunchMan
 		static void ReceivePacket(int playFd, int frameType, char* buffer, unsigned int size, void* usr);
 
 		/**
+		* @brief: 初始化视频输入
+		* @param: inputUrl 视频输入地址
+		* @return: 视频状态
+		*/
+		bool InitInput(const std::string& inputUrl);
+
+		/**
+		* @brief: 结束视频输入
+		*/
+		void UninitInput();
+
+		/**
 		* @brief: 初始化解码器
 		* @param: inputUrl 输入url
 		* @return: 初始化成功返回true
@@ -272,11 +293,17 @@ namespace OnePunchMan
 		bool _loop;
 		
 		//线程中改变
-		//视频输入
-		FFmpegInput _inputHandler;
-		//视频输出
-		FFmpegOutput _outputHandler;
-		//帧间隔时长(毫秒)
+		//输入视频
+		AVFormatContext* _inputFormat;
+		//视频流
+		AVStream* _inputStream;
+		//视频流序号
+		int _inputVideoIndex;
+		//视频源宽度
+		int _sourceWidth;
+		//视频源高度
+		int _sourceHeight;
+		//输入视频帧间隔时长(毫秒)
 		unsigned char _frameSpan;
 		//帧数
 		unsigned int _frameIndex;
@@ -288,6 +315,9 @@ namespace OnePunchMan
 		unsigned char _currentTaskId;
 		//当前国标播放句柄
 		int _playHandler;
+
+		//视频输出
+		FFmpegOutput _outputHandler;
 
 		//debug
 		//解码相关

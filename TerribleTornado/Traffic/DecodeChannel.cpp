@@ -10,9 +10,11 @@ const int DecodeChannel::DestinationWidth = 1920;
 const int DecodeChannel::DestinationHeight = 1080;
 
 DecodeChannel::DecodeChannel(int channelIndex, int loginId, EncodeChannel* encodeChannel)
-	:ThreadObject("decode"), _channelIndex(channelIndex), _loginId(loginId)
+	:ThreadObject("decode")
+	, _channelIndex(channelIndex), _loginId(loginId)
 	, _inputUrl(), _outputUrl(), _channelType(ChannelType::None), _channelStatus(ChannelStatus::Init), _taskId(0), _loop(false)
-	, _inputHandler(), _outputHandler(), _frameSpan(0), _frameIndex(1), _lastframeIndex(0), _handleSpan(0), _currentTaskId(0), _playHandler(-1)
+	, _inputFormat(NULL), _inputStream(NULL), _inputVideoIndex(-1), _sourceWidth(0), _sourceHeight(0), _frameSpan(0), _frameIndex(1), _lastframeIndex(0), _handleSpan(0), _currentTaskId(0), _playHandler(-1)
+	, _outputHandler()
 	, _decodeContext(NULL), _yuvFrame(NULL), _bgrFrame(NULL), _bgrBuffer(NULL), _bgrSwsContext(NULL), _bgrHandler(3)
 	, _finished(false), _tempTaskId(0), _tempFrameIndex(0), _tempFrameSpan(0)
 	, _yuvSize(static_cast<int>(DestinationWidth* DestinationHeight * 1.5)), _yuvHasValue(false), _yuv_phy_addr(0), _yuvBuffer(NULL), _iveSize(DestinationWidth* DestinationHeight * 3), _ive_phy_addr(0), _iveBuffer(NULL)
@@ -44,6 +46,21 @@ DecodeChannel::~DecodeChannel()
 	HI_MPI_SYS_MmzFree(_yuv_phy_addr, reinterpret_cast<HI_VOID*>(_yuvBuffer));
 	HI_MPI_SYS_MmzFree(_ive_phy_addr, reinterpret_cast<HI_VOID*>(_iveBuffer));
 #endif // !_WIN32
+}
+
+void DecodeChannel::InitFFmpeg()
+{
+	av_register_all();
+	avcodec_register_all();
+	avformat_network_init();
+	av_log_set_level(AV_LOG_INFO);
+	LogPool::Information(LogEvent::Decode, "初始化 ffmpeg sdk");
+}
+
+void DecodeChannel::UninitFFmpeg()
+{
+	avformat_network_deinit();
+	LogPool::Information(LogEvent::Decode, "卸载 ffmpeg sdk");
 }
 
 bool DecodeChannel::InitHisi(int videoCount)
@@ -735,12 +752,12 @@ ChannelStatus DecodeChannel::Status()
 
 int DecodeChannel::SourceWidth()
 {
-	return _inputHandler.SourceWidth();
+	return _sourceWidth;
 }
 
 int DecodeChannel::SourceHeight()
 {
-	return _inputHandler.SourceHeight();
+	return _sourceHeight;
 }
 
 int DecodeChannel::HandleSpan()
@@ -778,22 +795,98 @@ void DecodeChannel::ClearChannel()
 	_channelStatus = ChannelStatus::Init;
 }
 
+
+bool DecodeChannel::InitInput(const string& inputUrl)
+{
+	if (inputUrl.empty())
+	{
+		return false;
+	}
+	else
+	{
+		if (_inputFormat == NULL)
+		{
+			AVDictionary* options = NULL;
+			if (inputUrl.size() >= 4 && inputUrl.substr(0, 4).compare("rtsp") == 0)
+			{
+				av_dict_set(&options, "rtsp_transport", "tcp", 0);
+				av_dict_set(&options, "stimeout", "5000000", 0);
+			}
+			if (avformat_open_input(&_inputFormat, inputUrl.c_str(), 0, 0) != 0) {
+				LogPool::Error(LogEvent::Decode, "avformat_open_input", inputUrl);
+				UninitInput();
+				return false;
+			}
+
+			if (avformat_find_stream_info(_inputFormat, NULL) < 0) {
+				LogPool::Error(LogEvent::Decode, "avformat_find_stream_info", inputUrl);
+				UninitInput();
+				return false;
+			}
+
+			for (unsigned int i = 0; i < _inputFormat->nb_streams; i++) {
+				if (_inputFormat->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
+					_inputVideoIndex = i;
+					break;
+				}
+			}
+			if (_inputVideoIndex == -1) {
+				LogPool::Error(LogEvent::Decode, "not found video index", inputUrl);
+				UninitInput();
+				return false;
+			}
+			_inputStream = _inputFormat->streams[_inputVideoIndex];
+			_sourceWidth = _inputStream->codecpar->width;
+			_sourceHeight = _inputStream->codecpar->height;
+			if (_inputStream->avg_frame_rate.den != 0)
+			{
+				_frameSpan = static_cast<unsigned char>(1000 / (_inputStream->avg_frame_rate.num / _inputStream->avg_frame_rate.den));
+			}
+			else if (_inputStream->r_frame_rate.den != 0)
+			{
+				_frameSpan = static_cast<unsigned char>(1000 / (_inputStream->r_frame_rate.num / _inputStream->r_frame_rate.den));
+			}
+			else
+			{
+				_frameSpan = 40;
+				LogPool::Warning(LogEvent::Decode, "未找到ffmpeg输入帧率，使用固定的40毫秒，输入地址:", inputUrl);
+			}
+			LogPool::Information(LogEvent::Decode, "初始化输入视频:", inputUrl);
+		}
+		return true;
+	}
+}
+
+void DecodeChannel::UninitInput()
+{
+	if (_inputFormat != NULL) {
+		_inputVideoIndex = -1;
+		_inputStream = NULL;
+		avformat_close_input(&_inputFormat);
+		_inputFormat = NULL;
+		_sourceWidth = 0;
+		_sourceHeight = 0;
+		_frameSpan = 0;
+		LogPool::Information(LogEvent::Decode, "结束输入视频:", _inputUrl);
+	}
+}
+
 bool DecodeChannel::InitDecoder(const string& inputUrl)
 {
 #ifdef _WIN32
-	if (_inputHandler.Stream()->codecpar->codec_id != AVCodecID::AV_CODEC_ID_H264)
+	if (_inputStream->codecpar->codec_id != AVCodecID::AV_CODEC_ID_H264)
 	{
 		LogPool::Warning(LogEvent::Decode, "codec is not h264", inputUrl);
 		return false;
 	}
 
-	AVCodec* decode = avcodec_find_decoder(_inputHandler.Stream()->codecpar->codec_id);
+	AVCodec* decode = avcodec_find_decoder(_inputStream->codecpar->codec_id);
 	if (decode == NULL) {
 		LogPool::Warning(LogEvent::Decode, "avcodec_find_decoder error", inputUrl);
 		return false;
 	}
 	_decodeContext = avcodec_alloc_context3(decode);
-	if (avcodec_parameters_to_context(_decodeContext, _inputHandler.Stream()->codecpar) < 0) {
+	if (avcodec_parameters_to_context(_decodeContext, _inputStream->codecpar) < 0) {
 		LogPool::Warning(LogEvent::Decode, "avcodec_parameters_to_context error", inputUrl);
 		return false;
 	}
@@ -1124,7 +1217,7 @@ void DecodeChannel::StartCore()
 			else
 			{
 				long long timeStamp1 = DateTime::UtcNowTimeStamp();
-				int readResult = av_read_frame(_inputHandler.FormatContext(), packet);
+				int readResult = av_read_frame(_inputFormat, packet);
 				if (readResult == AVERROR_EOF)
 				{
 					if (channelType == ChannelType::File && !_loop)
@@ -1139,10 +1232,10 @@ void DecodeChannel::StartCore()
 				}
 				else if (readResult == 0)
 				{
-					if (packet->stream_index == _inputHandler.VideoIndex())
+					if (packet->stream_index == _inputVideoIndex)
 					{
 						_outputHandler.WritePacket(packet);
-						int filterResult = av_bitstream_filter_filter(h264bsfc, _inputHandler.Stream()->codec, NULL, &tempPacket->data, &tempPacket->size, packet->data, packet->size, 0);
+						int filterResult = av_bitstream_filter_filter(h264bsfc, _inputStream->codec, NULL, &tempPacket->data, &tempPacket->size, packet->data, packet->size, 0);
 						if (filterResult < 0)
 						{
 							LogPool::Error(LogEvent::Decode, "av_bitstream_filter_filter", _channelIndex, _frameIndex, filterResult);
@@ -1222,8 +1315,7 @@ void DecodeChannel::StartCore()
 			}
 			else
 			{
-				_inputHandler.Uninit();
-
+				UninitInput();
 			}
 
 			//循环停止和解码错误时不再重新打开视频
@@ -1271,7 +1363,7 @@ void DecodeChannel::StartCore()
 					}
 					else
 					{
-						tempStatus = _inputHandler.Init(_inputUrl) ? ChannelStatus::Normal : ChannelStatus::InputError;
+						tempStatus = InitInput(_inputUrl) ? ChannelStatus::Normal : ChannelStatus::InputError;
 					}
 				}
 				//输出
@@ -1285,7 +1377,7 @@ void DecodeChannel::StartCore()
 					}
 					else
 					{
-						tempStatus = _outputHandler.Init(_outputUrl, -1,_inputHandler.Stream()->codecpar)
+						tempStatus = _outputHandler.Init(_outputUrl, -1,_inputStream->codecpar)
 							? ChannelStatus::Normal
 							: ChannelStatus::OutputError;
 					}
@@ -1304,7 +1396,6 @@ void DecodeChannel::StartCore()
 
 			if (_channelStatus == ChannelStatus::Normal)
 			{
-				_frameSpan = _inputHandler.FrameSpan();
 				_frameIndex = 1;
 				_lastframeIndex = 0;
 				_handleSpan = 0;
@@ -1325,7 +1416,7 @@ void DecodeChannel::StartCore()
 	av_packet_free(&tempPacket);
 	av_packet_free(&packet);
 	UninitDecoder();
-	_inputHandler.Uninit();
+	UninitInput();
 	_outputHandler.Uninit();
 }
 

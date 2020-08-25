@@ -7,9 +7,6 @@
     <ClInclude Include="Mqtt\MqttChannel.h">
       <Filter>Mqtt</Filter>
     </ClInclude>
-    <ClInclude Include="FFmpeg\FFmpegInput.h">
-      <Filter>FFmpeg</Filter>
-    </ClInclude>
     <ClInclude Include="FFmpeg\H264Cache.h">
       <Filter>FFmpeg</Filter>
     </ClInclude>
@@ -34,9 +31,6 @@
     </ClCompile>
     <ClCompile Include="Mqtt\MqttChannel.cpp">
       <Filter>Mqtt</Filter>
-    </ClCompile>
-    <ClCompile Include="FFmpeg\FFmpegInput.cpp">
-      <Filter>FFmpeg</Filter>
     </ClCompile>
     <ClCompile Include="FFmpeg\H264Cache.cpp">
       <Filter>FFmpeg</Filter>

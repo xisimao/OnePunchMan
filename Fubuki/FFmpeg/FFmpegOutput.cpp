@@ -235,9 +235,9 @@ void FFmpegOutput::WritePacket(const unsigned char* data,int size, FrameType fra
 		memcpy(temp, data, size);
 		av_packet_from_data(packet, temp, size);
 		packet->flags = frameType == FrameType::I ? 1 : 0;
-		packet->pos = -1;
 		packet->pts = _frameIndex * _frameSpan;
 		packet->dts = packet->pts;
+		packet->pos = -1;
 		packet->duration = _frameSpan;
 		av_interleaved_write_frame(_outputFormat, packet);
 		av_packet_free(&packet);
@@ -260,6 +260,7 @@ void FFmpegOutput::WritePacket(AVPacket* packet)
 		packet->dts = packet->pts;
 		packet->duration = _frameSpan;
 		packet->pos = -1;
+		packet->duration = _frameSpan;
 		av_write_frame(_outputFormat, packet);
 		_frameIndex += 1;
 	}

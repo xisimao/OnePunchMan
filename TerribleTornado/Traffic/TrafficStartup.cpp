@@ -451,7 +451,7 @@ void TrafficStartup::StartCore()
 {
     Socket::Init();
     MqttChannel::Init();
-    FFmpegInput::InitFFmpeg();
+    DecodeChannel::InitFFmpeg();
 
     DecodeChannel::UninitHisi(ChannelCount);
     if (!DecodeChannel::InitHisi(ChannelCount)
@@ -615,7 +615,7 @@ void TrafficStartup::StartCore()
     SeemmoSDK::Uninit();
     EncodeChannel::UninitHisi(ChannelCount);
     DecodeChannel::UninitHisi(ChannelCount);
-    FFmpegInput::UninitFFmpeg();
+    DecodeChannel::UninitFFmpeg();
     MqttChannel::Uninit();
     Socket::Uninit();
 }

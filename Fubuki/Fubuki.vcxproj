@@ -142,14 +142,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="FFmpeg\FFmpegInput.cpp" />
     <ClCompile Include="FFmpeg\H264Cache.cpp" />
     <ClCompile Include="Mqtt\MqttChannel.cpp" />
     <ClCompile Include="FFmpeg\FFmpegOutput.cpp" />
     <ClCompile Include="Sqlite\Sqlite.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="FFmpeg\FFmpegInput.h" />
     <ClInclude Include="FFmpeg\H264Cache.h" />
     <ClInclude Include="Mqtt\MqttChannel.h" />
     <ClInclude Include="FFmpeg\FFmpegOutput.h" />

@@ -37,7 +37,6 @@
     <ClCompile Include="..\TerribleTornado\Event\EventStartup.cpp" />
     <ClCompile Include="..\TerribleTornado\Adapter\IoAdapter.cpp" />
     <ClCompile Include="..\TerribleTornado\Traffic\TrafficData.cpp" />
-    <ClCompile Include="..\Fubuki\FFmpeg\FFmpegInput.cpp" />
     <ClCompile Include="..\TerribleTornado\Image\BGR24Handler.cpp" />
     <ClCompile Include="..\TerribleTornado\Image\H264Handler.cpp" />
     <ClCompile Include="..\TerribleTornado\Image\ImageConvert.cpp" />
@@ -89,7 +88,6 @@
     <ClInclude Include="..\TerribleTornado\Event\EventDetector.h" />
     <ClInclude Include="..\TerribleTornado\Event\EventStartup.h" />
     <ClInclude Include="..\TerribleTornado\Adapter\IoAdapter.h" />
-    <ClInclude Include="..\Fubuki\FFmpeg\FFmpegInput.h" />
     <ClInclude Include="..\TerribleTornado\Image\BGR24Handler.h" />
     <ClInclude Include="..\TerribleTornado\Image\H264Handler.h" />
     <ClInclude Include="..\TerribleTornado\Image\ImageConvert.h" />
