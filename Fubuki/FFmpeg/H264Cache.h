@@ -43,6 +43,9 @@ namespace OnePunchMan
 		//I帧间隔
 		const static int Gop;
 
+		//输出队列最大数量
+		const static int MaxOutputCount;
+
 	private:
 
 		class FrameItem
@@ -59,10 +62,10 @@ namespace OnePunchMan
 		* @param: frameType 视频包对应的帧类型
 		* @return: 表示是否写入缓存成功
 		*/
-		bool WriteCache(unsigned char* data, int size, int frameIndex, int frameType);
+		bool WriteCache(unsigned char* data, int size, int frameIndex, FrameType frameType);
 
-		//同时最多输出数量
-		const static int MaxOutputCount;
+		//sps+pps最大长度
+		const static int MaxExtraDataSize;
 		//帧的最大长度
 		const static int FrameSize;
 
@@ -77,11 +80,11 @@ namespace OnePunchMan
 		unsigned int _frameCount;
 
 		//输出视频参数
-		AVCodecParameters _avParameters;
+		unsigned char* _extraData;
 		//是否已经获取到sps帧
-		int _gotSPS;
+		int _spsSize;
 		//是否已经获取到pps帧
-		int _gotPPS;
+		int _ppsSize;
 
 		//帧缓存
 		std::vector<FrameItem> _frameCache;

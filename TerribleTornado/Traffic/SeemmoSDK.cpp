@@ -21,7 +21,7 @@ bool SeemmoSDK::Init()
 	Handle = dlopen("/mtd/seemmo/programs/aisdk/3559a/lib/libexport_sdk.so", RTLD_LAZY);
 	if (Handle == NULL)
 	{
-		LogPool::Error(LogEvent::System, "init seemmo sdk failed");
+		LogPool::Error(LogEvent::System, "初始化seemmo sdk失败");
 		return false;
 	}
 	seemmo_process_init = (seemmo_process_init_t)dlsym(Handle, "seemmo_process_init");
@@ -41,7 +41,7 @@ bool SeemmoSDK::Init()
 		|| seemmo_version == NULL
 		)
 	{
-		LogPool::Error(LogEvent::System, "init func failed");
+		LogPool::Error(LogEvent::System, "初始化seemmo sdk函数失败");
 		return false;
 	}
 	else
@@ -49,11 +49,11 @@ bool SeemmoSDK::Init()
 		int32_t result = seemmo_process_init("/mtd/seemmo/programs/aisdk", 8, 8, "", 1, false);
 		if (result != 0)
 		{
-			LogPool::Error(LogEvent::System, "init process failed", result);
+			LogPool::Error(LogEvent::System, "打开seemmo sdk失败，错误代码:", result);
 			return false;
 		}
 	}
-	LogPool::Information(LogEvent::System, "init seemmo sdk");
+	LogPool::Information(LogEvent::System, "初始化seemmo sdk成功");
 	return true;
 #endif // !_WIN32
 
@@ -72,5 +72,5 @@ void SeemmoSDK::Uninit()
 		dlclose(Handle);
 	}
 #endif // !_WIN32
-	LogPool::Information(LogEvent::System,"uninit seemmo sdk");
+	LogPool::Information(LogEvent::System,"卸载seemmo sdk");
 }

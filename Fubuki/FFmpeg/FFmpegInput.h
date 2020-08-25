@@ -10,37 +10,6 @@ extern "C"
 
 namespace OnePunchMan
 {
-	//通道状态
-	enum class ChannelStatus
-	{
-		//正常
-		Normal = 1,
-		//无法打开视频源
-		InputError = 2,
-		//解码器异常
-		DecoderError = 4,
-		//无法读取视频数据
-		ReadError = 5,
-		//解码错误
-		DecodeError = 6,
-		//准备循环播放
-		ReadEOF_Restart = 7,
-		//文件播放结束
-		ReadEOF_Stop = 8,
-		//正在初始化
-		Init = 9,
-		//网络异常(中心)
-		Disconnect = 10,
-		//通道不同步(中心)
-		NotFoundChannel = 11,
-		//车道不同步(中心)
-		NotFoundLane = 12,
-		//过多帧没有处理
-		NotHandle = 13,
-		//过滤avc1格式错误
-		FilterError=14
-	};
-
 	//视频输入
 	class FFmpegInput
 	{
@@ -65,7 +34,7 @@ namespace OnePunchMan
 		* @param: inputUrl 视频输入地址
 		* @return: 视频状态
 		*/
-		ChannelStatus Init(const std::string& inputUrl);
+		bool Init(const std::string& inputUrl);
 
 		/**
 		* @brief: 卸载视频输入

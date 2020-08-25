@@ -4,7 +4,7 @@ using namespace std;
 using namespace OnePunchMan;
 
 FFmpegInput::FFmpegInput()
-	:_inputUrl(), _inputFormat(NULL), _inputStream(NULL), _inputVideoIndex(-1),_sourceWidth(0),_sourceHeight(0),_frameSpan(0)
+	:_inputFormat(NULL), _inputStream(NULL), _inputVideoIndex(-1),_sourceWidth(0),_sourceHeight(0),_frameSpan(0)
 {
 
 }
@@ -15,13 +15,13 @@ void FFmpegInput::InitFFmpeg()
 	avcodec_register_all();
 	avformat_network_init();
 	av_log_set_level(AV_LOG_INFO);
-	LogPool::Information(LogEvent::Decode, "init ffmpeg sdk");
+	LogPool::Information(LogEvent::Decode, "初始化 ffmpeg sdk");
 }
 
 void FFmpegInput::UninitFFmpeg()
 {
 	avformat_network_deinit();
-	LogPool::Information(LogEvent::Decode, "uninit video sdk");
+	LogPool::Information(LogEvent::Decode, "卸载 ffmpeg sdk");
 }
 
 AVFormatContext* FFmpegInput::FormatContext()
@@ -54,11 +54,12 @@ unsigned char FFmpegInput::FrameSpan() const
 	return _frameSpan;
 }
 
-ChannelStatus FFmpegInput::Init(const string& inputUrl)
+bool FFmpegInput::Init(const string& inputUrl)
 {
+	_inputUrl = inputUrl;
 	if (inputUrl.empty())
 	{
-		return ChannelStatus::Init;
+		return false;
 	}
 	else
 	{
@@ -73,13 +74,13 @@ ChannelStatus FFmpegInput::Init(const string& inputUrl)
 			if (avformat_open_input(&_inputFormat, inputUrl.c_str(), 0,0) != 0) {
 				LogPool::Error(LogEvent::Decode, "avformat_open_input", inputUrl);
 				Uninit();
-				return ChannelStatus::InputError;
+				return false;
 			}
 
 			if (avformat_find_stream_info(_inputFormat, NULL) < 0) {
 				LogPool::Error(LogEvent::Decode, "avformat_find_stream_info", inputUrl);
 				Uninit();
-				return ChannelStatus::InputError;
+				return false;
 			}
 
 			for (unsigned int i = 0; i < _inputFormat->nb_streams; i++) {
@@ -91,7 +92,7 @@ ChannelStatus FFmpegInput::Init(const string& inputUrl)
 			if (_inputVideoIndex == -1) {
 				LogPool::Error(LogEvent::Decode, "not found video index", inputUrl);
 				Uninit();
-				return ChannelStatus::InputError;
+				return false;
 			}
 			_inputStream = _inputFormat->streams[_inputVideoIndex];
 			_sourceWidth = _inputStream->codecpar->width;
@@ -107,10 +108,11 @@ ChannelStatus FFmpegInput::Init(const string& inputUrl)
 			else
 			{
 				_frameSpan = 40;
-				LogPool::Warning(LogEvent::Decode, "frame span not found", _inputUrl);
+				LogPool::Warning(LogEvent::Decode, "未找到ffmpeg输入帧率，使用固定的40毫秒，输入地址:", inputUrl);
 			}
+			LogPool::Information(LogEvent::Decode, "初始化输入视频:", inputUrl);
 		}
-		return ChannelStatus::Normal;
+		return true;
 	}
 }
 
@@ -124,5 +126,6 @@ void FFmpegInput::Uninit()
 		_sourceWidth = 0;
 		_sourceHeight = 0;
 		_frameSpan = 0;
+		LogPool::Information(LogEvent::Decode, "结束输入视频:", _inputUrl);
 	}
 }

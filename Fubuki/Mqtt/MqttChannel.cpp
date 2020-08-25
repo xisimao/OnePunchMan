@@ -90,7 +90,7 @@ void MqttChannel::StartCore()
     }
     if (_status == MqttStatus::Connected)
     {
-        LogPool::Information(LogEvent::Mqtt, "mqtt connect");
+        LogPool::Information(LogEvent::Mqtt, "mqtt 已经连接,ip:",_ip.c_str(),"端口:",_port);
     }
     while (!_cancelled)
     {
@@ -100,7 +100,7 @@ void MqttChannel::StartCore()
             if (i == MOSQ_ERR_NO_CONN)
             {
                 _status = MqttStatus::Disconnected;
-                LogPool::Information(LogEvent::Mqtt, "mqtt disconnect");
+                LogPool::Information(LogEvent::Mqtt, "mqtt 断开连接,ip:", _ip.c_str(), "端口:", _port);
                 MqttDisconnectedEventArgs e;
                 MqttDisconnected.Notice(&e);
             }
@@ -116,7 +116,7 @@ void MqttChannel::StartCore()
                 {
                     mosquitto_subscribe(_mosq, NULL, it->c_str(), 0);
                 }
-                LogPool::Information(LogEvent::Mqtt, "mqtt reconnect");
+                LogPool::Information(LogEvent::Mqtt, "mqtt 已经重连,ip:", _ip.c_str(), "端口:", _port);
             }
             else
             {

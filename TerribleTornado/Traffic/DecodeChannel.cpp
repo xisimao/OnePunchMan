@@ -9,16 +9,15 @@ const int DecodeChannel::MaxHandleSpan = 1000;
 const int DecodeChannel::DestinationWidth = 1920;
 const int DecodeChannel::DestinationHeight = 1080;
 
-DecodeChannel::DecodeChannel(int channelIndex,int loginId, EncodeChannel* encodeChannel)
+DecodeChannel::DecodeChannel(int channelIndex, int loginId, EncodeChannel* encodeChannel)
 	:ThreadObject("decode"), _channelIndex(channelIndex), _loginId(loginId)
 	, _inputUrl(), _outputUrl(), _channelType(ChannelType::None), _channelStatus(ChannelStatus::Init), _taskId(0), _loop(false)
-	, _inputHandler(), _frameSpan(0), _frameIndex(1), _lastframeIndex(0), _handleSpan(0), _duration(0),_currentTaskId(0), _playHandler(-1)
+	, _inputHandler(), _outputHandler(), _frameSpan(0), _frameIndex(1), _lastframeIndex(0), _handleSpan(0), _currentTaskId(0), _playHandler(-1)
 	, _decodeContext(NULL), _yuvFrame(NULL), _bgrFrame(NULL), _bgrBuffer(NULL), _bgrSwsContext(NULL), _bgrHandler(3)
 	, _finished(false), _tempTaskId(0), _tempFrameIndex(0), _tempFrameSpan(0)
 	, _yuvSize(static_cast<int>(DestinationWidth* DestinationHeight * 1.5)), _yuvHasValue(false), _yuv_phy_addr(0), _yuvBuffer(NULL), _iveSize(DestinationWidth* DestinationHeight * 3), _ive_phy_addr(0), _iveBuffer(NULL)
-	, _gbPacket(NULL), _encodeChannel(encodeChannel), _gotIFrame(false)
+	, _encodeChannel(encodeChannel)
 {
-	_gbPacket = av_packet_alloc();
 #ifndef _WIN32
 	if (HI_MPI_SYS_MmzAlloc_Cached(reinterpret_cast<HI_U64*>(&_yuv_phy_addr),
 		reinterpret_cast<HI_VOID**>(&_yuvBuffer),
@@ -45,7 +44,6 @@ DecodeChannel::~DecodeChannel()
 	HI_MPI_SYS_MmzFree(_yuv_phy_addr, reinterpret_cast<HI_VOID*>(_yuvBuffer));
 	HI_MPI_SYS_MmzFree(_ive_phy_addr, reinterpret_cast<HI_VOID*>(_iveBuffer));
 #endif // !_WIN32
-	av_packet_free(&_gbPacket);
 }
 
 bool DecodeChannel::InitHisi(int videoCount)
@@ -613,7 +611,7 @@ bool DecodeChannel::InitHisi(int videoCount)
 	}
 
 #endif
-	LogPool::Information(LogEvent::Decode, "init hisi decode");
+	LogPool::Information(LogEvent::Decode, "初始化海思解码sdk");
 	return true;
 }
 
@@ -721,7 +719,7 @@ void DecodeChannel::UninitHisi(int videoCount)
 	HI_MPI_SYS_Exit();
 	HI_MPI_VB_Exit();
 #endif // !_WIN32
-	LogPool::Information(LogEvent::Decode, "uninit hisi sdk");
+	LogPool::Information(LogEvent::Decode, "卸载海思解码sdk");
 }
 
 string DecodeChannel::InputUrl()
@@ -780,29 +778,29 @@ void DecodeChannel::ClearChannel()
 	_channelStatus = ChannelStatus::Init;
 }
 
-ChannelStatus DecodeChannel::InitDecoder(const string& inputUrl)
+bool DecodeChannel::InitDecoder(const string& inputUrl)
 {
 #ifdef _WIN32
 	if (_inputHandler.Stream()->codecpar->codec_id != AVCodecID::AV_CODEC_ID_H264)
 	{
 		LogPool::Warning(LogEvent::Decode, "codec is not h264", inputUrl);
-		return ChannelStatus::DecoderError;
+		return false;
 	}
 
 	AVCodec* decode = avcodec_find_decoder(_inputHandler.Stream()->codecpar->codec_id);
 	if (decode == NULL) {
 		LogPool::Warning(LogEvent::Decode, "avcodec_find_decoder error", inputUrl);
-		return ChannelStatus::DecoderError;
+		return false;
 	}
 	_decodeContext = avcodec_alloc_context3(decode);
 	if (avcodec_parameters_to_context(_decodeContext, _inputHandler.Stream()->codecpar) < 0) {
 		LogPool::Warning(LogEvent::Decode, "avcodec_parameters_to_context error", inputUrl);
-		return ChannelStatus::DecoderError;
+		return false;
 	}
 
 	if (avcodec_open2(_decodeContext, decode, NULL) < 0) {//打开解码器
 		LogPool::Warning(LogEvent::Decode, "avcodec_open2 error", inputUrl);
-		return ChannelStatus::DecoderError;
+		return false;
 	}
 
 	//初始化帧
@@ -814,17 +812,17 @@ ChannelStatus DecodeChannel::InitDecoder(const string& inputUrl)
 	if (av_image_fill_arrays(_bgrFrame->data, _bgrFrame->linesize, _bgrBuffer, AV_PIX_FMT_BGR24, DestinationWidth, DestinationHeight, 1) < 0)
 	{
 		LogPool::Warning(LogEvent::Decode, "av_image_fill_arrays error");
-		return ChannelStatus::DecoderError;
+		return false;
 	}
 	_bgrSwsContext = sws_getContext(_decodeContext->width, _decodeContext->height, _decodeContext->pix_fmt, DestinationWidth, DestinationHeight, AV_PIX_FMT_BGR24,
 		SWS_FAST_BILINEAR, NULL, NULL, NULL);
 	if (_bgrSwsContext == NULL)
 	{
 		LogPool::Warning(LogEvent::Decode, "sws_getContext error", inputUrl);
-		return ChannelStatus::DecoderError;
+		return false;
 	}
 #endif // _WIN32
-	return ChannelStatus::Normal;
+	return true;
 }
 
 void DecodeChannel::UninitDecoder()
@@ -858,9 +856,9 @@ void DecodeChannel::UninitDecoder()
 #endif // _WIN32
 }
 
-DecodeResult DecodeChannel::Decode(const AVPacket* packet, unsigned char taskId, unsigned int frameIndex, unsigned char frameSpan)
+DecodeResult DecodeChannel::DecodeTest(const AVPacket* packet, unsigned char taskId, unsigned int frameIndex, unsigned char frameSpan)
 {
-#ifdef _WIN32
+
 	if (avcodec_send_packet(_decodeContext, packet) == 0)
 	{
 		while (true)
@@ -890,11 +888,16 @@ DecodeResult DecodeChannel::Decode(const AVPacket* packet, unsigned char taskId,
 		return DecodeResult::Error;
 	}
 	return DecodeResult::Handle;
+}
 
+DecodeResult DecodeChannel::Decode(unsigned char* data,unsigned int size, unsigned char taskId, unsigned int frameIndex, unsigned char frameSpan)
+{
+#ifdef _WIN32
+	return DecodeResult::Skip;
 #else
 	bool handled = false;
 	int hi_s32_ret = HI_SUCCESS;
-	if (packet != NULL)
+	if (data != NULL)
 	{
 		VDEC_STREAM_S stStream;
 		stStream.u64PTS = 0;
@@ -905,17 +908,17 @@ DecodeResult DecodeChannel::Decode(const AVPacket* packet, unsigned char taskId,
 		temp = frameSpan;
 		stStream.u64PTS |= (temp << 40);
 
-		stStream.pu8Addr = packet->data;
-		stStream.u32Len = packet->size;
+		stStream.pu8Addr = data;
+		stStream.u32Len = size;
 		stStream.bEndOfFrame = HI_TRUE;
 		stStream.bEndOfStream = HI_FALSE;
 		stStream.bDisplay = HI_TRUE;
 		hi_s32_ret = HI_MPI_VDEC_SendStream(_channelIndex - 1, &stStream, 0);
 		if (HI_SUCCESS != hi_s32_ret) {
-			LogPool::Debug("send error", _channelIndex, hi_s32_ret);
+			LogPool::Error(LogEvent::Decode,"HI_MPI_VDEC_SendStream", _channelIndex, hi_s32_ret);
 			return DecodeResult::Error;
 		}
-	}
+}
 
 	while (true)
 	{
@@ -942,7 +945,7 @@ DecodeResult DecodeChannel::Decode(const AVPacket* packet, unsigned char taskId,
 		}
 	}
 	//结束帧强制设置
-	if (packet == NULL)
+	if (data == NULL)
 	{
 		while (true)
 		{
@@ -960,6 +963,7 @@ DecodeResult DecodeChannel::Decode(const AVPacket* packet, unsigned char taskId,
 #endif // _WIN32
 
 }
+
 
 bool DecodeChannel::YuvToIve()
 {
@@ -1068,16 +1072,10 @@ void DecodeChannel::ReceivePacket(int playFd, int frameType, char* buffer, unsig
 	DecodeChannel* channel = static_cast<DecodeChannel*>(usr);
 	if (channel->_channelStatus == ChannelStatus::Normal)
 	{
-		if (!channel->_gotIFrame && frameType != 0)
-		{
-			return;
-		}
 		long long timeStamp1 = DateTime::UtcNowTimeStamp();
-		channel->_gotIFrame = true;
-		channel->_gbPacket->flags = frameType == 0 ? 1 : 0;
-		av_packet_from_data(channel->_gbPacket, reinterpret_cast<unsigned char*>(buffer), size);
-		DecodeResult decodeResult = channel->Decode(channel->_gbPacket, channel->_currentTaskId, channel->_frameIndex, channel->_frameSpan);
-		LogPool::Information(LogEvent::Decode, "收到国标数据", channel->_frameIndex,static_cast<int>(channel->_channelStatus),static_cast<int>(decodeResult), frameType,size);
+		channel->_outputHandler.WritePacket(reinterpret_cast<const unsigned char*>(buffer), size, frameType == 0 ? FrameType::I : FrameType::P);
+		DecodeResult decodeResult = channel->Decode(reinterpret_cast<unsigned char*>(buffer),size, channel->_currentTaskId, channel->_frameIndex, channel->_frameSpan);
+		LogPool::Information(LogEvent::Decode, "收到国标数据", channel->_frameIndex, static_cast<int>(channel->_channelStatus), static_cast<int>(decodeResult), frameType, size);
 		if (decodeResult == DecodeResult::Handle)
 		{
 			channel->_handleSpan = channel->_frameIndex - channel->_lastframeIndex;
@@ -1104,7 +1102,7 @@ void DecodeChannel::ReceivePacket(int playFd, int frameType, char* buffer, unsig
 			this_thread::sleep_for(chrono::milliseconds(sleepTime));
 		}
 	}
-	
+
 }
 
 void DecodeChannel::StartCore()
@@ -1113,7 +1111,7 @@ void DecodeChannel::StartCore()
 	AVPacket* tempPacket = av_packet_alloc();
 	bool reportFinish = false;
 	string inputUrl;
-	ChannelType channelType=ChannelType::None;
+	ChannelType channelType = ChannelType::None;
 	AVBitStreamFilterContext* h264bsfc = av_bitstream_filter_init("h264_mp4toannexb");
 	while (!_cancelled)
 	{
@@ -1143,6 +1141,7 @@ void DecodeChannel::StartCore()
 				{
 					if (packet->stream_index == _inputHandler.VideoIndex())
 					{
+						_outputHandler.WritePacket(packet);
 						int filterResult = av_bitstream_filter_filter(h264bsfc, _inputHandler.Stream()->codec, NULL, &tempPacket->data, &tempPacket->size, packet->data, packet->size, 0);
 						if (filterResult < 0)
 						{
@@ -1152,7 +1151,7 @@ void DecodeChannel::StartCore()
 						else
 						{
 							long long timeStamp2 = DateTime::UtcNowTimeStamp();
-							DecodeResult decodeResult = Decode(tempPacket, _currentTaskId, _frameIndex, _frameSpan);
+							DecodeResult decodeResult = Decode(tempPacket->data,tempPacket->size, _currentTaskId, _frameIndex, _frameSpan);
 							long long timeStamp3 = DateTime::UtcNowTimeStamp();
 							if (decodeResult == DecodeResult::Handle)
 							{
@@ -1168,7 +1167,7 @@ void DecodeChannel::StartCore()
 							}
 							else
 							{
-								LogPool::Error(LogEvent::Decode, "decode error", _channelIndex, _frameIndex);
+								LogPool::Error(LogEvent::Decode, "解码错误，输入视频:", inputUrl,"帧序号", _frameIndex);
 								_channelStatus = ChannelStatus::DecodeError;
 							}
 							long long timeStamp4 = DateTime::UtcNowTimeStamp();
@@ -1177,7 +1176,7 @@ void DecodeChannel::StartCore()
 							{
 								this_thread::sleep_for(chrono::milliseconds(sleepTime));
 							}
-							LogPool::Debug(LogEvent::Decode, "frame", _channelIndex,packet->size, static_cast<int>(_currentTaskId), _frameIndex, static_cast<int>(_frameSpan), static_cast<int>(decodeResult), timeStamp2 - timeStamp1, timeStamp3 - timeStamp2, timeStamp4 - timeStamp3);
+							LogPool::Debug(LogEvent::Decode, "frame", _channelIndex, packet->size, static_cast<int>(_currentTaskId), _frameIndex, static_cast<int>(_frameSpan), static_cast<int>(decodeResult), timeStamp2 - timeStamp1, timeStamp3 - timeStamp2, timeStamp4 - timeStamp3);
 							if (filterResult > 0)
 							{
 								av_free(tempPacket->data);
@@ -1188,7 +1187,7 @@ void DecodeChannel::StartCore()
 				}
 				else
 				{
-					LogPool::Error(LogEvent::Decode, "read error", _channelIndex, _frameIndex, readResult);
+					LogPool::Error(LogEvent::Decode, "av_read_frame，输入视频:", inputUrl,"帧序号:", _frameIndex,"返回结果:", readResult);
 					_channelStatus = ChannelStatus::ReadError;
 				}
 				av_packet_unref(packet);
@@ -1199,19 +1198,24 @@ void DecodeChannel::StartCore()
 			//播放文件结束时报一次结束
 			if (_channelStatus == ChannelStatus::ReadEOF_Stop && !reportFinish)
 			{
-				Decode(NULL, _currentTaskId, _frameIndex, _frameSpan);
+				Decode(NULL,0, _currentTaskId, _frameIndex, _frameSpan);
 				reportFinish = true;
 			}
 			unique_lock<mutex> lck(_mutex);
 			channelType = _channelType;
 			UninitDecoder();
+			//读取到结尾重新启动时不需要重置输出
+			if (_channelStatus != ChannelStatus::ReadEOF_Restart)
+			{
+				_outputHandler.Uninit();
+			}
 			if (channelType == ChannelType::GB28181)
 			{
 #ifndef _WIN32	
 				if (_playHandler >= 0)
 				{
-					int result=vas_sdk_stop_realplay(_playHandler);
-					LogPool::Information(LogEvent::Decode, "关闭国标视频,播放句柄:", _playHandler, result,_inputUrl);
+					int result = vas_sdk_stop_realplay(_playHandler);
+					LogPool::Information(LogEvent::Decode, "关闭国标视频,视频输入地址:", _inputUrl,",播放句柄:", _playHandler, "返回结果:",result);
 					_playHandler = -1;
 				}
 #endif // !_WIN32
@@ -1222,86 +1226,92 @@ void DecodeChannel::StartCore()
 
 			}
 
-			ChannelStatus oldStatus = _channelStatus;
-
 			//循环停止和解码错误时不再重新打开视频
 			if (_channelStatus != ChannelStatus::ReadEOF_Stop
 				&& _channelStatus != ChannelStatus::NotHandle
 				&& _channelStatus != ChannelStatus::DecodeError)
 			{
-				ChannelStatus inputStatus;
+				//防止局部变量改动影响前端效果，所以现用临时变量存放，最后确定状态在赋值
+				ChannelStatus tempStatus;
+				//输入
 				if (channelType == ChannelType::GB28181)
 				{
 #ifdef _WIN32				
-					inputStatus = ChannelStatus::InputError;
+					tempStatus = ChannelStatus::InputError;
 #else					
 					if (_inputUrl.empty())
 					{
-						inputStatus = ChannelStatus::Init;
+						tempStatus = ChannelStatus::Init;
 					}
 					else if (_loginId < 0)
 					{
-						inputStatus = ChannelStatus::InputError;
+						tempStatus = ChannelStatus::InputError;
 					}
 					else
 					{
 						_playHandler = vas_sdk_realplay(_loginId, const_cast<char*>(_inputUrl.c_str()), ReceivePacket, this);
 						if (_playHandler >= 0)
 						{
-							inputStatus = ChannelStatus::Normal;
-							LogPool::Information(LogEvent::Decode, "打开国标视频成功,播放句柄:", _playHandler, _inputUrl);
+							tempStatus = ChannelStatus::Normal;
+							LogPool::Information(LogEvent::Decode, "打开国标视频成功,视频地址:", _inputUrl,"播放句柄:", _playHandler);
 						}
 						else
 						{
-							inputStatus = ChannelStatus::Init;
-							LogPool::Error(LogEvent::Decode, "打开国标视频失败,错误代码:", _playHandler, _inputUrl);
+							tempStatus = ChannelStatus::Init;
+							LogPool::Error(LogEvent::Decode, "打开国标视频失败,视频地址:", _inputUrl, "播放句柄:", _playHandler);
 						}
-					}			
+					}
 #endif // !_WIN32
 				}
 				else
 				{
-					inputStatus = _inputHandler.Init(_inputUrl);
-				}
-				if (inputStatus == ChannelStatus::Normal)
-				{
-					ChannelStatus decoderStatus = InitDecoder(_inputUrl);
-					if (decoderStatus == ChannelStatus::Normal)
+					if (_inputUrl.empty())
 					{
-						_channelStatus = ChannelStatus::Normal;
+						tempStatus = ChannelStatus::Init;
 					}
 					else
 					{
-						_channelStatus = decoderStatus;
+						tempStatus = _inputHandler.Init(_inputUrl) ? ChannelStatus::Normal : ChannelStatus::InputError;
 					}
 				}
-				else
+				//输出
+				if (tempStatus == ChannelStatus::Normal)
 				{
-					_channelStatus = inputStatus;
+					if (_channelType == ChannelType::GB28181)
+					{
+						tempStatus = _outputHandler.Init(_outputUrl,-1)
+							? ChannelStatus::Normal
+							: ChannelStatus::OutputError;
+					}
+					else
+					{
+						tempStatus = _outputHandler.Init(_outputUrl, -1,_inputHandler.Stream()->codecpar)
+							? ChannelStatus::Normal
+							: ChannelStatus::OutputError;
+					}
 				}
+
+				//解码器
+				if (tempStatus == ChannelStatus::Normal)
+				{
+					tempStatus = InitDecoder(_inputUrl)
+						? ChannelStatus::Normal
+						: ChannelStatus::DecoderError;
+				}
+
+				_channelStatus = tempStatus;
 			}
 
 			if (_channelStatus == ChannelStatus::Normal)
 			{
-				//只有在视频循环时才不重置参数,而对时长进行累加
-				if (inputUrl.compare(_inputUrl) == 0
-					&& oldStatus == ChannelStatus::ReadEOF_Restart)
-				{
-					_duration += (_frameIndex - 1) * _frameSpan;
-				}
-				else
-				{
-					_duration = 0;
-					_frameSpan = _inputHandler.FrameSpan();
-				}
-				_gotIFrame = false;
+				_frameSpan = _inputHandler.FrameSpan();
 				_frameIndex = 1;
 				_lastframeIndex = 0;
 				_handleSpan = 0;
 				_currentTaskId = _taskId;
 				reportFinish = false;
 				inputUrl = _inputUrl;
-				LogPool::Information(LogEvent::Decode, "init frame channel success,inputUrl:", _inputUrl, "outputUrl:", _outputUrl, "frame span:", static_cast<int>(_frameSpan), "loop:", _loop);
+				LogPool::Information(LogEvent::Decode, "初始化解码通道 输入地址:", _inputUrl, "输出地址:", _outputUrl, "帧间隔(ms):", static_cast<int>(_frameSpan), "是否循环:", _loop);
 				lck.unlock();
 			}
 			else
@@ -1316,5 +1326,6 @@ void DecodeChannel::StartCore()
 	av_packet_free(&packet);
 	UninitDecoder();
 	_inputHandler.Uninit();
+	_outputHandler.Uninit();
 }
 

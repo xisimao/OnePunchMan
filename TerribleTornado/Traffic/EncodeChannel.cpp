@@ -97,7 +97,7 @@ bool EncodeChannel::InitHisi(int encodeCount, int width, int height)
         }
     }
 #endif
-    LogPool::Information(LogEvent::Decode, "init hisi encode");
+    LogPool::Information(LogEvent::Decode, "初始化海思编码sdk");
     return true;
 }
 
@@ -117,7 +117,7 @@ void EncodeChannel::UninitHisi(int encodeCount)
         HI_MPI_VENC_DestroyChn(i);
     }
 #endif // !_WIN32
-    LogPool::Information(LogEvent::Decode, "uninit hisi encode");
+    LogPool::Information(LogEvent::Decode, "卸载海思编码sdk");
 }
 
 bool EncodeChannel::AddOutput(int channelIndex, const std::string& outputUrl, int frameCount)

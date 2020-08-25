@@ -4,6 +4,7 @@
 
 #include "Thread.h"
 #include "FFmpegInput.h"
+#include "FFmpegOutput.h"
 #include "EncodeChannel.h"
 #include "BGR24Handler.h"
 #include "TrafficData.h"
@@ -197,7 +198,7 @@ namespace OnePunchMan
 		* @param: inputUrl 输入url
 		* @return: 初始化成功返回true
 		*/
-		ChannelStatus InitDecoder(const std::string& inputUrl);
+		bool InitDecoder(const std::string& inputUrl);
 
 		/**
 		* @brief: 卸载解码器
@@ -206,13 +207,24 @@ namespace OnePunchMan
 
 		/**
 		* @brief: 解码
+		* @param: packet 视频字节流
+		* @param: size 视频字节流长度
+		* @param: taskId 任务号
+		* @param: frameIndex 视频帧序号
+		* @param: frameSpan 两帧的间隔时间(毫秒)
+		* @return: 解码成功返回Handle，略过返回Ski，否则返回Error，解码失败会结束线程
+		*/
+		DecodeResult Decode(unsigned char* buffer, unsigned int size, unsigned char taskId, unsigned int frameIndex, unsigned char frameSpan);
+
+		/**
+		* @brief: 解码,用于windows测试
 		* @param: packet 视频帧
 		* @param: taskId 任务号
 		* @param: frameIndex 视频帧序号
 		* @param: frameSpan 两帧的间隔时间(毫秒)
 		* @return: 解码成功返回Handle，略过返回Ski，否则返回Error，解码失败会结束线程
 		*/
-		DecodeResult Decode(const AVPacket* packet, unsigned char taskId, unsigned int frameIndex, unsigned char frameSpan);
+		DecodeResult DecodeTest(const AVPacket* packet, unsigned char taskId, unsigned int frameIndex, unsigned char frameSpan);
 
 		/**
 		* @brief: 写入临时ive数据
@@ -262,6 +274,8 @@ namespace OnePunchMan
 		//线程中改变
 		//视频输入
 		FFmpegInput _inputHandler;
+		//视频输出
+		FFmpegOutput _outputHandler;
 		//帧间隔时长(毫秒)
 		unsigned char _frameSpan;
 		//帧数
@@ -270,8 +284,6 @@ namespace OnePunchMan
 		unsigned int _lastframeIndex;
 		//处理帧的间隔
 		unsigned int _handleSpan;
-		//帧时长
-		long long _duration;
 		//当前处理视频的任务号
 		unsigned char _currentTaskId;
 		//当前国标播放句柄
@@ -314,14 +326,8 @@ namespace OnePunchMan
 		unsigned long long _ive_phy_addr;
 		uint8_t* _iveBuffer;
 
-		//国标使用的packet
-		AVPacket* _gbPacket;
-
 		//编码
 		EncodeChannel* _encodeChannel;
-		//是否已经有了i帧
-		bool _gotIFrame;
-
 	};
 
 }

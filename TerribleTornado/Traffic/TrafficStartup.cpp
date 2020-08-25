@@ -15,7 +15,7 @@ TrafficStartup::TrafficStartup()
 
 void TrafficStartup::Update(MqttDisconnectedEventArgs* e)
 {
-    LogPool::Information(LogEvent::System,"system restart");
+    LogPool::Information(LogEvent::System,"系统即将重启");
     exit(1);
 }
 
@@ -206,14 +206,14 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
     }
     else if (UrlStartWith(e->Url, "/api/update/licence"))
     {
-        LogPool::Information(LogEvent::Http, "update licence");
+        LogPool::Information(LogEvent::Http, "开始更新授权");
         string filePath("/mtd/seemmo/programs/aisdk/data/licence");
         HttpHandler::WriteFile(e->RequestJson, filePath);
         e->Code = HttpCode::OK;
     }
     else if (UrlStartWith(e->Url, "/api/update/system"))
     {
-        LogPool::Information(LogEvent::Http, "update system");
+        LogPool::Information(LogEvent::Http, "开始更新系统");
         string filePath = Path::Combine(Path::GetCurrentPath(), "service.tar");
         HttpHandler::WriteFile(e->RequestJson, filePath);
         Command::Execute("tar xf service.tar -C ../../");
@@ -582,7 +582,7 @@ void TrafficStartup::StartCore()
                 vector<string> datas = StringEx::Split(columns[4], "m", true);
                 if (!datas.empty())
                 {
-                    LogPool::Information(LogEvent::Monitor, "memory:", datas[0]);
+                    LogPool::Information(LogEvent::Monitor, "使用内存(MB):", datas[0]);
                 }
             }
         }
