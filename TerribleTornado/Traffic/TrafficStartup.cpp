@@ -247,27 +247,6 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
         {
             e->Code = HttpCode::NotFound;
         }
-
-    }
-    else if (UrlStartWith(e->Url, "/api/test"))
-    {
-        if (e->Function.compare(HttpFunction::Get) == 0)
-        {
-            if (_encode != NULL)
-            {
-                _encode->AddOutput(2, StringEx::Combine("../temp/", DateTime::UtcNowTimeStamp(), ".mp4"), 10);
-            }
-        }
-        else  if (e->Function.compare(HttpFunction::Post) == 0)
-        {
-            string id = GetId(e->Url, "/api/test");
-            if (_encode != NULL)
-            {
-                _encode->OutputFinished(2, StringEx::Combine("../temp/",id));
-            }
-        }
-
-        e->Code = HttpCode::OK;
     }
 }
 

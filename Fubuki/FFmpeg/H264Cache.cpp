@@ -115,7 +115,7 @@ void H264Cache::PushPacket(unsigned char* data, int size)
 					LogPool::Error("sps数据过长,通道序号:",_channelIndex, "sps长度:", size, "pps长度:", _ppsSize);
 					return;
 				}
-				LogPool::Information(LogEvent::Encode,"获取到sps数据:", _channelIndex);
+				LogPool::Information(LogEvent::Encode,"获取到sps数据,通道序号:", _channelIndex);
 				memcpy(_extraData, data, size);
 				_spsSize = size;
 			}
@@ -129,7 +129,7 @@ void H264Cache::PushPacket(unsigned char* data, int size)
 					LogPool::Error("pps数据过长,通道序号:", _channelIndex, "sps长度:", _spsSize, "pps长度:", size);
 					return;
 				}
-				LogPool::Information(LogEvent::Encode, "获取到pps数据:", _channelIndex);
+				LogPool::Information(LogEvent::Encode, "获取到pps数据,通道序号:", _channelIndex);
 				memcpy(_extraData + _spsSize, data, size);
 				_ppsSize = size;
 			}
