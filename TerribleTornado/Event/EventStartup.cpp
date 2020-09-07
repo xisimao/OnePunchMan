@@ -23,7 +23,7 @@ void EventStartup::Update(HttpReceivedEventArgs* e)
     {
         SqliteReader reader("event.db");
         
-        if (reader.BeginQuery("Select * From Event_Data"))
+        if (reader.BeginQuery("Select * From Event_Data Order By TimeStamp Desc"))
         {
             while (reader.HasRow())
             {

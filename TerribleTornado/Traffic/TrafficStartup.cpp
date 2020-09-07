@@ -446,10 +446,8 @@ void TrafficStartup::StartCore()
         exit(2);
     }
 
-    Path::CreatePath("../temp");
-    Path::CreatePath("../images");
+    //删除临时目录
     Command::Execute("rm -rf ../temp/*");
-    Command::Execute("rm -rf ../images/*");
 
     //升级数据库
     UpdateDb();
