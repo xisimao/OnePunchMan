@@ -71,7 +71,7 @@ void H264Cache::RemoveOutputUrl(const std::string& outputUrl)
 	map<string, FFmpegOutput*>::iterator it = _outputItems.find(outputUrl);
 	if (it != _outputItems.end())
 	{
-		LogPool::Information("删除输出视频:", it->first);
+		LogPool::Information(LogEvent::Encode, "删除输出视频:", it->first);
 		delete it->second;
 		_outputItems.erase(it);
 	}
@@ -83,12 +83,14 @@ bool H264Cache::OutputFinished(const std::string& outputUrl)
 	map<string, FFmpegOutput*>::iterator it = _outputItems.find(outputUrl);
 	if (it == _outputItems.end())
 	{
+		LogPool::Information(LogEvent::Encode, "未找到检查结束视频:", outputUrl);
 		return true;
 	}
 	else
 	{
 		if (it->second->Finished())
 		{
+			LogPool::Information(LogEvent::Encode, "自动删除输出视频:", outputUrl);
 			delete it->second;
 			_outputItems.erase(it);
 			return true;

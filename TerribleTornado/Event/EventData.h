@@ -26,7 +26,7 @@ namespace OnePunchMan
 		//箭头
 		std::string Line;
 	};
-
+	
 	//事件视频通道
 	class EventChannel:public TrafficChannel
 	{

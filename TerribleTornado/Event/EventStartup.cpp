@@ -4,7 +4,7 @@ using namespace std;
 using namespace OnePunchMan;
 
 EventStartup::EventStartup()
-    :TrafficStartup()
+    :TrafficStartup(), _encode(ChannelCount), _data(NULL)
 {
     TrafficData::Init("event.db");
 }
@@ -17,20 +17,53 @@ EventStartup::~EventStartup()
     }
 }
 
+void EventStartup::Update(HttpReceivedEventArgs* e)
+{
+    if (UrlStartWith(e->Url, "/api/data"))
+    {
+        SqliteReader reader("event.db");
+        
+        if (reader.BeginQuery("Select * From Event_Data"))
+        {
+            while (reader.HasRow())
+            {
+                string json;
+                JsonSerialization::SerializeValue(&json,"id", reader.GetInt(0));
+                string guid = reader.GetString(1);
+                JsonSerialization::SerializeValue(&json,"channelUrl", reader.GetString(2));
+                JsonSerialization::SerializeValue(&json,"laneIndex", reader.GetInt(3));
+                JsonSerialization::SerializeValue(&json,"timeStamp", reader.GetLong(4));
+                JsonSerialization::SerializeValue(&json,"type", reader.GetInt(5));
+                JsonSerialization::SerializeValue(&json,"image1", EventData::GetImageLink(guid,1));
+                JsonSerialization::SerializeValue(&json,"image2", EventData::GetImageLink(guid, 2));
+                JsonSerialization::SerializeValue(&json,"video", EventData::GetVideoLink(guid));
+                JsonSerialization::AddClassItem(&e->ResponseJson, json);
+            }
+            reader.EndQuery();
+        }
+        e->Code = HttpCode::OK;
+    }
+    else
+    {
+        TrafficStartup::Update(e);
+    }
+}
+
 void EventStartup::UpdateDb()
 {
     EventChannelData data;
     data.UpdateDb();
 }
 
-void EventStartup::InitThreads(MqttChannel* mqtt, vector<DecodeChannel*>* decodes, EncodeChannel* encode,  vector<TrafficDetector*>* detectors, vector<DetectChannel*>* detects, vector<RecognChannel*>* recogns,int loginHandler)
+void EventStartup::InitThreads(MqttChannel* mqtt, vector<DecodeChannel*>* decodes, vector<TrafficDetector*>* detectors, vector<DetectChannel*>* detects, vector<RecognChannel*>* recogns,int loginHandler)
 {
+    _data = new EventDataChannel(mqtt);
     for (int i = 0; i < ChannelCount; ++i)
     {
-        EventDetector* detector = new EventDetector(DecodeChannel::DestinationWidth, DecodeChannel::DestinationHeight, mqtt, encode);
+        EventDetector* detector = new EventDetector(DecodeChannel::DestinationWidth, DecodeChannel::DestinationHeight, mqtt, &_encode,_data);
         _detectors.push_back(detector);
         detectors->push_back(detector);
-        DecodeChannel* decode = new DecodeChannel(i + 1, loginHandler , encode);
+        DecodeChannel* decode = new DecodeChannel(i + 1, loginHandler, &_encode);
         decodes->push_back(decode);
     }
 
@@ -49,7 +82,9 @@ void EventStartup::InitThreads(MqttChannel* mqtt, vector<DecodeChannel*>* decode
             detects->at(i)->AddChannel(channelIndex, decodes->at(channelIndex - 1), detectors->at(channelIndex - 1));
         }
     }
-    
+    _encode.Start();
+    _data->Init();
+    _data->Start();
 }
 
 void EventStartup::InitChannels()

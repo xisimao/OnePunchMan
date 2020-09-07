@@ -59,22 +59,6 @@ DateTime::DateTime(int year, int month, int day, int hour, int minute, int secon
 	}
 }
 
-DateTime::DateTime(long long utcTimeStamp)
-{
-	time_t time = utcTimeStamp / 1000;
-	struct tm timeinfo;
-	localtime_s(&timeinfo, &time);
-
-	_year = timeinfo.tm_year + 1900;
-	_month = timeinfo.tm_mon + 1;
-	_day = timeinfo.tm_mday;
-	_hour = timeinfo.tm_hour;
-	_minute = timeinfo.tm_min;
-	_second = timeinfo.tm_sec;
-	_millisecond = static_cast<int>(utcTimeStamp % 1000);
-	_utcTimeStamp = utcTimeStamp;
-}
-
 int DateTime::Year() const
 {
 	return _year;
@@ -266,6 +250,16 @@ DateTime DateTime::ParseString(const string& format, const string& value)
 	sscanf(value.c_str(), format.c_str(), &year, &month, &day, &hour, &minute, &second, &millisecond);
 	return DateTime(year, month, day, hour, minute, second, millisecond);
 }
+
+DateTime DateTime::ParseTimeStamp(long long utcTimeStamp)
+{
+	time_t time = utcTimeStamp / 1000;
+	struct tm timeinfo;
+	localtime_s(&timeinfo, &time);
+
+	return DateTime(timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec, static_cast<int>(utcTimeStamp % 1000));
+}
+
 
 long long DateTime::UtcNowTimeStamp()
 {

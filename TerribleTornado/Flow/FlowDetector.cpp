@@ -103,7 +103,7 @@ void FlowDetector::UpdateChannel(const unsigned char taskId, const FlowChannel& 
 	DateTime date;
 	if (channel.OutputReport)
 	{
-		date = DateTime(0);
+		date = DateTime::ParseTimeStamp(0);
 	}
 	else
 	{
@@ -329,7 +329,7 @@ void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long 
 		}
 
 		//结算后认为该分钟结束，当前帧收到的数据结算到下一分钟
-		DateTime currentTime(timeStamp);
+		DateTime currentTime=DateTime::ParseTimeStamp(timeStamp);
 		DateTime currentTimePoint(currentTime.Year(), currentTime.Month(), currentTime.Day(), currentTime.Hour(), currentTime.Minute(), 0);
 		_currentMinuteTimeStamp = currentTimePoint.UtcTimeStamp();
 		_lastFrameTimeStamp = _currentMinuteTimeStamp;
@@ -523,7 +523,7 @@ void FlowDetector::HandleRecognVehicle(const RecognItem& recognItem, const unsig
 			JsonSerialization::SerializeValue(&json, "plateType", vehicle.PlateType);
 			JsonSerialization::SerializeValue(&json, "plateNumber", vehicle.PlateNumber);
 			string image;
-			ImageConvert::IveToJpgBase64(iveBuffer, recognItem.Width, recognItem.Height, _recognBgrBuffer, &image, _recognJpgBuffer, _jpgSize);
+			ImageConvert::IveToJpgBase64(iveBuffer, recognItem.Width, recognItem.Height, _recognBgrBuffer, _recognJpgBuffer, _jpgSize, &image);
 			JsonSerialization::SerializeValue(&json, "image", image);
 			if (_outputRecogn)
 			{
@@ -568,7 +568,7 @@ void FlowDetector::HandleRecognBike(const RecognItem& recognItem, const unsigned
 			JsonSerialization::SerializeValue(&json, "videoStructType", (int)VideoStructType::Bike);
 			JsonSerialization::SerializeValue(&json, "bikeType", bike.BikeType);
 			string image;
-			ImageConvert::IveToJpgBase64(iveBuffer, recognItem.Width, recognItem.Height, _recognBgrBuffer, &image, _recognJpgBuffer, _jpgSize);
+			ImageConvert::IveToJpgBase64(iveBuffer, recognItem.Width, recognItem.Height, _recognBgrBuffer, _recognJpgBuffer, _jpgSize, &image);
 			JsonSerialization::SerializeValue(&json, "image", image);
 			if (_outputRecogn)
 			{
@@ -615,7 +615,7 @@ void FlowDetector::HandleRecognPedestrain(const RecognItem& recognItem, const un
 			JsonSerialization::SerializeValue(&json, "age", pedestrain.Age);
 			JsonSerialization::SerializeValue(&json, "upperColor", pedestrain.UpperColor);
 			string image;
-			ImageConvert::IveToJpgBase64(iveBuffer, recognItem.Width, recognItem.Height, _recognBgrBuffer, &image, _recognJpgBuffer, _jpgSize);
+			ImageConvert::IveToJpgBase64(iveBuffer, recognItem.Width, recognItem.Height, _recognBgrBuffer, _recognJpgBuffer, _jpgSize, &image);
 			JsonSerialization::SerializeValue(&json, "image", image);
 			if (_outputRecogn)
 			{

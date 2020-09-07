@@ -8,7 +8,7 @@ const int TrafficStartup::DetectCount = 4;
 const int TrafficStartup::RecognCount = 2;
 
 TrafficStartup::TrafficStartup()
-    :ThreadObject("startup"), _startTime(DateTime::Now()),_sdkInited(false), _socketMaid(NULL), _mqtt(NULL), _encode(NULL)
+    :ThreadObject("startup"), _startTime(DateTime::Now()),_sdkInited(false), _socketMaid(NULL), _mqtt(NULL)
 {
 
 }
@@ -497,8 +497,7 @@ void TrafficStartup::StartCore()
 
     _mqtt = new MqttChannel("127.0.0.1", 1883);
     _mqtt->MqttDisconnected.Subscribe(this);
-    _encode = new EncodeChannel(ChannelCount);
-    InitThreads(_mqtt, &_decodes,_encode,&_detectors,&_detects, &_recogns, loginHandler);
+    InitThreads(_mqtt, &_decodes,&_detectors,&_detects, &_recogns, loginHandler);
     if (_sdkInited)
     {
         _mqtt->Start();
@@ -541,7 +540,6 @@ void TrafficStartup::StartCore()
             }
         }
     }
-    _encode->Start();
     for (unsigned int i = 0; i < _decodes.size(); ++i)
     {
         _decodes[i]->Start();

@@ -56,13 +56,25 @@ namespace OnePunchMan
 		* @param: width 图片宽度
 		* @param: height 图片高度
 		* @param: bgrBuffer 转换时用到的bgr字节流
-		* @param: jpgBase64 用于写入base64字符串
 		* @param: jpgBuffer 用于写入的jpg字节流
 		* @param: jpgSize 用于写入的jpg字节流长度
+		* @param: jpgBase64 用于写入base64字符串
 		* @return: jpg字节流的长度
 		*/
-		static int IveToJpgBase64(const unsigned char* iveBuffer, int width, int height, unsigned char* bgrBuffer, std::string* jpgBase64, unsigned char* jpgBuffer, int jpgSize);
+		static int IveToJpgBase64(const unsigned char* iveBuffer, int width, int height, unsigned char* bgrBuffer, unsigned char* jpgBuffer, int jpgSize, std::string* jpgBase64);
 		
+		/**
+		* @brief: ive转jpg文件
+		* @param: iveBuffer ive字节流
+		* @param: width 图片宽度
+		* @param: height 图片高度
+		* @param: bgrBuffer 转换时用到的bgr字节流
+		* @param: jpgBuffer 用于写入的jpg字节流
+		* @param: jpgSize 用于写入的jpg字节流长度
+		* @param: filePath 写入文件路径
+		*/
+		static void IveToJpgFile(const unsigned char* iveBuffer, int width, int height, unsigned char* bgrBuffer, unsigned char* jpgBuffer, int jpgSize, const std::string& filePath);
+
 		/**
 		* @brief: mp4文件 base64
 		* @param: filePath MP4文件路径

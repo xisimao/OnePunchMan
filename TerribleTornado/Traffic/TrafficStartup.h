@@ -56,13 +56,12 @@ namespace OnePunchMan
         * @brief: 初始化线程集合
         * @param: mqtt mqtt
         * @param: decodes 解码类集合
-        * @param: encodeChannel 编码线程
         * @param: detectors 交通检测类集合
         * @param: detects 视频检测类集合
         * @param: recogns 视频识别类集合
         * @param: loginHandler 登陆句柄
         */
-        virtual void InitThreads(MqttChannel* mqtt, std::vector<DecodeChannel*>* decodes,EncodeChannel* encodeChannel, std::vector<TrafficDetector*>* detectors, std::vector<DetectChannel*>* detects, std::vector<RecognChannel*>* recogns,int loginHandler) = 0;
+        virtual void InitThreads(MqttChannel* mqtt, std::vector<DecodeChannel*>* decodes, std::vector<TrafficDetector*>* detectors, std::vector<DetectChannel*>* detects, std::vector<RecognChannel*>* recogns,int loginHandler) = 0;
 
         /**
         * @brief: 初始化通道集合
@@ -153,6 +152,14 @@ namespace OnePunchMan
         */
         void FillChannel(TrafficChannel* channel, const JsonDeserialization& jd, int itemIndex);
 
+        /**
+        * @brief: 获取url是否是指定的前缀
+        * @param: url url
+        * @param: key 前缀
+        * @return: 返回true表示url有指定前缀
+        */
+        bool UrlStartWith(const std::string& url, const std::string& key);
+
         //解码线程集合，等于视频总数
         std::vector<DecodeChannel*> _decodes;
 
@@ -162,14 +169,6 @@ namespace OnePunchMan
         * @param: e http消息接收事件参数
         */
         void GetDevice(HttpReceivedEventArgs* e);
-
-        /**
-        * @brief: 获取url是否是指定的前缀
-        * @param: url url
-        * @param: key 前缀
-        * @return: 返回true表示url有指定前缀
-        */
-        bool UrlStartWith(const std::string& url, const std::string& key);
 
         /**
         * @brief: 获取url中的id
@@ -193,9 +192,6 @@ namespace OnePunchMan
         HttpHandler _handler;
         //mqtt
         MqttChannel* _mqtt;
-
-        //编码
-        EncodeChannel* _encode;
 
         //交通检测类集合，等于视频总数
         std::vector<TrafficDetector*> _detectors;

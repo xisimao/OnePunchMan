@@ -82,6 +82,9 @@
     <ClCompile Include="Traffic\EncodeChannel.cpp">
       <Filter>Traffic</Filter>
     </ClCompile>
+    <ClCompile Include="Event\EventDataChannel.cpp">
+      <Filter>Event</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Flow\FlowData.h">
@@ -146,6 +149,9 @@
     </ClInclude>
     <ClInclude Include="Flow\FlowStartup.h">
       <Filter>Flow</Filter>
+    </ClInclude>
+    <ClInclude Include="Event\EventDataChannel.h">
+      <Filter>Event</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

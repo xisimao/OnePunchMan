@@ -23,14 +23,14 @@ void FlowStartup::UpdateDb()
     data.UpdateDb();
 }
 
-void FlowStartup::InitThreads(MqttChannel* mqtt, vector<DecodeChannel*>* decodes, EncodeChannel* encode, vector<TrafficDetector*>* detectors, vector<DetectChannel*>* detects, vector<RecognChannel*>* recogns, int loginHandler)
+void FlowStartup::InitThreads(MqttChannel* mqtt, vector<DecodeChannel*>* decodes, vector<TrafficDetector*>* detectors, vector<DetectChannel*>* detects, vector<RecognChannel*>* recogns, int loginHandler)
 {
     for (int i = 0; i < ChannelCount; ++i)
     {
         FlowDetector* detector = new FlowDetector(DecodeChannel::DestinationWidth, DecodeChannel::DestinationHeight, mqtt);
         _detectors.push_back(detector);
         detectors->push_back(detector);
-        DecodeChannel* decode = new DecodeChannel(i + 1, loginHandler, encode);
+        DecodeChannel* decode = new DecodeChannel(i + 1, loginHandler, NULL);
         decodes->push_back(decode);
     }
 

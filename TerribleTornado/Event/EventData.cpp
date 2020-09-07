@@ -136,6 +136,10 @@ void EventChannelData::UpdateDb()
 		_sqlite.ExecuteRowCount("ALTER TABLE[System_Channel] ADD COLUMN[DeviceId] TEXT NULL;");
 		_sqlite.ExecuteRowCount("ALTER TABLE[System_Channel] ADD COLUMN[ChannelId] TEXT NULL;");
 	}
-	SetParameter("Version", "1.0.0.13");
-	SetParameter("VersionValue", "10013");
+	if (versionValue < 10014)
+	{
+		_sqlite.ExecuteRowCount("CREATE TABLE[Event_Data]([Id] INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, [Guid] text NOT NULL, [ChannelUrl] text NOT NULL, [LaneIndex] bigint NOT NULL, [TimeStamp] bigint NOT NULL, [Type] bigint NOT NULL);");
+	}
+	SetParameter("Version", "1.0.0.14");
+	SetParameter("VersionValue", "10014");
 }

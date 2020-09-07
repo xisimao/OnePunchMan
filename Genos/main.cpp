@@ -7,12 +7,6 @@
 using namespace std;
 using namespace OnePunchMan;
 
-int main1()
-{
-    //int r=vas_sdk_startup();
-    //cout << r << endl;
-    return 0;
-}
 int main(int argc, char* argv[])
 {
     if (argc >= 2)

@@ -2,6 +2,7 @@
 #include "EventData.h"
 #include "TrafficDetector.h"
 #include "EncodeChannel.h"
+#include "EventDataChannel.h"
 
 namespace OnePunchMan
 {
@@ -24,9 +25,10 @@ namespace OnePunchMan
 		* @param: width 图片宽度
 		* @param: height 图片高度
 		* @param: mqtt mqtt
-		* @param: encodeChannel 编码通道
+		* @param: encodeChannel 编码线程
+		* @param: dataChannel 数据线程
 		*/
-		EventDetector(int width, int height,MqttChannel* mqtt, EncodeChannel* encodeChannel);
+		EventDetector(int width, int height,MqttChannel* mqtt, EncodeChannel* encodeChannel, EventDataChannel* dataChannel);
 		
 		/**
 		* @brief: 析构函数
@@ -105,21 +107,6 @@ namespace OnePunchMan
 
 		};
 
-		//事件编码缓存
-		class EventEncodeCache
-		{
-		public:
-			EventEncodeCache()
-				:Json(), FilePath()
-			{
-
-			}
-			//事件json数据
-			std::string Json;
-			//输出mp4文件地址
-			std::string FilePath;
-		};
-
 		/**
 		* @brief: 绘制车辆事件图片
 		* @param: jpgBase64 用于写入的字符串
@@ -168,7 +155,7 @@ namespace OnePunchMan
 		//车道集合
 		std::vector<EventLaneCache> _lanes;
 		//等待编码的集合
-		std::vector<EventEncodeCache> _encodes;
+		std::vector<EventData> _encodeDatas;
 		//bgr字节流
 		unsigned char* _bgrBuffer;
 		//jpg字节流
@@ -179,6 +166,8 @@ namespace OnePunchMan
 		int _videoSize;
 		//视频文件临时存放字节流
 		unsigned char* _videoBuffer;
+		//事件数据线程
+		EventDataChannel* _dataChannel;
 		
 	};
 

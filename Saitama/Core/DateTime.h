@@ -55,12 +55,6 @@ namespace OnePunchMan
 		DateTime(int year,int month,int day,int hour,int minute,int second,int millisecond);
 
 		/**
-		* @brief: 构造函数
-		* @param: utcTimeStamp utc时间戳
-		*/
-		DateTime(long long utcTimeStamp);
-
-		/**
 		* @brief: 年
 		* @return: 年
 		*/
@@ -145,8 +139,16 @@ namespace OnePunchMan
 		* @brief: 从字符串解析日期时间
 		* @param: format 时间字符串格式 例如%d-%d-%d %d:%d:%d.%d，%4d%2d%2d
 		* @param: value 表示时间的字符串
+		* @return: 解析出的时间
 		*/
 		static DateTime ParseString(const std::string& format, const std::string& value);
+
+		/**
+		* @brief: 从时间戳解析日期时间
+		* @param: utcTimeStamp utc时间戳
+		* @return: 解析出的时间
+		*/
+		static DateTime  ParseTimeStamp(long long utcTimeStamp);
 
 		/**
 		* @brief: 返回当前的日期时间

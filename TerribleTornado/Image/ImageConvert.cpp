@@ -53,13 +53,25 @@ int ImageConvert::BgrToJpgBase64(const unsigned char* bgrBuffer, int width, int 
 	return size;
 }
 
-int ImageConvert::IveToJpgBase64(const unsigned char* iveBuffer,int width,int height,unsigned char* bgrBuffer,string* jpgBase64,unsigned char* jpgBuffer,int jpgSize)
+int ImageConvert::IveToJpgBase64(const unsigned char* iveBuffer,int width,int height,unsigned char* bgrBuffer,unsigned char* jpgBuffer,int jpgSize, string* jpgBase64)
 {
 	ImageConvert::IveToBgr(iveBuffer, width,height,bgrBuffer);
 	int size = ImageConvert::BgrToJpg(bgrBuffer, width, height, jpgBuffer, jpgSize);
 	jpgBase64->assign("data:image/jpg;base64,");
 	StringEx::ToBase64String(jpgBuffer, size, jpgBase64);
 	return size;
+}
+
+void ImageConvert::IveToJpgFile(const unsigned char* iveBuffer, int width, int height, unsigned char* bgrBuffer, unsigned char* jpgBuffer, int jpgSize, const std::string& filePath)
+{
+	ImageConvert::IveToBgr(iveBuffer, width, height, bgrBuffer);
+	int size = ImageConvert::BgrToJpg(bgrBuffer, width, height, jpgBuffer, jpgSize);
+	FILE* fw = fopen(filePath.c_str(), "wb");
+	if (fw != NULL)
+	{
+		fwrite(jpgBuffer,1, size,fw);
+		fclose(fw);
+	}
 }
 
 void ImageConvert::Mp4ToBase64(const std::string& filePath, unsigned char* videoBuffer, int videoSize, std::string* base64)
