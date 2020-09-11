@@ -99,30 +99,30 @@ namespace OnePunchMan
 		static int UdpSocket();
 
 		/**
-		* @brief: 绑定本地地址，用作Udp多播服务
+		* @brief: 绑定本地地址,用作Udp多播服务
 		* @param: endPoint 本地地址
-		* @return: 返回0表示监听时出现错误，否则返回绑定套接字
+		* @return: 返回0表示监听时出现错误,否则返回绑定套接字
 		*/
 		static int MultiCast(const EndPoint& endPoint);
 
 		/**
-		* @brief: 绑定本地地址，用作Udp服务
+		* @brief: 绑定本地地址,用作Udp服务
 		* @param: endPoint 本地地址
-		* @return: 返回0表示监听时出现错误，否则返回绑定套接字
+		* @return: 返回0表示监听时出现错误,否则返回绑定套接字
 		*/
 		static int Bind(const EndPoint& endPoint);
 
 		/**
-		* @brief: 监听本地端口，用作Tcp服务
+		* @brief: 监听本地端口,用作Tcp服务
 		* @param: endPoint 本地地址
-		* @return: 返回0表示监听时出现错误，否则返回监听套接字
+		* @return: 返回0表示监听时出现错误,否则返回监听套接字
 		*/
 		static int Listen(const EndPoint& endPoint);
 
 		/**
 		* @brief: 连接到Tcp服务
 		* @param: endPoint 远程地址
-		* @return: 返回0表示连接失败，否则返回套接字
+		* @return: 返回0表示连接失败,否则返回套接字
 		*/
 		static int ConnectTcp(const EndPoint& endPoint);
 

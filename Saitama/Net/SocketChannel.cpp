@@ -171,7 +171,7 @@ void SocketChannel::StartCore()
 							e.Handler = data.Handler->Clone(tcpSocket);
 						}
 						Accepted.Notice(&e);
-						//这里不添加到本通道，由外界根据负载均衡添加
+						//这里不添加到本通道,由外界根据负载均衡添加
 					}
 					break;
 				}

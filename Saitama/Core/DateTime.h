@@ -110,13 +110,13 @@ namespace OnePunchMan
 		bool Empty() const;
 
 		/**
-		* @brief: 根据指定格式返回日期时间字符串，例如：%Y-%m-%d %H:%M:%S
+		* @brief: 根据指定格式返回日期时间字符串,例如:%Y-%m-%d %H:%M:%S
 		* @return: 日期时间字符串
 		*/
 		std::string ToString(const std::string& format) const;
 
 		/**
-		* @brief: 返回日期时间字符串，例如2017-01-01 00:00:00.001
+		* @brief: 返回日期时间字符串,例如2017-01-01 00:00:00.001
 		* @return: 日期时间字符串
 		*/
 		std::string ToString() const;
@@ -137,7 +137,7 @@ namespace OnePunchMan
 
 		/**
 		* @brief: 从字符串解析日期时间
-		* @param: format 时间字符串格式 例如%d-%d-%d %d:%d:%d.%d，%4d%2d%2d
+		* @param: format 时间字符串格式 例如%d-%d-%d %d:%d:%d.%d,%4d%2d%2d
 		* @param: value 表示时间的字符串
 		* @return: 解析出的时间
 		*/

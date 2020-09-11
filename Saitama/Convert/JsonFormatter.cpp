@@ -20,6 +20,29 @@ JsonDeserialization::JsonDeserialization(const string& json)
 		{
 			DeserializeArray(json);
 		}
+		else
+		{
+			string temp;
+			ifstream file;
+			file.open(json);
+			if (file.good())
+			{
+				string line;
+				while (getline(file, line))
+				{
+					temp.append(line);
+				}
+				if (temp[0] == '{')
+				{
+					Deserialize(temp);
+				}
+				else if (temp[0] == '[')
+				{
+					DeserializeArray(temp);
+				}
+			}
+			file.close();
+		}
 	}
 	
 }

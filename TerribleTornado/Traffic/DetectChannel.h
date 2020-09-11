@@ -21,7 +21,7 @@ namespace OnePunchMan
 
 		/**
 		* @brief: 当前检测线程是否未初始化
-		* @return: 如果未初始化或者当前线程正在进行检测返回true，否则返回false
+		* @return: 如果未初始化或者当前线程正在进行检测返回true,否则返回false
 		*/
 		bool Inited();
 
@@ -66,7 +66,7 @@ namespace OnePunchMan
 		* @brief: 从json数据中获取检测项集合
 		* @param: items 检测项集合
 		* @param: jd json解析
-		* @param: key 检测类型，机动车，非机动和和行人
+		* @param: key 检测类型,机动车,非机动和和行人
 		*/
 		void GetDetecItems(std::map<std::string, DetectItem>* items, const JsonDeserialization& jd, const std::string& key);
 
@@ -74,7 +74,7 @@ namespace OnePunchMan
 		* @brief: 从json数据中获取识别项集合
 		* @param: items 识别项集合
 		* @param: jd json解析
-		* @param: key 检测类型，机动车，非机动和和行人
+		* @param: key 检测类型,机动车,非机动和和行人
 		* @param: channelIndex 通道序号
 		* @param: frameIndex 帧序号
 		* @param: frameSpan 帧间隔时间(毫秒)

@@ -121,7 +121,7 @@ bool FFmpegOutput::Init(const std::string& outputUrl, int iFrameCount, const AVC
 	_iFrameCount = iFrameCount;
 	if (_outputFormat != NULL)
 	{
-		LogPool::Warning(LogEvent::Encode, "已经初始化了输出文件", _outputUrl);
+		LogPool::Warning(LogEvent::Encode, "already inited output file:", _outputUrl);
 		return true;
 	}
 	if (_outputUrl.size() >= 4 && _outputUrl.substr(0, 4).compare("rtmp") == 0)
@@ -182,7 +182,7 @@ bool FFmpegOutput::Init(const std::string& outputUrl, int iFrameCount, const AVC
 		Uninit();
 		return false;
 	}
-	LogPool::Information(LogEvent::Encode, "初始化输出视频:", _outputUrl, "I帧输出数量:", _iFrameCount);
+	LogPool::Information(LogEvent::Encode, "init output file:", _outputUrl, "I frame count:", _iFrameCount);
 	return true;
 }
 
@@ -203,7 +203,7 @@ void FFmpegOutput::Uninit()
 		_outputCodec = NULL;
 		_outputStream = NULL;
 		_outputFormat = NULL;
-		LogPool::Information("结束输出视频:", _outputUrl, "共输出:", _frameIndex, "帧");
+		LogPool::Information("end output file:", _outputUrl, "total:", _frameIndex, " frames");
 	}
 
 }

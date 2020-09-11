@@ -45,7 +45,7 @@ void RecognChannel::PushItems(const vector<RecognItem>& items)
 		}
 		else
 		{
-			LogPool::Warning(LogEvent::Recogn, "识别项队列已满，配置的最大数量:",MaxCacheCount);
+			LogPool::Warning(LogEvent::Recogn, "recogn queue is full,config max count:",MaxCacheCount);
 		}
 	}
 }
@@ -61,11 +61,11 @@ void RecognChannel::StartCore()
 		int result = SeemmoSDK::seemmo_thread_init(2, _recognIndex %2, 1);
 		if (result == 0)
 		{
-			LogPool::Information(LogEvent::Detect, "初始化seemmo识别线程成功");
+			LogPool::Information(LogEvent::Detect, "init seemmo recogn thread");
 		}
 		else
 		{
-			LogPool::Warning(LogEvent::Detect, "初始化seemmo识别线程失败", result);
+			LogPool::Warning(LogEvent::Detect, "init seemmo recogn thread failed", result);
 			return;
 		}
 	}

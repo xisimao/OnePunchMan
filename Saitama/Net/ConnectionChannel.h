@@ -64,7 +64,7 @@ namespace OnePunchMan
 		/**
 		* @brief: 获取终结点的套接字
 		* @param: endPoint 地址
-		* @return: 返回0表示未找到地址，返回-1表示未连接，否则返回套接字
+		* @return: 返回0表示未找到地址,返回-1表示未连接,否则返回套接字
 		*/
 		int GetSocket(const EndPoint& endPoint);
 

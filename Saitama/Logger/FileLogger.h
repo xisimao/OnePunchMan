@@ -45,8 +45,7 @@ namespace OnePunchMan
 		static std::string GetLogFileName(const std::string& logName, const DateTime& logDate);
 
 	protected:
-
-		void LogCore(const std::string& log);
+		void LogCore(LogLevel logLevel, LogEvent logEvent, const DateTime& time, const std::string& content);
 
 	private:
 

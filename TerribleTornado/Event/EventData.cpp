@@ -6,7 +6,7 @@ using namespace OnePunchMan;
 vector<EventChannel> EventChannelData::GetList()
 {
 	vector<EventChannel> channels;
-	SqliteReader sqlite(_dbName);
+	SqliteReader sqlite(DbName);
 	if (sqlite.BeginQuery(GetChannelList()))
 	{
 		while (sqlite.HasRow()) 
@@ -21,7 +21,7 @@ vector<EventChannel> EventChannelData::GetList()
 EventChannel EventChannelData::Get(int channelIndex)
 {
 	EventChannel channel;
-	SqliteReader sqlite(_dbName);
+	SqliteReader sqlite(DbName);
 	if (sqlite.BeginQuery(GetChannel(channelIndex)))
 	{
 		if (sqlite.HasRow()) 
@@ -37,7 +37,7 @@ EventChannel EventChannelData::FillChannel(const SqliteReader& sqlite)
 {
 	EventChannel channel;
 	TrafficData::FillChannel(sqlite, &channel);
-	SqliteReader laneSqlite(_dbName);
+	SqliteReader laneSqlite(DbName);
 	string laneSql(StringEx::Combine("Select * From Event_Lane Where ChannelIndex=", channel.ChannelIndex," Order By LaneIndex"));
 	if (laneSqlite.BeginQuery(laneSql))
 	{
@@ -138,8 +138,9 @@ void EventChannelData::UpdateDb()
 	}
 	if (versionValue < 10014)
 	{
-		_sqlite.ExecuteRowCount("CREATE TABLE[Event_Data]([Id] INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, [Guid] text NOT NULL, [ChannelUrl] text NOT NULL, [LaneIndex] bigint NOT NULL, [TimeStamp] bigint NOT NULL, [Type] bigint NOT NULL);");
+		_sqlite.ExecuteRowCount("CREATE TABLE[Event_Data]([Id] INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, [ChannelIndex] bigint NOT NULL, [LaneIndex] bigint NOT NULL,[Guid] text NOT NULL,  [TimeStamp] bigint NOT NULL, [Type] bigint NOT NULL);");
 	}
-	SetParameter("Version", "1.0.0.14");
-	SetParameter("VersionValue", "10014");
+
+	SetParameter("Version", "1.0.0.15");
+	SetParameter("VersionValue", "10015");
 }

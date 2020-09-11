@@ -54,13 +54,13 @@ void DecodeChannel::InitFFmpeg()
 	avcodec_register_all();
 	avformat_network_init();
 	av_log_set_level(AV_LOG_INFO);
-	LogPool::Information(LogEvent::Decode, "初始化 ffmpeg sdk");
+	LogPool::Information(LogEvent::Decode, "init ffmpeg sdk");
 }
 
 void DecodeChannel::UninitFFmpeg()
 {
 	avformat_network_deinit();
-	LogPool::Information(LogEvent::Decode, "卸载 ffmpeg sdk");
+	LogPool::Information(LogEvent::Decode, "uninit ffmpeg sdk");
 }
 
 bool DecodeChannel::InitHisi(int videoCount)
@@ -628,7 +628,7 @@ bool DecodeChannel::InitHisi(int videoCount)
 	}
 
 #endif
-	LogPool::Information(LogEvent::Decode, "初始化海思解码sdk");
+	LogPool::Information(LogEvent::Decode, "init hisi decode sdk");
 	return true;
 }
 
@@ -736,7 +736,7 @@ void DecodeChannel::UninitHisi(int videoCount)
 	HI_MPI_SYS_Exit();
 	HI_MPI_VB_Exit();
 #endif // !_WIN32
-	LogPool::Information(LogEvent::Decode, "卸载海思解码sdk");
+	LogPool::Information(LogEvent::Decode, "uninit hisi decode sdk");
 }
 
 string DecodeChannel::InputUrl()
@@ -849,9 +849,9 @@ bool DecodeChannel::InitInput(const string& inputUrl)
 			else
 			{
 				_frameSpan = 40;
-				LogPool::Warning(LogEvent::Decode, "未找到ffmpeg输入帧率，使用固定的40毫秒，输入地址:", inputUrl);
+				LogPool::Warning(LogEvent::Decode, "not found ffmpeg frame_rate,use default 40ms,input url:", inputUrl);
 			}
-			LogPool::Information(LogEvent::Decode, "初始化输入视频:", inputUrl);
+			LogPool::Information(LogEvent::Decode, "init input url:", inputUrl);
 		}
 		return true;
 	}
@@ -867,7 +867,7 @@ void DecodeChannel::UninitInput()
 		_sourceWidth = 0;
 		_sourceHeight = 0;
 		_frameSpan = 0;
-		LogPool::Information(LogEvent::Decode, "结束输入视频:", _inputUrl);
+		LogPool::Information(LogEvent::Decode, "uninit input url:", _inputUrl);
 	}
 }
 
@@ -1168,7 +1168,7 @@ void DecodeChannel::ReceivePacket(int playFd, int frameType, char* buffer, unsig
 		long long timeStamp1 = DateTime::UtcNowTimeStamp();
 		channel->_outputHandler.WritePacket(reinterpret_cast<const unsigned char*>(buffer), size, frameType == 0 ? FrameType::I : FrameType::P);
 		DecodeResult decodeResult = channel->Decode(reinterpret_cast<unsigned char*>(buffer),size, channel->_currentTaskId, channel->_frameIndex, channel->_frameSpan);
-		LogPool::Information(LogEvent::Decode, "收到国标数据", channel->_frameIndex, static_cast<int>(channel->_channelStatus), static_cast<int>(decodeResult), frameType, size);
+		LogPool::Debug(LogEvent::Decode, "收到国标数据", channel->_frameIndex, static_cast<int>(channel->_channelStatus), static_cast<int>(decodeResult), frameType, size);
 		if (decodeResult == DecodeResult::Handle)
 		{
 			channel->_handleSpan = channel->_frameIndex - channel->_lastframeIndex;
@@ -1260,7 +1260,7 @@ void DecodeChannel::StartCore()
 							}
 							else
 							{
-								LogPool::Error(LogEvent::Decode, "解码错误，输入视频:", inputUrl,"帧序号", _frameIndex);
+								LogPool::Error(LogEvent::Decode, "decode error,input url:", inputUrl," frame index", _frameIndex);
 								_channelStatus = ChannelStatus::DecodeError;
 							}
 							long long timeStamp4 = DateTime::UtcNowTimeStamp();
@@ -1280,7 +1280,7 @@ void DecodeChannel::StartCore()
 				}
 				else
 				{
-					LogPool::Error(LogEvent::Decode, "av_read_frame，输入视频:", inputUrl,"帧序号:", _frameIndex,"返回结果:", readResult);
+					LogPool::Error(LogEvent::Decode, "av_read_frame,input url:", inputUrl," frame index:", _frameIndex,"返回结果:", readResult);
 					_channelStatus = ChannelStatus::ReadError;
 				}
 				av_packet_unref(packet);
@@ -1308,7 +1308,7 @@ void DecodeChannel::StartCore()
 				if (_playHandler >= 0)
 				{
 					int result = vas_sdk_stop_realplay(_playHandler);
-					LogPool::Information(LogEvent::Decode, "关闭国标视频,视频输入地址:", _inputUrl,",播放句柄:", _playHandler, "返回结果:",result);
+					LogPool::Information(LogEvent::Decode, "stop gb,input url:", _inputUrl,",play handler:", _playHandler, ",result:",result);
 					_playHandler = -1;
 				}
 #endif // !_WIN32
@@ -1323,7 +1323,7 @@ void DecodeChannel::StartCore()
 				&& _channelStatus != ChannelStatus::NotHandle
 				&& _channelStatus != ChannelStatus::DecodeError)
 			{
-				//防止局部变量改动影响前端效果，所以现用临时变量存放，最后确定状态在赋值
+				//防止局部变量改动影响前端效果,所以现用临时变量存放,最后确定状态在赋值
 				ChannelStatus tempStatus;
 				//输入
 				if (channelType == ChannelType::GB28181)
@@ -1345,12 +1345,12 @@ void DecodeChannel::StartCore()
 						if (_playHandler >= 0)
 						{
 							tempStatus = ChannelStatus::Normal;
-							LogPool::Information(LogEvent::Decode, "打开国标视频成功,视频地址:", _inputUrl,"播放句柄:", _playHandler);
+							LogPool::Information(LogEvent::Decode, "open gb,input url:", _inputUrl,",play hanlder:", _playHandler);
 						}
 						else
 						{
 							tempStatus = ChannelStatus::Init;
-							LogPool::Error(LogEvent::Decode, "打开国标视频失败,视频地址:", _inputUrl, "播放句柄:", _playHandler);
+							LogPool::Error(LogEvent::Decode, "oopen gb failed,input url:", _inputUrl, ",play handler:", _playHandler);
 						}
 					}
 #endif // !_WIN32
@@ -1402,7 +1402,7 @@ void DecodeChannel::StartCore()
 				_currentTaskId = _taskId;
 				reportFinish = false;
 				inputUrl = _inputUrl;
-				LogPool::Information(LogEvent::Decode, "初始化解码通道 输入地址:", _inputUrl, "输出地址:", _outputUrl, "帧间隔(ms):", static_cast<int>(_frameSpan), "是否循环:", _loop);
+				LogPool::Information(LogEvent::Decode, "init decode channel, input url:", _inputUrl, ",output url:", _outputUrl, ",frame span(ms):", static_cast<int>(_frameSpan), ",loop:", _loop);
 				lck.unlock();
 			}
 			else

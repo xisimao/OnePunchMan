@@ -34,7 +34,7 @@ namespace OnePunchMan
 		
 		/**
 		* @brief: 获取是否初始化完成
-		* @return: 初始化完成返回ture，否则返回false
+		* @return: 初始化完成返回ture,否则返回false
 		*/
 		bool Inited();
 

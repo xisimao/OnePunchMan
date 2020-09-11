@@ -97,7 +97,7 @@ bool EncodeChannel::InitHisi(int encodeCount, int width, int height)
         }
     }
 #endif
-    LogPool::Information(LogEvent::Decode, "初始化海思编码sdk");
+    LogPool::Information(LogEvent::Decode, "init hisi encode sdk");
     return true;
 }
 
@@ -117,7 +117,7 @@ void EncodeChannel::UninitHisi(int encodeCount)
         HI_MPI_VENC_DestroyChn(i);
     }
 #endif // !_WIN32
-    LogPool::Information(LogEvent::Decode, "卸载海思编码sdk");
+    LogPool::Information(LogEvent::Decode, "uninit hisi encode sdk");
 }
 
 bool EncodeChannel::AddOutput(int channelIndex, const std::string& outputUrl, int frameCount)
@@ -128,7 +128,7 @@ bool EncodeChannel::AddOutput(int channelIndex, const std::string& outputUrl, in
     }
     else
     {
-        LogPool::Warning(LogEvent::Encode, "添加视频输出出错,视频序号：", channelIndex);
+        LogPool::Warning(LogEvent::Encode, "add output url failed,channel index:", channelIndex);
         return false;
     }
 }
@@ -141,7 +141,7 @@ void EncodeChannel::RemoveOutput(int channelIndex, const std::string& outputUrl)
     }
     else
     {
-        LogPool::Warning(LogEvent::Encode, "删除视频输出结果出错,视频序号：", channelIndex);
+        LogPool::Warning(LogEvent::Encode, "remove output url failed,channel index:", channelIndex);
     }
 }
 
@@ -153,7 +153,7 @@ bool EncodeChannel::OutputFinished(int channelIndex, const std::string& outputUr
     }
     else
     {
-        LogPool::Warning(LogEvent::Encode, "查询视频输出结果出错,视频序号：", channelIndex);
+        LogPool::Warning(LogEvent::Encode, "check output url failed,channel index:", channelIndex);
         return true;
     }
 }

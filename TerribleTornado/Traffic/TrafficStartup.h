@@ -11,6 +11,7 @@
 #include "TrafficDetector.h"
 #include "SocketMaid.h"
 #include "TrafficData.h"
+#include "SqliteLogger.h"
 #ifndef _WIN32
 #include "clientsdk.h"
 #endif // !_WIN32
@@ -96,7 +97,7 @@ namespace OnePunchMan
         /**
         * @brief: 删除通道
         * @param: channelIndex 通道序号
-        * @return: 删除成功返回true，否则返回false
+        * @return: 删除成功返回true,否则返回false
         */
         virtual bool DeleteChannel(int channelIndex)=0;
 
@@ -110,14 +111,14 @@ namespace OnePunchMan
         /**
         * @brief: 判断通道序号是否可用
         * @param: channelIndex 通道序号
-        * @return: 返回ture表示通道序号可用，否则返回false
+        * @return: 返回ture表示通道序号可用,否则返回false
         */
         bool ChannelIndexEnable(int channelIndex);
 
         /**
         * @brief: 检查通道数据项
         * @param: channel 通道数据
-        * @return: 返回空字符串表示检查通过，否则返回错误原因
+        * @return: 返回空字符串表示检查通过,否则返回错误原因
         */
         std::string CheckChannel(TrafficChannel* channel);
 
@@ -160,7 +161,15 @@ namespace OnePunchMan
         */
         bool UrlStartWith(const std::string& url, const std::string& key);
 
-        //解码线程集合，等于视频总数
+        /**
+        * @brief: 获取url中的id
+        * @param: url url
+        * @param: key 前缀
+        * @return: id
+        */
+        std::string GetId(const std::string& url, const std::string& key);
+
+        //解码线程集合,等于视频总数
         std::vector<DecodeChannel*> _decodes;
 
     private:
@@ -169,14 +178,6 @@ namespace OnePunchMan
         * @param: e http消息接收事件参数
         */
         void GetDevice(HttpReceivedEventArgs* e);
-
-        /**
-        * @brief: 获取url中的id
-        * @param: url url
-        * @param: key 前缀
-        * @return: id
-        */
-        std::string GetId(const std::string& url, const std::string& key);
 
         //系统启动时间
         DateTime _startTime;
@@ -193,11 +194,11 @@ namespace OnePunchMan
         //mqtt
         MqttChannel* _mqtt;
 
-        //交通检测类集合，等于视频总数
+        //交通检测类集合,等于视频总数
         std::vector<TrafficDetector*> _detectors;
-        //视频检测线程集合，等于视频总数
+        //视频检测线程集合,等于视频总数
         std::vector<DetectChannel*> _detects;
-        //视频识别线程集合，等于视频总数/RecognChannel::ItemCount
+        //视频识别线程集合,等于视频总数/RecognChannel::ItemCount
         std::vector<RecognChannel*> _recogns;
     };
 }

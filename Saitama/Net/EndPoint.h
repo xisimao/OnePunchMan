@@ -55,7 +55,7 @@ namespace OnePunchMan
 
 		/**
 		* @brief: 构造函数
-		* @param: ip端口的文字表示方式，例如:127.0.0.1:8080
+		* @param: ip端口的文字表示方式,例如:127.0.0.1:8080
 		*/
 		EndPoint(const std::string& endPoint);
 
@@ -84,14 +84,14 @@ namespace OnePunchMan
 		unsigned short HostPort() const;
 
 		/**
-		* @brief:  获取地址是否为空，
+		* @brief:  获取地址是否为空,
 		* @return: 返回true表示地址为空
 		*/
 		bool Empty() const;
 
 		/**
 		* @brief:  获取地址的文字表示方式
-		* @return: 地址的文字表示方式，如192.160.0.100:10001
+		* @return: 地址的文字表示方式,如192.160.0.100:10001
 		*/
 		const std::string& ToString() const;
 

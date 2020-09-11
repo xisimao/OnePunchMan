@@ -175,6 +175,29 @@ namespace OnePunchMan
 		std::string ChannelName;
 	};
 
+	//配置信息
+	class TrafficDirectory
+	{
+	public:
+		//文件临时存放目录
+		static std::string TempDir;
+		//文件存放目录
+		static std::string FileDir;
+		//文件目录连接
+		static std::string FileLink;
+
+		/**
+		* @brief: 初始化目录配置
+		* @param: jd json配置
+		*/
+		static void Init(const JsonDeserialization& jd)
+		{
+			TempDir = jd.Get<std::string>("Directory:TempDir");
+			FileDir = jd.Get<std::string>("Directory:FileDir");
+			FileLink = jd.Get<std::string>("Directory:FileLink");
+		}
+	};
+
 	//数据库
 	class TrafficData
 	{
@@ -268,6 +291,9 @@ namespace OnePunchMan
 		*/
 		virtual void UpdateDb();
 
+		//数据库名称
+		static std::string DbName;
+
 	protected:
 		/**
 		* @brief: 填充通道
@@ -308,9 +334,6 @@ namespace OnePunchMan
 		* @return: 清空通道sql语句
 		*/
 		std::string ClearChannel();
-
-		//数据库名称
-		static std::string _dbName;
 
 		//数据写入
 		SqliteWriter _sqlite;

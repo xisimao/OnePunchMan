@@ -146,7 +146,7 @@ namespace OnePunchMan
 		/**
 		* @brief: json转线段
 		* @param: json 线段json数据[[1,1],[2,2]]
-		* @return: 转换成功返回线段，否则返回空线段
+		* @return: 转换成功返回线段,否则返回空线段
 		*/
 		static Line FromJson(const std::string& json)
 		{
@@ -317,7 +317,7 @@ namespace OnePunchMan
 		/**
 		* @brief: 测试点是否包含在多边形
 		* @param: point 点
-		* @return: 点在多边形内返回true，否则返回false
+		* @return: 点在多边形内返回true,否则返回false
 		*/
 		bool Contains(const Point& point)
 		{
@@ -377,7 +377,7 @@ namespace OnePunchMan
 		/**
 		* @brief: json转多边形
 		* @param: json 多边形json数据[[1,1],[2,2],[3,3],[4,4],[5,5]]
-		* @return: 转换成功返回多边形，否则返回空
+		* @return: 转换成功返回多边形,否则返回空
 		*/
 		static Polygon FromJson(const std::string& json)
 		{
@@ -397,7 +397,7 @@ namespace OnePunchMan
 		/**
 		* @brief: json转多边形集合
 		* @param: json 多边形json数据[[[1,1],[2,2],[3,3],[4,4],[5,5]],[[1,1],[2,2],[3,3],[4,4],[5,5]]]
-		* @return: 转换成功返回多边形集合，否则返回空集合
+		* @return: 转换成功返回多边形集合,否则返回空集合
 		*/
 		static std::vector<Polygon> FromJsonArray(const std::string& json)
 		{

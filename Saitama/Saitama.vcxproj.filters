@@ -18,9 +18,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Core\FileConfig.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
     <ClCompile Include="Core\DateTime.cpp">
       <Filter>Core</Filter>
     </ClCompile>
@@ -38,9 +35,6 @@
     </ClCompile>
     <ClCompile Include="Core\Thread.cpp">
       <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Logger\LogReader.cpp">
-      <Filter>Logger</Filter>
     </ClCompile>
     <ClCompile Include="Convert\ByteFormatter.cpp">
       <Filter>Convert</Filter>
@@ -95,9 +89,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Core\FileConfig.h">
-      <Filter>Core</Filter>
-    </ClInclude>
     <ClInclude Include="Core\DateTime.h">
       <Filter>Core</Filter>
     </ClInclude>
@@ -121,9 +112,6 @@
     </ClInclude>
     <ClInclude Include="Core\Thread.h">
       <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Logger\LogReader.h">
-      <Filter>Logger</Filter>
     </ClInclude>
     <ClInclude Include="Convert\ByteFormatter.h">
       <Filter>Convert</Filter>
@@ -169,9 +157,6 @@
     </ClInclude>
     <ClInclude Include="Net\AsyncHandler.h">
       <Filter>Net</Filter>
-    </ClInclude>
-    <ClInclude Include="Logger\LogEvent.h">
-      <Filter>Logger</Filter>
     </ClInclude>
     <ClInclude Include="Net\SocketMaid.h">
       <Filter>Net</Filter>

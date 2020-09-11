@@ -6,7 +6,7 @@ using namespace OnePunchMan;
 vector<FlowChannel> FlowChannelData::GetList()
 {
 	vector<FlowChannel> channels;
-	SqliteReader sqlite(_dbName);
+	SqliteReader sqlite(DbName);
 	if (sqlite.BeginQuery(GetChannelList()))
 	{
 		while (sqlite.HasRow()) 
@@ -21,7 +21,7 @@ vector<FlowChannel> FlowChannelData::GetList()
 FlowChannel FlowChannelData::Get(int channelIndex)
 {
 	FlowChannel channel;
-	SqliteReader sqlite(_dbName);
+	SqliteReader sqlite(DbName);
 	if (sqlite.BeginQuery(GetChannel(channelIndex)))
 	{
 		if (sqlite.HasRow()) 
@@ -38,7 +38,7 @@ FlowChannel FlowChannelData::FillChannel(const SqliteReader& sqlite)
 	FlowChannel channel;
 	TrafficData::FillChannel(sqlite, &channel);
 
-	SqliteReader laneSqlite(_dbName);
+	SqliteReader laneSqlite(DbName);
 	string laneSql(StringEx::Combine("Select * From Flow_Lane Where ChannelIndex=", channel.ChannelIndex," Order By LaneIndex"));
 	if (laneSqlite.BeginQuery(laneSql))
 	{

@@ -6,7 +6,7 @@ using namespace OnePunchMan;
 EventStartup::EventStartup()
     :TrafficStartup(), _encode(ChannelCount), _data(NULL)
 {
-    TrafficData::Init("event.db");
+
 }
 
 EventStartup::~EventStartup()
@@ -21,25 +21,21 @@ void EventStartup::Update(HttpReceivedEventArgs* e)
 {
     if (UrlStartWith(e->Url, "/api/data"))
     {
-        SqliteReader reader("event.db");
-        
-        if (reader.BeginQuery("Select * From Event_Data Order By TimeStamp Desc"))
+        int channelIndex = StringEx::Convert<int>(GetId(e->Url, "/api/data"));
+        vector<EventData> datas=EventDataChannel::GetDatas(channelIndex);
+        for (vector<EventData>::iterator it = datas.begin(); it != datas.end(); ++it)
         {
-            while (reader.HasRow())
-            {
-                string json;
-                JsonSerialization::SerializeValue(&json,"id", reader.GetInt(0));
-                string guid = reader.GetString(1);
-                JsonSerialization::SerializeValue(&json,"channelUrl", reader.GetString(2));
-                JsonSerialization::SerializeValue(&json,"laneIndex", reader.GetInt(3));
-                JsonSerialization::SerializeValue(&json,"timeStamp", reader.GetLong(4));
-                JsonSerialization::SerializeValue(&json,"type", reader.GetInt(5));
-                JsonSerialization::SerializeValue(&json,"image1", EventData::GetImageLink(guid,1));
-                JsonSerialization::SerializeValue(&json,"image2", EventData::GetImageLink(guid, 2));
-                JsonSerialization::SerializeValue(&json,"video", EventData::GetVideoLink(guid));
-                JsonSerialization::AddClassItem(&e->ResponseJson, json);
-            }
-            reader.EndQuery();
+            string json;
+            JsonSerialization::SerializeValue(&json, "id", it->Id);
+            string guid = it->Guid;
+            JsonSerialization::SerializeValue(&json, "channelIndex", it->ChannelIndex);
+            JsonSerialization::SerializeValue(&json, "laneIndex", it->LaneIndex);
+            JsonSerialization::SerializeValue(&json, "timeStamp", it->TimeStamp);
+            JsonSerialization::SerializeValue(&json, "type", it->Type);
+            JsonSerialization::SerializeValue(&json, "image1", EventData::GetImageLink(guid, 1));
+            JsonSerialization::SerializeValue(&json, "image2", EventData::GetImageLink(guid, 2));
+            JsonSerialization::SerializeValue(&json, "video", EventData::GetVideoLink(guid));
+            JsonSerialization::AddClassItem(&e->ResponseJson, json);
         }
         e->Code = HttpCode::OK;
     }
@@ -83,7 +79,6 @@ void EventStartup::InitThreads(MqttChannel* mqtt, vector<DecodeChannel*>* decode
         }
     }
     _encode.Start();
-    _data->Init();
     _data->Start();
 }
 

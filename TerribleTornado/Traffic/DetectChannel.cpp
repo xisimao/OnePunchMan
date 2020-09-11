@@ -29,7 +29,7 @@ void DetectChannel::SetRecogn(RecognChannel* recogn)
 
 void DetectChannel::AddChannel(int channelIndex, DecodeChannel* decode, TrafficDetector* detector)
 {
-	LogPool::Information(LogEvent::System, "第", channelIndex, "个通道添加到了第",_detectIndex+1,"个检测线程");
+	LogPool::Information(LogEvent::System, "the ", channelIndex, " channel add to the",_detectIndex+1," detect thread");
 	ChannelItem item;
 	item.ChannelIndex = channelIndex;
 	item.Param = detector->GetDetectParam();
@@ -101,11 +101,11 @@ void DetectChannel::StartCore()
 		int result = SeemmoSDK::seemmo_thread_init(1, _detectIndex % 2, 1);
 		if (result == 0)
 		{
-			LogPool::Information(LogEvent::Detect, "初始化seemmo检测线程成功");
+			LogPool::Information(LogEvent::Detect, "init seemmo thread");
 		}
 		else
 		{
-			LogPool::Warning(LogEvent::Detect, "初始化seemmo检测线程失败", result);
+			LogPool::Warning(LogEvent::Detect, "init seemmo thread failed", result);
 			return;
 		}
 	}

@@ -28,14 +28,14 @@ namespace OnePunchMan
 		FFmpegOutput();
 
 		/**
-		* @brief: 初始化视频输出,用于无法获取sps和pps，ffmpeg也无法读取
+		* @brief: 初始化视频输出,用于无法获取sps和pps,ffmpeg也无法读取
 		* @param: outputUrl 输出地址
 		* @return: 初始化结果
 		*/
 		bool Init(const std::string& outputUrl, int iFrameCount);
 
 		/**
-		* @brief: 初始化视频输出，用于可以获取到sps和pps数据
+		* @brief: 初始化视频输出,用于可以获取到sps和pps数据
 		* @param: outputUrl 输出地址
 		* @param: iFrameCount 输出i帧的数量
 		* @param: extraData sps+pps字节流
@@ -45,7 +45,7 @@ namespace OnePunchMan
 		bool Init(const std::string& outputUrl, int iFrameCount, unsigned char* extraData,int extraDataSize);
 
 		/**
-		* @brief: 初始化视频输出，用于可以获取到sps和pps数据
+		* @brief: 初始化视频输出,用于可以获取到sps和pps数据
 		* @param: outputUrl 输出地址
 		* @param: iFrameCount 输出i帧的数量
 		* @param: parameters 输出解码参数

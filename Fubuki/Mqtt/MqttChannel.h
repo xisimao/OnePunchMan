@@ -62,14 +62,14 @@ namespace OnePunchMan
         /**
         * @brief: 构造函数
         * @param: ip mqtt服务端地址
-        * @param: port mqtt服务端端口，默认为1883
+        * @param: port mqtt服务端端口,默认为1883
         */
         MqttChannel(const std::string& ip, int port);
 
         /**
         * @brief: 构造函数
         * @param: ip mqtt服务端地址
-        * @param: port mqtt服务端端口，默认为1883
+        * @param: port mqtt服务端端口,默认为1883
         * @param: topics 订阅的主题集合
         */
         MqttChannel(const std::string& ip, int port, std::vector<std::string> topics);
@@ -77,7 +77,7 @@ namespace OnePunchMan
         /**
         * @brief: mqtt接收消息回调函数
         * @param: mosq mosq实例
-        * @param: userdata 自定义数据，此时表示this指针
+        * @param: userdata 自定义数据,此时表示this指针
         * @param: message 接收到的消息
         */
         static void ReceivedEventHandler(struct mosquitto* mosq, void* userdata, const struct mosquitto_message* message);

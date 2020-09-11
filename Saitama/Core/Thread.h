@@ -38,7 +38,7 @@ namespace OnePunchMan
 		void Join();
 
 		/**
-		* @brief: 向线程提交取消请求，并阻塞调用线程直到线程终止为止。
+		* @brief: 向线程提交取消请求,并阻塞调用线程直到线程终止为止。
 		*/
 		void Stop();
 

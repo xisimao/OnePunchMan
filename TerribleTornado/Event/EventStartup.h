@@ -39,7 +39,7 @@ namespace OnePunchMan
         bool DeleteChannel(int channelIndex);
 
     private:
-        //通道检测集合，等于视频总数
+        //通道检测集合,等于视频总数
         std::vector<EventDetector*> _detectors;
 
         EncodeChannel _encode;

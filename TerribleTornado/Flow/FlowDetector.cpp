@@ -74,7 +74,7 @@ void FlowDetector::UpdateChannel(const unsigned char taskId, const FlowChannel& 
 	_lanesInited = !_laneCaches.empty() && _laneCaches.size() == channel.Lanes.size();
 	if (!_lanesInited)
 	{
-		LogPool::Warning("车道未初始化，通道序号:", channel.ChannelIndex);
+		LogPool::Warning("not found any lane,channel index:", channel.ChannelIndex);
 	}
 	_channelIndex = channel.ChannelIndex;
 	if (channel.GlobalDetect)
@@ -87,12 +87,12 @@ void FlowDetector::UpdateChannel(const unsigned char taskId, const FlowChannel& 
 	}
 	_setParam = false;
 	_writeBmp = true;
-	remove(StringEx::Combine("../images/channel_", channel.ChannelIndex, ".bmp").c_str());
+	remove(StringEx::Combine(TrafficDirectory::FileDir, "channel_", channel.ChannelIndex, ".bmp").c_str());
 	//输出图片时先删除旧的
 	_outputImage = channel.OutputImage;
 	if (_outputImage)
 	{
-		Command::Execute(StringEx::Combine("rm -rf ../temp/jpg_", channel.ChannelIndex, "*"));
+		Command::Execute(StringEx::Combine("rm -rf ", TrafficDirectory::TempDir,"jpg_", channel.ChannelIndex, "*"));
 	}
 	_reportCaches.clear();
 	_vehicleReportCaches.clear();
@@ -112,7 +112,7 @@ void FlowDetector::UpdateChannel(const unsigned char taskId, const FlowChannel& 
 	_currentMinuteTimeStamp = DateTime(date.Year(), date.Month(), date.Day(), date.Hour(), date.Minute(), 0).UtcTimeStamp();
 	_nextMinuteTimeStamp = _currentMinuteTimeStamp + 60 * 1000;
 	_outputRecogn = channel.OutputRecogn;
-	LogPool::Information(LogEvent::Flow, "初始化流量检测，通道序号:", channel.ChannelIndex, "任务号:", _taskId, "是否输出检测报告:", channel.OutputReport, "是否输出检测图片:", channel.OutputImage, "是否输出识别数据:", channel.OutputRecogn, "是否全局检测:", channel.GlobalDetect, "当前检测周期时间戳:", _currentMinuteTimeStamp, "下一个检测周期时间戳:", _nextMinuteTimeStamp);
+	LogPool::Information(LogEvent::Flow, "init flow detector,channel index:", channel.ChannelIndex, " task id:", _taskId, " output report:", channel.OutputReport, " output pic:", channel.OutputImage, " output recogn:", channel.OutputRecogn, " global detect:", channel.GlobalDetect, " current detect timeStamp:", _currentMinuteTimeStamp, " next detect timeStamp:", _nextMinuteTimeStamp);
 }
 
 void FlowDetector::ClearChannel()
@@ -328,7 +328,7 @@ void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long 
 			_mqtt->Send(FlowTopic, flowLanesJson);
 		}
 
-		//结算后认为该分钟结束，当前帧收到的数据结算到下一分钟
+		//结算后认为该分钟结束,当前帧收到的数据结算到下一分钟
 		DateTime currentTime=DateTime::ParseTimeStamp(timeStamp);
 		DateTime currentTimePoint(currentTime.Year(), currentTime.Month(), currentTime.Day(), currentTime.Hour(), currentTime.Minute(), 0);
 		_currentMinuteTimeStamp = currentTimePoint.UtcTimeStamp();
@@ -433,7 +433,7 @@ void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long 
 			}
 		}
 
-		//如果上一次有车，则认为到这次检测为止都有车
+		//如果上一次有车,则认为到这次检测为止都有车
 		//时间占有率=总时间/一分钟
 		if (laneCache.IoStatus)
 		{
@@ -547,7 +547,7 @@ void FlowDetector::HandleRecognVehicle(const RecognItem& recognItem, const unsig
 			return;
 		}
 	}
-	LogPool::Information(LogEvent::Detect, "识别项丢失，识别项编号：", recognItem.Guid, "识别项类型：", recognItem.Type, "帧序号：", recognItem.FrameIndex);
+	LogPool::Information(LogEvent::Detect, "lost recogn,id:", recognItem.Guid, " type:", recognItem.Type, " frame index:", recognItem.FrameIndex);
 }
 
 void FlowDetector::HandleRecognBike(const RecognItem& recognItem, const unsigned char* iveBuffer, const VideoStruct_Bike& bike)
@@ -592,7 +592,7 @@ void FlowDetector::HandleRecognBike(const RecognItem& recognItem, const unsigned
 			return;
 		}
 	}
-	LogPool::Information(LogEvent::Detect, "识别项丢失，识别项编号：", recognItem.Guid, "识别项类型：", recognItem.Type, "帧序号：", recognItem.FrameIndex);
+	LogPool::Information(LogEvent::Detect, "lost recogn,id:", recognItem.Guid, " type:", recognItem.Type, " frame index:", recognItem.FrameIndex);
 }
 
 void FlowDetector::HandleRecognPedestrain(const RecognItem& recognItem, const unsigned char* iveBuffer, const VideoStruct_Pedestrain& pedestrain)
@@ -638,7 +638,7 @@ void FlowDetector::HandleRecognPedestrain(const RecognItem& recognItem, const un
 			return;
 		}
 	}
-	LogPool::Information(LogEvent::Detect, "识别项丢失，识别项编号：", recognItem.Guid, "识别项类型：", recognItem.Type, "帧序号：", recognItem.FrameIndex);
+	LogPool::Information(LogEvent::Detect, "lost recogn,id:", recognItem.Guid, " type:", recognItem.Type, " frame index:", recognItem.FrameIndex);
 }
 
 void FlowDetector::DrawDetect(const map<string, DetectItem>& detectItems,const unsigned char* iveBuffer, unsigned int frameIndex)

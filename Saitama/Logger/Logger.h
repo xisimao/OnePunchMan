@@ -4,7 +4,6 @@
 #include <ostream>
 #include <mutex>
 
-#include "LogEvent.h"
 #include "DateTime.h"
 
 namespace OnePunchMan
@@ -27,18 +26,23 @@ namespace OnePunchMan
 		Error = 4
 	};
 
-	//日志项
-	class LogItem
+	//日志事件
+	enum class LogEvent :int
 	{
-	public:
-		//时间
-		std::string Time;
-		//级别
-		std::string Level;
-		//事件
-		std::string Event;
-		//内容
-		std::string Content;
+		None = 0,
+		System = 1,
+		Socket = 2,
+		Mqtt = 3,
+		Sqlite = 4,
+		Encode = 5,
+		Decode = 6,
+		Detect = 7,
+		Recogn = 8,
+		Flow = 9,
+		Event = 10,
+		Adapter = 11,
+		Http = 12,
+		Monitor = 13
 	};
 	
 	// 日志类
@@ -64,13 +68,15 @@ namespace OnePunchMan
 		/**
 		* @brief: 写日志
 		* @param: logLevel 日志级别
-		* @param: content  日志的内容
+		* @param: logEvent 日志事件
+		* @param: time 日志事件
+		* @param: content 日志内容
 		*/
-		void Log(LogLevel logLevel, const std::string& content)
+		void Log(LogLevel logLevel, LogEvent logEvent,const DateTime& time,const std::string& content)
 		{
 			if ((int)logLevel >= (int)_minLevel && (int)logLevel <= (int)_maxLevel)
 			{
-				LogCore(content);
+				LogCore(logLevel,logEvent,time,content);
 			}
 		}
 
@@ -78,9 +84,12 @@ namespace OnePunchMan
 
 		/**
 		* @brief: 供子类实现的写日志
-		* @param: 日志内容
+		* @param: logLevel 日志级别
+		* @param: logEvent 日志事件
+		* @param: time 日志事件
+		* @param: content 日志内容
 		*/
-		virtual void LogCore(const std::string& log)=0;
+		virtual void LogCore(LogLevel logLevel, LogEvent logEvent, const DateTime& time, const std::string& content)=0;
 
 	private:
 

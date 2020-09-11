@@ -13,9 +13,10 @@ namespace OnePunchMan
 	public:
 		/**
 		* @brief: 构造函数
+		* @param: fileDir 写入的目录
 		* @param: count 写入帧的总数
 		*/
-		IVEHandler(int count = 3);
+		IVEHandler(const std::string& fileDir,int count = 3);
 
 		/**
 		* @brief: 写入视频帧
@@ -27,9 +28,10 @@ namespace OnePunchMan
 		void HandleFrame(const unsigned char* ive, int width, int height, unsigned int frameIndex);
 		
 	private:
-
 		//bmp文件头长度
 		static const int HeaderSize;
+		//写入的目录
+		std::string _fileDir;
 		//当前写入数量
 		int _index;
 		//写入总量

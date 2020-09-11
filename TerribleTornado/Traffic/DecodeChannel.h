@@ -115,7 +115,7 @@ namespace OnePunchMan
 		/**
 		* @brief: 初始化hisi sdk
 		* @param: videoCount 通道总数
-		* @return: 初始化成功返回true，否则返回false
+		* @return: 初始化成功返回true,否则返回false
 		*/
 		static bool InitHisi(int videoCount);
 
@@ -233,7 +233,7 @@ namespace OnePunchMan
 		* @param: taskId 任务号
 		* @param: frameIndex 视频帧序号
 		* @param: frameSpan 两帧的间隔时间(毫秒)
-		* @return: 解码成功返回Handle，略过返回Ski，否则返回Error，解码失败会结束线程
+		* @return: 解码成功返回Handle,略过返回Ski,否则返回Error,解码失败会结束线程
 		*/
 		DecodeResult Decode(unsigned char* buffer, unsigned int size, unsigned char taskId, unsigned int frameIndex, unsigned char frameSpan);
 
@@ -243,7 +243,7 @@ namespace OnePunchMan
 		* @param: taskId 任务号
 		* @param: frameIndex 视频帧序号
 		* @param: frameSpan 两帧的间隔时间(毫秒)
-		* @return: 解码成功返回Handle，略过返回Ski，否则返回Error，解码失败会结束线程
+		* @return: 解码成功返回Handle,略过返回Ski,否则返回Error,解码失败会结束线程
 		*/
 		DecodeResult DecodeTest(const AVPacket* packet, unsigned char taskId, unsigned int frameIndex, unsigned char frameSpan);
 
@@ -253,13 +253,13 @@ namespace OnePunchMan
 		* @param: yuv yuv数据
 		* @param: frameIndex 帧序号
 		* @param: finished 视频是否读取完成
-		* @return: 返回true表示成功写入，返回false表示当前已经有yuv数据
+		* @return: 返回true表示成功写入,返回false表示当前已经有yuv数据
 		*/
 		bool SetTempIve(unsigned char taskId, const unsigned char* yuv, unsigned int frameIndex, unsigned char frameSpan, bool finished);
 
 		/**
 		* @brief: yuv转ive
-		* @return: 转换成功返回true，否则返回false
+		* @return: 转换成功返回true,否则返回false
 		*/
 		bool YuvToIve();
 
@@ -267,7 +267,7 @@ namespace OnePunchMan
 		static const int ConnectSpan;
 		//国标休眠时间(毫秒)
 		static const int GbSleepSpan;
-		//最长的处理帧间隔，如果超过这个间隔就会修改通道状态
+		//最长的处理帧间隔,如果超过这个间隔就会修改通道状态
 		static const int MaxHandleSpan;
 
 		//构造函数时改变

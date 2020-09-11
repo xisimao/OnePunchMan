@@ -5,12 +5,10 @@
     <ClCompile Include="..\Saitama\Convert\JsonFormatter.cpp" />
     <ClCompile Include="..\Saitama\Core\Command.cpp" />
     <ClCompile Include="..\Saitama\Core\DateTime.cpp" />
-    <ClCompile Include="..\Saitama\Core\FileConfig.cpp" />
     <ClCompile Include="..\Saitama\Core\Thread.cpp" />
     <ClCompile Include="..\Saitama\Logger\ConsoleLogger.cpp" />
     <ClCompile Include="..\Saitama\Logger\FileLogger.cpp" />
     <ClCompile Include="..\Saitama\Logger\LogPool.cpp" />
-    <ClCompile Include="..\Saitama\Logger\LogReader.cpp" />
     <ClCompile Include="..\Saitama\Net\AsyncHandler.cpp" />
     <ClCompile Include="..\Saitama\Net\ConnectionChannel.cpp" />
     <ClCompile Include="..\Saitama\Net\EndPoint.cpp" />
@@ -48,21 +46,19 @@
     <ClCompile Include="..\Fubuki\FFmpeg\H264Cache.cpp" />
     <ClCompile Include="..\Fubuki\FFmpeg\FFmpegOutput.cpp" />
     <ClCompile Include="..\TerribleTornado\Event\EventDataChannel.cpp" />
+    <ClCompile Include="..\TerribleTornado\Traffic\SqliteLogger.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Saitama\Convert\JsonFormatter.h" />
     <ClInclude Include="..\Saitama\Core\Command.h" />
     <ClInclude Include="..\Saitama\Core\DateTime.h" />
-    <ClInclude Include="..\Saitama\Core\FileConfig.h" />
     <ClInclude Include="..\Saitama\Core\Observable.h" />
     <ClInclude Include="..\Saitama\Core\Shape.h" />
     <ClInclude Include="..\Saitama\Core\Thread.h" />
     <ClInclude Include="..\Saitama\Logger\ConsoleLogger.h" />
     <ClInclude Include="..\Saitama\Logger\FileLogger.h" />
-    <ClInclude Include="..\Saitama\Logger\LogEvent.h" />
     <ClInclude Include="..\Saitama\Logger\Logger.h" />
     <ClInclude Include="..\Saitama\Logger\LogPool.h" />
-    <ClInclude Include="..\Saitama\Logger\LogReader.h" />
     <ClInclude Include="..\Saitama\Net\AsyncHandler.h" />
     <ClInclude Include="..\Saitama\Net\ConnectionChannel.h" />
     <ClInclude Include="..\Saitama\Net\EndPoint.h" />
@@ -100,5 +96,6 @@
     <ClInclude Include="..\Fubuki\FFmpeg\H264Cache.h" />
     <ClInclude Include="..\Fubuki\FFmpeg\FFmpegOutput.h" />
     <ClInclude Include="..\TerribleTornado\Event\EventDataChannel.h" />
+    <ClInclude Include="..\TerribleTornado\Traffic\SqliteLogger.h" />
   </ItemGroup>
 </Project>

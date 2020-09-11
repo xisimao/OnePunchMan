@@ -39,7 +39,7 @@ namespace OnePunchMan
 
 		/**
 		* @brief: 等待通知
-		* @return: 返回true表示等待到通知，返回false表示超时
+		* @return: 返回true表示等待到通知,返回false表示超时
 		*/
 		bool Wait(int milliseconds=3500);
 

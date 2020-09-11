@@ -17,9 +17,8 @@ namespace OnePunchMan
 		*/
 		ConsoleLogger(LogLevel minLevel, LogLevel maxLevel);
 
-	protected:
-		
-		void LogCore(const std::string& log);
+	protected:	
+		void LogCore(LogLevel logLevel, LogEvent logEvent, const DateTime& time, const std::string& content);
 
 	};
 }

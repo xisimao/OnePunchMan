@@ -59,17 +59,17 @@ namespace OnePunchMan
 			{
 
 			}
-			//检测项第一次出现的时间戳，停车检测
+			//检测项第一次出现的时间戳,停车检测
 			long long FirstTimeStamp;
-			//检测项最后一次出现的时间戳，删除缓存，行人检测，停车检测
+			//检测项最后一次出现的时间戳,删除缓存,行人检测,停车检测
 			long long LastTimeStamp;
-			//是否已经开始计算停车，停车检测
+			//是否已经开始计算停车,停车检测
 			bool StartPark;
-			//是否已经结束计算停车，停车检测
+			//是否已经结束计算停车,停车检测
 			bool StopPark;
-			//开始停车的图片，停车检测
+			//开始停车的图片,停车检测
 			std::string StartParkImage;
-			//在区域逆行的检测点集合，逆行检测
+			//在区域逆行的检测点集合,逆行检测
 			std::vector<Point> RetrogradePoints;
 		};
 
@@ -90,16 +90,16 @@ namespace OnePunchMan
 			EventLaneType LaneType;
 			//当前检测区域
 			Polygon Region;
-			//x移动的趋势，true表示正向，逆行检测
+			//x移动的趋势,true表示正向,逆行检测
 			bool XTrend;
-			//y移动的趋势，true表示正向，逆行检测
+			//y移动的趋势,true表示正向,逆行检测
 			bool YTrend;
 			//判断的坐标系
 			bool BaseAsX;
 
 			//当前车道是否处于拥堵状态
 			bool Congestion;
-			//上一次上报的时间戳，拥堵检测
+			//上一次上报的时间戳,拥堵检测
 			long long LastReportTimeStamp;
 
 			//车道内检测项集合

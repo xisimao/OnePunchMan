@@ -15,7 +15,7 @@ TrafficStartup::TrafficStartup()
 
 void TrafficStartup::Update(MqttDisconnectedEventArgs* e)
 {
-    LogPool::Information(LogEvent::System,"系统即将重启");
+    LogPool::Information(LogEvent::System,"system restart");
     exit(1);
 }
 
@@ -206,14 +206,14 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
     }
     else if (UrlStartWith(e->Url, "/api/update/licence"))
     {
-        LogPool::Information(LogEvent::Http, "开始更新授权");
+        LogPool::Information(LogEvent::Http, "update licence");
         string filePath("/mtd/seemmo/programs/aisdk/data/licence");
         HttpHandler::WriteFile(e->RequestJson, filePath);
         e->Code = HttpCode::OK;
     }
     else if (UrlStartWith(e->Url, "/api/update/system"))
     {
-        LogPool::Information(LogEvent::Http, "开始更新系统");
+        LogPool::Information(LogEvent::Http, "update system");
         string filePath = Path::Combine(Path::GetCurrentPath(), "service.tar");
         HttpHandler::WriteFile(e->RequestJson, filePath);
         Command::Execute("tar xf service.tar -C ../../");
@@ -226,12 +226,6 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
         string sn=jd.Get<string>("sn");
         TrafficData data;
         data.SetParameter("SN", sn);
-        e->Code = HttpCode::OK;
-    }
-    else if (UrlStartWith(e->Url, "/api/logs/export"))
-    {
-        string ls = Command::Execute("cd ../logs;tar cf logs.tar *.log");
-        e->ResponseJson = "logs.tar";
         e->Code = HttpCode::OK;
     }
     else if (UrlStartWith(e->Url, "/api/report"))
@@ -247,6 +241,75 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
         {
             e->Code = HttpCode::NotFound;
         }
+    }
+    else if (UrlStartWith(e->Url, "/api/logs"))
+    {
+        vector<string> datas = StringEx::Split(e->Url, "?", true);
+        if (datas.size() > 1)
+        {
+            int logLevel = 0;
+            int logEvent = 0;
+            string startTime;
+            string endTime;
+            int pageNum = 0;
+            int pageSize = 0;
+            vector<string> params = StringEx::Split(datas[1], "&", true);
+            for (vector<string>::iterator mit = params.begin(); mit != params.end(); ++mit)
+            {
+                vector<string> pair = StringEx::Split(*mit, "=", true);
+                if (pair.size() >= 2)
+                {
+                    if (pair[0].compare("logLevel") == 0)
+                    {
+                        logLevel = StringEx::Convert<int>(pair[1]);
+                    }
+                    else if (pair[0].compare("logEvent") == 0)
+                    {
+                        logEvent = StringEx::Convert<int>(pair[1]);
+                    }
+                    else if (pair[0].compare("startTime") == 0)
+                    {
+                        startTime = pair[1];
+                        if (startTime.size() >= 19)
+                        {
+                            startTime = startTime.replace(10, 3, " ");
+                        }
+                    }
+                    else if (pair[0].compare("endTime") == 0)
+                    {
+                        endTime = pair[1];
+                        if (endTime.size() >= 19)
+                        {
+                            endTime = endTime.replace(10, 3, " ");
+                        }
+                    }
+                    else if (pair[0].compare("pageNum") == 0)
+                    {
+                        pageNum = StringEx::Convert<int>(pair[1]);
+                    }
+                    else if (pair[0].compare("pageSize") == 0)
+                    {
+                        pageSize = StringEx::Convert<int>(pair[1]);
+                    }
+                }
+            }
+            int total = 0;
+            vector<LogData> logDatas = SqliteLogger::GetDatas(logLevel, logEvent, startTime, endTime, pageNum, pageSize,&total);
+            string datasJson;
+            for (vector<LogData>::iterator it = logDatas.begin(); it != logDatas.end(); ++it)
+            {
+                string json;
+                JsonSerialization::SerializeValue(&json, "id", it->Id);
+                JsonSerialization::SerializeValue(&json, "logLevel", it->LogLevel);
+                JsonSerialization::SerializeValue(&json, "logEvent", it->LogEvent);
+                JsonSerialization::SerializeValue(&json, "time", it->Time);
+                JsonSerialization::SerializeValue(&json, "content", it->Content);
+                JsonSerialization::AddClassItem(&datasJson, json);
+            }
+            JsonSerialization::SerializeValue(&e->ResponseJson, "total", total);
+            JsonSerialization::SerializeArray(&e->ResponseJson, "datas", datasJson);
+        }
+        e->Code = HttpCode::OK;
     }
 }
 
@@ -369,7 +432,7 @@ bool TrafficStartup::UrlStartWith(const string& url, const string& key)
     else if (url.size() >= key.size())
     {
         return url.substr(0, key.size()).compare(key) == 0
-            && url[key.size()] == '/';
+            && (url[key.size()] == '/'|| url[key.size()] == '?');
     }
     else
     {
@@ -379,7 +442,7 @@ bool TrafficStartup::UrlStartWith(const string& url, const string& key)
 
 string TrafficStartup::GetId(const std::string& url, const std::string& key)
 {
-    return url.size() >= key.size() ? url.substr(key.size() + 1, url.size() - key.size() - 1) : string();
+    return url.size() > key.size() ? url.substr(key.size() + 1, url.size() - key.size() - 1) : string();
 }
 
 string TrafficStartup::GetErrorJson(const string& field, const string& message)
@@ -447,7 +510,8 @@ void TrafficStartup::StartCore()
     }
 
     //删除临时目录
-    Command::Execute("rm -rf ../temp/*");
+    Command::Execute(StringEx::Combine("mkdir -p ", TrafficDirectory::TempDir));
+    Command::Execute(StringEx::Combine("rm -rf ", TrafficDirectory::TempDir, "*"));
 
     //升级数据库
     UpdateDb();
@@ -467,28 +531,28 @@ void TrafficStartup::StartCore()
     int gbResult = vas_sdk_startup();
     if (gbResult >= 0)
     {
-        LogPool::Information(LogEvent::System, "国标sdk初始化成功，登陆句柄:",gbResult);
+        LogPool::Information(LogEvent::System, "init gb sdk,login handler:",gbResult);
     }
     else
     {
-        LogPool::Information(LogEvent::System, "国标sdk初始化失败,错误代码:", gbResult);
+        LogPool::Information(LogEvent::System, "init gb sdk failed,result:", gbResult);
     }
 
     GbParameter gbParameter = data.GetGbPrameter();
     if (gbParameter.ServerIp.empty())
     {
-        LogPool::Information(LogEvent::System, "国标服务地址未配置，略过登陆");
+        LogPool::Information(LogEvent::System, "not found gb serverip,skip login");
     }
     else
     {
         loginHandler = vas_sdk_login(const_cast<char*>(gbParameter.ServerIp.c_str()), gbParameter.ServerPort, const_cast<char*>(gbParameter.UserName.c_str()), const_cast<char*>(gbParameter.Password.c_str()));
         if (loginHandler >= 0)
         {
-            LogPool::Information(LogEvent::System, "国标sdk登陆成功");
+            LogPool::Information(LogEvent::System, "gb sdk login");
         }
         else
         {
-            LogPool::Information(LogEvent::System, "国标sdk登陆失败,错误代码:", loginHandler);
+            LogPool::Information(LogEvent::System, "gb sdk login failed,result:", loginHandler);
         }
     }
 #endif // !_WIN32
@@ -545,6 +609,8 @@ void TrafficStartup::StartCore()
     InitChannels();
     _socketMaid->Start();
   
+    int day = DateTime::Today().Day();
+
     while (!_cancelled)
     {
         string ps = Command::Execute("top -n 1|grep Genos.out");
@@ -557,9 +623,16 @@ void TrafficStartup::StartCore()
                 vector<string> datas = StringEx::Split(columns[4], "m", true);
                 if (!datas.empty())
                 {
-                    LogPool::Information(LogEvent::Monitor, "使用内存(MB):", datas[0]);
+                    LogPool::Information(LogEvent::Monitor, "memory(MB):", datas[0]);
                 }
             }
+        }
+        DateTime today = DateTime::Today();
+        if (day != today.Day())
+        {
+            DateTime removeTime = DateTime::ParseTimeStamp(today.UtcTimeStamp() - LogPool::HoldDays() * 24 * 60 * 60 * 1000);
+            SqliteLogger::RemoveDatas(removeTime);
+            day = today.Day();
         }
         this_thread::sleep_for(chrono::minutes(1));
     }

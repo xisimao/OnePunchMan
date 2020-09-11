@@ -31,14 +31,14 @@ namespace OnePunchMan
 		/**
 		* @brief: 获取文件名
 		* @param: path 路径字符串
-		* @return: 获取成功时返回文件名，失败时返回空字符串
+		* @return: 获取成功时返回文件名,失败时返回空字符串
 		*/
 		static std::string GetFileName(const std::string& path);
 
 		/**
 		* @brief: 获取文件后缀名
 		* @param: path 路径字符串
-		* @return: 获取成功时返回后缀名，失败时返回空字符串
+		* @return: 获取成功时返回后缀名,失败时返回空字符串
 		*/
 		static std::string GetExtension(const std::string& path);
 
@@ -81,7 +81,7 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 将最后一个元素拼接到路径上，该方法不会增加目录分隔符。
+		* @brief: 将最后一个元素拼接到路径上,该方法不会增加目录分隔符。
 		* @param: t 组成路径的最后一个的元素
 		*/
 		template<typename T>

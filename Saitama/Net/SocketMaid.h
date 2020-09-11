@@ -35,7 +35,7 @@ namespace OnePunchMan
 		* @brief: 添加监听地址
 		* @param: endPoint 监听地址
 		* @param: handler 套接字操作指针
-		* @return: 返回-1表示监听失败，否则返回套接字
+		* @return: 返回-1表示监听失败,否则返回套接字
 		*/
 		int AddListenEndPoint(const EndPoint& endPoint, SocketHandler* handler);
 
@@ -49,8 +49,8 @@ namespace OnePunchMan
 		/**
 		* @brief: 添加Udp套接字
 		* @param: handler 套接字操作指针
-		* @param: channelIndex 通道编号，-1表示自动适配
-		* @return: 返回-1表示绑定失败，否则返回套接字
+		* @param: channelIndex 通道编号,-1表示自动适配
+		* @return: 返回-1表示绑定失败,否则返回套接字
 		*/
 		int AddUdpSocket(SocketHandler* handler, int channelIndex = -1);
 
@@ -58,8 +58,8 @@ namespace OnePunchMan
 		* @brief: 添加Udp地址
 		* @param: endPoint Udp地址
 		* @param: handler 套接字操作指针
-		* @param: channelIndex 通道编号，-1表示自动适配
-		* @return: 返回-1表示绑定失败，否则返回套接字
+		* @param: channelIndex 通道编号,-1表示自动适配
+		* @return: 返回-1表示绑定失败,否则返回套接字
 		*/
 		int AddBindEndPoint(const EndPoint& endPoint, SocketHandler* handler, int channelIndex = -1);
 
@@ -67,8 +67,8 @@ namespace OnePunchMan
 		* @brief: 添加Udp多播地址
 		* @param: endPoint Udp地址
 		* @param: handler 套接字操作指针
-		* @param: channelIndex 通道编号，-1表示自动适配
-		* @return: 返回-1表示绑定失败，否则返回套接字
+		* @param: channelIndex 通道编号,-1表示自动适配
+		* @return: 返回-1表示绑定失败,否则返回套接字
 		*/
 		int AddMultiCastEndPoint(const EndPoint& endPoint, SocketHandler* handler, int channelIndex = -1);
 
@@ -110,7 +110,7 @@ namespace OnePunchMan
 		SocketResult SendTcp(unsigned short tag, const std::string& buffer);
 
 		/**
-		* @brief: 发送字节流，并等待响应，但是不关心返回结果
+		* @brief: 发送字节流,并等待响应,但是不关心返回结果
 		* @param: socket 套接字
 		* @param: buffer 字节流缓冲
 		* @param: timeStamp 发送时间戳
@@ -120,7 +120,7 @@ namespace OnePunchMan
 		SocketResult SendTcp(int socket, const std::string& buffer, long long timeStamp,unsigned int protocolId);
 
 		/**
-		* @brief: 发送字节流，并等待响应，但是不关心返回结果
+		* @brief: 发送字节流,并等待响应,但是不关心返回结果
 		* @param: endPoint 地址
 		* @param: buffer 字节流缓冲
 		* @param: timeStamp 发送时间戳
@@ -130,7 +130,7 @@ namespace OnePunchMan
 		SocketResult SendTcp(const EndPoint& endPoint, const std::string& buffer, long long timeStamp, unsigned int protocolId);
 
 		/**
-		* @brief: 发送字节流，并等待响应，但是不关心返回结果
+		* @brief: 发送字节流,并等待响应,但是不关心返回结果
 		* @param: tag 客户端标记
 		* @param: buffer 字节流缓冲
 		* @param: timeStamp 发送时间戳
@@ -140,7 +140,7 @@ namespace OnePunchMan
 		SocketResult SendTcp(unsigned short tag, const std::string& buffer, long long timeStamp, unsigned int protocolId);
 
 		/**
-		* @brief: 发送字节流，并等待响应，需要获取返回结果
+		* @brief: 发送字节流,并等待响应,需要获取返回结果
 		* @param: socket 套接字
 		* @param: buffer 字节流缓冲
 		* @param: timeStamp 发送时间戳
@@ -151,7 +151,7 @@ namespace OnePunchMan
 		SocketResult SendTcp(int socket, const std::string& buffer, long long timeStamp, unsigned int protocolId, std::string* responseBuffer);
 
 		/**
-		* @brief: 发送字节流，并等待响应，需要获取返回结果
+		* @brief: 发送字节流,并等待响应,需要获取返回结果
 		* @param: endPoint 地址
 		* @param: buffer 字节流缓冲
 		* @param: timeStamp 发送时间戳
@@ -162,7 +162,7 @@ namespace OnePunchMan
 		SocketResult SendTcp(const EndPoint& endPoint, const std::string& buffer, long long timeStamp, unsigned int protocolId, std::string* responseBuffer);
 
 		/**
-		* @brief: 发送字节流，并等待响应，需要获取返回结果
+		* @brief: 发送字节流,并等待响应,需要获取返回结果
 		* @param: tag 客户端标记
 		* @param: buffer 字节流缓冲
 		* @param: timeStamp 发送时间戳
@@ -197,7 +197,7 @@ namespace OnePunchMan
 		SocketResult SendUdp(const EndPoint& bindEndPoint, const EndPoint& remoteEndPoint, const std::string& buffer);
 
 		/**
-		* @brief: 发送字节流，并等待响应，但是不关心返回结果
+		* @brief: 发送字节流,并等待响应,但是不关心返回结果
 		* @param: socket 套接字
 		* @param: remoteEndPoint 远程地址
 		* @param: buffer 字节流缓冲
@@ -208,7 +208,7 @@ namespace OnePunchMan
 		SocketResult SendUdp(int socket, const EndPoint& remoteEndPoint, const std::string& buffer, long long timeStamp, unsigned int protocolId);
 
 		/**
-		* @brief: 发送字节流，并等待响应，但是不关心返回结果
+		* @brief: 发送字节流,并等待响应,但是不关心返回结果
 		* @param: bindEndPoint 绑定地址
 		* @param: remoteEndPoint 远程地址
 		* @param: buffer 字节流缓冲
@@ -219,7 +219,7 @@ namespace OnePunchMan
 		SocketResult SendUdp(const EndPoint& bindEndPoint, const EndPoint& remoteEndPoint, const std::string& buffer, long long timeStamp, unsigned int protocolId);
 
 		/**
-		* @brief: 发送字节流，并等待响应，需要获取返回结果
+		* @brief: 发送字节流,并等待响应,需要获取返回结果
 		* @param: socket 套接字
 		* @param: remoteEndPoint 远程地址
 		* @param: buffer 字节流缓冲
@@ -231,7 +231,7 @@ namespace OnePunchMan
 		SocketResult SendUdp(int socket, const EndPoint& remoteEndPoint, const std::string& buffer, long long timeStamp, unsigned int protocolId,std::string* responseBuffer);
 
 		/**
-		* @brief: 发送字节流，并等待响应，需要获取返回结果
+		* @brief: 发送字节流,并等待响应,需要获取返回结果
 		* @param: bindEndPoint 绑定地址
 		* @param: remoteEndPoint 远程地址
 		* @param: buffer 字节流缓冲
@@ -291,13 +291,13 @@ namespace OnePunchMan
 
 		/**
 		* @brief: 轮询选择通道
-		* @param: index 通道序号，-1表示轮询，否则表示指定序号
-		* @return: 返回Null表示没有可用通道，否则返回通道指针
+		* @param: index 通道序号,-1表示轮询,否则表示指定序号
+		* @return: 返回Null表示没有可用通道,否则返回通道指针
 		*/
 		SocketChannel* Select(int index=-1);
 
 		/**
-		* @brief: 发送字节流，实现异步通知功能
+		* @brief: 发送字节流,实现异步通知功能
 		* @param: socket 套接字
 		* @param: buffer 字节流缓冲
 		* @param: handler 异步接口
@@ -306,7 +306,7 @@ namespace OnePunchMan
 		SocketResult SendTcp(int socket, const std::string& buffer, AsyncHandler* handler);
 
 		/**
-		* @brief: 发送字节流，实现异步通知功能
+		* @brief: 发送字节流,实现异步通知功能
 		* @param: endPoint 地址
 		* @param: buffer 字节流缓冲
 		* @param: handler 异步接口
@@ -315,7 +315,7 @@ namespace OnePunchMan
 		SocketResult SendTcp(const EndPoint& endPoint, const std::string& buffer, AsyncHandler* handler);
 
 		/**
-		* @brief: 发送字节流，实现异步通知功能
+		* @brief: 发送字节流,实现异步通知功能
 		* @param: tag 客户端标记
 		* @param: buffer 字节流缓冲
 		* @param: handler 异步接口
@@ -324,7 +324,7 @@ namespace OnePunchMan
 		SocketResult SendTcp(unsigned short tag, const std::string& buffer, AsyncHandler* handler);
 
 		/**
-		* @brief: 发送字节流，实现异步通知功能
+		* @brief: 发送字节流,实现异步通知功能
 		* @param: socket 套接字
 		* @param: remoteEndPoint 远程地址
 		* @param: buffer 字节流缓冲
@@ -334,7 +334,7 @@ namespace OnePunchMan
 		SocketResult SendUdp(int socket, const EndPoint& remoteEndPoint, const std::string& buffer, AsyncHandler* handler);
 
 		/**
-		* @brief: 发送字节流，实现异步通知功能
+		* @brief: 发送字节流,实现异步通知功能
 		* @param: bindEndPoint 绑定地址
 		* @param: remoteEndPoint 远程地址
 		* @param: buffer 字节流缓冲

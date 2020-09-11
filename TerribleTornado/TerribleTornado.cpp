@@ -3,6 +3,7 @@
 #include "IoAdapter.h"
 #include "EncodeChannel.h"
 #include "DecodeChannel.h"
+#include "SqliteLogger.h"
 
 using namespace std;
 using namespace OnePunchMan;
@@ -10,13 +11,15 @@ using namespace OnePunchMan;
 
 int main(int argc, char* argv[])
 {
-
-    LogPool::Init("appsettings.json");
-    string s = DateTime::ParseTimeStamp(DateTime::UtcNowTimeStamp()).ToString();;
-
-    EventStartup traffic;
-    traffic.Start();
-    system("pause");
+    JsonDeserialization jd("appsettings.json");
+    LogPool::Init(jd);
+    TrafficDirectory::Init(jd);
+    TrafficData::Init(jd.Get<string>("Event:Db"));
+    SqliteLogger logger(TrafficData::DbName);
+    LogPool::AddLogger(&logger);
+    EventStartup startup;
+    startup.Start();
+    startup.Join();
 
     return 0;
 }

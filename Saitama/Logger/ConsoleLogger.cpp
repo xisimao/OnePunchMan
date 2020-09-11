@@ -9,7 +9,7 @@ ConsoleLogger::ConsoleLogger(LogLevel minLevel, LogLevel maxLevel)
 	
 }
 
-void ConsoleLogger::LogCore(const std::string& log)
+void ConsoleLogger::LogCore(LogLevel logLevel, LogEvent logEvent, const DateTime& time, const string& content)
 {
-	cout<<log;
+	cout<< content;
 }

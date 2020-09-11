@@ -44,7 +44,7 @@ namespace OnePunchMan
 		/**
 		* @brief: 检查视频输出是否完成
 		* @param: outputUrl 视频输出地址
-		* @return: 如果视频输出已经完成返回true并自动卸载，但是不会删除文件
+		* @return: 如果视频输出已经完成返回true并自动卸载,但是不会删除文件
 		*/
 		bool OutputFinished(const std::string& outputUrl);
 

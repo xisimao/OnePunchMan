@@ -3,10 +3,10 @@
 #include <set>
 #include <string>
 
-#include "FileConfig.h"
 #include "Logger.h"
 #include "ConsoleLogger.h"
 #include "FileLogger.h"
+#include "JsonFormatter.h"
 
 namespace OnePunchMan
 {
@@ -24,14 +24,15 @@ namespace OnePunchMan
 
 		/**
 		* @brief: 初始化日志
-		* @param: filePath 配置文件路径
+		* @param: jd json解析
 		*/
-		static void Init(const std::string& filePath);
+		static void Init(const JsonDeserialization& jd);
 
 		/**
-		* @brief: 卸载日志
+		* @brief: 添加日志写入
+		* @param: logger 日志写入指针
 		*/
-		static void Uninit();
+		static void AddLogger(Logger* logger);
 
 		/**
 		* @brief: 调试日志
@@ -153,25 +154,25 @@ namespace OnePunchMan
 
 		/**
 		* @brief: 构造函数
-		* @param: filePath 配置文件路径
+		* @param: jd json解析
 		*/
-		LogPool(const std::string& filePath);
+		LogPool(const JsonDeserialization& jd);
 
 		/**
 		* @brief: 从配置文件读取日志类型
-		* @param: config 配置文件
+		* @param: jd json解析
 		* @param: key 日志级别对应的配置项key
-		* @return: 如果读取成功返回类型，否则返回None
+		* @return: 如果读取成功返回类型,否则返回None
 		*/
-		LogType ReadType(const FileConfig& config, const std::string& key);
+		LogType ReadType(const JsonDeserialization& jd, const std::string& key);
 
 		/**
 		* @brief: 从配置文件读取日志级别
-		* @param: config 配置文件
+		* @param: jd json解析
 		* @param: key 日志级别对应的配置项key
-		* @return: 如果读取成功返回级别，否则返回None
+		* @return: 如果读取成功返回级别,否则返回None
 		*/
-		LogLevel ReadLevel(const FileConfig& config, const std::string& key);
+		LogLevel ReadLevel(const JsonDeserialization& jd, const std::string& key);
 
 		/**
 		* @brief: 写日志
@@ -186,15 +187,16 @@ namespace OnePunchMan
 			{
 				return;
 			}
+			DateTime time = DateTime::Now();
 			std::stringstream ss;
-			ss << "[" << DateTime::Now().ToString() << "]";
+			ss << "[" << time.ToString() << "]";
 			ss << "[" << (int)logLevel << "]";
 			ss << "[" << (int)logEvent << "] ";
 			ContentFormat(&ss, t, u...);
 			std::lock_guard<std::mutex> lck(_mutex);
 			for (std::set<Logger*>::iterator it = _loggers.begin(); it != _loggers.end(); ++it)
 			{
-				(*it)->Log(logLevel, ss.str());
+				(*it)->Log(logLevel,logEvent,time, ss.str());
 			}
 		}
 

@@ -41,7 +41,7 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 通知提供程序：某观察程序将要接收通知。
+		* @brief: 通知提供程序:某观察程序将要接收通知。
 		* @param: observer 观察者
 		*/
 		void Subscribe(IObserver<T>* observer)
@@ -51,7 +51,7 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 通知提供程序：某观察程序将要取消通知。
+		* @brief: 通知提供程序:某观察程序将要取消通知。
 		* @param: observer 观察者
 		*/
 		void Unsubscribe(IObserver<T>*  observer)

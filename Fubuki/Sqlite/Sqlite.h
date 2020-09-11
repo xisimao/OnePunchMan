@@ -63,6 +63,13 @@ namespace OnePunchMan
 		void EndQuery();
 
 		/**
+		* @brief: 查询语句
+		* @param: sql sql语句
+		* @return: 查询所返回的结果集中第一行的第一列
+		*/
+		int ExecuteScalar(const std::string& sql);
+
+		/**
 		* @brief: 获取最后一次错误消息
 		* @return: 最后一次错误消息
 		*/
@@ -101,6 +108,12 @@ namespace OnePunchMan
 		* @brief: 析构函数
 		*/
 		~SqliteWriter();
+
+		/**
+		* @brief: 执行语句不关心返回结果,即使出错也不会记录错误日志
+		* @param: sql sql语句
+		*/
+		void Execute(const std::string& sql);
 
 		/**
 		* @brief: 执行语句并返回影响行数

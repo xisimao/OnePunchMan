@@ -159,6 +159,7 @@
     <ClCompile Include="Image\IVEHandler.cpp" />
     <ClCompile Include="Image\YUV420PHandler.cpp" />
     <ClCompile Include="Image\YUV420SPHandler.cpp" />
+    <ClCompile Include="Traffic\SqliteLogger.cpp" />
     <ClCompile Include="TerribleTornado.cpp" />
     <ClCompile Include="Traffic\DecodeChannel.cpp" />
     <ClCompile Include="Traffic\EncodeChannel.cpp" />
@@ -184,6 +185,7 @@
     <ClInclude Include="Image\IVEHandler.h" />
     <ClInclude Include="Image\YUV420PHandler.h" />
     <ClInclude Include="Image\YUV420SPHandler.h" />
+    <ClInclude Include="Traffic\SqliteLogger.h" />
     <ClInclude Include="Traffic\DecodeChannel.h" />
     <ClInclude Include="Traffic\EncodeChannel.h" />
     <ClInclude Include="Event\EventData.h" />

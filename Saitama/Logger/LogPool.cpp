@@ -3,36 +3,33 @@
 using namespace std;
 using namespace OnePunchMan;
 
-LogPool* LogPool::_instance=NULL;
+LogPool* LogPool::_instance= NULL;
 
-LogPool::LogPool(const string& filePath)
+LogPool::LogPool(const JsonDeserialization& jd)
 {
-	//读取文件日志参数
-	FileConfig config(filePath);
-
 	//读取配置文件
-	_directory = config.Get("Logging:Directory", string("logs"));
-	_holdDays = config.Get<unsigned int>("Logging:HoldDays");
-	_defaultLevel = ReadLevel(config, "Logging:Default");
+	_directory = jd.Get("Logging:Directory", string("logs"));
+	_holdDays = jd.Get<unsigned int>("Logging:HoldDays");
+	_defaultLevel = ReadLevel(jd,"Logging:Default");
 	//添加文件日志
 	unsigned int index = 0;
 	while (true)
 	{
 		string loggerTag = StringEx::Combine("Logging:Logger:", index);
-		LogType type = ReadType(config, loggerTag + ":Type");
+		LogType type = ReadType(jd, loggerTag + ":Type");
 		if (type == LogType::None)
 		{
 			break;
 		}
-		LogLevel minLevel = ReadLevel(config, loggerTag + ":MinLevel");
-		LogLevel maxLevel = ReadLevel(config, loggerTag + ":MaxLevel");
+		LogLevel minLevel = ReadLevel(jd, loggerTag + ":MinLevel");
+		LogLevel maxLevel = ReadLevel(jd, loggerTag + ":MaxLevel");
 		if (type == LogType::Console)
 		{
 			_loggers.insert(new ConsoleLogger(minLevel, maxLevel));
 		}
 		else if (type == LogType::File)
 		{
-			string name = config.Get<string>(loggerTag + ":Name");
+			string name = jd.Get<string>(loggerTag + ":Name");
 			if (!name.empty())
 			{
 				_loggers.insert(new FileLogger(minLevel, maxLevel, name, _directory, _holdDays));
@@ -49,17 +46,15 @@ LogPool::~LogPool()
 	});
 }
 
-void LogPool::Init(const std::string& filePath)
+void LogPool::Init(const JsonDeserialization& jd)
 {
-	_instance = new LogPool(filePath);
+	_instance = new LogPool(jd);
 }
 
-void LogPool::Uninit()
+void LogPool::AddLogger(Logger* logger)
 {
-	if (_instance != NULL)
-	{
-		delete _instance;
-	}
+	std::lock_guard<std::mutex> lck(_instance->_mutex);
+	_instance->_loggers.insert(logger);
 }
 
 string LogPool::Directory()
@@ -86,9 +81,9 @@ int LogPool::HoldDays()
 	}
 }
 
-LogType LogPool::ReadType(const FileConfig& config, const string& key)
+LogType LogPool::ReadType(const JsonDeserialization& jd, const string& key)
 {
-	string value = config.Get<string>(key);
+	string value = jd.Get<string>(key);
 	if (!value.empty())
 	{
 		value = StringEx::ToUpper(value);
@@ -104,9 +99,9 @@ LogType LogPool::ReadType(const FileConfig& config, const string& key)
 	return LogType::None;
 }
 
-LogLevel LogPool::ReadLevel(const FileConfig& config, const string& key)
+LogLevel LogPool::ReadLevel(const JsonDeserialization& jd, const string& key)
 {
-	string value = config.Get<string>(key);
+	string value = jd.Get<string>(key);
 	if (!value.empty())
 	{
 		value = StringEx::ToUpper(value);

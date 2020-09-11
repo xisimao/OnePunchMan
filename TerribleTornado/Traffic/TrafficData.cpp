@@ -3,17 +3,21 @@
 using namespace std;
 using namespace OnePunchMan;
 
-string TrafficData::_dbName("");
+string TrafficData::DbName("");
+
+string TrafficDirectory::TempDir;
+string TrafficDirectory::FileDir;
+string TrafficDirectory::FileLink;
 
 TrafficData::TrafficData()
-	:_sqlite(_dbName)
+	:_sqlite(DbName)
 {
 
 }
 
 void TrafficData::Init(const std::string& dbName)
 {
-	_dbName = dbName;
+	DbName = dbName;
 }
 
 string TrafficData::LastError()
@@ -73,7 +77,7 @@ string TrafficData::ClearChannel()
 string TrafficData::GetParameter(const string& key)
 {
 	string sql(StringEx::Combine("Select Value From System_Parameter Where Key='", key, "'"));
-	SqliteReader sqlite(_dbName);
+	SqliteReader sqlite(DbName);
 	string value;
 	if (sqlite.BeginQuery(sql))
 	{
@@ -95,7 +99,7 @@ bool TrafficData::SetParameter(const string& key, const string& value)
 GbParameter TrafficData::GetGbPrameter()
 {
 	string sql("Select * From GB_Config Limit 1");
-	SqliteReader sqlite(_dbName);
+	SqliteReader sqlite(DbName);
 	GbParameter parameter;
 	if (sqlite.BeginQuery(sql))
 	{
@@ -135,7 +139,7 @@ bool TrafficData::SetGbPrameter(const GbParameter& parameter)
 vector<GbDevice> TrafficData::GetGbDeviceList()
 {
 	vector<GbDevice> devices;
-	SqliteReader sqlite(_dbName);
+	SqliteReader sqlite(DbName);
 	if (sqlite.BeginQuery("Select DeviceId,GbId,DeviceName,DeviceIp,DevicePort,UserName,Password From GB_Device"))
 	{
 		while (sqlite.HasRow())
@@ -192,7 +196,7 @@ bool TrafficData::DeleteGbDevice(int deviceId)
 vector<GbChannel> TrafficData::GetGbChannelList(const string& deviceId)
 {
 	string sql(StringEx::Combine("Select Id,ChannelId,ChannelName From GB_Channel Where DeviceId='", deviceId,"'"));
-	SqliteReader sqlite(_dbName);
+	SqliteReader sqlite(DbName);
 	vector<GbChannel> channels;
 	if (sqlite.BeginQuery(sql))
 	{
@@ -211,7 +215,7 @@ vector<GbChannel> TrafficData::GetGbChannelList(const string& deviceId)
 
 void TrafficData::UpdateDb()
 {
-	SqliteReader sqlite(_dbName);
+	SqliteReader sqlite(DbName);
 	string sql("Select * From System_Parameter Limit 1");
 	if (!sqlite.BeginQuery(sql))
 	{
@@ -227,6 +231,12 @@ void TrafficData::UpdateDb()
 		_sqlite.ExecuteRowCount("CREATE TABLE[GB_Config]([ServerId] text NOT NULL, [ServerIp] text NOT NULL, [ServerPort] bigint NOT NULL, [SipPort] bigint NOT NULL, [SipType] bigint NOT NULL, [GbId] text NOT NULL, [DomainId] text NOT NULL, [UserName] text NOT NULL, [Password] text NOT NULL, CONSTRAINT[sqlite_autoindex_GB_Config] PRIMARY KEY([ServerId]));");
 		_sqlite.ExecuteRowCount("CREATE TABLE[GB_Device]([DeviceId] INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, [DeviceName] text NOT NULL, [DeviceIp] text NOT NULL, [DevicePort] bigint NOT NULL, [GbId] text NOT NULL, [UserName] text NOT NULL, [Password] text NOT NULL);");	
 		_sqlite.ExecuteRowCount("CREATE TABLE[GB_Channel]([Id] INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, [ChannelId] text NOT NULL, [ChannelName] text NOT NULL, [DeviceId] text NOT NULL);CREATE UNIQUE INDEX[GB_Channel_GB_Channel_ChannelId] ON[GB_Channel]([ChannelId] ASC);");	
+	}
+
+	sql = "Select * From System_Log Limit 1";
+	if (!sqlite.BeginQuery(sql))
+	{
+		_sqlite.ExecuteRowCount("CREATE TABLE [System_Log] ([Id] INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, [LogLevel] bigint NOT NULL, [LogEvent] bigint NOT NULL, [Time] text NOT NULL, [Content] text NOT NULL);");
 	}
 
 }

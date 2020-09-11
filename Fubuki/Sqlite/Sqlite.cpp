@@ -28,6 +28,20 @@ void SqliteReader::LogError()
 	LogPool::Error(LogEvent::Sqlite, _lastError);
 }
 
+int SqliteReader::ExecuteScalar(const string& sql)
+{
+	int value = 0;
+	if (BeginQuery(sql))
+	{
+		if (HasRow())
+		{
+			value = GetInt(0);
+		}
+		EndQuery();
+	}
+	return value;
+}
+
 bool SqliteReader::BeginQuery(const string& sql)
 {
 	int result=sqlite3_prepare_v2(_db, sql.c_str(), -1, &_stmt, NULL);
@@ -123,6 +137,11 @@ void SqliteWriter::LogError()
 {
 	_lastError = string(sqlite3_errmsg(_db));
 	LogPool::Error(LogEvent::Sqlite, _lastError);
+}
+
+void SqliteWriter::Execute(const std::string& sql)
+{
+	sqlite3_exec(_db, sql.c_str(), NULL, NULL, NULL);
 }
 
 int SqliteWriter::ExecuteRowCount(const std::string& sql)

@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <fstream>
 
 #include "StringEx.h"
 
@@ -11,7 +12,6 @@ namespace OnePunchMan
 	class JsonSerialization
 	{
 	public:
-
 		/**
 		* @brief: 序列化字段
 		* @param: json 用于存放序列化结果的字符串
@@ -205,12 +205,7 @@ namespace OnePunchMan
 		*/
 		JsonDeserialization(const std::string& json);
 
-		/**
-		* @brief: 反序列化Json
-		* @param: json json字符串
-		* @param: prefix key前缀
-		*/
-		void Deserialize(const std::string& json, const std::string& prefix = "");
+
 
 		/**
 		* @brief: 读取json
@@ -329,12 +324,18 @@ namespace OnePunchMan
 		}
 	
 	private:
+		/**
+		* @brief: 反序列化Json
+		* @param: json json字符串
+		* @param: prefix key前缀
+		*/
+		void Deserialize(const std::string& json, const std::string& prefix = "");
 
 		/**
 		* @brief: 截取字符串。
 		* @param: json json字符串
 		* @param: offset 从开头略过的字符数
-		* @return: 第一个参数表示搜索的长度，第二个参数表示截取结果，成功返回字段的值，如果搜索失败返回空字符串
+		* @return: 第一个参数表示搜索的长度,第二个参数表示截取结果,成功返回字段的值,如果搜索失败返回空字符串
 		*/
 		std::tuple<size_t, std::string> CutString(const std::string& json, size_t offset);
 
@@ -342,7 +343,7 @@ namespace OnePunchMan
 		* @brief: 截取数字。
 		* @param: json json字符串
 		* @param: offset 从开头略过的字符数
-		* @return: 第一个参数表示搜索的长度，第二个参数表示截取结果，成功返回字段的值，如果搜索失败返回空字符串
+		* @return: 第一个参数表示搜索的长度,第二个参数表示截取结果,成功返回字段的值,如果搜索失败返回空字符串
 		*/
 		std::tuple<size_t, std::string> CutInteger(const std::string& json, size_t offset);
 
@@ -352,7 +353,7 @@ namespace OnePunchMan
 		* @param: offset 从开头略过的字符数
 		* @param: head 开始标记
 		* @param: tail 结束标记
-		* @return: 第一个参数表示搜索的长度，第二个参数表示截取结果，成功返回字段的值，如果搜索失败返回空字符串
+		* @return: 第一个参数表示搜索的长度,第二个参数表示截取结果,成功返回字段的值,如果搜索失败返回空字符串
 		*/
 		static std::tuple<size_t, std::string> CutByTag(const std::string& json, size_t offset, char head, char tail);
 
@@ -368,7 +369,7 @@ namespace OnePunchMan
 		* @param: json json字符串
 		* @param: t 字段值的指针
 		* @param: offset 从开头略过的字符数
-		* @return: 解析成功返回解析的总字符数，否则返回0
+		* @return: 解析成功返回解析的总字符数,否则返回0
 		*/
 		template<typename T>
 		static size_t FindItem(const std::string& json, T* t, size_t offset)
@@ -401,7 +402,7 @@ namespace OnePunchMan
 		* @param: json json字符串
 		* @param: t 字段值的指针
 		* @param: offset 从开头略过的字符数
-		* @return: 解析成功返回解析的总字符数，否则返回0
+		* @return: 解析成功返回解析的总字符数,否则返回0
 		*/
 		static size_t FindItem(const std::string& json, std::string* t, size_t offset)
 		{

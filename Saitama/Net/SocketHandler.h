@@ -30,7 +30,7 @@ namespace OnePunchMan
 		* @brief: 发送字节流
 		* @param: socket 套接字
 		* @param: buffer 字节流缓冲
-		* @param: handler 异步操作指针，不使用传入NULL
+		* @param: handler 异步操作指针,不使用传入NULL
 		* @return: 发送结果
 		*/
 		SocketResult SendTcp(int socket, const std::string& buffer, AsyncHandler* handler);
@@ -40,7 +40,7 @@ namespace OnePunchMan
 		* @param: socket 套接字
 		* @param: remoteEndPoint 远程地址
 		* @param: buffer 字节流缓冲
-		* @param: handler 异步操作指针，不使用传入NULL
+		* @param: handler 异步操作指针,不使用传入NULL
 		* @return: 发送结果
 		*/
 		SocketResult SendUdp(int socket, const EndPoint& remoteEndPoint, const std::string& buffer, AsyncHandler* handler);

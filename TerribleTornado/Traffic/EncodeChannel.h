@@ -63,7 +63,7 @@ namespace OnePunchMan
         * @param: encodeCount 编码器总数
         * @param: width 编码宽度
         * @param: height 编码高度
-        * @return: 初始化成功返回true，否则返回false
+        * @return: 初始化成功返回true,否则返回false
         */
         static bool InitHisi(int encodeCount, int width, int height);
 

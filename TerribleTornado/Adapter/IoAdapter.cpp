@@ -46,7 +46,6 @@ void IoAdapter::Update(MqttReceivedEventArgs* e)
 
 void IoAdapter::StartCore()
 {
-	TrafficData::Init("flow.db");
 	Socket::Init();
 	MqttChannel::Init();
 	_maid = new SocketMaid(0,true);

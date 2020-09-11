@@ -100,7 +100,7 @@ void FileLogger::Close()
 	}
 }
 
-void FileLogger::LogCore(const std::string& log)
+void FileLogger::LogCore(LogLevel logLevel, LogEvent logEvent, const DateTime& time, const string& content)
 {
 	DateTime today = DateTime::Today();
 	if (_date != today)
@@ -111,6 +111,6 @@ void FileLogger::LogCore(const std::string& log)
 		Open();
 	}
 
-	_file << log;
+	_file << content;
 	_file.flush();
 }

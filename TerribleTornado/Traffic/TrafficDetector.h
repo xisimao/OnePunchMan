@@ -6,6 +6,7 @@
 #include "MqttChannel.h"
 #include "IVEHandler.h"
 #include "ImageConvert.h"
+#include "TrafficData.h"
 
 namespace OnePunchMan
 {
@@ -223,7 +224,7 @@ namespace OnePunchMan
 	protected:
 		/**
 		* @brief: 获取车道检测参数
-		* @param: regions 车道区域集合，json字符串
+		* @param: regions 车道区域集合,json字符串
 		* @return: 车道检测参数
 		*/
 		std::string GetDetectParam(const std::string& regions);

@@ -8,32 +8,36 @@ const int EventDataChannel::MaxDataCount = 50;
 const string EventDataChannel::EventTopic("Event");
 
 EventDataChannel::EventDataChannel(MqttChannel* mqtt)
-	:ThreadObject("event data"), _writer("event.db"), _mqtt(mqtt),_datas(),_tempDatas()
+	:ThreadObject("event data"), _writer(TrafficData::DbName), _mqtt(mqtt),_datas(),_tempDatas()
 {
 
 }
 
-void EventDataChannel::Init()
+vector<EventData> EventDataChannel::GetDatas(int channelIndex)
 {
-	SqliteReader reader("event.db");
-	if (reader.BeginQuery("Select * From Event_Data"))
+	SqliteReader reader(TrafficData::DbName);
+	string sql = "Select * From Event_Data Where ";
+	sql.append(channelIndex==0? "1=1" : StringEx::Combine("ChannelIndex=", channelIndex));
+	vector<EventData> datas;
+	if (reader.BeginQuery(sql))
 	{
 		while (reader.HasRow())
 		{
 			EventData data;
 			data.Id = reader.GetInt(0);
-			data.Guid = reader.GetString(1);
-			data.ChannelUrl = reader.GetString(2);
-			data.LaneIndex = reader.GetInt(3);
+			data.ChannelIndex = reader.GetInt(1);
+			data.LaneIndex = reader.GetInt(2);
+			data.Guid = reader.GetString(3);		
 			data.TimeStamp = reader.GetLong(4);
 			data.Type = reader.GetInt(5);
-			_datas.push(data);
+			datas.push_back(data);
 		}
 		reader.EndQuery();
 	}
+	return datas;
 }
 
-void EventDataChannel::Push(const EventData& data)
+void EventDataChannel::AddData(const EventData& data)
 {
 	lock_guard<mutex> lck(_mutex);
 	_tempDatas.push(data);
@@ -41,6 +45,11 @@ void EventDataChannel::Push(const EventData& data)
 
 void EventDataChannel::StartCore()
 {
+	vector<EventData> datas = GetDatas();
+	for (vector<EventData>::iterator it = datas.begin(); it != datas.end(); ++it)
+	{
+		_datas.push(*it);
+	}
 	while (!_cancelled)
 	{
 		if (_tempDatas.empty())
@@ -54,17 +63,17 @@ void EventDataChannel::StartCore()
 			_tempDatas.pop();
 			lck.unlock();
 
-			string insertSql = StringEx::Combine("Insert Into Event_Data (Id,Guid,ChannelUrl,LaneIndex,TimeStamp,Type) Values "
+			string insertSql = StringEx::Combine("Insert Into Event_Data (Id,Guid,ChannelIndex,LaneIndex,TimeStamp,Type) Values "
 				, "(NULL,"
 				, "'", data.Guid, "',"
-				, "'", data.ChannelUrl, "',"
+				, data.ChannelIndex, ","
 				, data.LaneIndex, ","
 				, data.TimeStamp, ","
 				, data.Type, ")");
 			int id = _writer.ExecuteKey(insertSql);
 			if (id != -1)
 			{
-				LogPool::Information(LogEvent::Event, "添加事件数据", data.Guid);
+				LogPool::Information(LogEvent::Event, "add event data ", data.Guid);
 				data.Id = id;
 				rename(data.GetTempImage(1).c_str(), data.GetImage(1).c_str());
 				rename(data.GetTempImage(2).c_str(), data.GetImage(2).c_str());
@@ -72,7 +81,7 @@ void EventDataChannel::StartCore()
 				_datas.push(data);
 
 				string json;
-				JsonSerialization::SerializeValue(&json, "channelUrl", data.ChannelUrl);
+				JsonSerialization::SerializeValue(&json, "channelIndex", data.ChannelIndex);
 				JsonSerialization::SerializeValue(&json, "laneIndex", data.LaneIndex);
 				JsonSerialization::SerializeValue(&json, "timeStamp", data.TimeStamp);
 				JsonSerialization::SerializeValue(&json, "type", data.Type);
@@ -93,7 +102,7 @@ void EventDataChannel::StartCore()
 					remove(removeData.GetImage(1).c_str());
 					remove(removeData.GetImage(2).c_str());
 					remove(removeData.GetVideo().c_str());
-					LogPool::Information(LogEvent::Event, "删除添加事件数据", removeData.TimeStamp);
+					LogPool::Information(LogEvent::Event, "remove event data ", removeData.TimeStamp);
 				}
 			}
 		}

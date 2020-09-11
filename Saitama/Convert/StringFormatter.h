@@ -104,7 +104,7 @@ namespace OnePunchMan
 		* @param: size 节流的长度。
 		* @param: t 当前递归到的反序列化的第一项
 		* @param: ...u 反序列化的其他项
-		* @return: 如果反序列化成功返回使用的字节流长度，如果失败返回0。
+		* @return: 如果反序列化成功返回使用的字节流长度,如果失败返回0。
 		*/
 		template<typename T, typename ...U>
 		static unsigned int Deserialize(std::string::const_iterator begin, std::string::const_iterator end, T* t, U... u)
@@ -133,7 +133,7 @@ namespace OnePunchMan
 		* @param: buffer 包含要反序列化的数据的字节流缓冲。
 		* @param: size 字节流长度。
 		* @param: value 布尔类型指针。
-		* @return: 如果反序列化成功返回使用的字节流长度，如果失败返回0。
+		* @return: 如果反序列化成功返回使用的字节流长度,如果失败返回0。
 		*/
 		static unsigned int Deserialize(std::string::const_iterator begin, std::string::const_iterator end, bool* value);
 
@@ -142,7 +142,7 @@ namespace OnePunchMan
 		* @param: buffer 包含要反序列化的数据的字节流缓冲。
 		* @param: size 字节流长度。
 		* @param: value 数字指针
-		* @return: 如果反序列化成功返回使用的字节流长度，如果失败返回0。
+		* @return: 如果反序列化成功返回使用的字节流长度,如果失败返回0。
 		*/
 		template<typename T>
 		static unsigned int Deserialize(std::string::const_iterator begin, std::string::const_iterator end, T* value)
@@ -169,7 +169,7 @@ namespace OnePunchMan
 		* @param: buffer 包含要反序列化的数据的字节流缓冲。
 		* @param: size 字节流长度。
 		* @param: value 单字节浮点类型指针。
-		* @return: 如果反序列化成功返回使用的字节流长度，如果失败返回0。
+		* @return: 如果反序列化成功返回使用的字节流长度,如果失败返回0。
 		*/
 		static unsigned int Deserialize(std::string::const_iterator begin, std::string::const_iterator end, float* value);
 
@@ -178,7 +178,7 @@ namespace OnePunchMan
 		* @param: buffer 包含要反序列化的数据的字节流缓冲。
 		* @param: size 字节流长度。
 		* @param: value 双字节浮点类型指针。
-		* @return: 如果反序列化成功返回使用的字节流长度，如果失败返回0。
+		* @return: 如果反序列化成功返回使用的字节流长度,如果失败返回0。
 		*/
 		static unsigned int Deserialize(std::string::const_iterator begin, std::string::const_iterator end, double* value);
 
@@ -187,7 +187,7 @@ namespace OnePunchMan
 		* @param: buffer 包含要反序列化的数据的字节流缓冲。
 		* @param: size 字节流长度。
 		* @param: value 字符串浮点类型指针。
-		* @return: 如果反序列化成功返回使用的字节流长度，如果失败返回0。
+		* @return: 如果反序列化成功返回使用的字节流长度,如果失败返回0。
 		*/
 		static unsigned int Deserialize(std::string::const_iterator begin, std::string::const_iterator end, std::string* value);
 
@@ -196,7 +196,7 @@ namespace OnePunchMan
 		* @param: buffer 包含要反序列化的数据的字节流缓冲。
 		* @param: size 字节流长度
 		* @param: values 列表指针
-		* @return: 如果反序列化成功返回使用的使用的字节流长度，如果失败返回0。
+		* @return: 如果反序列化成功返回使用的使用的字节流长度,如果失败返回0。
 		*/
 		template<typename T>
 		static unsigned int Deserialize(std::string::const_iterator begin, std::string::const_iterator end, std::vector<T>* values)
@@ -230,7 +230,7 @@ namespace OnePunchMan
 		* @param: buffer 包含要反序列化的数据的字节流缓冲。
 		* @param: size 字节流长度
 		* @param: values 集合指针
-		* @return: 如果反序列化成功返回使用的使用的字节流长度，如果失败返回0。
+		* @return: 如果反序列化成功返回使用的使用的字节流长度,如果失败返回0。
 		*/
 		template<typename T>
 		static unsigned int Deserialize(std::string::const_iterator begin, std::string::const_iterator end, std::set<T>* values)

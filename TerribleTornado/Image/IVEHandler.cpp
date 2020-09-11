@@ -5,8 +5,8 @@ using namespace OnePunchMan;
 
 const int IVEHandler::HeaderSize = 54;
 
-IVEHandler::IVEHandler(int count)
-	:_index(0), _count(count)
+IVEHandler::IVEHandler(const std::string& fileDir, int count)
+	:_fileDir(fileDir),_index(0), _count(count)
 {
 
 }
@@ -17,7 +17,7 @@ void IVEHandler::HandleFrame(const unsigned char* ive, int width, int height, un
 	{
 		return;
 	}
-	FILE* fw = fopen(StringEx::Combine("../images/channel_", frameIndex, ".bmp").c_str(), "wb");
+	FILE* fw = fopen(StringEx::Combine(_fileDir,"channel_", frameIndex, ".bmp").c_str(), "wb");
 	if (fw ==NULL) {
 		return;
 	}

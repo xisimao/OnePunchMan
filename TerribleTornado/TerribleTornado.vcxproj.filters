@@ -16,6 +16,9 @@
     <Filter Include="Image">
       <UniqueIdentifier>{dba4bd3d-dc77-4194-9a41-1fbb91d77a63}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Image\Debug">
+      <UniqueIdentifier>{2a60d150-410d-4616-b93d-68cc056659c4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Flow\FlowData.cpp">
@@ -61,19 +64,7 @@
     <ClCompile Include="Image\ImageConvert.cpp">
       <Filter>Image</Filter>
     </ClCompile>
-    <ClCompile Include="Image\H264Handler.cpp">
-      <Filter>Image</Filter>
-    </ClCompile>
     <ClCompile Include="Image\IVEHandler.cpp">
-      <Filter>Image</Filter>
-    </ClCompile>
-    <ClCompile Include="Image\YUV420PHandler.cpp">
-      <Filter>Image</Filter>
-    </ClCompile>
-    <ClCompile Include="Image\YUV420SPHandler.cpp">
-      <Filter>Image</Filter>
-    </ClCompile>
-    <ClCompile Include="Image\BGR24Handler.cpp">
       <Filter>Image</Filter>
     </ClCompile>
     <ClCompile Include="Traffic\DecodeChannel.cpp">
@@ -84,6 +75,21 @@
     </ClCompile>
     <ClCompile Include="Event\EventDataChannel.cpp">
       <Filter>Event</Filter>
+    </ClCompile>
+    <ClCompile Include="Traffic\SqliteLogger.cpp">
+      <Filter>Traffic</Filter>
+    </ClCompile>
+    <ClCompile Include="Image\BGR24Handler.cpp">
+      <Filter>Image\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="Image\H264Handler.cpp">
+      <Filter>Image\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="Image\YUV420PHandler.cpp">
+      <Filter>Image\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="Image\YUV420SPHandler.cpp">
+      <Filter>Image\Debug</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -126,19 +132,7 @@
     <ClInclude Include="Image\ImageConvert.h">
       <Filter>Image</Filter>
     </ClInclude>
-    <ClInclude Include="Image\YUV420SPHandler.h">
-      <Filter>Image</Filter>
-    </ClInclude>
-    <ClInclude Include="Image\H264Handler.h">
-      <Filter>Image</Filter>
-    </ClInclude>
     <ClInclude Include="Image\IVEHandler.h">
-      <Filter>Image</Filter>
-    </ClInclude>
-    <ClInclude Include="Image\YUV420PHandler.h">
-      <Filter>Image</Filter>
-    </ClInclude>
-    <ClInclude Include="Image\BGR24Handler.h">
       <Filter>Image</Filter>
     </ClInclude>
     <ClInclude Include="Traffic\DecodeChannel.h">
@@ -152,6 +146,21 @@
     </ClInclude>
     <ClInclude Include="Event\EventDataChannel.h">
       <Filter>Event</Filter>
+    </ClInclude>
+    <ClInclude Include="Traffic\SqliteLogger.h">
+      <Filter>Traffic</Filter>
+    </ClInclude>
+    <ClInclude Include="Image\BGR24Handler.h">
+      <Filter>Image\Debug</Filter>
+    </ClInclude>
+    <ClInclude Include="Image\H264Handler.h">
+      <Filter>Image\Debug</Filter>
+    </ClInclude>
+    <ClInclude Include="Image\YUV420PHandler.h">
+      <Filter>Image\Debug</Filter>
+    </ClInclude>
+    <ClInclude Include="Image\YUV420SPHandler.h">
+      <Filter>Image\Debug</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

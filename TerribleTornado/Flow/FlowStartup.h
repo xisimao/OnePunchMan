@@ -37,7 +37,7 @@ namespace OnePunchMan
         void GetReport(int channelIndex,HttpReceivedEventArgs* e);
 
     private:
-        //通道检测集合，等于视频总数
+        //通道检测集合,等于视频总数
         std::vector<FlowDetector*> _detectors;
 
     };

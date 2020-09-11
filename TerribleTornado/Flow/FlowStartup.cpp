@@ -6,7 +6,6 @@ using namespace OnePunchMan;
 FlowStartup::FlowStartup()
     :TrafficStartup()
 {
-    TrafficData::Init("flow.db");
 }
 
 FlowStartup::~FlowStartup()

@@ -42,12 +42,10 @@
     <ClCompile Include="..\Saitama\Convert\JsonFormatter.cpp" />
     <ClCompile Include="..\Saitama\Core\Command.cpp" />
     <ClCompile Include="..\Saitama\Core\DateTime.cpp" />
-    <ClCompile Include="..\Saitama\Core\FileConfig.cpp" />
     <ClCompile Include="..\Saitama\Core\Thread.cpp" />
     <ClCompile Include="..\Saitama\Logger\ConsoleLogger.cpp" />
     <ClCompile Include="..\Saitama\Logger\FileLogger.cpp" />
     <ClCompile Include="..\Saitama\Logger\LogPool.cpp" />
-    <ClCompile Include="..\Saitama\Logger\LogReader.cpp" />
     <ClCompile Include="..\Saitama\Net\AsyncHandler.cpp" />
     <ClCompile Include="..\Saitama\Net\ConnectionChannel.cpp" />
     <ClCompile Include="..\Saitama\Net\EndPoint.cpp" />
@@ -78,6 +76,7 @@
     <ClCompile Include="..\TerribleTornado\Traffic\EncodeChannel.cpp" />
     <ClCompile Include="..\TerribleTornado\Traffic\RecognChannel.cpp" />
     <ClCompile Include="..\TerribleTornado\Traffic\SeemmoSDK.cpp" />
+    <ClCompile Include="..\TerribleTornado\Traffic\SqliteLogger.cpp" />
     <ClCompile Include="..\TerribleTornado\Traffic\TrafficData.cpp" />
     <ClCompile Include="..\TerribleTornado\Traffic\TrafficDetector.cpp" />
     <ClCompile Include="..\TerribleTornado\Traffic\TrafficStartup.cpp" />
@@ -91,16 +90,13 @@
     <ClInclude Include="..\Saitama\Convert\JsonFormatter.h" />
     <ClInclude Include="..\Saitama\Core\Command.h" />
     <ClInclude Include="..\Saitama\Core\DateTime.h" />
-    <ClInclude Include="..\Saitama\Core\FileConfig.h" />
     <ClInclude Include="..\Saitama\Core\Observable.h" />
     <ClInclude Include="..\Saitama\Core\Shape.h" />
     <ClInclude Include="..\Saitama\Core\Thread.h" />
     <ClInclude Include="..\Saitama\Logger\ConsoleLogger.h" />
     <ClInclude Include="..\Saitama\Logger\FileLogger.h" />
-    <ClInclude Include="..\Saitama\Logger\LogEvent.h" />
     <ClInclude Include="..\Saitama\Logger\Logger.h" />
     <ClInclude Include="..\Saitama\Logger\LogPool.h" />
-    <ClInclude Include="..\Saitama\Logger\LogReader.h" />
     <ClInclude Include="..\Saitama\Net\AsyncHandler.h" />
     <ClInclude Include="..\Saitama\Net\ConnectionChannel.h" />
     <ClInclude Include="..\Saitama\Net\EndPoint.h" />
@@ -131,6 +127,7 @@
     <ClInclude Include="..\TerribleTornado\Traffic\EncodeChannel.h" />
     <ClInclude Include="..\TerribleTornado\Traffic\RecognChannel.h" />
     <ClInclude Include="..\TerribleTornado\Traffic\SeemmoSDK.h" />
+    <ClInclude Include="..\TerribleTornado\Traffic\SqliteLogger.h" />
     <ClInclude Include="..\TerribleTornado\Traffic\TrafficData.h" />
     <ClInclude Include="..\TerribleTornado\Traffic\TrafficDetector.h" />
     <ClInclude Include="..\TerribleTornado\Traffic\TrafficStartup.h" />

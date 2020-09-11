@@ -157,7 +157,6 @@
     <ClCompile Include="Convert\JsonFormatter.cpp" />
     <ClCompile Include="Core\Command.cpp" />
     <ClCompile Include="Core\DateTime.cpp" />
-    <ClCompile Include="Core\FileConfig.cpp" />
     <ClCompile Include="Net\SocketMaid.cpp" />
     <ClCompile Include="Net\AsyncHandler.cpp" />
     <ClCompile Include="Net\EndPoint.cpp" />
@@ -176,17 +175,14 @@
     <ClCompile Include="Logger\ConsoleLogger.cpp" />
     <ClCompile Include="Logger\FileLogger.cpp" />
     <ClCompile Include="Logger\LogPool.cpp" />
-    <ClCompile Include="Logger\LogReader.cpp" />
     <ClCompile Include="Text\StringEx.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Convert\ByteFormatter.h" />
     <ClInclude Include="Core\Command.h" />
     <ClInclude Include="Core\DateTime.h" />
-    <ClInclude Include="Core\FileConfig.h" />
     <ClInclude Include="Convert\JsonFormatter.h" />
     <ClInclude Include="Core\Observable.h" />
-    <ClInclude Include="Logger\LogEvent.h" />
     <ClInclude Include="Net\SocketMaid.h" />
     <ClInclude Include="Net\AsyncHandler.h" />
     <ClInclude Include="Net\EndPoint.h" />
@@ -208,7 +204,6 @@
     <ClInclude Include="Logger\FileLogger.h" />
     <ClInclude Include="Logger\Logger.h" />
     <ClInclude Include="Logger\LogPool.h" />
-    <ClInclude Include="Logger\LogReader.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
