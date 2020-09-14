@@ -812,14 +812,15 @@ bool DecodeChannel::InitInput(const string& inputUrl)
 				av_dict_set(&options, "rtsp_transport", "tcp", 0);
 				av_dict_set(&options, "stimeout", "5000000", 0);
 			}
-			if (avformat_open_input(&_inputFormat, inputUrl.c_str(), 0, 0) != 0) {
-				LogPool::Error(LogEvent::Decode, "avformat_open_input", inputUrl);
+			int result = avformat_open_input(&_inputFormat, inputUrl.c_str(), 0, 0);
+			if (result != 0) {
+				LogPool::Error(LogEvent::Decode, "avformat_open_input", inputUrl, result);
 				UninitInput();
 				return false;
 			}
-
-			if (avformat_find_stream_info(_inputFormat, NULL) < 0) {
-				LogPool::Error(LogEvent::Decode, "avformat_find_stream_info", inputUrl);
+			result = avformat_find_stream_info(_inputFormat, NULL);
+			if (result < 0) {
+				LogPool::Error(LogEvent::Decode, "avformat_find_stream_info", inputUrl, result);
 				UninitInput();
 				return false;
 			}

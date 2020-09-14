@@ -121,40 +121,49 @@ bool FFmpegOutput::Init(const std::string& outputUrl, int iFrameCount, const AVC
 	_iFrameCount = iFrameCount;
 	if (_outputFormat != NULL)
 	{
-		LogPool::Warning(LogEvent::Encode, "already inited output file:", _outputUrl);
+		LogPool::Warning(LogEvent::Encode, "already inited output file:", outputUrl);
 		return true;
 	}
-	if (_outputUrl.size() >= 4 && _outputUrl.substr(0, 4).compare("rtmp") == 0)
+	int result = 0;
+	if (outputUrl.size() >= 4 && outputUrl.substr(0, 4).compare("rtmp") == 0)
 	{
-		avformat_alloc_output_context2(&_outputFormat, NULL, "flv", _outputUrl.c_str());
+		result=avformat_alloc_output_context2(&_outputFormat, NULL, "flv", outputUrl.c_str());
+		if (result < 0)
+		{
+			LogPool::Error(LogEvent::Encode, "avformat_alloc_output_context2", outputUrl, result);
+		}
 		_frameSpan = 40;
 	}
 	else
 	{
-		avformat_alloc_output_context2(&_outputFormat, NULL, NULL, _outputUrl.c_str());
+		result = avformat_alloc_output_context2(&_outputFormat, NULL, NULL, outputUrl.c_str());
+		if (result < 0)
+		{
+			LogPool::Error(LogEvent::Encode, "avformat_alloc_output_context2", outputUrl, result);
+		}
 		_frameSpan = 3600;
 	}
 
 	if (_outputFormat == NULL) {
-		LogPool::Error(LogEvent::Encode, "avformat_alloc_output_context2", _outputUrl);
+		LogPool::Error(LogEvent::Encode, "avformat_alloc_output_context2", outputUrl);
 		Uninit();
 		return false;
 	}
 	AVCodec* decode = avcodec_find_decoder(AV_CODEC_ID_H264);
 	if (decode == NULL) {
-		LogPool::Error(LogEvent::Encode, "avcodec_find_decoder", _outputUrl);
+		LogPool::Error(LogEvent::Encode, "avcodec_find_decoder", outputUrl);
 		Uninit();
 		return false;
 	}
 	_outputStream = avformat_new_stream(_outputFormat, decode);
 	if (_outputStream == NULL) {
-		LogPool::Error(LogEvent::Encode, "avformat_new_stream", _outputUrl);
+		LogPool::Error(LogEvent::Encode, "avformat_new_stream", outputUrl);
 		Uninit();
 		return false;
 	}
 	_outputCodec = avcodec_alloc_context3(decode);
 	if (avcodec_parameters_to_context(_outputCodec, parameters) < 0) {
-		LogPool::Error(LogEvent::Encode, "avcodec_parameters_to_context", _outputUrl);
+		LogPool::Error(LogEvent::Encode, "avcodec_parameters_to_context", outputUrl);
 		Uninit();
 		return false;
 	}
@@ -163,26 +172,28 @@ bool FFmpegOutput::Init(const std::string& outputUrl, int iFrameCount, const AVC
 	{
 		_outputCodec->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
 	}
-	if (avcodec_parameters_from_context(_outputStream->codecpar, _outputCodec) < 0) {
-		LogPool::Error(LogEvent::Encode, "avcodec_parameters_to_context", _outputUrl);
+	result = avcodec_parameters_from_context(_outputStream->codecpar, _outputCodec);
+	if (result < 0) {
+		LogPool::Error(LogEvent::Encode, "avcodec_parameters_to_context", outputUrl, result);
 		Uninit();
 		return false;
 	}
 	if (!(_outputFormat->oformat->flags & AVFMT_NOFILE))
 	{
-		if (avio_open(&_outputFormat->pb, _outputUrl.c_str(), AVIO_FLAG_WRITE))
+		if (avio_open(&_outputFormat->pb, outputUrl.c_str(), AVIO_FLAG_WRITE))
 		{
-			LogPool::Error(LogEvent::Encode, "avio_open", _outputUrl);
+			LogPool::Error(LogEvent::Encode, "avio_open", outputUrl);
 			Uninit();
 			return false;
 		}
 	}
-	if (avformat_write_header(_outputFormat, NULL) < 0) {
-		LogPool::Error(LogEvent::Encode, "avformat_write_header", _outputUrl);
+	result = avformat_write_header(_outputFormat, NULL);
+	if (result < 0) {
+		LogPool::Error(LogEvent::Encode, "avformat_write_header", outputUrl, result);
 		Uninit();
 		return false;
 	}
-	LogPool::Information(LogEvent::Encode, "init output file:", _outputUrl, "I frame count:", _iFrameCount);
+	LogPool::Information(LogEvent::Encode, "init output file:", outputUrl, "I frame count:", _iFrameCount);
 	return true;
 }
 
@@ -239,7 +250,11 @@ void FFmpegOutput::WritePacket(const unsigned char* data,int size, FrameType fra
 		packet->dts = packet->pts;
 		packet->pos = -1;
 		packet->duration = _frameSpan;
-		av_interleaved_write_frame(_outputFormat, packet);
+		int result=av_interleaved_write_frame(_outputFormat, packet);
+		if (result < 0)
+		{
+			LogPool::Error(LogEvent::Encode, "av_interleaved_write_frame", _outputUrl, result);
+		}
 		av_packet_free(&packet);
 		_frameIndex += 1;
 	}
@@ -260,8 +275,12 @@ void FFmpegOutput::WritePacket(AVPacket* packet)
 		packet->dts = packet->pts;
 		packet->duration = _frameSpan;
 		packet->pos = -1;
-		packet->duration = _frameSpan;
-		av_write_frame(_outputFormat, packet);
+		packet->duration = _frameSpan;	
+		int result = av_write_frame(_outputFormat, packet);
+		if (result < 0)
+		{
+			LogPool::Error(LogEvent::Encode, "av_write_frame", _outputUrl, result);
+		}
 		_frameIndex += 1;
 	}
 }
