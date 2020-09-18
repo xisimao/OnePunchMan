@@ -29,7 +29,7 @@ void DetectChannel::SetRecogn(RecognChannel* recogn)
 
 void DetectChannel::AddChannel(int channelIndex, DecodeChannel* decode, TrafficDetector* detector)
 {
-	LogPool::Information(LogEvent::System, "the ", channelIndex, " channel add to the",_detectIndex+1," detect thread");
+	LogPool::Information(LogEvent::System, "the", channelIndex, "channel add to the",_detectIndex+1,"detect thread");
 	ChannelItem item;
 	item.ChannelIndex = channelIndex;
 	item.Param = detector->GetDetectParam();
@@ -110,6 +110,7 @@ void DetectChannel::StartCore()
 		}
 	}
 	_inited = true;
+	int index = 0;
 	while (!_cancelled)
 	{
 		bool detected = false;
@@ -163,10 +164,17 @@ void DetectChannel::StartCore()
 					channelItem.Detector->HandleDetect(&detectItems, detectTimeStamp, &channelItem.Param, frameItem.TaskId, frameItem.IveBuffer, frameItem.FrameIndex, frameItem.FrameSpan);
 				}
 				long long detectTimeStamp3 = DateTime::UtcNowTimeStamp();
-				LogPool::Debug("detect", channelItem.ChannelIndex, static_cast<int>(frameItem.TaskId), frameItem.FrameIndex, static_cast<int>(frameItem.FrameSpan), result, detectTimeStamp1 - detectTimeStamp, detectTimeStamp2 - detectTimeStamp1, detectTimeStamp3 - detectTimeStamp2);
+				if (index % 100 == 0)
+				{
+					LogPool::Debug(LogEvent::Detect, "detect", channelItem.ChannelIndex, static_cast<int>(frameItem.TaskId), frameItem.FrameIndex, static_cast<int>(frameItem.FrameSpan), result, " get frame:", detectTimeStamp1 - detectTimeStamp, " sdk:", detectTimeStamp2 - detectTimeStamp1, " traffic:", detectTimeStamp3 - detectTimeStamp2);
+				}				
 			}
 		}
-		if (!detected)
+		if (detected)
+		{
+			index += 1;
+		}
+		else
 		{
 			this_thread::sleep_for(chrono::milliseconds(SleepTime));
 		}

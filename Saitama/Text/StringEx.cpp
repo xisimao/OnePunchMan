@@ -15,7 +15,7 @@ string StringEx::ToHex(int value)
 	return std::string(temp);
 }
 
-string StringEx::ToHex(string::const_iterator begin, string::const_iterator end)
+string StringEx::ToHex(string::const_iterator begin, string::const_iterator end, const string& separator)
 {
 	std::string str;
 	char temp[3];
@@ -23,12 +23,12 @@ string StringEx::ToHex(string::const_iterator begin, string::const_iterator end)
 	{
 		sprintf(temp, "%.2x", static_cast<unsigned char>(*it));
 		str.append(temp, 2);
-		str.append(" ");
+		str.append(separator);
 	}
 	return str;
 }
 
-string StringEx::ToHex(const char* buffer, unsigned int size)
+string StringEx::ToHex(const char* buffer, unsigned int size, const string& separator)
 {
 	std::string str;
 	char temp[3];
@@ -36,7 +36,7 @@ string StringEx::ToHex(const char* buffer, unsigned int size)
 	{
 		sprintf(temp, "%.2x", static_cast<unsigned char>(buffer[i]));
 		str.append(temp, 2);
-		str.append(" ");
+		str.append(separator);
 	}
 	return str;
 }

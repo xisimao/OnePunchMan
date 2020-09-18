@@ -33,7 +33,7 @@ SocketResult SocketHandler::SendTcp(int socket, const string& buffer, AsyncHandl
 		lock_guard<mutex> lck(_mutex);
 		_handlers.push_back(handler);
 	}
-	//LogPool::Debug(LogEvent::Socket,socket, "-", buffer.size(), StringEx::ToHex(buffer.begin(),buffer.end()));
+	LogPool::Debug(LogEvent::Socket,socket, "-", buffer.size(), StringEx::ToHex(buffer.begin(),buffer.end()));
 	return Socket::SendTcp(socket, buffer.c_str(), static_cast<unsigned int>(buffer.size())) ? SocketResult::Success : SocketResult::SendFailed;
 }
 
@@ -45,21 +45,21 @@ SocketResult SocketHandler::SendUdp(int socket, const EndPoint& remoteEndPoint, 
 		lock_guard<mutex> lck(_mutex);
 		_handlers.push_back(handler);
 	}
-	//LogPool::Debug(LogEvent::Socket, socket, remoteEndPoint.ToString(), "-", buffer.size(), StringEx::ToHex(buffer.begin(), buffer.end()));
+	LogPool::Debug(LogEvent::Socket, socket, remoteEndPoint.ToString(), "-", buffer.size(), StringEx::ToHex(buffer.begin(), buffer.end()));
 	return Socket::SendUdp(socket, remoteEndPoint, buffer.c_str(), static_cast<unsigned int>(buffer.size())) ? SocketResult::Success : SocketResult::SendFailed;;
 }
 
 void SocketHandler::Handle(int socket, unsigned int ip, unsigned short port, const char* buffer, unsigned int size)
 {
 	_receiveSize += size;
-	//if (ip == 0 && port == 0)
-	//{
-	//	LogPool::Debug(LogEvent::Socket, socket,"+", size, StringEx::ToHex(buffer,size));
-	//}
-	//else
-	//{
-	//	LogPool::Debug(LogEvent::Socket, socket, EndPoint(ip, port).ToString(), "+", size, StringEx::ToHex(buffer,size));
-	//}
+	if (ip == 0 && port == 0)
+	{
+		LogPool::Debug(LogEvent::Socket, socket,"+", size, StringEx::ToHex(buffer,size));
+	}
+	else
+	{
+		LogPool::Debug(LogEvent::Socket, socket, EndPoint(ip, port).ToString(), "+", size, StringEx::ToHex(buffer,size));
+	}
 	
 	_residueBuffer.append(buffer,size);
 

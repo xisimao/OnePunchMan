@@ -78,7 +78,7 @@ namespace OnePunchMan
 		{
 		public:
 			EventLaneCache()
-				:LaneIndex(0), LaneType(EventLaneType::None), Region(), XTrend(true), YTrend(true), BaseAsX(false)
+				:LaneIndex(0), LaneId(),LaneType(EventLaneType::None), Region(), XTrend(true), YTrend(true), BaseAsX(false)
 				, Congestion(false),LastReportTimeStamp(0), Items()
 			{
 
@@ -86,6 +86,8 @@ namespace OnePunchMan
 
 			//车道序号
 			int LaneIndex;
+			//车道编号
+			std::string LaneId;
 			//车道类型
 			EventLaneType LaneType;
 			//当前检测区域
@@ -109,22 +111,11 @@ namespace OnePunchMan
 
 		/**
 		* @brief: 绘制车辆事件图片
-		* @param: jpgBase64 用于写入的字符串
+		* @param: filePath 写入文件路径
 		* @param: iveBuffer ive字节流
-		* @param: laneRegion 检测区域
 		* @param: detectRegion 检测项区域
-		* @param: frameIndex 帧序号
 		*/
-		void DrawRegion(std::string* jpgBase64,const unsigned char* iveBuffer, const Polygon& laneRegion, const Rectangle& detectRegion, unsigned int frameIndex);
-	
-		/**
-		* @brief: 绘制拥堵区域
-		* @param: jpgBase64 用于写入的字符串
-		* @param: iveBuffer ive字节流
-		* @param: laneRegion 检测区域
-		* @param: frameIndex 帧序号
-		*/
-		void DrawRegion(std::string* jpgBase64, const unsigned char* iveBuffer, const Polygon& laneRegion, unsigned int frameIndex);
+		void DrawDetect(const std::string& filePath,const unsigned char* iveBuffer, const Rectangle& detectRegion);
 
 		//IO mqtt主题
 		static const std::string EventTopic;

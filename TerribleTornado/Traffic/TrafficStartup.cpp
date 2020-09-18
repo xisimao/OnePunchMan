@@ -511,6 +511,7 @@ void TrafficStartup::StartCore()
 
     //删除临时目录
     Command::Execute(StringEx::Combine("mkdir -p ", TrafficDirectory::TempDir));
+    Command::Execute(StringEx::Combine("mkdir -p ", TrafficDirectory::FileDir));
     Command::Execute(StringEx::Combine("rm -rf ", TrafficDirectory::TempDir, "*"));
 
     //升级数据库

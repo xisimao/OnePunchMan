@@ -13,6 +13,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TerribleTornado", "Terrible
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test", "Test\Test.vcxproj", "{3732D405-65C4-4672-80A2-6AD3850D2204}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Machine", "Machine\Machine.vcxproj", "{3AC2F30C-BD8E-469A-BB2B-FDFDB6632820}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM = Debug|ARM
@@ -109,6 +111,18 @@ Global
 		{3732D405-65C4-4672-80A2-6AD3850D2204}.Release|x86.ActiveCfg = Release|x86
 		{3732D405-65C4-4672-80A2-6AD3850D2204}.Release|x86.Build.0 = Release|x86
 		{3732D405-65C4-4672-80A2-6AD3850D2204}.Release|x86.Deploy.0 = Release|x86
+		{3AC2F30C-BD8E-469A-BB2B-FDFDB6632820}.Debug|ARM.ActiveCfg = Debug|Win32
+		{3AC2F30C-BD8E-469A-BB2B-FDFDB6632820}.Debug|ARM64.ActiveCfg = Debug|Win32
+		{3AC2F30C-BD8E-469A-BB2B-FDFDB6632820}.Debug|x64.ActiveCfg = Debug|x64
+		{3AC2F30C-BD8E-469A-BB2B-FDFDB6632820}.Debug|x64.Build.0 = Debug|x64
+		{3AC2F30C-BD8E-469A-BB2B-FDFDB6632820}.Debug|x86.ActiveCfg = Debug|Win32
+		{3AC2F30C-BD8E-469A-BB2B-FDFDB6632820}.Debug|x86.Build.0 = Debug|Win32
+		{3AC2F30C-BD8E-469A-BB2B-FDFDB6632820}.Release|ARM.ActiveCfg = Release|Win32
+		{3AC2F30C-BD8E-469A-BB2B-FDFDB6632820}.Release|ARM64.ActiveCfg = Release|Win32
+		{3AC2F30C-BD8E-469A-BB2B-FDFDB6632820}.Release|x64.ActiveCfg = Release|x64
+		{3AC2F30C-BD8E-469A-BB2B-FDFDB6632820}.Release|x64.Build.0 = Release|x64
+		{3AC2F30C-BD8E-469A-BB2B-FDFDB6632820}.Release|x86.ActiveCfg = Release|Win32
+		{3AC2F30C-BD8E-469A-BB2B-FDFDB6632820}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

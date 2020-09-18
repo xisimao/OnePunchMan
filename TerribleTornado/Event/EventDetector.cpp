@@ -182,6 +182,7 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 						EventData data;
 						data.Guid = dit->first;
 						data.ChannelIndex = _channelIndex;
+						data.ChannelUrl = _channelUrl;
 						data.LaneIndex = laneCache.LaneIndex;
 						data.TimeStamp = timeStamp;
 						data.Type = (int)EventType::Pedestrain;
@@ -189,7 +190,7 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 						{
 							if (_encodeChannel->AddOutput(_channelIndex, data.GetTempVideo(), EncodeIFrameCount))
 							{
-								ImageConvert::IveToJpgFile(iveBuffer, _width, _height, _bgrBuffer, _jpgBuffer, _jpgSize, data.GetTempImage(1));
+								DrawDetect(data.GetTempImage(1), iveBuffer, dit->second.Region);
 								_encodeDatas.push_back(data);
 							}
 						}
@@ -236,6 +237,7 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 									EventData data;
 									data.Guid = dit->first;
 									data.ChannelIndex = _channelIndex;
+									data.ChannelUrl = _channelUrl;
 									data.LaneIndex = laneCache.LaneIndex;
 									data.TimeStamp = timeStamp;
 									data.Type = (int)EventType::Park;
@@ -243,7 +245,7 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 									{
 										if (_encodeChannel->AddOutput(_channelIndex, data.GetTempVideo(), EncodeIFrameCount))
 										{
-											ImageConvert::IveToJpgFile(iveBuffer, _width, _height, _bgrBuffer, _jpgBuffer, _jpgSize, data.GetTempImage(1));
+											DrawDetect(data.GetTempImage(1), iveBuffer, dit->second.Region);
 											_encodeDatas.push_back(data);
 										}
 									}
@@ -279,6 +281,7 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 								EventData data;
 								data.Guid = dit->first;
 								data.ChannelIndex = _channelIndex;
+								data.ChannelUrl = _channelUrl;
 								data.LaneIndex = laneCache.LaneIndex;
 								data.TimeStamp = timeStamp;
 								data.Type = (int)EventType::Congestion;
@@ -286,7 +289,7 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 								{
 									if (_encodeChannel->AddOutput(_channelIndex, data.GetTempVideo(), EncodeIFrameCount))
 									{
-										ImageConvert::IveToJpgFile(iveBuffer, _width, _height, _bgrBuffer, _jpgBuffer, _jpgSize, data.GetTempImage(1));
+										DrawDetect(data.GetTempImage(1), iveBuffer, dit->second.Region);
 										_encodeDatas.push_back(data);
 									}
 								}
@@ -346,6 +349,7 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 											EventData data;
 											data.Guid = dit->first;
 											data.ChannelIndex = _channelIndex;
+											data.ChannelUrl = _channelUrl;
 											data.LaneIndex = laneCache.LaneIndex;
 											data.TimeStamp = timeStamp;
 											data.Type = (int)EventType::Retrograde;
@@ -353,7 +357,7 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 											{
 												if (_encodeChannel->AddOutput(_channelIndex, data.GetTempVideo(), EncodeIFrameCount))
 												{
-													ImageConvert::IveToJpgFile(iveBuffer, _width, _height, _bgrBuffer, _jpgBuffer, _jpgSize, data.GetTempImage(1));
+													DrawDetect(data.GetTempImage(1), iveBuffer, dit->second.Region);
 													_encodeDatas.push_back(data);
 												}
 											}
@@ -375,23 +379,12 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 	}
 }
 
-void EventDetector::DrawRegion(string* jpgBase64, const unsigned char* iveBuffer, const Polygon& laneRegion, unsigned int frameIndex)
+void EventDetector::DrawDetect(const string& filePath, const unsigned char* iveBuffer, const Rectangle& detectRegion)
 {
 	ImageConvert::IveToBgr(iveBuffer, _width, _height, _bgrBuffer);
 	cv::Mat image(_height, _width, CV_8UC3, _bgrBuffer);
-	//ºìÉ«¼ì²âÇøÓò
-	ImageConvert::DrawPolygon(&image, laneRegion, cv::Scalar(0, 0, 255));
-	ImageConvert::BgrToJpgBase64(image.data, _width, _height,jpgBase64, _jpgBuffer, _jpgSize);
-}
-
-void EventDetector::DrawRegion(string* jpgBase64, const unsigned char* iveBuffer, const Polygon& laneRegion, const Rectangle& detectRegion, unsigned int frameIndex)
-{
-	ImageConvert::IveToBgr(iveBuffer, _width, _height, _bgrBuffer);
-	cv::Mat image(_height, _width, CV_8UC3, _bgrBuffer);
-	//ºìÉ«¼ì²âÇøÓò
-	ImageConvert::DrawPolygon(&image, laneRegion, cv::Scalar(0, 0, 255));
 	//ÂÌÉ«¼ì²âÏîÇøÓò
 	ImageConvert::DrawRectangle(&image, detectRegion, cv::Scalar(0, 255,0));
-	ImageConvert::BgrToJpgBase64(image.data, _width, _height,jpgBase64, _jpgBuffer, _jpgSize);
+	ImageConvert::BgrToJpgFile(image.data, _width, _height, _jpgBuffer, _jpgSize,filePath);
 }
 

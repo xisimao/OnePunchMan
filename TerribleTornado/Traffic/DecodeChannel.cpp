@@ -53,7 +53,7 @@ void DecodeChannel::InitFFmpeg()
 	av_register_all();
 	avcodec_register_all();
 	avformat_network_init();
-	av_log_set_level(AV_LOG_INFO);
+	av_log_set_level(AV_LOG_DEBUG);
 	LogPool::Information(LogEvent::Decode, "init ffmpeg sdk");
 }
 
@@ -810,9 +810,9 @@ bool DecodeChannel::InitInput(const string& inputUrl)
 			if (inputUrl.size() >= 4 && inputUrl.substr(0, 4).compare("rtsp") == 0)
 			{
 				av_dict_set(&options, "rtsp_transport", "tcp", 0);
-				av_dict_set(&options, "stimeout", "5000000", 0);
+				av_dict_set(&options, "stimeout", "5000000", 0); 
 			}
-			int result = avformat_open_input(&_inputFormat, inputUrl.c_str(), 0, 0);
+			int result = avformat_open_input(&_inputFormat, inputUrl.c_str(), 0, &options);
 			if (result != 0) {
 				LogPool::Error(LogEvent::Decode, "avformat_open_input", inputUrl, result);
 				UninitInput();
@@ -1058,7 +1058,6 @@ DecodeResult DecodeChannel::Decode(unsigned char* data,unsigned int size, unsign
 
 }
 
-
 bool DecodeChannel::YuvToIve()
 {
 #ifndef _WIN32
@@ -1169,7 +1168,10 @@ void DecodeChannel::ReceivePacket(int playFd, int frameType, char* buffer, unsig
 		long long timeStamp1 = DateTime::UtcNowTimeStamp();
 		channel->_outputHandler.WritePacket(reinterpret_cast<const unsigned char*>(buffer), size, frameType == 0 ? FrameType::I : FrameType::P);
 		DecodeResult decodeResult = channel->Decode(reinterpret_cast<unsigned char*>(buffer),size, channel->_currentTaskId, channel->_frameIndex, channel->_frameSpan);
-		LogPool::Debug(LogEvent::Decode, "收到国标数据", channel->_frameIndex, static_cast<int>(channel->_channelStatus), static_cast<int>(decodeResult), frameType, size);
+		if (channel->_frameIndex % 100 == 0)
+		{
+			LogPool::Debug(LogEvent::Decode, "收到国标数据", channel->_frameIndex, static_cast<int>(channel->_channelStatus), static_cast<int>(decodeResult), frameType, size);
+		}		
 		if (decodeResult == DecodeResult::Handle)
 		{
 			channel->_handleSpan = channel->_frameIndex - channel->_lastframeIndex;
@@ -1270,7 +1272,10 @@ void DecodeChannel::StartCore()
 							{
 								this_thread::sleep_for(chrono::milliseconds(sleepTime));
 							}
-							LogPool::Debug(LogEvent::Decode, "frame", _channelIndex, packet->size, static_cast<int>(_currentTaskId), _frameIndex, static_cast<int>(_frameSpan), static_cast<int>(decodeResult), timeStamp2 - timeStamp1, timeStamp3 - timeStamp2, timeStamp4 - timeStamp3);
+							if (_frameIndex % 100 == 0)
+							{
+								LogPool::Debug(LogEvent::Decode, "frame", _channelIndex, packet->size, static_cast<int>(_currentTaskId), _frameIndex, static_cast<int>(_frameSpan), static_cast<int>(decodeResult), timeStamp2 - timeStamp1, timeStamp3 - timeStamp2, timeStamp4 - timeStamp3);
+							}							
 							if (filterResult > 0)
 							{
 								av_free(tempPacket->data);
@@ -1367,8 +1372,10 @@ void DecodeChannel::StartCore()
 						tempStatus = InitInput(_inputUrl) ? ChannelStatus::Normal : ChannelStatus::InputError;
 					}
 				}
+
 				//输出
-				if (tempStatus == ChannelStatus::Normal)
+				if (_channelStatus != ChannelStatus::ReadEOF_Restart
+					&&tempStatus == ChannelStatus::Normal)
 				{
 					if (_channelType == ChannelType::GB28181)
 					{

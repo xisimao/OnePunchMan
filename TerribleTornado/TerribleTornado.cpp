@@ -14,12 +14,14 @@ int main(int argc, char* argv[])
     JsonDeserialization jd("appsettings.json");
     LogPool::Init(jd);
     TrafficDirectory::Init(jd);
-    TrafficData::Init(jd.Get<string>("Event:Db"));
+    TrafficData::Init(jd.Get<string>("Flow:Db"));
     SqliteLogger logger(TrafficData::DbName);
     LogPool::AddLogger(&logger);
-    EventStartup startup;
-    startup.Start();
-    startup.Join();
+    DecodeChannel::InitFFmpeg();
+    DecodeChannel channel(1, -1, NULL);
+    channel.UpdateChannel("rtsp://admin:Hikjxjj123@66.66.12.86/media/video1/multicast", "", ChannelType::RTSP, true);
+    channel.Start();
+    channel.Join();
 
     return 0;
 }

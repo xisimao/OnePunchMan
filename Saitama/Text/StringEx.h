@@ -27,7 +27,7 @@ namespace OnePunchMan
 		* @param: size 字节流长度
 		* @return: 十六进制字符串
 		*/
-		static std::string ToHex(const char* buffer, unsigned int size);
+		static std::string ToHex(const char* buffer, unsigned int size, const std::string& separator=" ");
 
 		/**
 		* @brief: 将字节流转换为十六进制字符串
@@ -35,7 +35,7 @@ namespace OnePunchMan
 		* @param: end 字节流结束
 		* @return: 十六进制字符串
 		*/
-		static std::string ToHex(std::string::const_iterator begin, std::string::const_iterator end);
+		static std::string ToHex(std::string::const_iterator begin, std::string::const_iterator end, const std::string& separator = " ");
 
 		/**
 		* @brief: 将十六进制字符串转换为字节流
@@ -43,7 +43,7 @@ namespace OnePunchMan
 		* @param: separator 分隔符
 		* @return: 返回转换后的字节流
 		*/
-		static std::string ToBytes(const std::string& value, char separator);
+		static std::string ToBytes(const std::string& value, const char separator);
 
 		/**
 		* @brief: 异或校验

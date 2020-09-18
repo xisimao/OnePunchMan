@@ -43,12 +43,23 @@ namespace OnePunchMan
 		* @param: bgrBuffer bgr字节流
 		* @param: width 图片宽度
 		* @param: height 图片高度
-		* @param: jpgBase64 用于写入base64字符串
 		* @param: jpgBuffer 用于写入的jpg字节流
 		* @param: jpgSize 用于写入的jpg字节流长度
+		* @param: jpgBase64 用于写入base64字符串
 		* @return: jpg字节流的长度
 		*/
-		static int BgrToJpgBase64(const unsigned char* bgrBuffer, int width, int height, std::string* jpgBase64, unsigned char* jpgBuffer, int jpgSize);
+		static int BgrToJpgBase64(const unsigned char* bgrBuffer, int width, int height, unsigned char* jpgBuffer, int jpgSize, std::string* jpgBase64);
+		
+		/**
+		* @brief: bgr转jpg文件
+		* @param: bgrBuffer bgr字节流
+		* @param: width 图片宽度
+		* @param: height 图片高度
+		* @param: jpgSize 用于写入的jpg字节流长度
+		* @param: jpgBase64 用于写入base64字符串
+		* @param: filePath 写入文件的路径
+		*/
+		static void BgrToJpgFile(const unsigned char* bgrBuffer, int width, int height,  unsigned char* jpgBuffer, int jpgSize, const std::string& filePath);
 
 		/**
 		* @brief: ive转jpg base64

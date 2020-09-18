@@ -263,6 +263,9 @@ namespace OnePunchMan
 		virtual void Update(ConnectedEventArgs* e);
 
 		virtual void Update(ClosedEventArgs* e);
+
+		//套接字关闭事件
+		Observable<ClosedEventArgs> Closed;
 		
 	protected:
 

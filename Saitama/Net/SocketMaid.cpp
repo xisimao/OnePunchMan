@@ -99,6 +99,8 @@ void SocketMaid::Update(ClosedEventArgs* e)
 	RemoveSocket(e->Socket, e->Result);
 	//tcp客户端重连
 	_connection.ReportTcpError(e->Socket);
+
+	Closed.Notice(e);
 }
 
 SocketChannel* SocketMaid::Select(int index)

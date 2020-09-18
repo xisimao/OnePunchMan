@@ -71,7 +71,7 @@ void H264Cache::RemoveOutputUrl(const std::string& outputUrl)
 	map<string, FFmpegOutput*>::iterator it = _outputItems.find(outputUrl);
 	if (it != _outputItems.end())
 	{
-		LogPool::Information(LogEvent::Encode, "remove output file:", it->first);
+		LogPool::Debug(LogEvent::Encode, "remove output file:", it->first);
 		delete it->second;
 		_outputItems.erase(it);
 	}
@@ -90,7 +90,7 @@ bool H264Cache::OutputFinished(const std::string& outputUrl)
 	{
 		if (it->second->Finished())
 		{
-			LogPool::Information(LogEvent::Encode, "aotu remove out file when check finish:", outputUrl);
+			LogPool::Debug(LogEvent::Encode, "aotu remove out file when check finish:", outputUrl);
 			delete it->second;
 			_outputItems.erase(it);
 			return true;

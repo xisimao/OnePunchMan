@@ -214,7 +214,7 @@ void FFmpegOutput::Uninit()
 		_outputCodec = NULL;
 		_outputStream = NULL;
 		_outputFormat = NULL;
-		LogPool::Information("end output file:", _outputUrl, "total:", _frameIndex, " frames");
+		LogPool::Information(LogEvent::Encode,"uninit output file:", _outputUrl, "total:", _frameIndex, " frames");
 	}
 
 }

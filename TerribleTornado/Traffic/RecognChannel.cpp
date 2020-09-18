@@ -61,15 +61,16 @@ void RecognChannel::StartCore()
 		int result = SeemmoSDK::seemmo_thread_init(2, _recognIndex %2, 1);
 		if (result == 0)
 		{
-			LogPool::Information(LogEvent::Detect, "init seemmo recogn thread");
+			LogPool::Information(LogEvent::Recogn, "init seemmo recogn thread");
 		}
 		else
 		{
-			LogPool::Warning(LogEvent::Detect, "init seemmo recogn thread failed", result);
+			LogPool::Warning(LogEvent::Recogn, "init seemmo recogn thread failed", result);
 			return;
 		}
 	}
 	_inited = true;
+	int index = 0;
 	while (!_cancelled)
 	{
 		if (_items.empty())
@@ -139,9 +140,13 @@ void RecognChannel::StartCore()
 						_detectors->at(item.ChannelIndex - 1)->HandleRecognPedestrain(item, _bgrs[0], pedestrain);
 					}
 				}
+				long long recognTimeStamp3 = DateTime::UtcNowTimeStamp();
+				if (index % 100 == 0)
+				{
+					LogPool::Debug(LogEvent::Recogn, "recogn", item.ChannelIndex, result, " sdk:", recognTimeStamp2 - recognTimeStamp1, " traffic:", recognTimeStamp3 - recognTimeStamp2);
+				}				
 			}
-			long long recognTimeStamp3 = DateTime::UtcNowTimeStamp();
-			LogPool::Debug("recogn", item.ChannelIndex, result, recognTimeStamp2 - recognTimeStamp1, recognTimeStamp3 - recognTimeStamp2);
+			index += 1;
 		}
 	}
 

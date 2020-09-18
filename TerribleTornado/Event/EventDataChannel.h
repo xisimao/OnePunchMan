@@ -13,7 +13,7 @@ namespace OnePunchMan
 	{
 	public:
 		EventData()
-			:Id(0), ChannelIndex(), LaneIndex(0), TimeStamp(0), Type(0)
+			:Id(0), ChannelIndex(), ChannelUrl(), LaneIndex(0), TimeStamp(0), Type(0)
 		{
 
 		}
@@ -21,6 +21,7 @@ namespace OnePunchMan
 		int Id;
 		std::string Guid;
 		int ChannelIndex;
+		std::string ChannelUrl;
 		int LaneIndex;
 		long long TimeStamp;
 		int Type;
