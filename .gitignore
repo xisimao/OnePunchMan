@@ -4,6 +4,7 @@
 /.vs
 /logs
 /images
+/Machine
 /*/Debug
 /*/Release
 /*/x64

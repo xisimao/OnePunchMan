@@ -141,6 +141,6 @@ void EventChannelData::UpdateDb()
 		_sqlite.ExecuteRowCount("CREATE TABLE[Event_Data]([Id] INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, [ChannelIndex] bigint NOT NULL, [LaneIndex] bigint NOT NULL,[Guid] text NOT NULL,  [TimeStamp] bigint NOT NULL, [Type] bigint NOT NULL);");
 	}
 
-	SetParameter("Version", "1.0.0.15");
-	SetParameter("VersionValue", "10015");
+	SetParameter("Version", "1.0.0.16");
+	SetParameter("VersionValue", "10016");
 }
