@@ -8,6 +8,7 @@ string TrafficData::DbName("");
 string TrafficDirectory::TempDir;
 string TrafficDirectory::FileDir;
 string TrafficDirectory::FileLink;
+string TrafficDirectory::WebDir;
 
 TrafficData::TrafficData()
 	:_sqlite(DbName)

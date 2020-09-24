@@ -16,6 +16,28 @@ FlowStartup::~FlowStartup()
     }
 }
 
+void FlowStartup::Update(HttpReceivedEventArgs* e)
+{
+    if (UrlStartWith(e->Url, "/api/report"))
+    {
+        string id = GetId(e->Url, "/api/report");
+        int channelIndex = StringEx::Convert<int>(id);
+        if (ChannelIndexEnable(channelIndex))
+        {
+            GetReport(channelIndex, e);
+            e->Code = HttpCode::OK;
+        }
+        else
+        {
+            e->Code = HttpCode::NotFound;
+        }
+    }
+    else
+    {
+        TrafficStartup::Update(e);
+    }
+}
+
 void FlowStartup::UpdateDb()
 {
     FlowChannelData data;

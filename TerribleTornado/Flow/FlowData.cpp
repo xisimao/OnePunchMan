@@ -159,6 +159,6 @@ void FlowChannelData::UpdateDb()
 		_sqlite.ExecuteRowCount("ALTER TABLE[Flow_Channel] RENAME TO [System_Channel];");
 		_sqlite.ExecuteRowCount("ALTER TABLE[System_Channel] ADD COLUMN[DeviceId] TEXT NULL;");
 	}
-	SetParameter("Version", "2.0.0.25");
-	SetParameter("VersionValue", "20025");
+	SetParameter("Version", "2.0.0.26");
+	SetParameter("VersionValue", "20026");
 }

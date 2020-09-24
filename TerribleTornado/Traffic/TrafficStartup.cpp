@@ -228,20 +228,6 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
         data.SetParameter("SN", sn);
         e->Code = HttpCode::OK;
     }
-    else if (UrlStartWith(e->Url, "/api/report"))
-    {
-        string id = GetId(e->Url, "/api/report");
-        int channelIndex = StringEx::Convert<int>(id);
-        if (ChannelIndexEnable(channelIndex))
-        {
-            GetReport(channelIndex, e);
-            e->Code = HttpCode::OK;
-        }
-        else
-        {
-            e->Code = HttpCode::NotFound;
-        }
-    }
     else if (UrlStartWith(e->Url, "/api/logs"))
     {
         vector<string> datas = StringEx::Split(e->Url, "?", true);
@@ -319,7 +305,7 @@ void TrafficStartup::GetDevice(HttpReceivedEventArgs* e)
     string sn = data.GetParameter("SN");
     string guid = StringEx::Trim(Command::Execute("cat /mtd/basesys/data/devguid"));
     string webVersion;
-    string cat = Command::Execute("cat ../web/static/config/base.js");
+    string cat = Command::Execute(StringEx::Combine("cat ",TrafficDirectory::WebDir,"static/config/base.js"));
     vector<string> catRows = StringEx::Split(cat, "\n", true);
     for (unsigned int i = 0; i < catRows.size(); ++i)
     {

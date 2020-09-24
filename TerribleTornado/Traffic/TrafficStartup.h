@@ -102,13 +102,6 @@ namespace OnePunchMan
         virtual bool DeleteChannel(int channelIndex)=0;
 
         /**
-        * @brief: 获取通道的检测报告
-        * @param: channelIndex 通道序号
-        * @param: e http消息接收事件参数
-        */
-        virtual void GetReport(int channelIndex,HttpReceivedEventArgs* e){}
-
-        /**
         * @brief: 判断通道序号是否可用
         * @param: channelIndex 通道序号
         * @return: 返回ture表示通道序号可用,否则返回false

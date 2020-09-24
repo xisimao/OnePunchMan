@@ -21,7 +21,7 @@ namespace OnePunchMan
         */
         ~EventStartup();
 
-        virtual void Update(HttpReceivedEventArgs* e);
+        void Update(HttpReceivedEventArgs* e);
 
     protected:
         void UpdateDb();

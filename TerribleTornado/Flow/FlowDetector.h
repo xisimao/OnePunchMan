@@ -1,4 +1,6 @@
 #pragma once
+#include <list>
+
 #include "FlowData.h"
 #include "TrafficDetector.h"
 #include "Command.h"
@@ -71,11 +73,12 @@ namespace OnePunchMan
 		{
 		public:
 			FlowLaneCache()
-				: LaneId(),LaneName(), Direction(), Region(),MeterPerPixel(0.0)
+				: LaneId(),LaneName(), Direction(), Region(),MeterPerPixel(0.0), StopPoint()
 				, Persons(0), Bikes(0), Motorcycles(0), Cars(0), Tricycles(0), Buss(0), Vans(0), Trucks(0)
 				, TotalDistance(0.0), TotalTime(0), Speed(0.0)
 				, TotalInTime(0), TimeOccupancy(0.0)
 				, LastInRegion(0), Vehicles(0), TotalSpan(0), HeadDistance(0.0),HeadSpace(0.0)
+				, QueueLength(0)
 				, TrafficStatus(0),IoStatus(false),Items()
 			{
 
@@ -91,6 +94,8 @@ namespace OnePunchMan
 			Polygon Region;
 			//每个像素代表的米数
 			double MeterPerPixel;
+			//停止线检测的点
+			Point StopPoint;
 
 			//行人流量
 			int Persons;
@@ -135,6 +140,9 @@ namespace OnePunchMan
 			//车头间距(m)
 			double HeadSpace;
 
+			//排队长度(m)
+			int QueueLength;
+
 			//交通状态
 			int TrafficStatus;
 
@@ -152,7 +160,7 @@ namespace OnePunchMan
 			FlowReportCache()
 				: LaneId(), LaneName(), Direction(0), Minute(0)
 				, Persons(0), Bikes(0), Motorcycles(0), Cars(0), Tricycles(0), Buss(0), Vans(0), Trucks(0)
-				, Speed(0.0), TimeOccupancy(0.0), HeadDistance(0.0), HeadSpace(0.0), TrafficStatus(0)
+				, Speed(0.0), TimeOccupancy(0.0), HeadDistance(0.0), HeadSpace(0.0), QueueLength(0), TrafficStatus(0)
 			{
 
 			}
@@ -190,8 +198,23 @@ namespace OnePunchMan
 			double HeadDistance;
 			//车头间距(m)
 			double HeadSpace;
+			//排队长度(m)
+			int QueueLength;
 			//交通状态
 			int TrafficStatus;
+		};
+
+		//车辆的距离
+		class CarDistance
+		{
+		public:
+			CarDistance()
+				:Distance(0),Length(0)
+			{
+
+			}
+			double Distance;
+			int Length;
 		};
 
 		/**
@@ -199,6 +222,20 @@ namespace OnePunchMan
 		* @param: laneCache 车道缓存
 		*/
 		void CalculateMinuteFlow(FlowLaneCache* laneCache);
+
+		/**
+		* @brief: 添加车辆距离有序列表
+		* @param: distances 车辆距离链表
+		* @param: type 车辆类型
+		* @param: distance 车辆距离停止线长度(px)
+		*/
+		void AddOrderedList(std::list<CarDistance>* distances, DetectType type,double distance);
+
+		/**
+		* @brief: 计算排队长度
+		* @param: distances 车辆距离链表
+		*/
+		int CalculateQueueLength(const std::list<CarDistance>& distances);
 
 		/**
 		* @brief: 绘制检测区域
@@ -219,7 +256,8 @@ namespace OnePunchMan
 		static const int ReportMaxSpan;
 		//数据移除的时间间隔(毫秒)
 		static const int DeleteSpan;
-
+		//计算排队时两车的最小距离(px)
+		static const int MinCarDistance;
 		//任务编号
 		int _taskId;
 

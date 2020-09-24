@@ -185,16 +185,19 @@ namespace OnePunchMan
 		static std::string FileDir;
 		//文件目录连接
 		static std::string FileLink;
+		//页面目录
+		static std::string WebDir;
 
 		/**
 		* @brief: 初始化目录配置
 		* @param: jd json配置
 		*/
-		static void Init(const JsonDeserialization& jd)
+		static void Init(const JsonDeserialization& jd,const std::string& webDir)
 		{
 			TempDir = jd.Get<std::string>("Directory:TempDir");
 			FileDir = jd.Get<std::string>("Directory:FileDir");
 			FileLink = jd.Get<std::string>("Directory:FileLink");
+			WebDir = webDir;
 		}
 	};
 

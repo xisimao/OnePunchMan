@@ -19,6 +19,8 @@ namespace OnePunchMan
         */
         ~FlowStartup();
 
+        void Update(HttpReceivedEventArgs* e);
+
     protected:
         void UpdateDb();
 
@@ -34,9 +36,14 @@ namespace OnePunchMan
 
         bool DeleteChannel(int channelIndex);
 
-        void GetReport(int channelIndex,HttpReceivedEventArgs* e);
-
     private:
+        /**
+        * @brief: 获取通道的检测报告
+        * @param: channelIndex 通道序号
+        * @param: e http消息接收事件参数
+        */
+        void GetReport(int channelIndex, HttpReceivedEventArgs* e);
+
         //通道检测集合,等于视频总数
         std::vector<FlowDetector*> _detectors;
 
