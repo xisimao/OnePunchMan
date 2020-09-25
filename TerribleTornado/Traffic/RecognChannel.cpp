@@ -96,11 +96,11 @@ void RecognChannel::StartCore()
 			long long recognTimeStamp2 = DateTime::UtcNowTimeStamp();
 			if (result == 0)
 			{
-				if (item.Type == static_cast<int>(DetectType::Car)
-					|| item.Type == static_cast<int>(DetectType::Tricycle)
-					|| item.Type == static_cast<int>(DetectType::Bus)
-					|| item.Type == static_cast<int>(DetectType::Van)
-					|| item.Type == static_cast<int>(DetectType::Truck))
+				if (item.Type == DetectType::Car
+					|| item.Type == DetectType::Tricycle
+					|| item.Type == DetectType::Bus
+					|| item.Type == DetectType::Van
+					|| item.Type == DetectType::Truck)
 				{
 					JsonDeserialization jd(_result.data());
 					int vehicleType = jd.Get<int>(StringEx::Combine("ImageResults:0:Vehicles:0:Type"));
@@ -115,8 +115,8 @@ void RecognChannel::StartCore()
 						_detectors->at(item.ChannelIndex - 1)->HandleRecognVehicle(item, _bgrs[0], vehicle);
 					}
 				}
-				else if (item.Type == static_cast<int>(DetectType::Bike)
-					|| item.Type == static_cast<int>(DetectType::Motobike))
+				else if (item.Type == DetectType::Bike
+					|| item.Type == DetectType::Motobike)
 				{
 					JsonDeserialization jd(_result.data());
 					int bikeType = jd.Get<int>(StringEx::Combine("ImageResults:0:Bikes:0:Type"));
@@ -127,7 +127,7 @@ void RecognChannel::StartCore()
 						_detectors->at(item.ChannelIndex - 1)->HandleRecognBike(item, _bgrs[0], bike);
 					}
 				}
-				else if (item.Type == static_cast<int>(DetectType::Pedestrain))
+				else if (item.Type == DetectType::Pedestrain)
 				{
 					JsonDeserialization jd(_result.data());
 					int pedestrainType = jd.Get<int>(StringEx::Combine("ImageResults:0:Pedestrains:0:Type"));

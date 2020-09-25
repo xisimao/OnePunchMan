@@ -7,7 +7,7 @@ vector<EventChannel> EventChannelData::GetList()
 {
 	vector<EventChannel> channels;
 	SqliteReader sqlite(DbName);
-	if (sqlite.BeginQuery(GetChannelList()))
+	if (sqlite.BeginQuery(GetChannelsSql()))
 	{
 		while (sqlite.HasRow()) 
 		{
@@ -22,7 +22,7 @@ EventChannel EventChannelData::Get(int channelIndex)
 {
 	EventChannel channel;
 	SqliteReader sqlite(DbName);
-	if (sqlite.BeginQuery(GetChannel(channelIndex)))
+	if (sqlite.BeginQuery(GetChannelSql(channelIndex)))
 	{
 		if (sqlite.HasRow()) 
 		{
@@ -57,9 +57,9 @@ EventChannel EventChannelData::FillChannel(const SqliteReader& sqlite)
 	return channel;
 }
 
-bool EventChannelData::Insert(const EventChannel& channel)
+bool EventChannelData::InsertChannel(const EventChannel& channel)
 {
-	if (_sqlite.ExecuteRowCount(InsertChannel(&channel))==1)
+	if (_sqlite.ExecuteRowCount(InsertChannelSql(&channel))==1)
 	{
 		for (vector<EventLane>::const_iterator it = channel.Lanes.begin(); it != channel.Lanes.end(); ++it)
 		{
@@ -87,7 +87,7 @@ bool EventChannelData::Insert(const EventChannel& channel)
 bool EventChannelData::Set(const EventChannel& channel)
 {
 	Delete(channel.ChannelIndex);
-	return Insert(channel);
+	return InsertChannel(channel);
 }
 
 bool EventChannelData::SetList(const vector<EventChannel>& channels)
@@ -95,7 +95,7 @@ bool EventChannelData::SetList(const vector<EventChannel>& channels)
 	Clear();
 	for (vector<EventChannel>::const_iterator it = channels.begin(); it != channels.end(); ++it)
 	{
-		if (!Insert(*it))
+		if (!InsertChannel(*it))
 		{
 			Clear();
 			return false;
@@ -106,7 +106,7 @@ bool EventChannelData::SetList(const vector<EventChannel>& channels)
 
 bool EventChannelData::Delete(int channelIndex)
 {
-	int result = _sqlite.ExecuteRowCount(DeleteChannel(channelIndex));
+	int result = _sqlite.ExecuteRowCount(DeleteChannelSql(channelIndex));
 	if (result==1)
 	{
 		_sqlite.ExecuteRowCount(StringEx::Combine("Delete From Event_Lane Where ChannelIndex=", channelIndex));
@@ -117,7 +117,7 @@ bool EventChannelData::Delete(int channelIndex)
 
 void EventChannelData::Clear()
 {
-	_sqlite.ExecuteRowCount(ClearChannel());
+	_sqlite.ExecuteRowCount(ClearChannelSql());
 	_sqlite.ExecuteRowCount(StringEx::Combine("Delete From Event_Lane"));
 }
 

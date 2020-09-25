@@ -73,12 +73,12 @@ namespace OnePunchMan
 		{
 		public:
 			FlowLaneCache()
-				: LaneId(),LaneName(), Direction(), Region(),MeterPerPixel(0.0), StopPoint()
+				: LaneId(),LaneName(), Length(0), Direction(), Region(),MeterPerPixel(0.0), StopPoint()
 				, Persons(0), Bikes(0), Motorcycles(0), Cars(0), Tricycles(0), Buss(0), Vans(0), Trucks(0)
 				, TotalDistance(0.0), TotalTime(0), Speed(0.0)
 				, TotalInTime(0), TimeOccupancy(0.0)
 				, LastInRegion(0), Vehicles(0), TotalSpan(0), HeadDistance(0.0),HeadSpace(0.0)
-				, QueueLength(0)
+				, QueueLength(0), CurrentQueueLength(0), TotalQueueLength(0),CountQueueLength(0), SpaceOccupancy(0.0)
 				, TrafficStatus(0),IoStatus(false),Items()
 			{
 
@@ -88,6 +88,7 @@ namespace OnePunchMan
 			std::string LaneId;
 			//车道名称
 			std::string LaneName;
+			int Length;
 			//车道方向
 			int Direction;
 			//当前检测区域
@@ -142,6 +143,14 @@ namespace OnePunchMan
 
 			//排队长度(m)
 			int QueueLength;
+			//当前瞬时排队长度(m)
+			int CurrentQueueLength;
+			//排队总长度(m)
+			int TotalQueueLength;
+			//排队总长度对应的计数次数
+			int CountQueueLength;
+			//空间占有率(%)
+			double SpaceOccupancy;
 
 			//交通状态
 			int TrafficStatus;
@@ -160,7 +169,7 @@ namespace OnePunchMan
 			FlowReportCache()
 				: LaneId(), LaneName(), Direction(0), Minute(0)
 				, Persons(0), Bikes(0), Motorcycles(0), Cars(0), Tricycles(0), Buss(0), Vans(0), Trucks(0)
-				, Speed(0.0), TimeOccupancy(0.0), HeadDistance(0.0), HeadSpace(0.0), QueueLength(0), TrafficStatus(0)
+				, Speed(0.0), TimeOccupancy(0.0), HeadDistance(0.0), HeadSpace(0.0), QueueLength(0), SpaceOccupancy(0.0), TrafficStatus(0)
 			{
 
 			}
@@ -200,6 +209,8 @@ namespace OnePunchMan
 			double HeadSpace;
 			//排队长度(m)
 			int QueueLength;
+			//空间占有率(%)
+			double SpaceOccupancy;
 			//交通状态
 			int TrafficStatus;
 		};
@@ -226,10 +237,10 @@ namespace OnePunchMan
 		/**
 		* @brief: 添加车辆距离有序列表
 		* @param: distances 车辆距离链表
-		* @param: type 车辆类型
+		* @param: length 车辆长度
 		* @param: distance 车辆距离停止线长度(px)
 		*/
-		void AddOrderedList(std::list<CarDistance>* distances, DetectType type,double distance);
+		void AddOrderedList(std::list<CarDistance>* distances, int length,double distance);
 
 		/**
 		* @brief: 计算排队长度
@@ -240,11 +251,13 @@ namespace OnePunchMan
 		/**
 		* @brief: 绘制检测区域
 		* @param: detectItems 检测项集合
-		* @param: ioChanged 是否是io变化的帧
+		* @param: hasIoChanged io是否变化
+		* @param: hasNewCar 是否有新车
+		* @param: hasQueue 是否有排队
 		* @param: iveBuffer ive字节流
 		* @param: frameIndex 帧序号
 		*/
-		void DrawDetect(const std::map<std::string, DetectItem>& detectItems, const unsigned char* iveBuffer, unsigned int frameIndex);
+		void DrawDetect(const std::map<std::string, DetectItem>& detectItems,bool hasIoChanged,bool hasNewCar,bool hasQueue, const unsigned char* iveBuffer, unsigned int frameIndex);
 
 		//IO mqtt主题
 		static const std::string IOTopic;

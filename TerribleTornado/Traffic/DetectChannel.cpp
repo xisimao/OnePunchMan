@@ -80,7 +80,7 @@ void DetectChannel::GetRecognItems(vector<RecognItem>* items, const JsonDeserial
 			item.FrameSpan = frameSpan;
 			item.TaskId = taskId;
 			item.Guid = id;
-			item.Type = jd.Get<int>(StringEx::Combine("FilterResults", ":0:", key, ":", itemIndex, ":Type"));
+			item.Type = static_cast<DetectType>(jd.Get<int>(StringEx::Combine("FilterResults", ":0:", key, ":", itemIndex, ":Type")));
 			item.Width = jd.Get<int>(StringEx::Combine("FilterResults", ":0:", key, ":", itemIndex, ":Detect:Body:Width"));
 			item.Height = jd.Get<int>(StringEx::Combine("FilterResults", ":0:", key, ":", itemIndex, ":Detect:Body:Height"));
 			item.Region = Rectangle(Point(rect[0], rect[1]), rect[2], rect[3]);
@@ -166,7 +166,7 @@ void DetectChannel::StartCore()
 				long long detectTimeStamp3 = DateTime::UtcNowTimeStamp();
 				if (index % 100 == 0)
 				{
-					LogPool::Debug(LogEvent::Detect, "detect", channelItem.ChannelIndex, static_cast<int>(frameItem.TaskId), frameItem.FrameIndex, static_cast<int>(frameItem.FrameSpan), result, " get frame:", detectTimeStamp1 - detectTimeStamp, " sdk:", detectTimeStamp2 - detectTimeStamp1, " traffic:", detectTimeStamp3 - detectTimeStamp2);
+					LogPool::Debug(LogEvent::Detect, "detect->channel index:", channelItem.ChannelIndex, "task id:",static_cast<int>(frameItem.TaskId), "frame index:", frameItem.FrameIndex, "result:", result, " get frame:", detectTimeStamp1 - detectTimeStamp, " sdk:", detectTimeStamp2 - detectTimeStamp1, " traffic:", detectTimeStamp3 - detectTimeStamp2);
 				}				
 			}
 		}

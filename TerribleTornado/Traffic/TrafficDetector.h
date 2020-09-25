@@ -40,7 +40,7 @@ namespace OnePunchMan
 	{
 	public:
 		DetectItem()
-			:Region(),Type(DetectType::None),Status(DetectStatus::Out)
+			:Region(),Type(DetectType::None),Status(DetectStatus::Out), Distance(0.0)
 		{
 
 		}
@@ -49,9 +49,32 @@ namespace OnePunchMan
 		Rectangle Region;
 		//检测元素类型
 		DetectType Type;
+		/**
+		* @brief: 获取检测项长度
+		* @return 检测项长度
+		*/
+		int GetLength() const
+		{
+			switch (Type)
+			{
+			case DetectType::Car:
+			case DetectType::Van:
+				return 5;
+			case DetectType::Tricycle:
+				return 4;
+			case DetectType::Bus:
+				return 9;
+			case DetectType::Truck:
+				return 13;
+			default:
+				return 0;
+			}
+		}
 		//输出
 		//检测元素状态
 		DetectStatus Status;
+		//车辆距离停止线距离(px)
+		double Distance;
 	};
 
 	//识别项
@@ -59,7 +82,7 @@ namespace OnePunchMan
 	{
 	public:
 		RecognItem()
-			:ChannelIndex(0), FrameIndex(0), FrameSpan(0), TaskId(0),Guid(),Type(0),Region(),Width(0),Height(0)
+			:ChannelIndex(0), FrameIndex(0), FrameSpan(0), TaskId(0),Guid(),Type(DetectType::None),Region(),Width(0),Height(0)
 		{
 
 		}
@@ -74,7 +97,7 @@ namespace OnePunchMan
 		//guid
 		std::string Guid;
 		//检测项类型
-		int Type;
+		DetectType Type;
 		//检测区域
 		Rectangle Region;
 		//宽度

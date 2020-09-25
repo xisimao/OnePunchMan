@@ -39,17 +39,17 @@ void TrafficData::FillChannel(const SqliteReader& sqlite, TrafficChannel* channe
 	channel->GlobalDetect = sqlite.GetInt(8);
 	channel->DeviceId = sqlite.GetString(9);
 }
-string TrafficData::GetChannelList()
+string TrafficData::GetChannelsSql()
 {
 	return string("Select * From System_Channel Order By ChannelIndex");
 }
 
-string TrafficData::GetChannel(int channelIndex)
+string TrafficData::GetChannelSql(int channelIndex)
 {
 	return StringEx::Combine("Select * From System_Channel Where ChannelIndex=", channelIndex);
 }
 
-string TrafficData::InsertChannel(const TrafficChannel* channel)
+string TrafficData::InsertChannelSql(const TrafficChannel* channel)
 {
 	return StringEx::Combine("Insert Into System_Channel (ChannelIndex,ChannelName,ChannelUrl,ChannelType,Loop,OutputImage,OutputReport,OutputRecogn,GlobalDetect,DeviceId) Values ("
 		, channel->ChannelIndex, ","
@@ -65,12 +65,12 @@ string TrafficData::InsertChannel(const TrafficChannel* channel)
 		, ")");
 }
 
-string TrafficData::DeleteChannel(int channelIndex)
+string TrafficData::DeleteChannelSql(int channelIndex)
 {
 	return StringEx::Combine("Delete From System_Channel Where ChannelIndex=", channelIndex);
 }
 
-string TrafficData::ClearChannel()
+string TrafficData::ClearChannelSql()
 {
 	return string("Delete From System_Channel");
 }

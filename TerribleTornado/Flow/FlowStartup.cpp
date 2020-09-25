@@ -122,8 +122,6 @@ string FlowStartup::GetChannelJson(const string& host,int channelIndex)
             JsonSerialization::SerializeValue(&laneJson, "ioIndex", lit->IOIndex);
             JsonSerialization::SerializeValue(&laneJson, "detectLine", lit->DetectLine);
             JsonSerialization::SerializeValue(&laneJson, "stopLine", lit->StopLine);
-            JsonSerialization::SerializeValue(&laneJson, "laneLine1", lit->LaneLine1);
-            JsonSerialization::SerializeValue(&laneJson, "laneLine2", lit->LaneLine2);
             JsonSerialization::SerializeValue(&laneJson, "region", lit->Region);
             JsonSerialization::AddClassItem(&lanesJson, laneJson);
         }
@@ -167,8 +165,6 @@ void FlowStartup::SetDevice(HttpReceivedEventArgs* e)
             lane.IOIndex = jd.Get<int>(StringEx::Combine("channels:", itemIndex, ":lanes:", laneIndex, ":ioIndex"));
             lane.DetectLine = jd.Get<string>(StringEx::Combine("channels:", itemIndex, ":lanes:", laneIndex, ":detectLine"));
             lane.StopLine = jd.Get<string>(StringEx::Combine("channels:", itemIndex, ":lanes:", laneIndex, ":stopLine"));
-            lane.LaneLine1 = jd.Get<string>(StringEx::Combine("channels:", itemIndex, ":lanes:", laneIndex, ":laneLine1"));
-            lane.LaneLine2 = jd.Get<string>(StringEx::Combine("channels:", itemIndex, ":lanes:", laneIndex, ":laneLine2"));
             lane.Region = jd.Get<string>(StringEx::Combine("channels:", itemIndex, ":lanes:", laneIndex, ":region"));
             channel.Lanes.push_back(lane);
             laneIndex += 1;
@@ -236,8 +232,6 @@ void FlowStartup::SetChannel(HttpReceivedEventArgs* e)
         lane.IOIndex = jd.Get<int>(StringEx::Combine("lanes:", laneIndex, ":ioIndex"));
         lane.DetectLine = jd.Get<string>(StringEx::Combine("lanes:", laneIndex, ":detectLine"));
         lane.StopLine = jd.Get<string>(StringEx::Combine("lanes:", laneIndex, ":stopLine"));
-        lane.LaneLine1 = jd.Get<string>(StringEx::Combine("lanes:", laneIndex, ":laneLine1"));
-        lane.LaneLine2 = jd.Get<string>(StringEx::Combine("lanes:", laneIndex, ":laneLine2"));
         lane.Region = jd.Get<string>(StringEx::Combine("lanes:", laneIndex, ":region"));
         channel.Lanes.push_back(lane);
         laneIndex += 1;

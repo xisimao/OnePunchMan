@@ -60,14 +60,17 @@ namespace OnePunchMan
 	class TrafficLane
 	{
 	public:
+		TrafficLane()
+			:ChannelIndex(),LaneIndex(),LaneName()
+		{
+
+		}
 		//通道序号
 		int ChannelIndex;
 		//车道序号
 		int LaneIndex;
 		//车道名称
 		std::string LaneName;
-		//区域
-		std::string Region;
 	};
 
 	//视频通道
@@ -309,34 +312,34 @@ namespace OnePunchMan
 		* @brief: 获取查询集合sql语句
 		* @return: 查询集合sql语句
 		*/
-		std::string GetChannelList();
+		std::string GetChannelsSql();
 
 		/**
 		* @brief: 获取查询单个sql语句
 		* @param: channelIndex 通道序号
 		* @return: 查询单个sql语句
 		*/
-		std::string GetChannel(int channelIndex);
+		std::string GetChannelSql(int channelIndex);
 
 		/**
 		* @brief: 获取添加通道sql语句
 		* @param: channel 要添加的通道数据
 		* @return: 添加通道sql语句
 		*/
-		std::string InsertChannel(const TrafficChannel* channel);
+		std::string InsertChannelSql(const TrafficChannel* channel);
 
 		/**
 		* @brief: 获取删除通道sql语句
 		* @param: channelIndex 通道序号
 		* @return: 删除通道sql语句
 		*/
-		std::string DeleteChannel(int channelIndex);
+		std::string DeleteChannelSql(int channelIndex);
 
 		/**
 		* @brief: 获取清空通道sql语句
 		* @return: 清空通道sql语句
 		*/
-		std::string ClearChannel();
+		std::string ClearChannelSql();
 
 		//数据写入
 		SqliteWriter _sqlite;

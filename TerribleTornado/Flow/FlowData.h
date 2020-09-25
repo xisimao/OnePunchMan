@@ -22,18 +22,22 @@ namespace OnePunchMan
 	class FlowLane:public TrafficLane
 	{
 	public:
+		FlowLane()
+			:TrafficLane(),LaneId(),Direction(0),Region(),DetectLine(),StopLine(),LaneType(0)
+			,FlowDirection(0),Length(0),IOIp(),IOPort(0),IOIndex(0)
+		{
+
+		}
 		//车道编号
 		std::string LaneId;
 		//车道方向
 		int Direction;
+		//区域
+		std::string Region;
 		//检测线
 		std::string DetectLine;
 		//停止线
 		std::string StopLine;
-		//车道线1
-		std::string LaneLine1;
-		//车道线2
-		std::string LaneLine2;
 		//车道类型
 		int LaneType;
 		//车道流向
@@ -74,13 +78,6 @@ namespace OnePunchMan
 		FlowChannel Get(int channelIndex);
 
 		/**
-		* @brief: 添加通道
-		* @param: channel 通道
-		* @return: 添加结果
-		*/
-		bool Insert(const FlowChannel& channel);
-
-		/**
 		* @brief: 设置通道
 		* @param: channel 通道
 		* @return: 设置结果
@@ -110,11 +107,32 @@ namespace OnePunchMan
 
 	private:
 		/**
+		* @brief: 添加通道
+		* @param: channel 通道
+		* @return: 添加结果
+		*/
+		bool InsertChannel(const FlowChannel& channel);
+
+		/**
+		* @brief: 添加车道
+		* @param: lane 车道
+		* @return: 添加结果
+		*/
+		bool InsertLane(const FlowLane& lane);
+
+		/**
 		* @brief: 填充通道
 		* @param: sqlite 查询结果
 		* @return: 通道
 		*/
 		FlowChannel FillChannel(const SqliteReader& sqlite);
+
+		/**
+		* @brief: 填充车道
+		* @param: sqlite 查询结果
+		* @return: 车道
+		*/
+		FlowLane FillLane(const SqliteReader& sqlite);
 	};
 }
 

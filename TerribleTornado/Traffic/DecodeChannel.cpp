@@ -53,7 +53,7 @@ void DecodeChannel::InitFFmpeg()
 	av_register_all();
 	avcodec_register_all();
 	avformat_network_init();
-	av_log_set_level(AV_LOG_DEBUG);
+	av_log_set_level(AV_LOG_INFO);
 	LogPool::Information(LogEvent::Decode, "init ffmpeg sdk");
 }
 
@@ -1248,7 +1248,6 @@ void DecodeChannel::StartCore()
 						{
 							long long timeStamp2 = DateTime::UtcNowTimeStamp();
 							DecodeResult decodeResult = Decode(tempPacket->data,tempPacket->size, _currentTaskId, _frameIndex, _frameSpan);
-							long long timeStamp3 = DateTime::UtcNowTimeStamp();
 							if (decodeResult == DecodeResult::Handle)
 							{
 								_handleSpan = _frameIndex - _lastframeIndex;
@@ -1266,15 +1265,15 @@ void DecodeChannel::StartCore()
 								LogPool::Error(LogEvent::Decode, "decode error,input url:", inputUrl," frame index", _frameIndex);
 								_channelStatus = ChannelStatus::DecodeError;
 							}
-							long long timeStamp4 = DateTime::UtcNowTimeStamp();
-							long long sleepTime = _frameSpan - (timeStamp4 - timeStamp2);
+							long long timeStamp3 = DateTime::UtcNowTimeStamp();
+							long long sleepTime = _frameSpan - (timeStamp3 - timeStamp1);
 							if (sleepTime > 0 && sleepTime <= _frameSpan)
 							{
 								this_thread::sleep_for(chrono::milliseconds(sleepTime));
 							}
 							if (_frameIndex % 100 == 0)
 							{
-								LogPool::Debug(LogEvent::Decode, "frame", _channelIndex, packet->size, static_cast<int>(_currentTaskId), _frameIndex, static_cast<int>(_frameSpan), static_cast<int>(decodeResult), timeStamp2 - timeStamp1, timeStamp3 - timeStamp2, timeStamp4 - timeStamp3);
+								LogPool::Debug(LogEvent::Decode, "frame->channel index:", _channelIndex, "packet size:", packet->size, "task id:", static_cast<int>(_currentTaskId), "frame index:", _frameIndex, "frame span:", static_cast<int>(_frameSpan), "decode result:", static_cast<int>(decodeResult), "read and write:", timeStamp2 - timeStamp1, "decode:", timeStamp3 - timeStamp2);
 							}							
 							if (filterResult > 0)
 							{

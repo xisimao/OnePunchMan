@@ -21,10 +21,17 @@ namespace OnePunchMan
 	class EventLane:public TrafficLane
 	{
 	public:
+		EventLane()
+			:TrafficLane(),LaneType(0),Line(),Region()
+		{
+
+		}
 		//车道类型
 		int LaneType;
 		//箭头
 		std::string Line;
+		//区域
+		std::string Region;
 	};
 	
 	//事件视频通道
@@ -53,12 +60,7 @@ namespace OnePunchMan
 		*/
 		EventChannel Get(int channelIndex);
 
-		/**
-		* @brief: 添加通道
-		* @param: channel 通道
-		* @return: 添加结果
-		*/
-		bool Insert(const EventChannel& channel);
+
 
 		/**
 		* @brief: 设置通道
@@ -95,6 +97,13 @@ namespace OnePunchMan
 		* @return: 通道
 		*/
 		EventChannel FillChannel(const SqliteReader& sqlite);
+
+		/**
+		* @brief: 添加通道
+		* @param: channel 通道
+		* @return: 添加结果
+		*/
+		bool InsertChannel(const EventChannel& channel);
 	};
 }
 
