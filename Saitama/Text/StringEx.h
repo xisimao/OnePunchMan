@@ -77,6 +77,7 @@ namespace OnePunchMan
 		/**
 		* @brief: 移除字符串前后的空白字符
 		* @param: value 字符串
+		* @return: 移除空白字符后的字符串
 		*/
 		static std::string Trim(const std::string& value);
 
@@ -85,8 +86,18 @@ namespace OnePunchMan
 		* @param: value 字符串
 		* @param: separator 分割字符串
 		* @param: filterEmpty 是否过滤掉空白
+		* @return: 分割后的字符串集合
 		*/
 		static std::vector<std::string> Split(const std::string& value, const std::string& separator, bool filterEmpty = false);
+
+		/**
+		* @brief: 替换字符串
+		* @param: value 字符串
+		* @param: oldValue 需要替换的值
+		* @param: newValue 替换成的值
+		* @return: 替换后的字符串
+		*/
+		static std::string Replace(const std::string& value, const std::string& oldValue, const std::string& newValue);
 
 		/**
 		* @brief: 将字符串转换为数字或者布尔类型

@@ -29,7 +29,7 @@ void DetectChannel::SetRecogn(RecognChannel* recogn)
 
 void DetectChannel::AddChannel(int channelIndex, DecodeChannel* decode, TrafficDetector* detector)
 {
-	LogPool::Information(LogEvent::System, "the", channelIndex, "channel add to the",_detectIndex+1,"detect thread");
+	LogPool::Information(LogEvent::Detect, "No.", channelIndex, "channel add to the",_detectIndex+1,"detect thread");
 	ChannelItem item;
 	item.ChannelIndex = channelIndex;
 	item.Param = detector->GetDetectParam();

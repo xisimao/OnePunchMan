@@ -114,7 +114,7 @@ void H264Cache::PushPacket(unsigned char* data, int size)
 			{
 				if (size+ _ppsSize > MaxExtraDataSize)
 				{
-					LogPool::Error("sps too large,channel index:",_channelIndex, "sps length:", size, "pps length:", _ppsSize);
+					LogPool::Error(LogEvent::Encode,"sps too large,channel index:",_channelIndex, "sps length:", size, "pps length:", _ppsSize);
 					return;
 				}
 				LogPool::Information(LogEvent::Encode,"got sps,channel index:", _channelIndex);
@@ -128,7 +128,7 @@ void H264Cache::PushPacket(unsigned char* data, int size)
 			{
 				if (_spsSize+size > MaxExtraDataSize)
 				{
-					LogPool::Error("pps too large,channel index:", _channelIndex, "sps length:", _spsSize, "pps length:", size);
+					LogPool::Error(LogEvent::Encode, "pps too large,channel index:", _channelIndex, "sps length:", _spsSize, "pps length:", size);
 					return;
 				}
 				LogPool::Information(LogEvent::Encode, "got pps,channel index:", _channelIndex);

@@ -143,7 +143,7 @@ void RecognChannel::StartCore()
 				long long recognTimeStamp3 = DateTime::UtcNowTimeStamp();
 				if (index % 100 == 0)
 				{
-					LogPool::Debug(LogEvent::Recogn, "recogn", item.ChannelIndex, result, " sdk:", recognTimeStamp2 - recognTimeStamp1, " traffic:", recognTimeStamp3 - recognTimeStamp2);
+					LogPool::Debug(LogEvent::Recogn, "recogn->channel index:", item.ChannelIndex,"result:", result, " sdk:", recognTimeStamp2 - recognTimeStamp1, " traffic:", recognTimeStamp3 - recognTimeStamp2);
 				}				
 			}
 			index += 1;

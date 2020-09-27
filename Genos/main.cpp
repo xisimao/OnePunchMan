@@ -20,7 +20,6 @@ int main(int argc, char* argv[])
             TrafficData::Init(jd.Get<string>("Flow:Db"));
             SqliteLogger logger(TrafficData::DbName);
             LogPool::AddLogger(&logger);
-
             FlowStartup startup;
             startup.Start();
             startup.Join();

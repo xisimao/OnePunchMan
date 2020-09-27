@@ -55,7 +55,7 @@ void EventDetector::UpdateChannel(const unsigned char taskId, const EventChannel
 					cache.YTrend = line.Point2.Y > line.Point1.Y;
 					cache.BaseAsX = abs(line.Point2.X - line.Point1.X) > abs(line.Point2.Y - line.Point1.Y);
 					_lanes.push_back(cache);
-					LogPool::Information("init lane ,channel index:", channel.ChannelIndex, "lane index:", lit->LaneIndex, "x offset:", line.Point2.X -line.Point1.X, "y offset:", line.Point2.Y - line.Point1.Y);
+					LogPool::Information(LogEvent::Event,"init lane ,channel index:", channel.ChannelIndex, "lane index:", lit->LaneIndex, "x offset:", line.Point2.X -line.Point1.X, "y offset:", line.Point2.Y - line.Point1.Y);
 					regionsParam.append(lit->Region);
 					regionsParam.append(",");
 				}
@@ -81,7 +81,7 @@ void EventDetector::UpdateChannel(const unsigned char taskId, const EventChannel
 	_lanesInited = !_lanes.empty() && _lanes.size() == channel.Lanes.size();
 	if (!_lanesInited)
 	{
-		LogPool::Warning("not found any lane,channel index:", channel.ChannelIndex);
+		LogPool::Warning(LogEvent::Event, "not found any lane,channel index:", channel.ChannelIndex);
 	}
 	_channelIndex = channel.ChannelIndex;
 	_param = GetDetectParam(regionsParam);
@@ -196,7 +196,7 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 						}
 						else
 						{
-							LogPool::Warning("event cache queue is full,channel index:", _channelIndex, "lane index:", i + 1, "detect id:", dit->first, "current cache count:", laneCache.Items.size(), "config max cache count:", MaxCacheCount);
+							LogPool::Warning(LogEvent::Event, "event cache queue is full,channel index:", _channelIndex, "lane index:", i + 1, "detect id:", dit->first, "current cache count:", laneCache.Items.size(), "config max cache count:", MaxCacheCount);
 						}
 					}
 					LogPool::Debug(LogEvent::Event, _channelIndex,dit->first, "pedestrain event");
@@ -251,7 +251,7 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 									}
 									else
 									{
-										LogPool::Warning("event cache queue is full,channel index:", _channelIndex, "lane index:", i + 1, "detect id:", dit->first, "current cache count:", laneCache.Items.size(), "config max cache count:", MaxCacheCount);
+										LogPool::Warning(LogEvent::Event, "event cache queue is full,channel index:", _channelIndex, "lane index:", i + 1, "detect id:", dit->first, "current cache count:", laneCache.Items.size(), "config max cache count:", MaxCacheCount);
 									}
 								}
 								LogPool::Debug(LogEvent::Event, _channelIndex, "park event");
@@ -295,7 +295,7 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 								}
 								else
 								{
-									LogPool::Warning("event cache queue is full,channel index:", _channelIndex, "lane index:", i + 1, "detect id:", dit->first, "current cache count:", laneCache.Items.size(), "config max cache count:", MaxCacheCount);
+									LogPool::Warning(LogEvent::Event, "event cache queue is full,channel index:", _channelIndex, "lane index:", i + 1, "detect id:", dit->first, "current cache count:", laneCache.Items.size(), "config max cache count:", MaxCacheCount);
 								}
 							}
 							laneCache.LastReportTimeStamp = timeStamp;
@@ -363,7 +363,7 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 											}
 											else
 											{
-												LogPool::Warning("event cache queue is full,channel index:", _channelIndex, "lane index:", i + 1, "detect id:", dit->first, "current cache count:", laneCache.Items.size(), "config max cache count:", MaxCacheCount);
+												LogPool::Warning(LogEvent::Event, "event cache queue is full,channel index:", _channelIndex, "lane index:", i + 1, "detect id:", dit->first, "current cache count:", laneCache.Items.size(), "config max cache count:", MaxCacheCount);
 											}
 										}
 										LogPool::Debug(LogEvent::Event, _channelIndex, "retrograde event");

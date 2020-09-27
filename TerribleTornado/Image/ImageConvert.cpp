@@ -26,7 +26,7 @@ int ImageConvert::BgrToJpg(const unsigned char* bgrBuffer, int width, int height
 	tjCompress2(jpgHandle, bgrBuffer, width, 0, height, TJPF_BGR, &jpgBuffer, &tempJpgSize, TJSAMP_422, 10, TJFLAG_NOREALLOC);
 	if (tempJpgBuffer != jpgBuffer)
 	{
-		LogPool::Error(LogEvent::Detect, "jpg memory leak");
+		LogPool::Error(LogEvent::System, "jpg memory leak");
 	}
 	tjDestroy(jpgHandle);
 	return static_cast<int>(tempJpgSize);
@@ -87,7 +87,7 @@ void ImageConvert::Mp4ToBase64(const std::string& filePath, unsigned char* video
 		{
 			if (static_cast<int>(size) == videoSize)
 			{
-				LogPool::Error(LogEvent::Detect, "video size over");
+				LogPool::Error(LogEvent::System, "video size over");
 			}
 			StringEx::ToBase64String(videoBuffer, static_cast<int>(size), base64);
 		}

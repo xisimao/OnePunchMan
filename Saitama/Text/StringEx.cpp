@@ -239,6 +239,18 @@ vector<string> StringEx::Split(const string& value, const string& separator, boo
 	return result;
 }
 
+string StringEx::Replace(const string& value, const string& oldValue, const string& newValue)
+{
+	string temp(value);
+	size_t index = temp.find(oldValue);
+	while (index != string::npos)
+	{
+		temp = temp.replace(index, oldValue.size(), newValue);
+		index = temp.find(oldValue);
+	}
+	return temp;
+}
+
 string StringEx::Rounding(float value, int precision)
 {
 	stringstream ss;

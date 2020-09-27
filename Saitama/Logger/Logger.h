@@ -41,15 +41,13 @@ namespace OnePunchMan
 		Flow = 9,
 		Event = 10,
 		Adapter = 11,
-		Http = 12,
-		Monitor = 13
+		Monitor = 12
 	};
 	
 	// 日志类
 	class Logger
 	{
 	public:
-
 		/**
 		* @brief: 构造函数
 		* @param: minLevel 日志最小级别
@@ -81,7 +79,6 @@ namespace OnePunchMan
 		}
 
 	protected:
-
 		/**
 		* @brief: 供子类实现的写日志
 		* @param: logLevel 日志级别
@@ -92,7 +89,6 @@ namespace OnePunchMan
 		virtual void LogCore(LogLevel logLevel, LogEvent logEvent, const DateTime& time, const std::string& content)=0;
 
 	private:
-
 		//日志最小级别
 		LogLevel _minLevel;
 		//日志最大级别

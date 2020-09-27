@@ -206,14 +206,14 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
     }
     else if (UrlStartWith(e->Url, "/api/update/licence"))
     {
-        LogPool::Information(LogEvent::Http, "update licence");
+        LogPool::Information(LogEvent::System, "update licence");
         string filePath("/mtd/seemmo/programs/aisdk/data/licence");
         HttpHandler::WriteFile(e->RequestJson, filePath);
         e->Code = HttpCode::OK;
     }
     else if (UrlStartWith(e->Url, "/api/update/system"))
     {
-        LogPool::Information(LogEvent::Http, "update system");
+        LogPool::Information(LogEvent::System, "update system");
         string filePath = Path::Combine(Path::GetCurrentPath(), "service.tar");
         HttpHandler::WriteFile(e->RequestJson, filePath);
         Command::Execute("tar xf service.tar -C ../../");
@@ -258,7 +258,8 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
                         startTime = pair[1];
                         if (startTime.size() >= 19)
                         {
-                            startTime = startTime.replace(10, 3, " ");
+                            startTime = StringEx::Replace(startTime, "%20", " ");
+                            startTime = StringEx::Replace(startTime, "%3A", ":");
                         }
                     }
                     else if (pair[0].compare("endTime") == 0)
@@ -266,7 +267,8 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
                         endTime = pair[1];
                         if (endTime.size() >= 19)
                         {
-                            endTime = endTime.replace(10, 3, " ");
+                            endTime = StringEx::Replace(endTime, "%20", " ");
+                            endTime = StringEx::Replace(endTime, "%3A", ":");
                         }
                     }
                     else if (pair[0].compare("pageNum") == 0)

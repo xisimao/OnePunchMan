@@ -44,7 +44,7 @@ void FlowDetector::UpdateChannel(const unsigned char taskId, const FlowChannel& 
 			|| stopLine.Empty()
 			|| laneCache.Region.Empty())
 		{
-			LogPool::Warning(LogEvent::Detect, "line empty channel:", it->ChannelIndex, "lane:", it->LaneId);
+			LogPool::Warning(LogEvent::Flow, "line empty channel:", it->ChannelIndex, "lane:", it->LaneId);
 		}
 		else
 		{
@@ -77,7 +77,7 @@ void FlowDetector::UpdateChannel(const unsigned char taskId, const FlowChannel& 
 	_lanesInited = !_laneCaches.empty() && _laneCaches.size() == channel.Lanes.size();
 	if (!_lanesInited)
 	{
-		LogPool::Warning("not found any lane,channel index:", channel.ChannelIndex);
+		LogPool::Warning(LogEvent::Flow, "not found any lane,channel index:", channel.ChannelIndex);
 	}
 	_channelIndex = channel.ChannelIndex;
 	if (channel.GlobalDetect)
@@ -211,7 +211,7 @@ void FlowDetector::CalculateMinuteFlow(FlowLaneCache* laneCache)
 	//时间占用率(%)
 	laneCache->TimeOccupancy = static_cast<double>(laneCache->TotalInTime) / 60000.0 * 100;
 	//空间占有率(%)
-	laneCache->SpaceOccupancy= static_cast<double>(laneCache->TotalDistance/laneCache->Length/laneCache->CountQueueLength);
+	laneCache->SpaceOccupancy= laneCache->TotalQueueLength/static_cast<double>(laneCache->Length)/static_cast<double>(laneCache->CountQueueLength)*100;
 	//交通状态
 	if (laneCache->Speed > 40)
 	{
@@ -290,7 +290,7 @@ void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long 
 			JsonSerialization::SerializeValue(&laneJson, "trafficStatus", laneCache.TrafficStatus);
 			JsonSerialization::AddClassItem(&flowLanesJson, laneJson);
 
-			LogPool::Debug(LogEvent::Detect, "lane:", laneCache.LaneId, "vehicles:", laneCache.Cars + laneCache.Tricycles + laneCache.Buss + laneCache.Vans + laneCache.Trucks, "bikes:", laneCache.Bikes + laneCache.Motorcycles, "persons:", laneCache.Persons, laneCache.Speed, "km/h ", laneCache.HeadDistance, "sec ", laneCache.TimeOccupancy, "%",laneCache.QueueLength,"m");
+			LogPool::Debug(LogEvent::Flow, "flow->lane:", laneCache.LaneId, "vehicles:", laneCache.Cars + laneCache.Tricycles + laneCache.Buss + laneCache.Vans + laneCache.Trucks, "bikes:", laneCache.Bikes + laneCache.Motorcycles, "persons:", laneCache.Persons, "speed:",laneCache.Speed, "head distance:", laneCache.HeadDistance, "time occ:", laneCache.TimeOccupancy,  "queue length:", laneCache.QueueLength, "space occ:", laneCache.SpaceOccupancy,"total queue:", laneCache.TotalQueueLength, "queue count:", laneCache.CountQueueLength,"lane length:",laneCache.Length);
 			if (_outputReport)
 			{
 				FlowReportCache reportCache;
@@ -467,7 +467,7 @@ void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long 
 		if (laneCache.CurrentQueueLength != 0)
 		{
 			hasQueue = true;
-			laneCache.TotalQueueLength = laneCache.CurrentQueueLength;
+			laneCache.TotalQueueLength += laneCache.CurrentQueueLength;
 			laneCache.CountQueueLength += 1;
 			if (laneCache.CurrentQueueLength > laneCache.QueueLength)
 			{
@@ -493,7 +493,7 @@ void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long 
 			JsonSerialization::SerializeValue(&laneJson, "timeStamp", timeStamp);
 			JsonSerialization::SerializeValue(&laneJson, "status", (int)ioStatus);
 			JsonSerialization::AddClassItem(&ioLanesJson, laneJson);
-			LogPool::Debug(LogEvent::Detect, "lane:", laneCache.LaneId, "io:", ioStatus);
+			LogPool::Debug(LogEvent::Flow, "lane:", laneCache.LaneId, "io:", ioStatus);
 		}
 	}
 
@@ -591,12 +591,10 @@ void FlowDetector::HandleRecognVehicle(const RecognItem& recognItem, const unsig
 					_mqtt->Send(VideoStructTopic, json);
 				}
 			}
-
-			LogPool::Debug(LogEvent::Detect, "lane:", it->LaneId, "type:", static_cast<int>(recognItem.Type));
 			return;
 		}
 	}
-	LogPool::Information(LogEvent::Detect, "lost recogn,id:", recognItem.Guid, " type:", static_cast<int>(recognItem.Type), " frame index:", recognItem.FrameIndex);
+	LogPool::Information(LogEvent::Flow, "lost recogn,id:", recognItem.Guid, " type:", static_cast<int>(recognItem.Type), " frame index:", recognItem.FrameIndex);
 }
 
 void FlowDetector::HandleRecognBike(const RecognItem& recognItem, const unsigned char* iveBuffer, const VideoStruct_Bike& bike)
@@ -636,12 +634,10 @@ void FlowDetector::HandleRecognBike(const RecognItem& recognItem, const unsigned
 					_mqtt->Send(VideoStructTopic, json);
 				}
 			}
-
-			LogPool::Debug(LogEvent::Detect, "lane:",it->LaneId, "type:", static_cast<int>(recognItem.Type));
 			return;
 		}
 	}
-	LogPool::Information(LogEvent::Detect, "lost recogn,id:", recognItem.Guid, " type:", static_cast<int>(recognItem.Type), " frame index:", recognItem.FrameIndex);
+	LogPool::Information(LogEvent::Flow, "lost recogn,id:", recognItem.Guid, " type:", static_cast<int>(recognItem.Type), " frame index:", recognItem.FrameIndex);
 }
 
 void FlowDetector::HandleRecognPedestrain(const RecognItem& recognItem, const unsigned char* iveBuffer, const VideoStruct_Pedestrain& pedestrain)
@@ -683,11 +679,10 @@ void FlowDetector::HandleRecognPedestrain(const RecognItem& recognItem, const un
 					_mqtt->Send(VideoStructTopic, json);
 				}
 			}
-			LogPool::Debug(LogEvent::Detect, "lane:", it->LaneId, "type:", static_cast<int>(recognItem.Type));
 			return;
 		}
 	}
-	LogPool::Information(LogEvent::Detect, "lost recogn,id:", recognItem.Guid, " type:", static_cast<int>(recognItem.Type), " frame index:", recognItem.FrameIndex);
+	LogPool::Information(LogEvent::Flow, "lost recogn,id:", recognItem.Guid, " type:", static_cast<int>(recognItem.Type), " frame index:", recognItem.FrameIndex);
 }
 
 void FlowDetector::AddOrderedList(list<CarDistance>* distances, int length,double distance)

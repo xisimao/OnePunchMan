@@ -26,7 +26,7 @@ DecodeChannel::DecodeChannel(int channelIndex, int loginId, EncodeChannel* encod
 		"yuv_buffer",
 		NULL,
 		_yuvSize) != HI_SUCCESS) {
-		LogPool::Error(LogEvent::Detect, "HI_MPI_SYS_MmzAlloc_Cached yuv");
+		LogPool::Error(LogEvent::Decode, "HI_MPI_SYS_MmzAlloc_Cached yuv");
 		exit(2);
 	}
 	if (HI_MPI_SYS_MmzAlloc_Cached(reinterpret_cast<HI_U64*>(&_ive_phy_addr),
@@ -34,7 +34,7 @@ DecodeChannel::DecodeChannel(int channelIndex, int loginId, EncodeChannel* encod
 		"ive_buffer",
 		NULL,
 		_iveSize) != HI_SUCCESS) {
-		LogPool::Error(LogEvent::Detect, "HI_MPI_SYS_MmzAlloc_Cached ive");
+		LogPool::Error(LogEvent::Decode, "HI_MPI_SYS_MmzAlloc_Cached ive");
 		exit(2);
 	}
 #endif // !_WIN32
@@ -1094,7 +1094,7 @@ bool DecodeChannel::YuvToIve()
 
 	hi_s32_ret = HI_MPI_IVE_CSC(&ive_handle, &yuv_image_list, &bgr_image_list, &ive_csc_ctrl, HI_TRUE);
 	if (HI_SUCCESS != hi_s32_ret) {
-		LogPool::Error(LogEvent::Detect, "HI_MPI_IVE_CSC", hi_s32_ret);
+		LogPool::Error(LogEvent::Decode, "HI_MPI_IVE_CSC", hi_s32_ret);
 		return false;
 	}
 	HI_BOOL ive_finish = HI_FALSE;
@@ -1104,7 +1104,7 @@ bool DecodeChannel::YuvToIve()
 	} while (HI_ERR_IVE_QUERY_TIMEOUT == hi_s32_ret);
 
 	if (HI_SUCCESS != hi_s32_ret) {
-		LogPool::Error(LogEvent::Detect, "HI_MPI_IVE_Query", hi_s32_ret);
+		LogPool::Error(LogEvent::Decode, "HI_MPI_IVE_Query", hi_s32_ret);
 		return false;
 	}
 #endif // !_WIN32
@@ -1170,7 +1170,7 @@ void DecodeChannel::ReceivePacket(int playFd, int frameType, char* buffer, unsig
 		DecodeResult decodeResult = channel->Decode(reinterpret_cast<unsigned char*>(buffer),size, channel->_currentTaskId, channel->_frameIndex, channel->_frameSpan);
 		if (channel->_frameIndex % 100 == 0)
 		{
-			LogPool::Debug(LogEvent::Decode, "收到国标数据", channel->_frameIndex, static_cast<int>(channel->_channelStatus), static_cast<int>(decodeResult), frameType, size);
+			LogPool::Debug(LogEvent::Decode, "got gb data", channel->_frameIndex, static_cast<int>(channel->_channelStatus), static_cast<int>(decodeResult), frameType, size);
 		}		
 		if (decodeResult == DecodeResult::Handle)
 		{
