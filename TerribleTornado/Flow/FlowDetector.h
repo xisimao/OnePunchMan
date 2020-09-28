@@ -25,6 +25,12 @@ namespace OnePunchMan
 		~FlowDetector();
 
 		/**
+		* @brief: 初始化流量参数配置
+		* @param: jd json配置
+		*/
+		static void Init(const JsonDeserialization& jd);
+
+		/**
 		* @brief: 更新通道
 		* @param: taskId 任务编号
 		* @param: channel 通道
@@ -269,8 +275,8 @@ namespace OnePunchMan
 		static const int ReportMaxSpan;
 		//数据移除的时间间隔(毫秒)
 		static const int DeleteSpan;
-		//计算排队时两车的最小距离(px)
-		static const int MinCarDistance;
+		//计算两车是否处于排队状态的最小距离(px)
+		static int QueueMinDistance;
 		//任务编号
 		int _taskId;
 

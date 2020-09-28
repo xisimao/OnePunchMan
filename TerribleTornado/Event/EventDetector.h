@@ -6,16 +6,6 @@
 
 namespace OnePunchMan
 {
-	//事件类型
-	enum class EventType
-	{
-		None = 0,
-		Pedestrain = 1,
-		Park = 2,
-		Congestion = 3,
-		Retrograde = 4
-	};
-
 	//通道检测
 	class EventDetector :public TrafficDetector
 	{
@@ -34,6 +24,12 @@ namespace OnePunchMan
 		* @brief: 析构函数
 		*/
 		~EventDetector();
+
+		/**
+		* @brief: 初始化事件参数配置
+		* @param: jd json配置
+		*/
+		static void Init(const JsonDeserialization& jd);
 
 		/**
 		* @brief: 更新通道
@@ -121,22 +117,24 @@ namespace OnePunchMan
 		static const std::string EventTopic;
 		//数据移除的时间间隔(毫秒)
 		static const int DeleteSpan;
-		//停车开始计算的时间间隔(毫秒)
-		static const int ParkStartSpan;
-		//停车结束计算的时间间隔(毫秒)
-		static const int ParkEndSpan;
-		//用于判断拥堵的车数量
-		static const int CarCount;
-		//上报拥堵事件间隔(毫秒)
-		static const int ReportSpan;
-		//逆行检测用到的移动像素
-		static const double MovePixel;
-		//判断逆行事件的点的数量
-		static const int PointCount;
-		//视频编码帧数
-		static const int EncodeIFrameCount;
 		//最多缓存的检测项缓存数量
 		static const int MaxCacheCount;
+
+		//开始计算停车事件的时间长度，单位:毫秒
+		static int ParkStartSpan;
+		//确认停车事件的时间长度，单位:毫秒
+		static int ParkEndSpan;
+		//判断拥堵时，区域内的最小机动车数量
+		static int CongestionCarCount;
+		//上报拥堵的时间间隔,单位:毫秒
+		static int CongestionReportSpan;
+		//判断车辆逆行点的最小逆行距离，单位：像素
+		static double RetrogradeMinMove;
+		//确定车辆逆行的最小逆行点的个数
+		static unsigned int RetrogradeMinCount;
+		//输出视频的I帧数量
+		static int OutputVideoIFrame;
+	
 
 		//任务编号
 		int _taskId;

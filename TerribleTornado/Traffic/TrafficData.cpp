@@ -5,9 +5,9 @@ using namespace OnePunchMan;
 
 string TrafficData::DbName("");
 
-string TrafficDirectory::TempDir;
-string TrafficDirectory::FileDir;
-string TrafficDirectory::FileLink;
+string TrafficDirectory::TempDir("../temp/");
+string TrafficDirectory::FileDir("../files/");
+string TrafficDirectory::FileLink("files");
 string TrafficDirectory::WebDir;
 
 TrafficData::TrafficData()

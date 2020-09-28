@@ -16,7 +16,7 @@ int main(int argc, char* argv[])
 
     JsonDeserialization jd("appsettings.json");
     LogPool::Init(jd);
-    TrafficDirectory::Init(jd, jd.Get<string>("Directory:FlowWeb"));
+    TrafficDirectory::Init(jd.Get<string>("Flow:Web"));
     TrafficData::Init(jd.Get<string>("Flow:Db"));
     //SqliteLogger logger(TrafficData::DbName);
     //LogPool::AddLogger(&logger);

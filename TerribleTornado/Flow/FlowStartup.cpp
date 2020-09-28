@@ -6,6 +6,10 @@ using namespace OnePunchMan;
 FlowStartup::FlowStartup()
     :TrafficStartup()
 {
+    JsonDeserialization jd("appsettings.json");
+    TrafficDirectory::Init(jd.Get<string>("Flow:Web"));
+    TrafficData::Init(jd.Get<string>("Flow:Db"));
+    FlowDetector::Init(jd);
 }
 
 FlowStartup::~FlowStartup()

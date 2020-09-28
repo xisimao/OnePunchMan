@@ -6,14 +6,16 @@ using namespace OnePunchMan;
 const string EventDetector::EventTopic("Event");
 
 const int EventDetector::DeleteSpan = 60 * 1000;
-const int EventDetector::ParkStartSpan = 60 * 1000;
-const int EventDetector::ParkEndSpan = 5 * 60 * 1000;
-const int EventDetector::CarCount = 4;
-const int EventDetector::ReportSpan = 60*1000;
-const double EventDetector::MovePixel = 50.0;
-const int EventDetector::PointCount = 3;
-const int EventDetector::EncodeIFrameCount = 20;
 const int EventDetector::MaxCacheCount = 100;
+
+int EventDetector::ParkStartSpan = 60 * 1000;
+int EventDetector::ParkEndSpan = 2 * 60 * 1000;
+int EventDetector::CongestionCarCount = 4;
+int EventDetector::CongestionReportSpan = 60*1000;
+double EventDetector::RetrogradeMinMove = 50.0;
+unsigned int EventDetector::RetrogradeMinCount = 3;
+int EventDetector::OutputVideoIFrame = 20;
+
 
 EventDetector::EventDetector(int width, int height, MqttChannel* mqtt, EncodeChannel* encodeChannel, EventDataChannel* dataChannel)
 	:TrafficDetector(width, height, mqtt), _taskId(0), _encodeChannel(encodeChannel), _dataChannel(dataChannel)
@@ -29,6 +31,28 @@ EventDetector::~EventDetector()
 	tjFree(_jpgBuffer);
 	delete[] _bgrBuffer;
 	delete[] _videoBuffer;
+}
+
+void EventDetector::Init(const JsonDeserialization& jd)
+{
+	ParkStartSpan = jd.Get<int>("Event:ParkStartSpan");
+	ParkEndSpan = jd.Get<int>("Event:ParkEndSpan");
+	CongestionCarCount = jd.Get<int>("Event:CongestionCarCount");
+	CongestionReportSpan = jd.Get<int>("Event:CongestionReportSpan");
+	RetrogradeMinMove = jd.Get<int>("Event:RetrogradeMinMove");
+	RetrogradeMinCount = jd.Get<unsigned int>("Event:RetrogradeMinCount");
+	OutputVideoIFrame = jd.Get<int>("Event:OutputVideoSpan");
+	LogPool::Information(LogEvent::Event, "ParkStartSpan", ParkStartSpan,"sec");
+	LogPool::Information(LogEvent::Event, "ParkEndSpan", ParkEndSpan, "sec");
+	LogPool::Information(LogEvent::Event, "CongestionCarCount", CongestionCarCount);
+	LogPool::Information(LogEvent::Event, "CongestionReportSpan", CongestionReportSpan, "sec");
+	LogPool::Information(LogEvent::Event, "RetrogradeMinMove", RetrogradeMinMove, "px");
+	LogPool::Information(LogEvent::Event, "RetrogradeMinCount", RetrogradeMinCount);
+	LogPool::Information(LogEvent::Event, "OutputVideoSpan", OutputVideoIFrame, "sec");
+	ParkStartSpan *= 1000;
+	ParkEndSpan *= 1000;
+	CongestionReportSpan *= 1000;
+	OutputVideoIFrame *= 2;
 }
 
 void EventDetector::UpdateChannel(const unsigned char taskId, const EventChannel& channel)
@@ -161,54 +185,8 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 		int carsInLane = 0;
 		for (map<string, DetectItem>::iterator dit = detectItems->begin(); dit != detectItems->end(); ++dit)
 		{
-			if (dit->second.Status != DetectStatus::Out)
-			{
-				continue;
-			}
-			if (dit->second.Type == DetectType::Pedestrain
-				&& laneCache.LaneType == EventLaneType::Pedestrain
-				&& laneCache.Region.Contains(dit->second.Region.HitPoint()))
-			{
-				map<string, EventDetectCache>::iterator mit = laneCache.Items.find(dit->first);
-				if (mit == laneCache.Items.end())
-				{
-					dit->second.Status = DetectStatus::New;
-					EventDetectCache eventItem;
-					eventItem.LastTimeStamp = timeStamp;
-					laneCache.Items.insert(pair<string, EventDetectCache>(dit->first, eventItem));
-					if (_encodeChannel != NULL)
-					{
-						LogPool::Information(LogEvent::Event, "start pedestrain event encode,channel index:", _channelIndex, "detect id:", dit->first);
-						EventData data;
-						data.Guid = dit->first;
-						data.ChannelIndex = _channelIndex;
-						data.ChannelUrl = _channelUrl;
-						data.LaneIndex = laneCache.LaneIndex;
-						data.TimeStamp = timeStamp;
-						data.Type = (int)EventType::Pedestrain;
-						if (laneCache.Items.size() < MaxCacheCount)
-						{
-							if (_encodeChannel->AddOutput(_channelIndex, data.GetTempVideo(), EncodeIFrameCount))
-							{
-								DrawDetect(data.GetTempImage(1), iveBuffer, dit->second.Region);
-								_encodeDatas.push_back(data);
-							}
-						}
-						else
-						{
-							LogPool::Warning(LogEvent::Event, "event cache queue is full,channel index:", _channelIndex, "lane index:", i + 1, "detect id:", dit->first, "current cache count:", laneCache.Items.size(), "config max cache count:", MaxCacheCount);
-						}
-					}
-					LogPool::Debug(LogEvent::Event, _channelIndex,dit->first, "pedestrain event");
-				}
-				else
-				{
-					dit->second.Status = DetectStatus::In;
-					mit->second.LastTimeStamp = timeStamp;
-				}
-			}
-			else if (dit->second.Type > DetectType::Motobike
-				&& laneCache.Region.Contains(dit->second.Region.HitPoint()))
+			//机动车
+			if (dit->second.Type > DetectType::Motobike)
 			{
 				if (laneCache.LaneType == EventLaneType::Park)
 				{
@@ -243,7 +221,7 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 									data.Type = (int)EventType::Park;
 									if (laneCache.Items.size() < MaxCacheCount)
 									{
-										if (_encodeChannel->AddOutput(_channelIndex, data.GetTempVideo(), EncodeIFrameCount))
+										if (_encodeChannel->AddOutput(_channelIndex, data.GetTempVideo(), OutputVideoIFrame))
 										{
 											DrawDetect(data.GetTempImage(1), iveBuffer, dit->second.Region);
 											_encodeDatas.push_back(data);
@@ -271,9 +249,9 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 				else if (laneCache.LaneType == EventLaneType::Lane)
 				{
 					++carsInLane;
-					if (carsInLane == CarCount)
+					if (carsInLane == CongestionCarCount)
 					{
-						if (timeStamp - laneCache.LastReportTimeStamp > ReportSpan)
+						if (timeStamp - laneCache.LastReportTimeStamp > CongestionReportSpan)
 						{
 							if (_encodeChannel != NULL)
 							{
@@ -287,7 +265,7 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 								data.Type = (int)EventType::Congestion;
 								if (laneCache.Items.size() < MaxCacheCount)
 								{
-									if (_encodeChannel->AddOutput(_channelIndex, data.GetTempVideo(), EncodeIFrameCount))
+									if (_encodeChannel->AddOutput(_channelIndex, data.GetTempVideo(), OutputVideoIFrame))
 									{
 										DrawDetect(data.GetTempImage(1), iveBuffer, dit->second.Region);
 										_encodeDatas.push_back(data);
@@ -318,24 +296,24 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 						{
 							dit->second.Status = DetectStatus::In;
 							cit->second.LastTimeStamp = timeStamp;
-							if (cit->second.RetrogradePoints.size() < PointCount)
-							{								
+							if (cit->second.RetrogradePoints.size() < RetrogradeMinCount)
+							{
 								double distance = dit->second.Region.HitPoint().Distance(cit->second.RetrogradePoints.back());
-								if (distance > MovePixel)
+								if (distance > RetrogradeMinMove)
 								{
 									bool xtrend = dit->second.Region.HitPoint().X > cit->second.RetrogradePoints.back().X;
 									bool ytrend = dit->second.Region.HitPoint().Y > cit->second.RetrogradePoints.back().Y;
-									if ((laneCache.BaseAsX && laneCache.XTrend!= xtrend)
-										||(!laneCache.BaseAsX && laneCache.YTrend != ytrend))
+									if ((laneCache.BaseAsX && laneCache.XTrend != xtrend)
+										|| (!laneCache.BaseAsX && laneCache.YTrend != ytrend))
 									{
 										cit->second.RetrogradePoints.push_back(dit->second.Region.HitPoint());
 									}
 								}
 							}
-							else if (cit->second.RetrogradePoints.size() == PointCount)
+							else if (cit->second.RetrogradePoints.size() == RetrogradeMinCount)
 							{
 								double distance = dit->second.Region.HitPoint().Distance(cit->second.RetrogradePoints.back());
-								if (distance > MovePixel)
+								if (distance > RetrogradeMinMove)
 								{
 									bool xtrend = dit->second.Region.HitPoint().X > cit->second.RetrogradePoints.back().X;
 									bool ytrend = dit->second.Region.HitPoint().Y > cit->second.RetrogradePoints.back().Y;
@@ -355,7 +333,7 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 											data.Type = (int)EventType::Retrograde;
 											if (laneCache.Items.size() < MaxCacheCount)
 											{
-												if (_encodeChannel->AddOutput(_channelIndex, data.GetTempVideo(), EncodeIFrameCount))
+												if (_encodeChannel->AddOutput(_channelIndex, data.GetTempVideo(), OutputVideoIFrame))
 												{
 													DrawDetect(data.GetTempImage(1), iveBuffer, dit->second.Region);
 													_encodeDatas.push_back(data);
@@ -374,8 +352,62 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 					}
 				}
 			}
+			//非机动车和行人
+			else if(dit->second.Type > DetectType::None || dit->second.Type < DetectType::Car)
+			{
+				EventType eventType;
+				if (laneCache.LaneType == EventLaneType::Pedestrain)
+				{
+					eventType = EventType::Pedestrain;
+				}
+				else if (laneCache.LaneType == EventLaneType::Bike)
+				{
+					eventType = EventType::Bike;
+				}
+				else
+				{
+					continue;
+				}
+				map<string, EventDetectCache>::iterator mit = laneCache.Items.find(dit->first);
+				if (mit == laneCache.Items.end())
+				{
+					dit->second.Status = DetectStatus::New;
+					EventDetectCache eventItem;
+					eventItem.LastTimeStamp = timeStamp;
+					laneCache.Items.insert(pair<string, EventDetectCache>(dit->first, eventItem));
+					if (_encodeChannel != NULL)
+					{
+						LogPool::Information(LogEvent::Event, "start",eventType==EventType::Pedestrain?"pedestrain":"bike","event encode,channel index:", _channelIndex, "detect id:", dit->first);
+						EventData data;
+						data.Guid = dit->first;
+						data.ChannelIndex = _channelIndex;
+						data.ChannelUrl = _channelUrl;
+						data.LaneIndex = laneCache.LaneIndex;
+						data.TimeStamp = timeStamp;
+						data.Type = (int)eventType;
+						if (laneCache.Items.size() < MaxCacheCount)
+						{
+							if (_encodeChannel->AddOutput(_channelIndex, data.GetTempVideo(), OutputVideoIFrame))
+							{
+								DrawDetect(data.GetTempImage(1), iveBuffer, dit->second.Region);
+								_encodeDatas.push_back(data);
+							}
+						}
+						else
+						{
+							LogPool::Warning(LogEvent::Event, "event cache queue is full,channel index:", _channelIndex, "lane index:", i + 1, "detect id:", dit->first, "current cache count:", laneCache.Items.size(), "config max cache count:", MaxCacheCount);
+						}
+					}
+					LogPool::Debug(LogEvent::Event, _channelIndex, dit->first, eventType == EventType::Pedestrain ? "pedestrain event" : "bike event");
+				}
+				else
+				{
+					dit->second.Status = DetectStatus::In;
+					mit->second.LastTimeStamp = timeStamp;
+				}
+			}		
 		}
-		laneCache.Congestion = carsInLane >= CarCount;
+		laneCache.Congestion = carsInLane >= CongestionCarCount;
 	}
 }
 

@@ -6,7 +6,10 @@ using namespace OnePunchMan;
 EventStartup::EventStartup()
     :TrafficStartup(), _encode(ChannelCount), _data(NULL)
 {
-
+    JsonDeserialization jd("appsettings.json");
+    TrafficDirectory::Init(jd.Get<string>("Event:Web"));
+    TrafficData::Init(jd.Get<string>("Event:Db"));
+    EventDetector::Init(jd);
 }
 
 EventStartup::~EventStartup()

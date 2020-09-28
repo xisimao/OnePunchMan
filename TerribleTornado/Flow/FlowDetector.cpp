@@ -8,7 +8,7 @@ const string FlowDetector::FlowTopic("Flow");
 const string FlowDetector::VideoStructTopic("VideoStruct");
 const int FlowDetector::ReportMaxSpan = 60 * 1000;
 const int FlowDetector::DeleteSpan = 60 * 1000;
-const int FlowDetector::MinCarDistance = 200;
+int FlowDetector::QueueMinDistance = 200;
 
 FlowDetector::FlowDetector(int width, int height, MqttChannel* mqtt)
 	:TrafficDetector(width, height, mqtt), _taskId(0), _lastFrameTimeStamp(0), _currentMinuteTimeStamp(0), _nextMinuteTimeStamp(0)
@@ -27,6 +27,12 @@ FlowDetector::~FlowDetector()
 	delete[] _detectBgrBuffer;
 	tjFree(_recognJpgBuffer);
 	delete[] _recognBgrBuffer;
+}
+
+void FlowDetector::Init(const JsonDeserialization& jd)
+{
+	QueueMinDistance = jd.Get<int>("Flow:MinCarDistance");
+	LogPool::Information(LogEvent::Event, "ParkStartSpan", QueueMinDistance, "px");
 }
 
 void FlowDetector::UpdateChannel(const unsigned char taskId, const FlowChannel& channel)
@@ -719,7 +725,7 @@ int FlowDetector::CalculateQueueLength(const list<CarDistance>& distances)
 		list<CarDistance>::const_iterator nextCar = ++distances.begin();
 		while (preCar != distances.end() && nextCar != distances.end())
 		{
-			if (nextCar->Distance - preCar->Distance > MinCarDistance)
+			if (nextCar->Distance - preCar->Distance > QueueMinDistance)
 			{
 				break;
 			}

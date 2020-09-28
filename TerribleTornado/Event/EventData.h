@@ -14,7 +14,19 @@ namespace OnePunchMan
 		None = 0,
 		Pedestrain = 1,
 		Park = 2,
-		Lane = 3
+		Lane = 3,
+		Bike=4
+	};
+
+	//事件类型
+	enum class EventType
+	{
+		None = 0,
+		Pedestrain = 1,
+		Park = 2,
+		Congestion = 3,
+		Retrograde = 4,
+		Bike = 5
 	};
 
 	//事件车道

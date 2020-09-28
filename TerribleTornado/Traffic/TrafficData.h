@@ -195,11 +195,8 @@ namespace OnePunchMan
 		* @brief: ≥ı ºªØƒø¬º≈‰÷√
 		* @param: jd json≈‰÷√
 		*/
-		static void Init(const JsonDeserialization& jd,const std::string& webDir)
+		static void Init(const std::string& webDir)
 		{
-			TempDir = jd.Get<std::string>("Directory:TempDir");
-			FileDir = jd.Get<std::string>("Directory:FileDir");
-			FileLink = jd.Get<std::string>("Directory:FileLink");
 			WebDir = webDir;
 		}
 	};

@@ -7,7 +7,8 @@ using namespace OnePunchMan;
 IoAdapter::IoAdapter()
 	:ThreadObject("IO"), _maid(NULL),_mqtt(NULL)
 {
-
+	JsonDeserialization jd("appsettings.json");
+	TrafficData::Init(jd.Get<string>("Flow:Db"));
 }
 
 void IoAdapter::Update(MqttReceivedEventArgs* e)
