@@ -31,8 +31,8 @@ FlowDetector::~FlowDetector()
 
 void FlowDetector::Init(const JsonDeserialization& jd)
 {
-	QueueMinDistance = jd.Get<int>("Flow:MinCarDistance");
-	LogPool::Information(LogEvent::Event, "ParkStartSpan", QueueMinDistance, "px");
+	QueueMinDistance = jd.Get<int>("Flow:QueueMinDistance");
+	LogPool::Information(LogEvent::Event, "QueueMinDistance", QueueMinDistance, "px");
 }
 
 void FlowDetector::UpdateChannel(const unsigned char taskId, const FlowChannel& channel)
@@ -217,7 +217,7 @@ void FlowDetector::CalculateMinuteFlow(FlowLaneCache* laneCache)
 	//时间占用率(%)
 	laneCache->TimeOccupancy = static_cast<double>(laneCache->TotalInTime) / 60000.0 * 100;
 	//空间占有率(%)
-	laneCache->SpaceOccupancy= laneCache->TotalQueueLength/static_cast<double>(laneCache->Length)/static_cast<double>(laneCache->CountQueueLength)*100;
+	laneCache->SpaceOccupancy= (laneCache->Length==0|| laneCache->CountQueueLength==0 )?0:laneCache->TotalQueueLength/static_cast<double>(laneCache->Length)/static_cast<double>(laneCache->CountQueueLength)*100;
 	//交通状态
 	if (laneCache->Speed > 40)
 	{

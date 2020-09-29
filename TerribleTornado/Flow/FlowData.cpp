@@ -188,6 +188,6 @@ void FlowChannelData::UpdateDb()
 			InsertLane(*it);
 		}
 	}
-	SetParameter("Version", "2.0.0.27");
-	SetParameter("VersionValue", "20027");
+	SetParameter("Version", "2.0.0.28");
+	SetParameter("VersionValue", "20028");
 }

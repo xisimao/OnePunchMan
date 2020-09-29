@@ -2,7 +2,6 @@
 #include "EventStartup.h"
 #include "IoAdapter.h"
 #include "EncodeChannel.h"
-//#include "clientsdk.h"
 
 using namespace std;
 using namespace OnePunchMan;
@@ -16,9 +15,7 @@ int main(int argc, char* argv[])
         {
             JsonDeserialization jd("appsettings.json");
             LogPool::Init(jd);
-            TrafficDirectory::Init(jd, jd.Get<string>("Directory:FlowWeb"));
-            TrafficData::Init(jd.Get<string>("Flow:Db"));
-            SqliteLogger logger(TrafficData::DbName);
+            SqliteLogger logger(jd.Get<string>("Flow:Db"));
             LogPool::AddLogger(&logger);
             FlowStartup startup;
             startup.Start();
@@ -28,9 +25,7 @@ int main(int argc, char* argv[])
         {
             JsonDeserialization jd("appsettings.json");
             LogPool::Init(jd);
-            TrafficDirectory::Init(jd, jd.Get<string>("Directory:EventWeb"));
-            TrafficData::Init(jd.Get<string>("Event:Db"));
-            SqliteLogger logger(TrafficData::DbName);
+            SqliteLogger logger(jd.Get<string>("Event:Db"));
             LogPool::AddLogger(&logger);
             EventStartup startup;
             startup.Start();
@@ -40,9 +35,6 @@ int main(int argc, char* argv[])
         {
             JsonDeserialization jd("appsettings.json");
             LogPool::Init(jd);
-            TrafficDirectory::Init(jd, jd.Get<string>("Directory:FlowWeb"));
-            TrafficData::Init(jd.Get<string>("Flow:Db"));
-
             IoAdapter adapter;
             adapter.Start();
             adapter.Join();
