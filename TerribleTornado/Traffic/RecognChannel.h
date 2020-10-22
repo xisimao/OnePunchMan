@@ -14,33 +14,33 @@ namespace OnePunchMan
 	{
 	public:
 		/**
-		* @brief: 构造函数
-		* @param: recognIndex 检测线程序号
-		* @param: width 图片宽度
-		* @param: height 图片高度
-		* @param: detectors 通道检测集合
+		* 构造函数
+		* @param recognIndex 检测线程序号
+		* @param width 图片宽度
+		* @param height 图片高度
+		* @param detectors 通道检测集合
 		*/
 		RecognChannel(int recognIndex,int width, int height, std::vector<TrafficDetector*>* detectors);
 
 		/**
-		* @brief: 析构函数
+		* 析构函数
 		*/
 		~RecognChannel();
 		/**
-		* @brief: 推送识别数据项集合
-		* @param: items 识别数据项集合
+		* 推送识别数据项集合
+		* @param items 识别数据项集合
 		*/
 		void PushItems(const std::vector<RecognItem>& items);
 		
 		/**
-		* @brief: 获取是否初始化完成
-		* @return: 初始化完成返回ture,否则返回false
+		* 获取是否初始化完成
+		* @return 初始化完成返回ture,否则返回false
 		*/
 		bool Inited();
 
 		/**
-		* @brief: 获取当前队列中的数据数量
-		* @return: 当前队列中的数据数量
+		* 获取当前队列中的数据数量
+		* @return 当前队列中的数据数量
 		*/
 		int Size();
 

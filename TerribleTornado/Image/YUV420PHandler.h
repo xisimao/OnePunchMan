@@ -11,17 +11,17 @@ namespace OnePunchMan
 	{
 	public:
 		/**
-		* @brief: 构造函数
-		* @param: count 写入帧的总数
+		* 构造函数
+		* @param count 写入帧的总数
 		*/
 		YUV420PHandler(int count = 3);
 
 		/**
-		* @brief: 写入视频帧
-		* @param: yuv yuv字节流
-		* @param: width 图片宽度
-		* @param: height 图片高度
-		* @param: frameIndex 视频帧序号
+		* 写入视频帧
+		* @param yuv yuv字节流
+		* @param width 图片宽度
+		* @param height 图片高度
+		* @param frameIndex 视频帧序号
 		*/
 		void HandleFrame(unsigned char* yuv, int width,int height, unsigned int frameIndex);
 

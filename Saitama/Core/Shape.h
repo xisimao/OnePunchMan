@@ -12,7 +12,7 @@ namespace OnePunchMan
 	public:
 
 		/**
-		* @brief: 构造函数
+		* 构造函数
 		*/
 		Point()
 			:Point(0, 0)
@@ -21,9 +21,9 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 构造函数
-		* @param: x 点的x值
-		* @param: y 点的y值
+		* 构造函数
+		* @param x 点的x值
+		* @param y 点的y值
 		*/
 		Point(int x, int y)
 			:X(x), Y(y)
@@ -37,8 +37,8 @@ namespace OnePunchMan
 		int Y;
 
 		/**
-		* @brief: 是否为空值
-		* @return: 返回ture表示空值
+		* 是否为空值
+		* @return 返回ture表示空值
 		*/
 		bool Empty()
 		{
@@ -46,9 +46,9 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 计算改点到点的距离
-		* @param: p 另外一个点
-		* @return: 两点的距离
+		* 计算改点到点的距离
+		* @param point 另外一个点
+		* @return 两点的距离
 		*/
 		double Distance(const Point& point) const
 		{
@@ -58,8 +58,8 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 获取点的json数据
-		* @return: 点的json数据
+		* 获取点的json数据
+		* @return 点的json数据
 		*/
 		std::string ToJson() const
 		{
@@ -73,7 +73,7 @@ namespace OnePunchMan
 	public:
 
 		/**
-		* @brief: 构造函数
+		* 构造函数
 		*/
 		Line()
 			:Line(Point(),Point())
@@ -82,9 +82,9 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 构造函数
-		* @param: point1 第一个点
-		* @param: point2 第二个点
+		* 构造函数
+		* @param point1 第一个点
+		* @param point2 第二个点
 		*/
 		Line(const Point& point1, const Point& point2)
 			:Point1(point1),Point2(point2)
@@ -98,8 +98,8 @@ namespace OnePunchMan
 		Point Point2;
 
 		/**
-		* @brief: 是否为空值
-		* @return: 返回ture表示空值
+		* 是否为空值
+		* @return 返回ture表示空值
 		*/
 		bool Empty()
 		{
@@ -107,9 +107,9 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 计算和另外一条线的相交点
-		* @param: line 另外一条线
-		* @return: 相交点
+		* 计算和另外一条线的相交点
+		* @param line 另外一条线
+		* @return 相交点
 		*/
 		Point Intersect(const Line& line)
 		{
@@ -135,8 +135,8 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 计算线段的中点
-		* @return: 中点
+		* 计算线段的中点
+		* @return 中点
 		*/
 		Point Middle()
 		{
@@ -144,9 +144,9 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: json转线段
-		* @param: json 线段json数据[[1,1],[2,2]]
-		* @return: 转换成功返回线段,否则返回空线段
+		* json转线段
+		* @param json 线段json数据[[1,1],[2,2]]
+		* @return 转换成功返回线段,否则返回空线段
 		*/
 		static Line FromJson(const std::string& json)
 		{
@@ -178,7 +178,7 @@ namespace OnePunchMan
 	public:
 
 		/**
-		* @brief: 构造函数
+		* 构造函数
 		*/
 		Rectangle()
 			:Rectangle(Point(), 0, 0)
@@ -187,11 +187,11 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 构造函数
-		* @param: x 矩形左上角点的x值
-		* @param: y 矩形左上角点的y值
-		* @param: width 矩形的宽度
-		* @param: height 矩形的高度
+		* 构造函数
+		* @param x 矩形左上角点的x值
+		* @param y 矩形左上角点的y值
+		* @param width 矩形的宽度
+		* @param height 矩形的高度
 		*/
 		Rectangle(int x,int y, int width, int height)
 			:Rectangle(Point(x,y), width,height)
@@ -200,10 +200,10 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 构造函数
-		* @param: top 矩形左上角的点
-		* @param: width 矩形的宽度
-		* @param: height 矩形的高度
+		* 构造函数
+		* @param top 矩形左上角的点
+		* @param width 矩形的宽度
+		* @param height 矩形的高度
 		*/
 		Rectangle(const Point& top, int width, int height)
 			:_top(top),_width(width),_height(height), _hitPoint(top.X + width / 2, top.Y + height)
@@ -215,8 +215,8 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 获取矩形宽度
-		* @return: 矩形宽度
+		* 获取矩形宽度
+		* @return 矩形宽度
 		*/
 		Point Top() const
 		{
@@ -224,8 +224,8 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 获取矩形宽度
-		* @return: 矩形宽度
+		* 获取矩形宽度
+		* @return 矩形宽度
 		*/
 		int Width() const
 		{
@@ -233,8 +233,8 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 获取矩形高度
-		* @return: 矩形高度
+		* 获取矩形高度
+		* @return 矩形高度
 		*/
 		int Height() const
 		{
@@ -242,8 +242,8 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 获取检测点
-		* @return: 检测点
+		* 获取检测点
+		* @return 检测点
 		*/
 		const Point& HitPoint() const
 		{
@@ -251,8 +251,8 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 获取矩形的点集合
-		* @return: 矩形的点集合
+		* 获取矩形的点集合
+		* @return 矩形的点集合
 		*/
 		const std::vector<Point>& Points() const
 		{
@@ -278,7 +278,7 @@ namespace OnePunchMan
 	public:
 
 		/**
-		* @brief: 构造函数
+		* 构造函数
 		*/
 		Polygon()
 			:Polygon(std::vector<Point>())
@@ -287,8 +287,8 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 构造函数
-		* @param: points 点集合
+		* 构造函数
+		* @param points 点集合
 		*/
 		Polygon(const std::vector<Point>& points)
 			:_points(points)
@@ -297,8 +297,8 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 获取多边形的点集合
-		* @return: 多边形的点集合
+		* 获取多边形的点集合
+		* @return 多边形的点集合
 		*/
 		const std::vector<Point>& Points() const
 		{
@@ -306,8 +306,8 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 是否为空值
-		* @return: 返回ture表示空值
+		* 是否为空值
+		* @return 返回ture表示空值
 		*/
 		bool Empty()
 		{
@@ -315,9 +315,9 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 测试点是否包含在多边形
-		* @param: point 点
-		* @return: 点在多边形内返回true,否则返回false
+		* 测试点是否包含在多边形
+		* @param point 点
+		* @return 点在多边形内返回true,否则返回false
 		*/
 		bool Contains(const Point& point)
 		{
@@ -351,8 +351,8 @@ namespace OnePunchMan
 		}
 		
 		/**
-		* @brief: 获取多边形的json数据
-		* @return: 多边形的json数据
+		* 获取多边形的json数据
+		* @return 多边形的json数据
 		*/
 		std::string ToJson() const
 		{
@@ -375,9 +375,9 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: json转多边形
-		* @param: json 多边形json数据[[1,1],[2,2],[3,3],[4,4],[5,5]]
-		* @return: 转换成功返回多边形,否则返回空
+		* json转多边形
+		* @param json 多边形json数据[[1,1],[2,2],[3,3],[4,4],[5,5]]
+		* @return 转换成功返回多边形,否则返回空
 		*/
 		static Polygon FromJson(const std::string& json)
 		{
@@ -395,9 +395,9 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: json转多边形集合
-		* @param: json 多边形json数据[[[1,1],[2,2],[3,3],[4,4],[5,5]],[[1,1],[2,2],[3,3],[4,4],[5,5]]]
-		* @return: 转换成功返回多边形集合,否则返回空集合
+		* json转多边形集合
+		* @param json 多边形json数据[[[1,1],[2,2],[3,3],[4,4],[5,5]],[[1,1],[2,2],[3,3],[4,4],[5,5]]]
+		* @return 转换成功返回多边形集合,否则返回空集合
 		*/
 		static std::vector<Polygon> FromJsonArray(const std::string& json)
 		{

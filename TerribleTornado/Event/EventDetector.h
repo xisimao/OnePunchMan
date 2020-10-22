@@ -11,35 +11,35 @@ namespace OnePunchMan
 	{
 	public:
 		/**
-		* @brief: 构造函数
-		* @param: width 图片宽度
-		* @param: height 图片高度
-		* @param: mqtt mqtt
-		* @param: encodeChannel 编码线程
-		* @param: dataChannel 数据线程
+		* 构造函数
+		* @param width 图片宽度
+		* @param height 图片高度
+		* @param mqtt mqtt
+		* @param encodeChannel 编码线程
+		* @param dataChannel 数据线程
 		*/
 		EventDetector(int width, int height,MqttChannel* mqtt, EncodeChannel* encodeChannel, EventDataChannel* dataChannel);
 		
 		/**
-		* @brief: 析构函数
+		* 析构函数
 		*/
 		~EventDetector();
 
 		/**
-		* @brief: 初始化事件参数配置
-		* @param: jd json配置
+		* 初始化事件参数配置
+		* @param jd json配置
 		*/
 		static void Init(const JsonDeserialization& jd);
 
 		/**
-		* @brief: 更新通道
-		* @param: taskId 任务号
-		* @param: channel 通道
+		* 更新通道
+		* @param taskId 任务号
+		* @param channel 通道
 		*/
 		void UpdateChannel(const unsigned char taskId, const EventChannel& channel);
 
 		/**
-		* @brief: 清空通道
+		* 清空通道
 		*/
 		void ClearChannel();
 
@@ -106,10 +106,10 @@ namespace OnePunchMan
 		};
 
 		/**
-		* @brief: 绘制车辆事件图片
-		* @param: filePath 写入文件路径
-		* @param: iveBuffer ive字节流
-		* @param: detectRegion 检测项区域
+		* 绘制车辆事件图片
+		* @param filePath 写入文件路径
+		* @param iveBuffer ive字节流
+		* @param detectRegion 检测项区域
 		*/
 		void DrawDetect(const std::string& filePath,const unsigned char* iveBuffer, const Rectangle& detectRegion);
 

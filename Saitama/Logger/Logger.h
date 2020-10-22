@@ -49,9 +49,9 @@ namespace OnePunchMan
 	{
 	public:
 		/**
-		* @brief: 构造函数
-		* @param: minLevel 日志最小级别
-		* @param: maxLevel 日志最大级别
+		* 构造函数
+		* @param minLevel 日志最小级别
+		* @param maxLevel 日志最大级别
 		*/
 		Logger(LogLevel minLevel, LogLevel maxLevel)
 		{
@@ -64,11 +64,11 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 写日志
-		* @param: logLevel 日志级别
-		* @param: logEvent 日志事件
-		* @param: time 日志事件
-		* @param: content 日志内容
+		* 写日志
+		* @param logLevel 日志级别
+		* @param logEvent 日志事件
+		* @param time 日志事件
+		* @param content 日志内容
 		*/
 		void Log(LogLevel logLevel, LogEvent logEvent,const DateTime& time,const std::string& content)
 		{
@@ -80,11 +80,11 @@ namespace OnePunchMan
 
 	protected:
 		/**
-		* @brief: 供子类实现的写日志
-		* @param: logLevel 日志级别
-		* @param: logEvent 日志事件
-		* @param: time 日志事件
-		* @param: content 日志内容
+		* 供子类实现的写日志
+		* @param logLevel 日志级别
+		* @param logEvent 日志事件
+		* @param time 日志事件
+		* @param content 日志内容
 		*/
 		virtual void LogCore(LogLevel logLevel, LogEvent logEvent, const DateTime& time, const std::string& content)=0;
 

@@ -153,6 +153,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Flow\DataMergeMap.cpp" />
     <ClCompile Include="Event\EventDataChannel.cpp" />
     <ClCompile Include="Image\BGR24Handler.cpp" />
     <ClCompile Include="Image\H264Handler.cpp" />
@@ -179,6 +180,7 @@
     <ClCompile Include="Traffic\SeemmoSDK.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Flow\DataMergeMap.h" />
     <ClInclude Include="Event\EventDataChannel.h" />
     <ClInclude Include="Image\BGR24Handler.h" />
     <ClInclude Include="Image\H264Handler.h" />

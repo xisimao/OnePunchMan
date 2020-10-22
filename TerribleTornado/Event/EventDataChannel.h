@@ -72,25 +72,25 @@ namespace OnePunchMan
 	{
 	public:
 		/**
-		* @brief: 构造函数
-		* @param: mqtt mqtt
+		* 构造函数
+		* @param mqtt mqtt
 		*/
 		EventDataChannel(MqttChannel* mqtt);
 
 		/**
-		* @brief: 构造函数
-		* @param: channelIndex 视频序号
-		* @return: 事件数据集合
+		* 构造函数
+		* @param channelIndex 视频序号
+		* @return 事件数据集合
 		*/
 		static std::vector<EventData> GetDatas(int channelIndex=0);
 
 		/**
-		* @brief: 添加新的事件数据
-		* @param: width 图片宽度
-		* @param: height 图片高度
-		* @param: mqtt mqtt
-		* @param: encodeChannel 编码线程
-		* @param: dataChannel 数据线程
+		* 添加新的事件数据
+		* @param width 图片宽度
+		* @param height 图片高度
+		* @param mqtt mqtt
+		* @param encodeChannel 编码线程
+		* @param dataChannel 数据线程
 		*/
 		void AddData(const EventData& data);
 

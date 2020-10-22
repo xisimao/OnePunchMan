@@ -12,28 +12,28 @@ namespace OnePunchMan
 	{
 	public:
 		/**
-		* @brief: 构造函数
-		* @param: detectIndex 检测序号
-		* @param: width 视频解码后宽度
-		* @param: height 视频解码后高度
+		* 构造函数
+		* @param detectIndex 检测序号
+		* @param width 视频解码后宽度
+		* @param height 视频解码后高度
 		*/
 		DetectChannel(int detectIndex,int width, int height);
 
 		/**
-		* @brief: 当前检测线程是否未初始化
-		* @return: 如果未初始化或者当前线程正在进行检测返回true,否则返回false
+		* 当前检测线程是否未初始化
+		* @return 如果未初始化或者当前线程正在进行检测返回true,否则返回false
 		*/
 		bool Inited();
 
 		/**
-		* @brief: 添加需要检测的通道序号
-		* @param: channelIndex 通道序号
+		* 添加需要检测的通道序号
+		* @param channelIndex 通道序号
 		*/
 		void SetRecogn(RecognChannel* recogn);
 
 		/**
-		* @brief: 添加需要检测的通道序号
-		* @param: channelIndex 通道序号
+		* 添加需要检测的通道序号
+		* @param channelIndex 通道序号
 		*/
 		void AddChannel(int channelIndex,DecodeChannel* decode,TrafficDetector* detector);
 
@@ -63,22 +63,22 @@ namespace OnePunchMan
 
 	private:
 		/**
-		* @brief: 从json数据中获取检测项集合
-		* @param: items 检测项集合
-		* @param: jd json解析
-		* @param: key 检测类型,机动车,非机动和和行人
+		* 从json数据中获取检测项集合
+		* @param items 检测项集合
+		* @param jd json解析
+		* @param key 检测类型,机动车,非机动和和行人
 		*/
 		void GetDetecItems(std::map<std::string, DetectItem>* items, const JsonDeserialization& jd, const std::string& key);
 
 		/**
-		* @brief: 从json数据中获取识别项集合
-		* @param: items 识别项集合
-		* @param: jd json解析
-		* @param: key 检测类型,机动车,非机动和和行人
-		* @param: channelIndex 通道序号
-		* @param: frameIndex 帧序号
-		* @param: frameSpan 帧间隔时间(毫秒)
-		* @param: taskId 任务号
+		* 从json数据中获取识别项集合
+		* @param items 识别项集合
+		* @param jd json解析
+		* @param key 检测类型,机动车,非机动和和行人
+		* @param channelIndex 通道序号
+		* @param frameIndex 帧序号
+		* @param frameSpan 帧间隔时间(毫秒)
+		* @param taskId 任务号
 		*/
 		void GetRecognItems(std::vector<RecognItem>* items, const JsonDeserialization& jd, const std::string& key,int channelIndex, int frameIndex,unsigned char frameSpan,unsigned char taskId);
 

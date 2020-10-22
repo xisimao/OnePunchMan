@@ -9,9 +9,10 @@ const string FlowDetector::VideoStructTopic("VideoStruct");
 const int FlowDetector::ReportMaxSpan = 60 * 1000;
 const int FlowDetector::DeleteSpan = 60 * 1000;
 int FlowDetector::QueueMinDistance = 200;
+const int FlowDetector::AllPropertiesFlag = 3;
 
-FlowDetector::FlowDetector(int width, int height, MqttChannel* mqtt)
-	:TrafficDetector(width, height, mqtt), _taskId(0), _lastFrameTimeStamp(0), _currentMinuteTimeStamp(0), _nextMinuteTimeStamp(0)
+FlowDetector::FlowDetector(int width, int height, MqttChannel* mqtt, DataMergeMap* merge)
+	:TrafficDetector(width, height, mqtt), _merge(merge),_taskId(0), _lastFrameTimeStamp(0), _currentMinuteTimeStamp(0), _nextMinuteTimeStamp(0)
 	, _outputImage(false), _outputReport(false), _currentReportMinute(0), _outputRecogn(false)
 {
 	_detectBgrBuffer = new unsigned char[_bgrSize];
@@ -59,6 +60,7 @@ void FlowDetector::UpdateChannel(const unsigned char taskId, const FlowChannel& 
 			laneCache.LaneName = it->LaneName;
 			laneCache.Length = it->Length;
 			laneCache.Direction = it->Direction;
+			laneCache.ReportProperties = it->ReportProperties;
 			laneCache.MeterPerPixel = it->Length / pixels;
 			laneCache.StopPoint = stopLine.Middle();
 			lanes.push_back(laneCache);
@@ -156,9 +158,9 @@ void FlowDetector::GetReportJson(string* json)
 		JsonSerialization::SerializeValue(&flowJson, "headDistance", it->HeadDistance);
 		JsonSerialization::SerializeValue(&flowJson, "headSpace", it->HeadSpace);
 		JsonSerialization::SerializeValue(&flowJson, "timeOccupancy", static_cast<int>(it->TimeOccupancy));
+		JsonSerialization::SerializeValue(&flowJson, "trafficStatus", it->TrafficStatus);
 		JsonSerialization::SerializeValue(&flowJson, "queueLength", it->QueueLength);
 		JsonSerialization::SerializeValue(&flowJson, "spaceOccupancy", it->SpaceOccupancy);
-		JsonSerialization::SerializeValue(&flowJson, "trafficStatus", it->TrafficStatus);
 		JsonSerialization::AddClassItem(&flowsJson, flowJson);
 	}
 	string vehiclesJson;
@@ -274,29 +276,66 @@ void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long 
 		{
 			FlowLaneCache& laneCache = _laneCaches[i];
 			CalculateMinuteFlow(&laneCache);
-			string laneJson;
-			JsonSerialization::SerializeValue(&laneJson, "channelUrl", _channelUrl);
-			JsonSerialization::SerializeValue(&laneJson, "laneId", laneCache.LaneId);
-			JsonSerialization::SerializeValue(&laneJson, "timeStamp", _currentMinuteTimeStamp);
-			JsonSerialization::SerializeValue(&laneJson, "persons", laneCache.Persons);
-			JsonSerialization::SerializeValue(&laneJson, "bikes", laneCache.Bikes);
-			JsonSerialization::SerializeValue(&laneJson, "motorcycles", laneCache.Motorcycles);
-			JsonSerialization::SerializeValue(&laneJson, "cars", laneCache.Cars);
-			JsonSerialization::SerializeValue(&laneJson, "tricycles", laneCache.Tricycles);
-			JsonSerialization::SerializeValue(&laneJson, "buss", laneCache.Buss);
-			JsonSerialization::SerializeValue(&laneJson, "vans", laneCache.Vans);
-			JsonSerialization::SerializeValue(&laneJson, "trucks", laneCache.Trucks);
+				
+			LogPool::Information(LogEvent::Flow, "original flow->channel url:", _channelUrl, "lane:", laneCache.LaneId,"timestamp:", DateTime::ParseTimeStamp(_currentMinuteTimeStamp).ToString(),"properties:",laneCache.ReportProperties, "cars:", laneCache.Cars, "tricycles:", laneCache.Tricycles, "buss", laneCache.Buss, "vans:", laneCache.Vans, "trucks:", laneCache.Trucks, "bikes:", laneCache.Bikes, "motorcycles:", laneCache.Motorcycles, "persons:", laneCache.Persons, "speed(km/h):", laneCache.Speed, "head distance(sec):", laneCache.HeadDistance, "head space(m)", laneCache.HeadSpace, "time occ(%):", laneCache.TimeOccupancy,"traffic status:",laneCache.TrafficStatus, "queue length(m):", laneCache.QueueLength, "space occ(%):", laneCache.SpaceOccupancy);
 
-			JsonSerialization::SerializeValue(&laneJson, "averageSpeed", static_cast<int>(laneCache.Speed));
-			JsonSerialization::SerializeValue(&laneJson, "headDistance", laneCache.HeadDistance);
-			JsonSerialization::SerializeValue(&laneJson, "headSpace", laneCache.HeadSpace);
-			JsonSerialization::SerializeValue(&laneJson, "timeOccupancy", static_cast<int>(laneCache.TimeOccupancy));
-			JsonSerialization::SerializeValue(&laneJson, "queueLength", laneCache.QueueLength);
-			JsonSerialization::SerializeValue(&laneJson, "spaceOccupancy", laneCache.SpaceOccupancy);
-			JsonSerialization::SerializeValue(&laneJson, "trafficStatus", laneCache.TrafficStatus);
-			JsonSerialization::AddClassItem(&flowLanesJson, laneJson);
+			if (laneCache.ReportProperties == AllPropertiesFlag)
+			{
+				string laneJson;
+				JsonSerialization::SerializeValue(&laneJson, "channelUrl", _channelUrl);
+				JsonSerialization::SerializeValue(&laneJson, "laneId", laneCache.LaneId);
+				JsonSerialization::SerializeValue(&laneJson, "timeStamp", _currentMinuteTimeStamp);
 
-			LogPool::Debug(LogEvent::Flow, "flow->lane:", laneCache.LaneId, "vehicles:", laneCache.Cars + laneCache.Tricycles + laneCache.Buss + laneCache.Vans + laneCache.Trucks, "bikes:", laneCache.Bikes + laneCache.Motorcycles, "persons:", laneCache.Persons, "speed:",laneCache.Speed, "head distance:", laneCache.HeadDistance, "time occ:", laneCache.TimeOccupancy,  "queue length:", laneCache.QueueLength, "space occ:", laneCache.SpaceOccupancy,"total queue:", laneCache.TotalQueueLength, "queue count:", laneCache.CountQueueLength,"lane length:",laneCache.Length);
+				JsonSerialization::SerializeValue(&laneJson, "persons", laneCache.Persons);
+				JsonSerialization::SerializeValue(&laneJson, "bikes", laneCache.Bikes);
+				JsonSerialization::SerializeValue(&laneJson, "motorcycles", laneCache.Motorcycles);
+				JsonSerialization::SerializeValue(&laneJson, "cars", laneCache.Cars);
+				JsonSerialization::SerializeValue(&laneJson, "tricycles", laneCache.Tricycles);
+				JsonSerialization::SerializeValue(&laneJson, "buss", laneCache.Buss);
+				JsonSerialization::SerializeValue(&laneJson, "vans", laneCache.Vans);
+				JsonSerialization::SerializeValue(&laneJson, "trucks", laneCache.Trucks);
+
+				JsonSerialization::SerializeValue(&laneJson, "averageSpeed", static_cast<int>(laneCache.Speed));
+				JsonSerialization::SerializeValue(&laneJson, "headDistance", laneCache.HeadDistance);
+				JsonSerialization::SerializeValue(&laneJson, "headSpace", laneCache.HeadSpace);
+				JsonSerialization::SerializeValue(&laneJson, "timeOccupancy", static_cast<int>(laneCache.TimeOccupancy));
+				JsonSerialization::SerializeValue(&laneJson, "trafficStatus", laneCache.TrafficStatus);
+
+				JsonSerialization::SerializeValue(&laneJson, "queueLength", laneCache.QueueLength);
+				JsonSerialization::SerializeValue(&laneJson, "spaceOccupancy", laneCache.SpaceOccupancy);
+
+				JsonSerialization::AddClassItem(&flowLanesJson, laneJson);
+			}
+			else
+			{
+				FlowReportData data;
+
+				data.ChannelUrl = _channelUrl;
+				data.LaneId = laneCache.LaneId;
+				data.TimeStamp = _currentMinuteTimeStamp;
+				data.ReportProperties = laneCache.ReportProperties;
+
+				data.Persons = laneCache.Persons;
+				data.Bikes = laneCache.Bikes;
+				data.Motorcycles = laneCache.Motorcycles;
+				data.Cars = laneCache.Cars;
+				data.Tricycles = laneCache.Tricycles;
+				data.Buss = laneCache.Buss;
+				data.Vans = laneCache.Vans;
+				data.Trucks = laneCache.Trucks;
+
+				data.Speed = laneCache.Speed;
+				data.HeadDistance = laneCache.HeadDistance;
+				data.HeadSpace = laneCache.HeadSpace;
+				data.TimeOccupancy = laneCache.TimeOccupancy;
+				data.TrafficStatus = laneCache.TrafficStatus;
+
+				data.QueueLength = laneCache.QueueLength;
+				data.SpaceOccupancy = laneCache.SpaceOccupancy;
+
+				_merge->PushData(data);
+			}
+
 			if (_outputReport)
 			{
 				FlowReportCache reportCache;
@@ -343,7 +382,6 @@ void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long 
 			laneCache.TotalQueueLength = 0;
 			laneCache.CountQueueLength = 0;
 			laneCache.SpaceOccupancy = 0.0;
-
 		}
 
 		if (!flowLanesJson.empty()
@@ -351,6 +389,7 @@ void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long 
 			&& !_outputReport
 			&& (timeStamp - _nextMinuteTimeStamp) < ReportMaxSpan)
 		{
+		
 			_mqtt->Send(FlowTopic, flowLanesJson);
 		}
 
@@ -600,7 +639,7 @@ void FlowDetector::HandleRecognVehicle(const RecognItem& recognItem, const unsig
 			return;
 		}
 	}
-	LogPool::Information(LogEvent::Flow, "lost recogn,id:", recognItem.Guid, " type:", static_cast<int>(recognItem.Type), " frame index:", recognItem.FrameIndex);
+	LogPool::Debug(LogEvent::Flow, "lost recogn,id:", recognItem.Guid, " type:", static_cast<int>(recognItem.Type), " frame index:", recognItem.FrameIndex);
 }
 
 void FlowDetector::HandleRecognBike(const RecognItem& recognItem, const unsigned char* iveBuffer, const VideoStruct_Bike& bike)
@@ -643,7 +682,7 @@ void FlowDetector::HandleRecognBike(const RecognItem& recognItem, const unsigned
 			return;
 		}
 	}
-	LogPool::Information(LogEvent::Flow, "lost recogn,id:", recognItem.Guid, " type:", static_cast<int>(recognItem.Type), " frame index:", recognItem.FrameIndex);
+	LogPool::Debug(LogEvent::Flow, "lost recogn,id:", recognItem.Guid, " type:", static_cast<int>(recognItem.Type), " frame index:", recognItem.FrameIndex);
 }
 
 void FlowDetector::HandleRecognPedestrain(const RecognItem& recognItem, const unsigned char* iveBuffer, const VideoStruct_Pedestrain& pedestrain)
@@ -688,7 +727,7 @@ void FlowDetector::HandleRecognPedestrain(const RecognItem& recognItem, const un
 			return;
 		}
 	}
-	LogPool::Information(LogEvent::Flow, "lost recogn,id:", recognItem.Guid, " type:", static_cast<int>(recognItem.Type), " frame index:", recognItem.FrameIndex);
+	LogPool::Debug(LogEvent::Flow, "lost recogn,id:", recognItem.Guid, " type:", static_cast<int>(recognItem.Type), " frame index:", recognItem.FrameIndex);
 }
 
 void FlowDetector::AddOrderedList(list<CarDistance>* distances, int length,double distance)

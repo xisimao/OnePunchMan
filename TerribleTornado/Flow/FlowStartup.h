@@ -10,12 +10,12 @@ namespace OnePunchMan
     {
     public:
         /**
-        * @brief: 构造函数
+        * 构造函数
         */
         FlowStartup();
 
         /**
-        * @brief: 析构函数
+        * 析构函数
         */
         ~FlowStartup();
 
@@ -38,14 +38,18 @@ namespace OnePunchMan
 
     private:
         /**
-        * @brief: 获取通道的检测报告
-        * @param: channelIndex 通道序号
-        * @param: e http消息接收事件参数
+        * 获取通道的检测报告
+        * @param channelIndex 通道序号
+        * @param e http消息接收事件参数
         */
         void GetReport(int channelIndex, HttpReceivedEventArgs* e);
 
+        std::string CheckFlowChannel(FlowChannel* channel);
+
         //通道检测集合,等于视频总数
         std::vector<FlowDetector*> _detectors;
+        //数据合并
+        DataMergeMap* _merge;
 
     };
 }

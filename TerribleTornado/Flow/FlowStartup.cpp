@@ -50,9 +50,10 @@ void FlowStartup::UpdateDb()
 
 void FlowStartup::InitThreads(MqttChannel* mqtt, vector<DecodeChannel*>* decodes, vector<TrafficDetector*>* detectors, vector<DetectChannel*>* detects, vector<RecognChannel*>* recogns, int loginHandler)
 {
+    _merge = new DataMergeMap(mqtt);
     for (int i = 0; i < ChannelCount; ++i)
     {
-        FlowDetector* detector = new FlowDetector(DecodeChannel::DestinationWidth, DecodeChannel::DestinationHeight, mqtt);
+        FlowDetector* detector = new FlowDetector(DecodeChannel::DestinationWidth, DecodeChannel::DestinationHeight, mqtt,_merge);
         _detectors.push_back(detector);
         detectors->push_back(detector);
         DecodeChannel* decode = new DecodeChannel(i + 1, loginHandler, NULL);
@@ -127,6 +128,7 @@ string FlowStartup::GetChannelJson(const string& host,int channelIndex)
             JsonSerialization::SerializeValue(&laneJson, "detectLine", lit->DetectLine);
             JsonSerialization::SerializeValue(&laneJson, "stopLine", lit->StopLine);
             JsonSerialization::SerializeValue(&laneJson, "region", lit->Region);
+            JsonSerialization::SerializeValue(&laneJson, "reportProperties", lit->ReportProperties);
             JsonSerialization::AddClassItem(&lanesJson, laneJson);
         }
         JsonSerialization::SerializeArray(&channelJson, "lanes", lanesJson);
@@ -170,6 +172,7 @@ void FlowStartup::SetDevice(HttpReceivedEventArgs* e)
             lane.DetectLine = jd.Get<string>(StringEx::Combine("channels:", itemIndex, ":lanes:", laneIndex, ":detectLine"));
             lane.StopLine = jd.Get<string>(StringEx::Combine("channels:", itemIndex, ":lanes:", laneIndex, ":stopLine"));
             lane.Region = jd.Get<string>(StringEx::Combine("channels:", itemIndex, ":lanes:", laneIndex, ":region"));
+            lane.ReportProperties = jd.Get<int>(StringEx::Combine("channels:", itemIndex, ":lanes:", laneIndex, ":reportProperties"));
             channel.Lanes.push_back(lane);
             laneIndex += 1;
         }
@@ -206,7 +209,7 @@ void FlowStartup::SetDevice(HttpReceivedEventArgs* e)
     else
     {
         e->Code = HttpCode::BadRequest;
-        e->ResponseJson = GetErrorJson("db", data.LastError());
+        JsonSerialization::SerializeArray(&e->ResponseJson, "db", data.LastError());
     }
 }
 
@@ -237,10 +240,11 @@ void FlowStartup::SetChannel(HttpReceivedEventArgs* e)
         lane.DetectLine = jd.Get<string>(StringEx::Combine("lanes:", laneIndex, ":detectLine"));
         lane.StopLine = jd.Get<string>(StringEx::Combine("lanes:", laneIndex, ":stopLine"));
         lane.Region = jd.Get<string>(StringEx::Combine("lanes:", laneIndex, ":region"));
+        lane.ReportProperties = jd.Get<int>(StringEx::Combine("lanes:", laneIndex, ":reportProperties"));
         channel.Lanes.push_back(lane);
         laneIndex += 1;
     }
-    string error = CheckChannel(&channel);
+    string error = CheckFlowChannel(&channel);
     if (!error.empty())
     {
         e->Code = HttpCode::BadRequest;
@@ -257,8 +261,36 @@ void FlowStartup::SetChannel(HttpReceivedEventArgs* e)
     else
     {
         e->Code = HttpCode::BadRequest;
-        e->ResponseJson = GetErrorJson("db", data.LastError());
+        JsonSerialization::SerializeArray(&e->ResponseJson, "db", data.LastError());
     }
+}
+
+string FlowStartup::CheckFlowChannel(FlowChannel* channel)
+{
+    string error = TrafficStartup::CheckChannel(channel);
+    if (error.empty())
+    {
+        FlowChannelData data;
+        string message;
+        for (vector<FlowLane>::iterator it = channel->Lanes.begin(); it != channel->Lanes.end(); ++it)
+        {
+            vector<FlowLane> lanes=data.GetLaneList(channel->ChannelIndex, it->LaneId);
+            for (vector<FlowLane>::iterator lit = lanes.begin(); lit != lanes.end(); ++lit)
+            {
+                if (it->ReportProperties & lit->ReportProperties)
+                {
+                    JsonSerialization::AddValueItem(&message, StringEx::Combine("channel:", it->ChannelIndex, " lane:", it->LaneId, " conflicts with channel:", lit->ChannelIndex, " lane:", lit->LaneId));
+                }
+            }
+        }
+        if (!message.empty())
+        {
+            string json;
+            JsonSerialization::SerializeArray(&json, "lanes", message);
+            return json;
+        }
+    }
+    return error;
 }
 
 bool FlowStartup::DeleteChannel(int channelIndex)

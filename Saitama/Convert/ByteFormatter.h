@@ -12,12 +12,12 @@ namespace OnePunchMan
 	public:
 
 		/**
-		* @brief: 递归序列化可变参数。
-		* @param: buffer 格式化程序在其中放置序列化数据的字节流。
-		* @param: capacity 字节流容量。
-		* @param: t 当前递归到的序列化的第一项
-		* @param: ...u 序列化的其他项
-		* @return: 如果序列化成功返回字节流长度,如果失败返回0
+		* 递归序列化可变参数。
+		* @param buffer 格式化程序在其中放置序列化数据的字节流。
+		* @param capacity 字节流容量。
+		* @param t 当前递归到的序列化的第一项
+		* @param ...u 序列化的其他项
+		* @return 如果序列化成功返回字节流长度,如果失败返回0
 		*/
 		template<typename T, typename ...U>
 		static unsigned int Serialize(char* buffer, unsigned int capacity, const T& t, U ...u)
@@ -42,12 +42,12 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 递归反序列化可变参数。
-		* @param: buffer 包含要反序列化的数据的字节流缓冲
-		* @param: size 节流的长度。
-		* @param: t 当前递归到的反序列化的第一项
-		* @param: ...u 反序列化的其他项
-		* @return: 如果反序列化成功返回使用的字节流长度,如果失败返回0。
+		* 递归反序列化可变参数。
+		* @param buffer 包含要反序列化的数据的字节流缓冲
+		* @param size 节流的长度。
+		* @param t 当前递归到的反序列化的第一项
+		* @param ...u 反序列化的其他项
+		* @return 如果反序列化成功返回使用的字节流长度,如果失败返回0。
 		*/
 		template<typename T, typename ...U>
 		static unsigned int Deserialize(const char* buffer, unsigned int size, T* t, U... u)
@@ -72,20 +72,20 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 布尔类型的序列化。
-		* @param: buffer 格式化程序在其中放置序列化数据的字节流。
-		* @param: capacity 字节流容量。
-		* @param: value 布尔类型
-		* @return: 如果序列化成功返回字节流长度,如果失败返回0。
+		* 布尔类型的序列化。
+		* @param buffer 格式化程序在其中放置序列化数据的字节流。
+		* @param capacity 字节流容量。
+		* @param value 布尔类型
+		* @return 如果序列化成功返回字节流长度,如果失败返回0。
 		*/
 		static unsigned int Serialize(char* buffer, unsigned int capacity, const bool& value);
 
 		/**
-		* @brief: 数字类型的序列化。
-		* @param: buffer 格式化程序在其中放置序列化数据的字节流。
-		* @param: capacity 字节流容量。
-		* @param: value 数字。
-		* @return: 如果序列化成功返回字节流长度,如果失败返回0。
+		* 数字类型的序列化。
+		* @param buffer 格式化程序在其中放置序列化数据的字节流。
+		* @param capacity 字节流容量。
+		* @param value 数字。
+		* @return 如果序列化成功返回字节流长度,如果失败返回0。
 		*/
 		template<typename T>
 		static unsigned int Serialize(char* buffer, unsigned int capacity, const T& value)
@@ -102,38 +102,38 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 单字节浮点类型的序列化。
-		* @param: buffer 格式化程序在其中放置序列化数据的字节流。
-		* @param: capacity 字节流容量。
-		* @param: value 单字节浮点类型
-		* @return: 如果序列化成功返回字节流长度,如果失败返回0。
+		* 单字节浮点类型的序列化。
+		* @param buffer 格式化程序在其中放置序列化数据的字节流。
+		* @param capacity 字节流容量。
+		* @param value 单字节浮点类型
+		* @return 如果序列化成功返回字节流长度,如果失败返回0。
 		*/
 		static unsigned int Serialize(char* buffer, unsigned int capacity, const float& value);
 
 		/**
-		* @brief: 双字节浮点类型的序列化。
-		* @param: buffer 格式化程序在其中放置序列化数据的字节流。
-		* @param: capacity 字节流容量。
-		* @param: value 双字节浮点类型
-		* @return: 如果序列化成功返回字节流长度,如果失败返回0。
+		* 双字节浮点类型的序列化。
+		* @param buffer 格式化程序在其中放置序列化数据的字节流。
+		* @param capacity 字节流容量。
+		* @param value 双字节浮点类型
+		* @return 如果序列化成功返回字节流长度,如果失败返回0。
 		*/
 		static unsigned int Serialize(char* buffer, unsigned int capacity, const double& value);
 
 		/**
-		* @brief: 字符串类型的序列化。
-		* @param: buffer 格式化程序在其中放置序列化数据的字节流。
-		* @param: capacity 字节流容量。
-		* @param: value 字符串
-		* @return: 如果序列化成功返回字节流长度,如果失败返回0。
+		* 字符串类型的序列化。
+		* @param buffer 格式化程序在其中放置序列化数据的字节流。
+		* @param capacity 字节流容量。
+		* @param value 字符串
+		* @return 如果序列化成功返回字节流长度,如果失败返回0。
 		*/
 		static unsigned int Serialize(char* buffer, unsigned int capacity, const std::string& value);
 
 		/**
-		* @brief: 列表类型的序列化。
-		* @param: buffer 格式化程序在其中放置序列化数据的字节流。
-		* @param: capacity 字节流容量
-		* @param: values 列表
-		* @return: 如果序列化成功返回字节流长度,如果失败返回0。
+		* 列表类型的序列化。
+		* @param buffer 格式化程序在其中放置序列化数据的字节流。
+		* @param capacity 字节流容量
+		* @param values 列表
+		* @return 如果序列化成功返回字节流长度,如果失败返回0。
 		*/
 		template<typename T>
 		static unsigned int Serialize(char* buffer, unsigned int capacity, const std::vector<T>& values)
@@ -160,11 +160,11 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 集合类型的序列化。
-		* @param: buffer 格式化程序在其中放置序列化数据的字节流。
-		* @param: capacity 字节流容量
-		* @param: values 集合
-		* @return: 如果序列化成功返回字节流长度,如果失败返回0。
+		* 集合类型的序列化。
+		* @param buffer 格式化程序在其中放置序列化数据的字节流。
+		* @param capacity 字节流容量
+		* @param values 集合
+		* @return 如果序列化成功返回字节流长度,如果失败返回0。
 		*/
 		template<typename T>
 		static unsigned int Serialize(char* buffer, unsigned int capacity, const std::set<T>& values)
@@ -190,20 +190,20 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 布尔类型的反序列化。
-		* @param: buffer 包含要反序列化的数据的字节流缓冲。
-		* @param: size 字节流长度。
-		* @param: value 布尔类型指针。
-		* @return: 如果反序列化成功返回使用的字节流长度,如果失败返回0。
+		* 布尔类型的反序列化。
+		* @param buffer 包含要反序列化的数据的字节流缓冲。
+		* @param size 字节流长度。
+		* @param value 布尔类型指针。
+		* @return 如果反序列化成功返回使用的字节流长度,如果失败返回0。
 		*/
 		static unsigned int Deserialize(const char* buffer, unsigned int size, bool* value);
 
 		/**
-		* @brief: 数字类型的反序列化。
-		* @param: buffer 包含要反序列化的数据的字节流缓冲。
-		* @param: size 字节流长度。
-		* @param: value 数字指针
-		* @return: 如果反序列化成功返回使用的字节流长度,如果失败返回0。
+		* 数字类型的反序列化。
+		* @param buffer 包含要反序列化的数据的字节流缓冲。
+		* @param size 字节流长度。
+		* @param value 数字指针
+		* @return 如果反序列化成功返回使用的字节流长度,如果失败返回0。
 		*/
 		template<typename T>
 		static unsigned int Deserialize(const char* buffer, unsigned int size, T* value)
@@ -226,38 +226,38 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 单字节浮点类型的反序列化。
-		* @param: buffer 包含要反序列化的数据的字节流缓冲。
-		* @param: size 字节流长度。
-		* @param: value 单字节浮点类型指针。
-		* @return: 如果反序列化成功返回使用的字节流长度,如果失败返回0。
+		* 单字节浮点类型的反序列化。
+		* @param buffer 包含要反序列化的数据的字节流缓冲。
+		* @param size 字节流长度。
+		* @param value 单字节浮点类型指针。
+		* @return 如果反序列化成功返回使用的字节流长度,如果失败返回0。
 		*/
 		static unsigned int Deserialize(const char* buffer, unsigned int size, float* value);
 
 		/**
-		* @brief: 双字节浮点类型的反序列化。
-		* @param: buffer 包含要反序列化的数据的字节流缓冲。
-		* @param: size 字节流长度。
-		* @param: value 双字节浮点类型指针。
-		* @return: 如果反序列化成功返回使用的字节流长度,如果失败返回0。
+		* 双字节浮点类型的反序列化。
+		* @param buffer 包含要反序列化的数据的字节流缓冲。
+		* @param size 字节流长度。
+		* @param value 双字节浮点类型指针。
+		* @return 如果反序列化成功返回使用的字节流长度,如果失败返回0。
 		*/
 		static unsigned int Deserialize(const char* buffer, unsigned int size, double* value);
 
 		/**
-		* @brief: 字符串浮点类型的反序列化。
-		* @param: buffer 包含要反序列化的数据的字节流缓冲。
-		* @param: size 字节流长度。
-		* @param: value 字符串浮点类型指针。
-		* @return: 如果反序列化成功返回使用的字节流长度,如果失败返回0。
+		* 字符串浮点类型的反序列化。
+		* @param buffer 包含要反序列化的数据的字节流缓冲。
+		* @param size 字节流长度。
+		* @param value 字符串浮点类型指针。
+		* @return 如果反序列化成功返回使用的字节流长度,如果失败返回0。
 		*/
 		static unsigned int Deserialize(const char* buffer, unsigned int size, std::string* value);
 
 		/**
-		* @brief: 列表类型的反序列化。
-		* @param: buffer 包含要反序列化的数据的字节流缓冲。
-		* @param: size 字节流长度
-		* @param: values 列表指针
-		* @return: 如果反序列化成功返回使用的使用的字节流长度,如果失败返回0。
+		* 列表类型的反序列化。
+		* @param buffer 包含要反序列化的数据的字节流缓冲。
+		* @param size 字节流长度
+		* @param values 列表指针
+		* @return 如果反序列化成功返回使用的使用的字节流长度,如果失败返回0。
 		*/
 		template<typename T>
 		static unsigned int Deserialize(const char* buffer, unsigned int size, std::vector<T>* values)
@@ -287,11 +287,11 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 集合类型的反序列化。
-		* @param: buffer 包含要反序列化的数据的字节流缓冲。
-		* @param: size 字节流长度
-		* @param: values 集合指针
-		* @return: 如果反序列化成功返回使用的使用的字节流长度,如果失败返回0。
+		* 集合类型的反序列化。
+		* @param buffer 包含要反序列化的数据的字节流缓冲。
+		* @param size 字节流长度
+		* @param values 集合指针
+		* @return 如果反序列化成功返回使用的使用的字节流长度,如果失败返回0。
 		*/
 		template<typename T>
 		static unsigned int Deserialize(const char* buffer, unsigned int size, std::set<T>* values)

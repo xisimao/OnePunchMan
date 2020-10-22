@@ -4,6 +4,7 @@
 #include "FlowData.h"
 #include "TrafficDetector.h"
 #include "Command.h"
+#include "DataMergeMap.h"
 
 namespace OnePunchMan
 {
@@ -12,39 +13,40 @@ namespace OnePunchMan
 	{
 	public:
 		/**
-		* @brief: 构造函数
-		* @param: width 图片宽度
-		* @param: height 图片高度
-		* @param: mqtt mqtt
+		* 构造函数
+		* @param width 图片宽度
+		* @param height 图片高度
+		* @param mqtt mqtt
+		* @param merge 数据合并
 		*/
-		FlowDetector(int width, int height,MqttChannel* mqtt);
+		FlowDetector(int width, int height,MqttChannel* mqtt, DataMergeMap* merge);
 		
 		/**
-		* @brief: 析构函数
+		* 析构函数
 		*/
 		~FlowDetector();
 
 		/**
-		* @brief: 初始化流量参数配置
-		* @param: jd json配置
+		* 初始化流量参数配置
+		* @param jd json配置
 		*/
 		static void Init(const JsonDeserialization& jd);
 
 		/**
-		* @brief: 更新通道
-		* @param: taskId 任务编号
-		* @param: channel 通道
+		* 更新通道
+		* @param taskId 任务编号
+		* @param channel 通道
 		*/
 		void UpdateChannel(const unsigned char taskId,const FlowChannel& channel);
 
 		/**
-		* @brief: 清空通道
+		* 清空通道
 		*/
 		void ClearChannel();
 
 		/**
-		* @brief: 获取报告json数据
-		* @param: json 用于存放json数据的字符串
+		* 获取报告json数据
+		* @param json 用于存放json数据的字符串
 		*/
 		void GetReportJson(std::string* json);
 
@@ -79,13 +81,13 @@ namespace OnePunchMan
 		{
 		public:
 			FlowLaneCache()
-				: LaneId(),LaneName(), Length(0), Direction(), Region(),MeterPerPixel(0.0), StopPoint()
+				: LaneId(), LaneName(), Length(0), Direction(), Region(), ReportProperties(0), MeterPerPixel(0.0), StopPoint()
 				, Persons(0), Bikes(0), Motorcycles(0), Cars(0), Tricycles(0), Buss(0), Vans(0), Trucks(0)
 				, TotalDistance(0.0), TotalTime(0), Speed(0.0)
 				, TotalInTime(0), TimeOccupancy(0.0)
-				, LastInRegion(0), Vehicles(0), TotalSpan(0), HeadDistance(0.0),HeadSpace(0.0)
-				, QueueLength(0), CurrentQueueLength(0), TotalQueueLength(0),CountQueueLength(0), SpaceOccupancy(0.0)
-				, TrafficStatus(0),IoStatus(false),Items()
+				, LastInRegion(0), Vehicles(0), TotalSpan(0), HeadDistance(0.0), HeadSpace(0.0)
+				, QueueLength(0), CurrentQueueLength(0), TotalQueueLength(0), CountQueueLength(0), SpaceOccupancy(0.0)
+				, TrafficStatus(0), IoStatus(false), Items()
 			{
 
 			}
@@ -94,11 +96,14 @@ namespace OnePunchMan
 			std::string LaneId;
 			//车道名称
 			std::string LaneName;
+			//车道长度
 			int Length;
 			//车道方向
 			int Direction;
 			//当前检测区域
 			Polygon Region;
+			//上报的属性
+			int ReportProperties;
 			//每个像素代表的米数
 			double MeterPerPixel;
 			//停止线检测的点
@@ -235,33 +240,33 @@ namespace OnePunchMan
 		};
 
 		/**
-		* @brief: 计算分钟流量
-		* @param: laneCache 车道缓存
+		* 计算分钟流量
+		* @param laneCache 车道缓存
 		*/
 		void CalculateMinuteFlow(FlowLaneCache* laneCache);
 
 		/**
-		* @brief: 添加车辆距离有序列表
-		* @param: distances 车辆距离链表
-		* @param: length 车辆长度
-		* @param: distance 车辆距离停止线长度(px)
+		* 添加车辆距离有序列表
+		* @param distances 车辆距离链表
+		* @param length 车辆长度
+		* @param distance 车辆距离停止线长度(px)
 		*/
 		void AddOrderedList(std::list<CarDistance>* distances, int length,double distance);
 
 		/**
-		* @brief: 计算排队长度
-		* @param: distances 车辆距离链表
+		* 计算排队长度
+		* @param distances 车辆距离链表
 		*/
 		int CalculateQueueLength(const std::list<CarDistance>& distances);
 
 		/**
-		* @brief: 绘制检测区域
-		* @param: detectItems 检测项集合
-		* @param: hasIoChanged io是否变化
-		* @param: hasNewCar 是否有新车
-		* @param: hasQueue 是否有排队
-		* @param: iveBuffer ive字节流
-		* @param: frameIndex 帧序号
+		* 绘制检测区域
+		* @param detectItems 检测项集合
+		* @param hasIoChanged io是否变化
+		* @param hasNewCar 是否有新车
+		* @param hasQueue 是否有排队
+		* @param iveBuffer ive字节流
+		* @param frameIndex 帧序号
 		*/
 		void DrawDetect(const std::map<std::string, DetectItem>& detectItems,bool hasIoChanged,bool hasNewCar,bool hasQueue, const unsigned char* iveBuffer, unsigned int frameIndex);
 
@@ -277,6 +282,11 @@ namespace OnePunchMan
 		static const int DeleteSpan;
 		//计算两车是否处于排队状态的最小距离(px)
 		static int QueueMinDistance;
+		//车道上报所有流量属性的标识
+		static const int AllPropertiesFlag;
+		//数据合并
+		DataMergeMap* _merge;
+
 		//任务编号
 		int _taskId;
 

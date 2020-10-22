@@ -15,245 +15,245 @@ namespace OnePunchMan
 	public:
 
 		/**
-		* @brief: 构造函数
+		* 构造函数
 		*/
 		SocketMaid();
 
 		/**
-		* @brief: 构造函数
-		* @param: channelCount 通道数量
-		* @param: useClient 是否使用客户端
+		* 构造函数
+		* @param channelCount 通道数量
+		* @param useClient 是否使用客户端
 		*/
 		SocketMaid(unsigned int channnelCount,bool useClient);
 
 		/**
-		* @brief: 析构函数
+		* 析构函数
 		*/
 		~SocketMaid();
 
 		/**
-		* @brief: 添加监听地址
-		* @param: endPoint 监听地址
-		* @param: handler 套接字操作指针
-		* @return: 返回-1表示监听失败,否则返回套接字
+		* 添加监听地址
+		* @param endPoint 监听地址
+		* @param handler 套接字操作指针
+		* @return 返回-1表示监听失败,否则返回套接字
 		*/
 		int AddListenEndPoint(const EndPoint& endPoint, SocketHandler* handler);
 
 		/**
-		* @brief: 添加tcp地址
-		* @param: endPoint 连接地址
-		* @param: handler 套接字操作指针
+		* 添加tcp地址
+		* @param endPoint 连接地址
+		* @param handler 套接字操作指针
 		*/
 		void AddConnectEndPoint(const EndPoint& endPoint, SocketHandler* handler);
 
 		/**
-		* @brief: 添加Udp套接字
-		* @param: handler 套接字操作指针
-		* @param: channelIndex 通道编号,-1表示自动适配
-		* @return: 返回-1表示绑定失败,否则返回套接字
+		* 添加Udp套接字
+		* @param handler 套接字操作指针
+		* @param channelIndex 通道编号,-1表示自动适配
+		* @return 返回-1表示绑定失败,否则返回套接字
 		*/
 		int AddUdpSocket(SocketHandler* handler, int channelIndex = -1);
 
 		/**
-		* @brief: 添加Udp地址
-		* @param: endPoint Udp地址
-		* @param: handler 套接字操作指针
-		* @param: channelIndex 通道编号,-1表示自动适配
-		* @return: 返回-1表示绑定失败,否则返回套接字
+		* 添加Udp地址
+		* @param endPoint Udp地址
+		* @param handler 套接字操作指针
+		* @param channelIndex 通道编号,-1表示自动适配
+		* @return 返回-1表示绑定失败,否则返回套接字
 		*/
 		int AddBindEndPoint(const EndPoint& endPoint, SocketHandler* handler, int channelIndex = -1);
 
 		/**
-		* @brief: 添加Udp多播地址
-		* @param: endPoint Udp地址
-		* @param: handler 套接字操作指针
-		* @param: channelIndex 通道编号,-1表示自动适配
-		* @return: 返回-1表示绑定失败,否则返回套接字
+		* 添加Udp多播地址
+		* @param endPoint Udp地址
+		* @param handler 套接字操作指针
+		* @param channelIndex 通道编号,-1表示自动适配
+		* @return 返回-1表示绑定失败,否则返回套接字
 		*/
 		int AddMultiCastEndPoint(const EndPoint& endPoint, SocketHandler* handler, int channelIndex = -1);
 
 		/**
-		* @brief: 移除连接地址
-		* @param: endPoint 连接地址
+		* 移除连接地址
+		* @param endPoint 连接地址
 		*/
 		void RemoveEndPoint(const EndPoint& endPoint);
 
 		/**
-		* @brief: 移除套接字
-		* @param: socket 套接字
-		* @param: result 移除原因
+		* 移除套接字
+		* @param socket 套接字
+		* @param result 移除原因
 		*/
 		void RemoveSocket(int socket,int result);
 
 		/**
-		* @brief: 发送字节流
-		* @param: socket 套接字
-		* @param: buffer 字节流缓冲
-		* @return: 发送结果
+		* 发送字节流
+		* @param socket 套接字
+		* @param buffer 字节流缓冲
+		* @return 发送结果
 		*/
 		SocketResult SendTcp(int socket, const std::string& buffer);
 
 		/**
-		* @brief: 发送字节流
-		* @param: endPoint 地址
-		* @param: buffer 字节流缓冲
-		* @return: 发送结果
+		* 发送字节流
+		* @param endPoint 地址
+		* @param buffer 字节流缓冲
+		* @return 发送结果
 		*/
 		SocketResult SendTcp(const EndPoint& endPoint, const std::string& buffer);
 
 		/**
-		* @brief: 发送字节流
-		* @param: tag 客户端标记
-		* @param: buffer 字节流缓冲
-		* @return: 发送结果
+		* 发送字节流
+		* @param tag 客户端标记
+		* @param buffer 字节流缓冲
+		* @return 发送结果
 		*/
 		SocketResult SendTcp(unsigned short tag, const std::string& buffer);
 
 		/**
-		* @brief: 发送字节流,并等待响应,但是不关心返回结果
-		* @param: socket 套接字
-		* @param: buffer 字节流缓冲
-		* @param: timeStamp 发送时间戳
-		* @param: protocolId 等待响应的协议编号
-		* @return: 发送结果
+		* 发送字节流,并等待响应,但是不关心返回结果
+		* @param socket 套接字
+		* @param buffer 字节流缓冲
+		* @param timeStamp 发送时间戳
+		* @param protocolId 等待响应的协议编号
+		* @return 发送结果
 		*/
 		SocketResult SendTcp(int socket, const std::string& buffer, long long timeStamp,unsigned int protocolId);
 
 		/**
-		* @brief: 发送字节流,并等待响应,但是不关心返回结果
-		* @param: endPoint 地址
-		* @param: buffer 字节流缓冲
-		* @param: timeStamp 发送时间戳
-		* @param: protocolId 等待响应的协议编号
-		* @return: 发送结果
+		* 发送字节流,并等待响应,但是不关心返回结果
+		* @param endPoint 地址
+		* @param buffer 字节流缓冲
+		* @param timeStamp 发送时间戳
+		* @param protocolId 等待响应的协议编号
+		* @return 发送结果
 		*/
 		SocketResult SendTcp(const EndPoint& endPoint, const std::string& buffer, long long timeStamp, unsigned int protocolId);
 
 		/**
-		* @brief: 发送字节流,并等待响应,但是不关心返回结果
-		* @param: tag 客户端标记
-		* @param: buffer 字节流缓冲
-		* @param: timeStamp 发送时间戳
-		* @param: protocolId 等待响应的协议编号
-		* @return: 发送结果
+		* 发送字节流,并等待响应,但是不关心返回结果
+		* @param tag 客户端标记
+		* @param buffer 字节流缓冲
+		* @param timeStamp 发送时间戳
+		* @param protocolId 等待响应的协议编号
+		* @return 发送结果
 		*/
 		SocketResult SendTcp(unsigned short tag, const std::string& buffer, long long timeStamp, unsigned int protocolId);
 
 		/**
-		* @brief: 发送字节流,并等待响应,需要获取返回结果
-		* @param: socket 套接字
-		* @param: buffer 字节流缓冲
-		* @param: timeStamp 发送时间戳
-		* @param: protocolId 等待响应的协议编号
-		* @param: responseBuffer 用于获取返回字节流的指针
-		* @return: 发送结果
+		* 发送字节流,并等待响应,需要获取返回结果
+		* @param socket 套接字
+		* @param buffer 字节流缓冲
+		* @param timeStamp 发送时间戳
+		* @param protocolId 等待响应的协议编号
+		* @param responseBuffer 用于获取返回字节流的指针
+		* @return 发送结果
 		*/
 		SocketResult SendTcp(int socket, const std::string& buffer, long long timeStamp, unsigned int protocolId, std::string* responseBuffer);
 
 		/**
-		* @brief: 发送字节流,并等待响应,需要获取返回结果
-		* @param: endPoint 地址
-		* @param: buffer 字节流缓冲
-		* @param: timeStamp 发送时间戳
-		* @param: protocolId 等待响应的协议编号
-		* @param: responseBuffer 用于获取返回字节流的指针
-		* @return: 发送结果
+		* 发送字节流,并等待响应,需要获取返回结果
+		* @param endPoint 地址
+		* @param buffer 字节流缓冲
+		* @param timeStamp 发送时间戳
+		* @param protocolId 等待响应的协议编号
+		* @param responseBuffer 用于获取返回字节流的指针
+		* @return 发送结果
 		*/
 		SocketResult SendTcp(const EndPoint& endPoint, const std::string& buffer, long long timeStamp, unsigned int protocolId, std::string* responseBuffer);
 
 		/**
-		* @brief: 发送字节流,并等待响应,需要获取返回结果
-		* @param: tag 客户端标记
-		* @param: buffer 字节流缓冲
-		* @param: timeStamp 发送时间戳
-		* @param: protocolId 等待响应的协议编号
-		* @param: responseBuffer 用于获取返回字节流的指针
-		* @return: 发送结果
+		* 发送字节流,并等待响应,需要获取返回结果
+		* @param tag 客户端标记
+		* @param buffer 字节流缓冲
+		* @param timeStamp 发送时间戳
+		* @param protocolId 等待响应的协议编号
+		* @param responseBuffer 用于获取返回字节流的指针
+		* @return 发送结果
 		*/
 		SocketResult SendTcp(unsigned short tag, const std::string& buffer, long long timeStamp, unsigned int protocolId, std::string* responseBuffer);
 		
 		/**
-		* @brief: 向连入的tcp客户端发出通知
-		* @param: buffer 字节流缓冲
+		* 向连入的tcp客户端发出通知
+		* @param buffer 字节流缓冲
 		*/
 		void SendTcp(const std::string& buffer);
 
 		/**
-		* @brief: 发送字节流
-		* @param: socket 套接字
-		* @param: remoteEndPoint 远程地址
-		* @param: buffer 字节流缓冲
-		* @return: 发送结果
+		* 发送字节流
+		* @param socket 套接字
+		* @param remoteEndPoint 远程地址
+		* @param buffer 字节流缓冲
+		* @return 发送结果
 		*/
 		SocketResult SendUdp(int socket, const EndPoint& remoteEndPoint, const std::string& buffer);
 
 		/**
-		* @brief: 发送字节流
-		* @param: bindEndPoint 绑定地址
-		* @param: remoteEndPoint 远程地址
-		* @param: buffer 字节流缓冲
-		* @return: 发送结果
+		* 发送字节流
+		* @param bindEndPoint 绑定地址
+		* @param remoteEndPoint 远程地址
+		* @param buffer 字节流缓冲
+		* @return 发送结果
 		*/
 		SocketResult SendUdp(const EndPoint& bindEndPoint, const EndPoint& remoteEndPoint, const std::string& buffer);
 
 		/**
-		* @brief: 发送字节流,并等待响应,但是不关心返回结果
-		* @param: socket 套接字
-		* @param: remoteEndPoint 远程地址
-		* @param: buffer 字节流缓冲
-		* @param: timeStamp 发送时间戳
-		* @param: protocolId 等待响应的协议编号
-		* @return: 发送结果
+		* 发送字节流,并等待响应,但是不关心返回结果
+		* @param socket 套接字
+		* @param remoteEndPoint 远程地址
+		* @param buffer 字节流缓冲
+		* @param timeStamp 发送时间戳
+		* @param protocolId 等待响应的协议编号
+		* @return 发送结果
 		*/
 		SocketResult SendUdp(int socket, const EndPoint& remoteEndPoint, const std::string& buffer, long long timeStamp, unsigned int protocolId);
 
 		/**
-		* @brief: 发送字节流,并等待响应,但是不关心返回结果
-		* @param: bindEndPoint 绑定地址
-		* @param: remoteEndPoint 远程地址
-		* @param: buffer 字节流缓冲
-		* @param: timeStamp 发送时间戳
-		* @param: protocolId 等待响应的协议编号
-		* @return: 发送结果
+		* 发送字节流,并等待响应,但是不关心返回结果
+		* @param bindEndPoint 绑定地址
+		* @param remoteEndPoint 远程地址
+		* @param buffer 字节流缓冲
+		* @param timeStamp 发送时间戳
+		* @param protocolId 等待响应的协议编号
+		* @return 发送结果
 		*/
 		SocketResult SendUdp(const EndPoint& bindEndPoint, const EndPoint& remoteEndPoint, const std::string& buffer, long long timeStamp, unsigned int protocolId);
 
 		/**
-		* @brief: 发送字节流,并等待响应,需要获取返回结果
-		* @param: socket 套接字
-		* @param: remoteEndPoint 远程地址
-		* @param: buffer 字节流缓冲
-		* @param: timeStamp 发送时间戳
-		* @param: protocolId 等待响应的协议编号
-		* @param: responseBuffer 用于获取返回字节流的指针
-		* @return: 发送结果
+		* 发送字节流,并等待响应,需要获取返回结果
+		* @param socket 套接字
+		* @param remoteEndPoint 远程地址
+		* @param buffer 字节流缓冲
+		* @param timeStamp 发送时间戳
+		* @param protocolId 等待响应的协议编号
+		* @param responseBuffer 用于获取返回字节流的指针
+		* @return 发送结果
 		*/
 		SocketResult SendUdp(int socket, const EndPoint& remoteEndPoint, const std::string& buffer, long long timeStamp, unsigned int protocolId,std::string* responseBuffer);
 
 		/**
-		* @brief: 发送字节流,并等待响应,需要获取返回结果
-		* @param: bindEndPoint 绑定地址
-		* @param: remoteEndPoint 远程地址
-		* @param: buffer 字节流缓冲
-		* @param: timeStamp 发送时间戳
-		* @param: protocolId 等待响应的协议编号
-		* @param: responseBuffer 用于获取返回字节流的指针
-		* @return: 发送结果
+		* 发送字节流,并等待响应,需要获取返回结果
+		* @param bindEndPoint 绑定地址
+		* @param remoteEndPoint 远程地址
+		* @param buffer 字节流缓冲
+		* @param timeStamp 发送时间戳
+		* @param protocolId 等待响应的协议编号
+		* @param responseBuffer 用于获取返回字节流的指针
+		* @return 发送结果
 		*/
 		SocketResult SendUdp(const EndPoint& bindEndPoint, const EndPoint& remoteEndPoint, const std::string& buffer, long long timeStamp, unsigned int protocolId, std::string* responseBuffer);
 
 		/**
-		* @brief: 开启连接和接收线程
+		* 开启连接和接收线程
 		*/
 		void Start();
 
 		/**
-		* @brief: 等待连接和接收线程结束
+		* 等待连接和接收线程结束
 		*/
 		void Join();
 
 		/**
-		* @brief: 关闭连接和接收线程
+		* 关闭连接和接收线程
 		*/
 		void Stop();
 
@@ -270,9 +270,9 @@ namespace OnePunchMan
 	protected:
 
 		/**
-		* @brief: 设置客户端套接字的标记
-		* @param: socket 客户端套接字
-		* @param: tag 客户端标记
+		* 设置客户端套接字的标记
+		* @param socket 客户端套接字
+		* @param tag 客户端标记
 		*/
 		void SetTag(int socket, unsigned short tag);
 
@@ -293,56 +293,56 @@ namespace OnePunchMan
 		};
 
 		/**
-		* @brief: 轮询选择通道
-		* @param: index 通道序号,-1表示轮询,否则表示指定序号
-		* @return: 返回Null表示没有可用通道,否则返回通道指针
+		* 轮询选择通道
+		* @param index 通道序号,-1表示轮询,否则表示指定序号
+		* @return 返回Null表示没有可用通道,否则返回通道指针
 		*/
 		SocketChannel* Select(int index=-1);
 
 		/**
-		* @brief: 发送字节流,实现异步通知功能
-		* @param: socket 套接字
-		* @param: buffer 字节流缓冲
-		* @param: handler 异步接口
-		* @return: 发送结果
+		* 发送字节流,实现异步通知功能
+		* @param socket 套接字
+		* @param buffer 字节流缓冲
+		* @param handler 异步接口
+		* @return 发送结果
 		*/
 		SocketResult SendTcp(int socket, const std::string& buffer, AsyncHandler* handler);
 
 		/**
-		* @brief: 发送字节流,实现异步通知功能
-		* @param: endPoint 地址
-		* @param: buffer 字节流缓冲
-		* @param: handler 异步接口
-		* @return: 发送结果
+		* 发送字节流,实现异步通知功能
+		* @param endPoint 地址
+		* @param buffer 字节流缓冲
+		* @param handler 异步接口
+		* @return 发送结果
 		*/
 		SocketResult SendTcp(const EndPoint& endPoint, const std::string& buffer, AsyncHandler* handler);
 
 		/**
-		* @brief: 发送字节流,实现异步通知功能
-		* @param: tag 客户端标记
-		* @param: buffer 字节流缓冲
-		* @param: handler 异步接口
-		* @return: 发送结果
+		* 发送字节流,实现异步通知功能
+		* @param tag 客户端标记
+		* @param buffer 字节流缓冲
+		* @param handler 异步接口
+		* @return 发送结果
 		*/
 		SocketResult SendTcp(unsigned short tag, const std::string& buffer, AsyncHandler* handler);
 
 		/**
-		* @brief: 发送字节流,实现异步通知功能
-		* @param: socket 套接字
-		* @param: remoteEndPoint 远程地址
-		* @param: buffer 字节流缓冲
-		* @param: handler 异步接口
-		* @return: 发送结果
+		* 发送字节流,实现异步通知功能
+		* @param socket 套接字
+		* @param remoteEndPoint 远程地址
+		* @param buffer 字节流缓冲
+		* @param handler 异步接口
+		* @return 发送结果
 		*/
 		SocketResult SendUdp(int socket, const EndPoint& remoteEndPoint, const std::string& buffer, AsyncHandler* handler);
 
 		/**
-		* @brief: 发送字节流,实现异步通知功能
-		* @param: bindEndPoint 绑定地址
-		* @param: remoteEndPoint 远程地址
-		* @param: buffer 字节流缓冲
-		* @param: handler 异步接口
-		* @return: 发送结果
+		* 发送字节流,实现异步通知功能
+		* @param bindEndPoint 绑定地址
+		* @param remoteEndPoint 远程地址
+		* @param buffer 字节流缓冲
+		* @param handler 异步接口
+		* @return 发送结果
 		*/
 		SocketResult SendUdp(const EndPoint& bindEndPoint, const EndPoint& remoteEndPoint, const std::string& buffer, AsyncHandler* handler);
 

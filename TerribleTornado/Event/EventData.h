@@ -60,43 +60,43 @@ namespace OnePunchMan
 	{
 	public:
 		/**
-		* @brief: 查询通道列表
-		* @return: 通道列表
+		* 查询通道列表
+		* @return 通道列表
 		*/
 		std::vector<EventChannel> GetList();
 
 		/**
-		* @brief: 查询单个通道
-		* @param: channelIndex 通道序号
-		* @return: 通道
+		* 查询单个通道
+		* @param channelIndex 通道序号
+		* @return 通道
 		*/
 		EventChannel Get(int channelIndex);
 
 
 
 		/**
-		* @brief: 设置通道
-		* @param: channel 通道
-		* @return: 设置结果
+		* 设置通道
+		* @param channel 通道
+		* @return 设置结果
 		*/
 		bool Set(const EventChannel& channel);
 
 		/**
-		* @brief: 设置通道集合
-		* @param: channels 通道集合
-		* @return: 设置结果
+		* 设置通道集合
+		* @param channels 通道集合
+		* @return 设置结果
 		*/
 		bool SetList(const std::vector<EventChannel>& channels);
 		
 		/**
-		* @brief: 删除通道
-		* @param: channel 通道
-		* @return: 删除结果
+		* 删除通道
+		* @param channel 通道
+		* @return 删除结果
 		*/
 		bool Delete(int channelIndex);
 
 		/**
-		* @brief: 清空通道
+		* 清空通道
 		*/
 		void Clear();
 
@@ -104,16 +104,16 @@ namespace OnePunchMan
 
 	private:
 		/**
-		* @brief: 填充通道
-		* @param: sqlite 查询结果
-		* @return: 通道
+		* 填充通道
+		* @param sqlite 查询结果
+		* @return 通道
 		*/
 		EventChannel FillChannel(const SqliteReader& sqlite);
 
 		/**
-		* @brief: 添加通道
-		* @param: channel 通道
-		* @return: 添加结果
+		* 添加通道
+		* @param channel 通道
+		* @return 添加结果
 		*/
 		bool InsertChannel(const EventChannel& channel);
 	};

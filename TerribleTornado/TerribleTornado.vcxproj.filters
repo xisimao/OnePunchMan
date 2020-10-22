@@ -91,6 +91,9 @@
     <ClCompile Include="Image\YUV420SPHandler.cpp">
       <Filter>Image\Debug</Filter>
     </ClCompile>
+    <ClCompile Include="Flow\DataMergeMap.cpp">
+      <Filter>Flow</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Flow\FlowData.h">
@@ -161,6 +164,9 @@
     </ClInclude>
     <ClInclude Include="Image\YUV420SPHandler.h">
       <Filter>Image\Debug</Filter>
+    </ClInclude>
+    <ClInclude Include="Flow\DataMergeMap.h">
+      <Filter>Flow</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

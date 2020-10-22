@@ -12,33 +12,33 @@ namespace OnePunchMan
 	public:
 
 		/**
-		* @brief: 构造函数
+		* 构造函数
 		*/
 		ThreadObject(const std::string& name);
 
 		/**
-		* @brief: 析构函数
+		* 析构函数
 		*/
 		virtual ~ThreadObject();
 
 		/**
-		* @brief: 获取线程名称
-		* @return: 线程名称
+		* 获取线程名称
+		* @return 线程名称
 		*/
 		std::string Name() const;
 
 		/**
-		* @brief: 开始线程
+		* 开始线程
 		*/
 		void Start();
 
 		/**
-		* @brief: 等待线程结束
+		* 等待线程结束
 		*/
 		void Join();
 
 		/**
-		* @brief: 向线程提交取消请求,并阻塞调用线程直到线程终止为止。
+		* 向线程提交取消请求,并阻塞调用线程直到线程终止为止。
 		*/
 		void Stop();
 
@@ -48,14 +48,14 @@ namespace OnePunchMan
 	protected:
 
 		/**
-		* @brief: 子类需要实现的具体启动程序
-		* @param: arg 启动参数
+		* 子类需要实现的具体启动程序
+		* @param arg 启动参数
 		*/
 		virtual void StartCore() = 0;
 
 		/**
-		* @brief: 子类选择实现的停止启动程序
-		* @param: arg 启动参数
+		* 子类选择实现的停止启动程序
+		* @param arg 启动参数
 		*/
 		virtual void StopCore()
 		{
@@ -78,8 +78,8 @@ namespace OnePunchMan
 		static const int SleepTime;
 
 		/**
-		* @brief: 线程启动函数
-		* @param: arg 启动参数
+		* 线程启动函数
+		* @param arg 启动参数
 		*/
 		void StartThread();
 

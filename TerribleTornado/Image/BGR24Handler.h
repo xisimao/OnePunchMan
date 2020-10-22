@@ -11,17 +11,17 @@ namespace OnePunchMan
 	{
 	public:
 		/**
-		* @brief: 构造函数
-		* @param: count 写入帧的总数
+		* 构造函数
+		* @param count 写入帧的总数
 		*/
 		BGR24Handler(int count=3);
 
 		/**
-		* @brief: 写入bmp文件
-		* @param: bgr24 bgr24格式的字节流
-		* @param: width 图片宽度
-		* @param: height 图片高度
-		* @param: frameIndex 帧序号
+		* 写入bmp文件
+		* @param bgr24 bgr24格式的字节流
+		* @param width 图片宽度
+		* @param height 图片高度
+		* @param frameIndex 帧序号
 		*/
 		void HandleFrame(unsigned char* bgr24, int width, int height, unsigned int frameIndex);
 

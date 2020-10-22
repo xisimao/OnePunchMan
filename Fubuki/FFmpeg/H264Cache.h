@@ -11,40 +11,40 @@ namespace OnePunchMan
 	{
 	public:
 		/**
-		* @brief: 构造函数
-		* @param: channelIndex 通道序号
+		* 构造函数
+		* @param channelIndex 通道序号
 		*/
 		H264Cache(int channelIndex);
 
 		/**
-		* @brief: 析构函数
+		* 析构函数
 		*/
 		~H264Cache();
 
 		/**
-		* @brief: 推送h264视频包
-		* @param: data 视频包字节流
-		* @param: size 视频包字节流长度
+		* 推送h264视频包
+		* @param data 视频包字节流
+		* @param size 视频包字节流长度
 		*/
 		void PushPacket(unsigned char* data, int size);
 
 		/**
-		* @brief: 添加视频输出
-		* @param: outputUrl 视频输出地址
-		* @param: iFrameCount 输出I帧数量
+		* 添加视频输出
+		* @param outputUrl 视频输出地址
+		* @param iFrameCount 输出I帧数量
 		*/
 		bool AddOutputUrl(const std::string& outputUrl, int iFrameCount);
 
 		/**
-		* @brief: 移除视频输出
-		* @param: outputUrl 视频输出地址
+		* 移除视频输出
+		* @param outputUrl 视频输出地址
 		*/
 		void RemoveOutputUrl(const std::string& outputUrl);
 
 		/**
-		* @brief: 检查视频输出是否完成
-		* @param: outputUrl 视频输出地址
-		* @return: 如果视频输出已经完成返回true并自动卸载,但是不会删除文件
+		* 检查视频输出是否完成
+		* @param outputUrl 视频输出地址
+		* @return 如果视频输出已经完成返回true并自动卸载,但是不会删除文件
 		*/
 		bool OutputFinished(const std::string& outputUrl);
 
@@ -63,12 +63,12 @@ namespace OnePunchMan
 			unsigned int Size;
 		};
 		/**
-		* @brief: 将h264视频包写入缓存
-		* @param: data 视频包字节流
-		* @param: size 视频包字节流长度
-		* @param: frameIndex 视频包对应的帧序号
-		* @param: frameType 视频包对应的帧类型
-		* @return: 表示是否写入缓存成功
+		* 将h264视频包写入缓存
+		* @param data 视频包字节流
+		* @param size 视频包字节流长度
+		* @param frameIndex 视频包对应的帧序号
+		* @param frameType 视频包对应的帧类型
+		* @return 表示是否写入缓存成功
 		*/
 		bool WriteCache(unsigned char* data, int size, int frameIndex, FrameType frameType);
 

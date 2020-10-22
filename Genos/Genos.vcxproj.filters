@@ -47,6 +47,7 @@
     <ClCompile Include="..\Fubuki\FFmpeg\FFmpegOutput.cpp" />
     <ClCompile Include="..\TerribleTornado\Event\EventDataChannel.cpp" />
     <ClCompile Include="..\TerribleTornado\Traffic\SqliteLogger.cpp" />
+    <ClCompile Include="..\TerribleTornado\Flow\DataMergeMap.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Saitama\Convert\JsonFormatter.h" />
@@ -97,5 +98,6 @@
     <ClInclude Include="..\Fubuki\FFmpeg\FFmpegOutput.h" />
     <ClInclude Include="..\TerribleTornado\Event\EventDataChannel.h" />
     <ClInclude Include="..\TerribleTornado\Traffic\SqliteLogger.h" />
+    <ClInclude Include="..\TerribleTornado\Flow\DataMergeMap.h" />
   </ItemGroup>
 </Project>

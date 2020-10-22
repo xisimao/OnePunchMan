@@ -17,23 +17,23 @@ namespace OnePunchMan
 	public:
 		
 		/**
-		* @brief: 执行命令
-		* @param: cmd 命令
-		* @return: 执行结果
+		* 执行命令
+		* @param cmd 命令
+		* @return 执行结果
 		*/
 		static std::string Execute(const std::string& cmd);
 
 		/**
-		* @brief: 替换命令中的正则表达式
-		* @param: cmd 命令
-		* @return: 替换后的字符串
+		* 替换命令中的正则表达式
+		* @param cmd 命令
+		* @return 替换后的字符串
 		*/
 		static std::string ReplacePattern(const std::string& cmd);
 
 		/**
-		* @brief: 替换命令中的转义字符
-		* @param: cmd 命令
-		* @return: 替换后的字符串
+		* 替换命令中的转义字符
+		* @param cmd 命令
+		* @return 替换后的字符串
 		*/
 		static std::string RepleaceEscape(const std::string& cmd);
 	};

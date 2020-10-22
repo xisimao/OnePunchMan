@@ -53,23 +53,23 @@ namespace OnePunchMan
     {
     public:
         /**
-        * @brief: 构造函数
-        * @param: encodeCount 编码器总数
+        * 构造函数
+        * @param encodeCount 编码器总数
         */
         EncodeChannel(int encodeCount);
 
         /**
-        * @brief: 初始化hisi sdk
-        * @param: encodeCount 编码器总数
-        * @param: width 编码宽度
-        * @param: height 编码高度
-        * @return: 初始化成功返回true,否则返回false
+        * 初始化hisi sdk
+        * @param encodeCount 编码器总数
+        * @param width 编码宽度
+        * @param height 编码高度
+        * @return 初始化成功返回true,否则返回false
         */
         static bool InitHisi(int encodeCount, int width, int height);
 
         /**
-        * @brief: 卸载hisi sdk
-        * @param: encodeCount 编码器总数
+        * 卸载hisi sdk
+        * @param encodeCount 编码器总数
         */
         static void UninitHisi(int encodeCount);
 
@@ -82,9 +82,9 @@ namespace OnePunchMan
 
 #ifndef _WIN32
         /**
-        * @brief: 向编码器推送视频帧
-        * @param: channelIndex 通道序号
-        * @param: frame 视频帧
+        * 向编码器推送视频帧
+        * @param channelIndex 通道序号
+        * @param frame 视频帧
         */
         void PushFrame(int channelIndex, VIDEO_FRAME_INFO_S* frame);
 #endif // !_WIN32

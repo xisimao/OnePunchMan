@@ -24,7 +24,7 @@ namespace OnePunchMan
 	public:
 		FlowLane()
 			:TrafficLane(),LaneId(),Direction(0),Region(),DetectLine(),StopLine(),LaneType(0)
-			,FlowDirection(0),Length(0),IOIp(),IOPort(0),IOIndex(0)
+			,FlowDirection(0),Length(0),IOIp(),IOPort(0),IOIndex(0), ReportProperties(0)
 		{
 
 		}
@@ -50,6 +50,8 @@ namespace OnePunchMan
 		int IOPort;
 		//io检测器输出口
 		int IOIndex;	
+		//上报属性
+		int ReportProperties;
 	};
 
 	//流量视频通道
@@ -65,41 +67,49 @@ namespace OnePunchMan
 	{
 	public:
 		/**
-		* @brief: 查询通道列表
-		* @return: 通道列表
+		* 查询通道列表
+		* @return 通道列表
 		*/
 		std::vector<FlowChannel> GetList();
 
 		/**
-		* @brief: 查询单个通道
-		* @param: channelIndex 通道序号
-		* @return: 通道
+		* 查询车道列表
+		* @param channelIndex 通道序号
+		* @param laneId 车道编号
+		* @return 车道列表
+		*/
+		std::vector<FlowLane> GetLaneList(int channelIndex,const std::string& laneId);
+
+		/**
+		* 查询单个通道
+		* @param channelIndex 通道序号
+		* @return 通道
 		*/
 		FlowChannel Get(int channelIndex);
 
 		/**
-		* @brief: 设置通道
-		* @param: channel 通道
-		* @return: 设置结果
+		* 设置通道
+		* @param channel 通道
+		* @return 设置结果
 		*/
 		bool Set(const FlowChannel& channel);
 
 		/**
-		* @brief: 设置通道集合
-		* @param: channels 通道集合
-		* @return: 设置结果
+		* 设置通道集合
+		* @param channels 通道集合
+		* @return 设置结果
 		*/
 		bool SetList(const std::vector<FlowChannel>& channels);
 		
 		/**
-		* @brief: 删除通道
-		* @param: channel 通道
-		* @return: 删除结果
+		* 删除通道
+		* @param channel 通道
+		* @return 删除结果
 		*/
 		bool Delete(int channelIndex);
 
 		/**
-		* @brief: 清空通道
+		* 清空通道
 		*/
 		void Clear();
 
@@ -107,30 +117,30 @@ namespace OnePunchMan
 
 	private:
 		/**
-		* @brief: 添加通道
-		* @param: channel 通道
-		* @return: 添加结果
+		* 添加通道
+		* @param channel 通道
+		* @return 添加结果
 		*/
 		bool InsertChannel(const FlowChannel& channel);
 
 		/**
-		* @brief: 添加车道
-		* @param: lane 车道
-		* @return: 添加结果
+		* 添加车道
+		* @param lane 车道
+		* @return 添加结果
 		*/
 		bool InsertLane(const FlowLane& lane);
 
 		/**
-		* @brief: 填充通道
-		* @param: sqlite 查询结果
-		* @return: 通道
+		* 填充通道
+		* @param sqlite 查询结果
+		* @return 通道
 		*/
 		FlowChannel FillChannel(const SqliteReader& sqlite);
 
 		/**
-		* @brief: 填充车道
-		* @param: sqlite 查询结果
-		* @return: 车道
+		* 填充车道
+		* @param sqlite 查询结果
+		* @return 车道
 		*/
 		FlowLane FillLane(const SqliteReader& sqlite);
 	};

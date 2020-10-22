@@ -8,9 +8,9 @@ namespace OnePunchMan
 	public:
 
 		/**
-		* @brief: sha1算法加密
-		* @param: value 需要加密的字符串
-		* @param: hash 加密后的字节流
+		* sha1算法加密
+		* @param value 需要加密的字符串
+		* @param hash 加密后的字节流
 		*/
 		static void Sha1(const std::string& value, unsigned char * hash,unsigned int capacity);
 

@@ -10,23 +10,23 @@ namespace OnePunchMan
 	{
 	public:
 		/**
-		* @brief: 构造函数
-		* @param: channelIndex 视频序号
-		* @param: count 写入帧的总数
+		* 构造函数
+		* @param channelIndex 视频序号
+		* @param count 写入帧的总数
 		*/
 		H264Handler(int channelIndex);
 
 		/**
-		* @brief: 处理视频帧
-		* @param: frame 视频帧字节流
-		* @param: size 视频帧字节流长度
+		* 处理视频帧
+		* @param frame 视频帧字节流
+		* @param size 视频帧字节流长度
 		*/
 		void HandleFrame(unsigned char* frame, int size);
 
 		/**
-		* @brief: 处理视频帧
-		* @param: frame 视频帧字节流
-		* @param: size 视频帧字节流长度
+		* 处理视频帧
+		* @param frame 视频帧字节流
+		* @param size 视频帧字节流长度
 		*/
 		void HandleFrame(int frameIndex, unsigned char* frame, int size);
 

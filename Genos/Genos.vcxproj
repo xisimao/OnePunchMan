@@ -62,6 +62,7 @@
     <ClCompile Include="..\TerribleTornado\Event\EventDataChannel.cpp" />
     <ClCompile Include="..\TerribleTornado\Event\EventDetector.cpp" />
     <ClCompile Include="..\TerribleTornado\Event\EventStartup.cpp" />
+    <ClCompile Include="..\TerribleTornado\Flow\DataMergeMap.cpp" />
     <ClCompile Include="..\TerribleTornado\Flow\FlowData.cpp" />
     <ClCompile Include="..\TerribleTornado\Flow\FlowDetector.cpp" />
     <ClCompile Include="..\TerribleTornado\Flow\FlowStartup.cpp" />
@@ -113,6 +114,7 @@
     <ClInclude Include="..\TerribleTornado\Event\EventDataChannel.h" />
     <ClInclude Include="..\TerribleTornado\Event\EventDetector.h" />
     <ClInclude Include="..\TerribleTornado\Event\EventStartup.h" />
+    <ClInclude Include="..\TerribleTornado\Flow\DataMergeMap.h" />
     <ClInclude Include="..\TerribleTornado\Flow\FlowData.h" />
     <ClInclude Include="..\TerribleTornado\Flow\FlowDetector.h" />
     <ClInclude Include="..\TerribleTornado\Flow\FlowStartup.h" />

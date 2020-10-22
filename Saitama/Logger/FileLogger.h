@@ -24,23 +24,23 @@ namespace OnePunchMan
 	public:
 
 		/**
-		* @brief: 构造函数
-		* @param: name 日志名称
-		* @param: minLevel 日志最小级别
-		* @param: maxLevel 日志最大级别
+		* 构造函数
+		* @param name 日志名称
+		* @param minLevel 日志最小级别
+		* @param maxLevel 日志最大级别
 		*/
 		FileLogger(LogLevel minLevel, LogLevel maxLevel, const std::string& name, const std::string& directory, int holdDays);
 
 		/**
-		* @brief: 析构函数
+		* 析构函数
 		*/
 		~FileLogger();
 
 		/**
-		* @brief: 获取日志文件名
-		* @param: name 日志名称
-		* @param: DateTime 日志日期
-		* @return: 日志文件名
+		* 获取日志文件名
+		* @param name 日志名称
+		* @param DateTime 日志日期
+		* @return 日志文件名
 		*/
 		static std::string GetLogFileName(const std::string& logName, const DateTime& logDate);
 
@@ -50,19 +50,19 @@ namespace OnePunchMan
 	private:
 
 		/**
-		* @brief: 打开文件
+		* 打开文件
 		*/
 		void Open();
 
 		/**
-		* @brief: 关闭文件
+		* 关闭文件
 		*/
 		void Close();
 
 		/**
-		* @brief: 删除日志
-		* @param: directory 目录
-		* @param: holdDays 日志保存天数
+		* 删除日志
+		* @param directory 目录
+		* @param holdDays 日志保存天数
 		*/
 		void DeleteLog(const std::string& directory, unsigned int holdDays);
 

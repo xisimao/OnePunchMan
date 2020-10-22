@@ -50,7 +50,7 @@ namespace OnePunchMan
 		//检测元素类型
 		DetectType Type;
 		/**
-		* @brief: 获取检测项长度
+		* 获取检测项长度
 		* @return 检测项长度
 		*/
 		int GetLength() const
@@ -173,82 +173,82 @@ namespace OnePunchMan
 	{
 	public:
 		/**
-		* @brief: 构造函数
-		* @param: width 图片宽度
-		* @param: height 图片高度
-		* @param: mqtt mqtt
+		* 构造函数
+		* @param width 图片宽度
+		* @param height 图片高度
+		* @param mqtt mqtt
 		*/
 		TrafficDetector(int width, int height, MqttChannel* mqtt);
 
 		/**
-		* @brief: 析构函数
+		* 析构函数
 		*/
 		virtual ~TrafficDetector() {};
 
 		/**
-		* @brief: 获取车道是否初始化成功
+		* 获取车道是否初始化成功
 		* @return 车道是否初始化成功
 		*/
 		bool LanesInited() const;
 
 		/**
-		* @brief: 将下一帧视频写入到bmp
+		* 将下一帧视频写入到bmp
 		*/
 		void WriteBmp();
 
 		/**
-		* @brief: 获取默认检测参数
-		* @return: 默认检测参数
+		* 获取默认检测参数
+		* @return 默认检测参数
 		*/
 		std::string GetDetectParam();
 
 		/**
-		* @brief: 供子类实现的处理检测数据
-		* @param: items 检测数据项集合
-		* @param: timeStamp 时间戳
-		* @param: param 检测参数
-		* @param: taskId 任务编号
-		* @param: iveBuffer 图片字节流
-		* @param: frameIndex 帧序号
-		* @param: frameSpan 帧间隔时间(毫秒)
+		* 供子类实现的处理检测数据
+		* @param items 检测数据项集合
+		* @param timeStamp 时间戳
+		* @param param 检测参数
+		* @param taskId 任务编号
+		* @param iveBuffer 图片字节流
+		* @param frameIndex 帧序号
+		* @param frameSpan 帧间隔时间(毫秒)
 		*/
 		virtual void HandleDetect(std::map<std::string, DetectItem>* detectItems, long long timeStamp, std::string* param, unsigned char taskId, const unsigned char* iveBuffer, unsigned int frameIndex, unsigned char frameSpan) = 0;
 		
 		/**
-		* @brief: 结束检测
-		* @param: taskId 任务编号
+		* 结束检测
+		* @param taskId 任务编号
 		*/
 		virtual void FinishDetect(unsigned char taskId) {};
 
 		/**
-		* @brief: 处理机动车识别数据
-		* @param: recognItem 识别数据项
-		* @param: iveBuffer 图片字节流
-		* @param: vehicle 机动车识别数据
+		* 处理机动车识别数据
+		* @param recognItem 识别数据项
+		* @param iveBuffer 图片字节流
+		* @param vehicle 机动车识别数据
 		*/
 		virtual void HandleRecognVehicle(const RecognItem& recognItem, const unsigned char* iveBuffer, const VideoStruct_Vehicle& vehicle) {}
 		
 		/**
-		* @brief: 处理非机动车识别数据
-		* @param: recognItem 识别数据项
-		* @param: iveBuffer 图片字节流
-		* @param: bike 非机动车识别数据
+		* 处理非机动车识别数据
+		* @param recognItem 识别数据项
+		* @param iveBuffer 图片字节流
+		* @param bike 非机动车识别数据
 		*/
 		virtual void HandleRecognBike(const RecognItem& recognItem, const unsigned char* iveBuffer, const VideoStruct_Bike& bike) {}
 		
 		/**
-		* @brief: 处理行人识别数据
-		* @param: recognItem 识别数据项
-		* @param: iveBuffer 图片字节流
-		* @param: pedestrain 行人识别数据
+		* 处理行人识别数据
+		* @param recognItem 识别数据项
+		* @param iveBuffer 图片字节流
+		* @param pedestrain 行人识别数据
 		*/
 		virtual void HandleRecognPedestrain(const RecognItem& recognItem, const unsigned char* iveBuffer, const VideoStruct_Pedestrain& pedestrain) {}
 
 	protected:
 		/**
-		* @brief: 获取车道检测参数
-		* @param: regions 车道区域集合,json字符串
-		* @return: 车道检测参数
+		* 获取车道检测参数
+		* @param regions 车道区域集合,json字符串
+		* @return 车道检测参数
 		*/
 		std::string GetDetectParam(const std::string& regions);
 

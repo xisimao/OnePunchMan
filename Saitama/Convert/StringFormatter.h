@@ -13,10 +13,10 @@ namespace OnePunchMan
 	public:
 
 		/**
-		* @brief: 递归序列化可变参数。
-		* @param: buffer 格式化程序在其中放置序列化数据的字符串。
-		* @param: t 当前递归到的序列化的第一项
-		* @param: ...u 序列化的其他项
+		* 递归序列化可变参数。
+		* @param buffer 格式化程序在其中放置序列化数据的字符串。
+		* @param t 当前递归到的序列化的第一项
+		* @param ...u 序列化的其他项
 		*/
 		template<typename T, typename ...U>
 		static void Serialize(std::string* buffer, const T& t, U ...u)
@@ -26,16 +26,16 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 布尔类型的序列化。
-		* @param: buffer 格式化程序在其中放置序列化数据的字符串。
-		* @param: value 布尔类型
+		* 布尔类型的序列化。
+		* @param buffer 格式化程序在其中放置序列化数据的字符串。
+		* @param value 布尔类型
 		*/
 		static void Serialize(std::string* buffer, const bool& value);
 
 		/**
-		* @brief: 数字类型的序列化。
-		* @param: buffer 格式化程序在其中放置序列化数据的字符串。
-		* @param: value 数字。
+		* 数字类型的序列化。
+		* @param buffer 格式化程序在其中放置序列化数据的字符串。
+		* @param value 数字。
 		*/
 		template<typename T>
 		static void Serialize(std::string* buffer, const T& value)
@@ -47,30 +47,30 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 单字节浮点类型的序列化。
-		* @param: buffer 格式化程序在其中放置序列化数据的字符串。
-		* @param: value 单字节浮点类型
+		* 单字节浮点类型的序列化。
+		* @param buffer 格式化程序在其中放置序列化数据的字符串。
+		* @param value 单字节浮点类型
 		*/
 		static void Serialize(std::string* buffer, const float& value);
 
 		/**
-		* @brief: 双字节浮点类型的序列化。
-		* @param: buffer 格式化程序在其中放置序列化数据的字符串。
-		* @param: value 双字节浮点类型
+		* 双字节浮点类型的序列化。
+		* @param buffer 格式化程序在其中放置序列化数据的字符串。
+		* @param value 双字节浮点类型
 		*/
 		static void Serialize(std::string* buffer, const double& value);
 
 		/**
-		* @brief: 字符串类型的序列化。
-		* @param: buffer 格式化程序在其中放置序列化数据的字符串。
-		* @param: value 字符串
+		* 字符串类型的序列化。
+		* @param buffer 格式化程序在其中放置序列化数据的字符串。
+		* @param value 字符串
 		*/
 		static void Serialize(std::string* buffer, const std::string& value);
 
 		/**
-		* @brief: 列表类型的序列化。
-		* @param: buffer 格式化程序在其中放置序列化数据的字符串。
-		* @param: values 列表
+		* 列表类型的序列化。
+		* @param buffer 格式化程序在其中放置序列化数据的字符串。
+		* @param values 列表
 		*/
 		template<typename T>
 		static void Serialize(std::string* buffer, const std::vector<T>& values)
@@ -83,9 +83,9 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 集合类型的序列化。
-		* @param: buffer 格式化程序在其中放置序列化数据的字符串。
-		* @param: values 集合
+		* 集合类型的序列化。
+		* @param buffer 格式化程序在其中放置序列化数据的字符串。
+		* @param values 集合
 		*/
 		template<typename T>
 		static void Serialize(std::string* buffer, const std::set<T>& values)
@@ -99,12 +99,12 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 递归反序列化可变参数。
-		* @param: buffer 包含要反序列化的数据的字节流缓冲
-		* @param: size 节流的长度。
-		* @param: t 当前递归到的反序列化的第一项
-		* @param: ...u 反序列化的其他项
-		* @return: 如果反序列化成功返回使用的字节流长度,如果失败返回0。
+		* 递归反序列化可变参数。
+		* @param buffer 包含要反序列化的数据的字节流缓冲
+		* @param size 节流的长度。
+		* @param t 当前递归到的反序列化的第一项
+		* @param ...u 反序列化的其他项
+		* @return 如果反序列化成功返回使用的字节流长度,如果失败返回0。
 		*/
 		template<typename T, typename ...U>
 		static unsigned int Deserialize(std::string::const_iterator begin, std::string::const_iterator end, T* t, U... u)
@@ -129,20 +129,20 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 布尔类型的反序列化。
-		* @param: buffer 包含要反序列化的数据的字节流缓冲。
-		* @param: size 字节流长度。
-		* @param: value 布尔类型指针。
-		* @return: 如果反序列化成功返回使用的字节流长度,如果失败返回0。
+		* 布尔类型的反序列化。
+		* @param buffer 包含要反序列化的数据的字节流缓冲。
+		* @param size 字节流长度。
+		* @param value 布尔类型指针。
+		* @return 如果反序列化成功返回使用的字节流长度,如果失败返回0。
 		*/
 		static unsigned int Deserialize(std::string::const_iterator begin, std::string::const_iterator end, bool* value);
 
 		/**
-		* @brief: 数字类型的反序列化。
-		* @param: buffer 包含要反序列化的数据的字节流缓冲。
-		* @param: size 字节流长度。
-		* @param: value 数字指针
-		* @return: 如果反序列化成功返回使用的字节流长度,如果失败返回0。
+		* 数字类型的反序列化。
+		* @param buffer 包含要反序列化的数据的字节流缓冲。
+		* @param size 字节流长度。
+		* @param value 数字指针
+		* @return 如果反序列化成功返回使用的字节流长度,如果失败返回0。
 		*/
 		template<typename T>
 		static unsigned int Deserialize(std::string::const_iterator begin, std::string::const_iterator end, T* value)
@@ -165,38 +165,38 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 单字节浮点类型的反序列化。
-		* @param: buffer 包含要反序列化的数据的字节流缓冲。
-		* @param: size 字节流长度。
-		* @param: value 单字节浮点类型指针。
-		* @return: 如果反序列化成功返回使用的字节流长度,如果失败返回0。
+		* 单字节浮点类型的反序列化。
+		* @param buffer 包含要反序列化的数据的字节流缓冲。
+		* @param size 字节流长度。
+		* @param value 单字节浮点类型指针。
+		* @return 如果反序列化成功返回使用的字节流长度,如果失败返回0。
 		*/
 		static unsigned int Deserialize(std::string::const_iterator begin, std::string::const_iterator end, float* value);
 
 		/**
-		* @brief: 双字节浮点类型的反序列化。
-		* @param: buffer 包含要反序列化的数据的字节流缓冲。
-		* @param: size 字节流长度。
-		* @param: value 双字节浮点类型指针。
-		* @return: 如果反序列化成功返回使用的字节流长度,如果失败返回0。
+		* 双字节浮点类型的反序列化。
+		* @param buffer 包含要反序列化的数据的字节流缓冲。
+		* @param size 字节流长度。
+		* @param value 双字节浮点类型指针。
+		* @return 如果反序列化成功返回使用的字节流长度,如果失败返回0。
 		*/
 		static unsigned int Deserialize(std::string::const_iterator begin, std::string::const_iterator end, double* value);
 
 		/**
-		* @brief: 字符串浮点类型的反序列化。
-		* @param: buffer 包含要反序列化的数据的字节流缓冲。
-		* @param: size 字节流长度。
-		* @param: value 字符串浮点类型指针。
-		* @return: 如果反序列化成功返回使用的字节流长度,如果失败返回0。
+		* 字符串浮点类型的反序列化。
+		* @param buffer 包含要反序列化的数据的字节流缓冲。
+		* @param size 字节流长度。
+		* @param value 字符串浮点类型指针。
+		* @return 如果反序列化成功返回使用的字节流长度,如果失败返回0。
 		*/
 		static unsigned int Deserialize(std::string::const_iterator begin, std::string::const_iterator end, std::string* value);
 
 		/**
-		* @brief: 列表类型的反序列化。
-		* @param: buffer 包含要反序列化的数据的字节流缓冲。
-		* @param: size 字节流长度
-		* @param: values 列表指针
-		* @return: 如果反序列化成功返回使用的使用的字节流长度,如果失败返回0。
+		* 列表类型的反序列化。
+		* @param buffer 包含要反序列化的数据的字节流缓冲。
+		* @param size 字节流长度
+		* @param values 列表指针
+		* @return 如果反序列化成功返回使用的使用的字节流长度,如果失败返回0。
 		*/
 		template<typename T>
 		static unsigned int Deserialize(std::string::const_iterator begin, std::string::const_iterator end, std::vector<T>* values)
@@ -226,11 +226,11 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 集合类型的反序列化。
-		* @param: buffer 包含要反序列化的数据的字节流缓冲。
-		* @param: size 字节流长度
-		* @param: values 集合指针
-		* @return: 如果反序列化成功返回使用的使用的字节流长度,如果失败返回0。
+		* 集合类型的反序列化。
+		* @param buffer 包含要反序列化的数据的字节流缓冲。
+		* @param size 字节流长度
+		* @param values 集合指针
+		* @return 如果反序列化成功返回使用的使用的字节流长度,如果失败返回0。
 		*/
 		template<typename T>
 		static unsigned int Deserialize(std::string::const_iterator begin, std::string::const_iterator end, std::set<T>* values)

@@ -107,8 +107,8 @@ namespace OnePunchMan
 		std::string DeviceId;
 
 		/**
-		* @brief: 获取通道rtmp地址
-		* @return: 通道rtmp地址
+		* 获取通道rtmp地址
+		* @return 通道rtmp地址
 		*/
 		std::string RtmpUrl(const std::string ip) const
 		{
@@ -116,8 +116,8 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 获取通道http-flv地址
-		* @return: 通道http-flv地址
+		* 获取通道http-flv地址
+		* @return 通道http-flv地址
 		*/
 		std::string FlvUrl(const std::string ip) const
 		{
@@ -192,8 +192,8 @@ namespace OnePunchMan
 		static std::string WebDir;
 
 		/**
-		* @brief: 初始化目录配置
-		* @param: jd json配置
+		* 初始化目录配置
+		* @param jd json配置
 		*/
 		static void Init(const std::string& webDir)
 		{
@@ -206,91 +206,91 @@ namespace OnePunchMan
 	{
 	public:
 		/**
-		* @brief: 构造函数
+		* 构造函数
 		*/
 		TrafficData();
 
 		/**
-		* @brief: 析构函数
+		* 析构函数
 		*/
 		virtual ~TrafficData()= default;
 
 		/**
-		* @brief: 初始化数据库名称
-		* @param: dbName 数据库名称
+		* 初始化数据库名称
+		* @param dbName 数据库名称
 		*/
 		static void Init(const std::string& dbName);
 
 		/**
-		* @brief: 获取最后一个错误信息
-		* @return: 最后一个错误信息
+		* 获取最后一个错误信息
+		* @return 最后一个错误信息
 		*/
 		std::string LastError();
 
 		/**
-		* @brief: 获取参数值
-		* @param: key 参数键
-		* @return: 参数值
+		* 获取参数值
+		* @param key 参数键
+		* @return 参数值
 		*/
 		std::string GetParameter(const std::string& key);
 
 		/**
-		* @brief: 获取参数值
-		* @param: key 参数键
-		* @param: value 参数值
-		* @return: 设置结果
+		* 获取参数值
+		* @param key 参数键
+		* @param value 参数值
+		* @return 设置结果
 		*/
 		bool SetParameter(const std::string& key, const std::string& value);
 		
 		/**
-		* @brief: 设置国标参数值
-		* @param: parameter 国标参数
-		* @return: 设置结果
+		* 设置国标参数值
+		* @param parameter 国标参数
+		* @return 设置结果
 		*/
 		bool SetGbPrameter(const GbParameter& parameter);
 
 		/**
-		* @brief: 获取国标参数
-		* @return: 国标参数
+		* 获取国标参数
+		* @return 国标参数
 		*/
 		GbParameter GetGbPrameter();
 
 		/**
-		* @brief: 获取国标设备集合
-		* @return: 国标设备集合
+		* 获取国标设备集合
+		* @return 国标设备集合
 		*/
 		std::vector<GbDevice> GetGbDeviceList();
 
 		/**
-		* @brief: 添加国标设备
-		* @param: device 国标设备
-		* @return: 添加成功返回主键否则返回-1
+		* 添加国标设备
+		* @param device 国标设备
+		* @return 添加成功返回主键否则返回-1
 		*/
 		int InsertGbDevice(const GbDevice& device);
 
 		/**
-		* @brief: 更新国标设备
-		* @param: device 国标设备
-		* @return: 更新结果
+		* 更新国标设备
+		* @param device 国标设备
+		* @return 更新结果
 		*/
 		bool UpdateGbDevice(const GbDevice& device);
 
 		/**
-		* @brief: 删除国标设备
-		* @param: deviceId 国标设备编号
-		* @return: 删除结果
+		* 删除国标设备
+		* @param deviceId 国标设备编号
+		* @return 删除结果
 		*/
 		bool DeleteGbDevice(int deviceId);
 
 		/**
-		* @brief: 查询国标通道集合
-		* @param: deviceId 国标设备编号
-		* @return: 查询结果
+		* 查询国标通道集合
+		* @param deviceId 国标设备编号
+		* @return 查询结果
 		*/
 		std::vector<GbChannel> GetGbChannelList(const std::string& deviceId);
 
 		/**
-		* @brief: 更新数据库
+		* 更新数据库
 		*/
 		virtual void UpdateDb();
 
@@ -299,42 +299,42 @@ namespace OnePunchMan
 
 	protected:
 		/**
-		* @brief: 填充通道
-		* @param: sqlite 查询结果
-		* @param: channel 要填充的通道数据
+		* 填充通道
+		* @param sqlite 查询结果
+		* @param channel 要填充的通道数据
 		*/
 		void FillChannel(const SqliteReader& sqlite, TrafficChannel* channel);
 
 		/**
-		* @brief: 获取查询集合sql语句
-		* @return: 查询集合sql语句
+		* 获取查询集合sql语句
+		* @return 查询集合sql语句
 		*/
 		std::string GetChannelsSql();
 
 		/**
-		* @brief: 获取查询单个sql语句
-		* @param: channelIndex 通道序号
-		* @return: 查询单个sql语句
+		* 获取查询单个sql语句
+		* @param channelIndex 通道序号
+		* @return 查询单个sql语句
 		*/
 		std::string GetChannelSql(int channelIndex);
 
 		/**
-		* @brief: 获取添加通道sql语句
-		* @param: channel 要添加的通道数据
-		* @return: 添加通道sql语句
+		* 获取添加通道sql语句
+		* @param channel 要添加的通道数据
+		* @return 添加通道sql语句
 		*/
 		std::string InsertChannelSql(const TrafficChannel* channel);
 
 		/**
-		* @brief: 获取删除通道sql语句
-		* @param: channelIndex 通道序号
-		* @return: 删除通道sql语句
+		* 获取删除通道sql语句
+		* @param channelIndex 通道序号
+		* @return 删除通道sql语句
 		*/
 		std::string DeleteChannelSql(int channelIndex);
 
 		/**
-		* @brief: 获取清空通道sql语句
-		* @return: 清空通道sql语句
+		* 获取清空通道sql语句
+		* @return 清空通道sql语句
 		*/
 		std::string ClearChannelSql();
 

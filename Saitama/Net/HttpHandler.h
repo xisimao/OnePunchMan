@@ -62,10 +62,10 @@ namespace OnePunchMan
 	private:
 
 		/**
-		* @brief: 拼组响应报文
-		* @param: code 响应http编码
-		* @param: responseJson 响应json字符串
-		* @return: 响应报文
+		* 拼组响应报文
+		* @param code 响应http编码
+		* @param responseJson 响应json字符串
+		* @return 响应报文
 		*/
 		std::string BuildResponse(HttpCode code, const std::string& responseJson);
 

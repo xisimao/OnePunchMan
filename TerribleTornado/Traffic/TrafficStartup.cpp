@@ -407,7 +407,9 @@ string TrafficStartup::CheckChannel(TrafficChannel* channel)
     }
     else
     {
-        return GetErrorJson("channelIndex", StringEx::Combine("channelIndex is limited to 1-", ChannelCount));
+        string json;
+        JsonSerialization::SerializeArray(&json, "channelIndex", StringEx::Combine("channelIndex is limited to 1-", ChannelCount));
+        return json;
     }
 }
 
@@ -431,11 +433,6 @@ bool TrafficStartup::UrlStartWith(const string& url, const string& key)
 string TrafficStartup::GetId(const std::string& url, const std::string& key)
 {
     return url.size() > key.size() ? url.substr(key.size() + 1, url.size() - key.size() - 1) : string();
-}
-
-string TrafficStartup::GetErrorJson(const string& field, const string& message)
-{
-    return StringEx::Combine("{\"", field, "\":[\"", message, "\"]}");
 }
 
 void TrafficStartup::FillChannelJson(string* channelJson,const TrafficChannel* channel,const string& host)

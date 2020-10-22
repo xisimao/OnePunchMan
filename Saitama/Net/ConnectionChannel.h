@@ -29,7 +29,7 @@ namespace OnePunchMan
 	public:
 
 		/**
-		* @brief: 构造函数
+		* 构造函数
 		*/
 		ConnectionChannel();
 
@@ -37,34 +37,34 @@ namespace OnePunchMan
 		Observable<ConnectedEventArgs> Connected;
 
 		/**
-		* @brief: 添加地址
-		* @param: endPoint 地址
-		* @param: handler 操作指针
+		* 添加地址
+		* @param endPoint 地址
+		* @param handler 操作指针
 		*/
 		void AddTcpEndPoint(const EndPoint& endPoint,SocketHandler* handler);
 
 		/**
-		* @brief: 添加地址和套接字
-		* @param: endPoint 地址
+		* 添加地址和套接字
+		* @param endPoint 地址
 		*/
 		void AddUdpEndPoint(const EndPoint& endPoint, int socket);
 
 		/**
-		* @brief: 移除地址
-		* @param: endPoint 地址
+		* 移除地址
+		* @param endPoint 地址
 		*/
 		void RemoveEndPoint(const EndPoint& endPoint);
 
 		/**
-		* @brief: 报告错误套接字
-		* @param: socket 套接字
+		* 报告错误套接字
+		* @param socket 套接字
 		*/
 		void ReportTcpError(int socket);
 
 		/**
-		* @brief: 获取终结点的套接字
-		* @param: endPoint 地址
-		* @return: 返回0表示未找到地址,返回-1表示未连接,否则返回套接字
+		* 获取终结点的套接字
+		* @param endPoint 地址
+		* @return 返回0表示未找到地址,返回-1表示未连接,否则返回套接字
 		*/
 		int GetSocket(const EndPoint& endPoint);
 
@@ -100,7 +100,7 @@ namespace OnePunchMan
 		};
 
 		/**
-		* @brief: 移动临时地址集合
+		* 移动临时地址集合
 		*/
 		void MoveTempEndPoints();
 

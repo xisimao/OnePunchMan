@@ -12,12 +12,12 @@ namespace OnePunchMan
     {
     public:
         /**
-        * @brief: 构造函数
+        * 构造函数
         */
         EventStartup();
 
         /**
-        * @brief: 析构函数
+        * 析构函数
         */
         ~EventStartup();
 

@@ -12,7 +12,7 @@ namespace OnePunchMan
 	public:
 
 		/**
-		* @brief: 析构函数
+		* 析构函数
 		*/
 		virtual ~IObserver()
 		{
@@ -20,8 +20,8 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 向观察者提供新数据
-		* @param: 当前的通知信息
+		* 向观察者提供新数据
+		* @param 当前的通知信息
 		*/
 		virtual void Update(T* t) = 0;
 	};
@@ -33,7 +33,7 @@ namespace OnePunchMan
 	public:
 
 		/**
-		* @brief: 析构函数
+		* 析构函数
 		*/
 		virtual ~Observable(void)
 		{
@@ -41,8 +41,8 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 通知提供程序:某观察程序将要接收通知。
-		* @param: observer 观察者
+		* 通知提供程序:某观察程序将要接收通知。
+		* @param observer 观察者
 		*/
 		void Subscribe(IObserver<T>* observer)
 		{
@@ -51,8 +51,8 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 通知提供程序:某观察程序将要取消通知。
-		* @param: observer 观察者
+		* 通知提供程序:某观察程序将要取消通知。
+		* @param observer 观察者
 		*/
 		void Unsubscribe(IObserver<T>*  observer)
 		{
@@ -61,8 +61,8 @@ namespace OnePunchMan
 		}
 		
 		/**
-		* @brief: 向所有观察者提供新数据
-		* @param: t 当前的通知信息。
+		* 向所有观察者提供新数据
+		* @param t 当前的通知信息。
 		*/
 		void Notice(T* t)
 		{
@@ -75,8 +75,8 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 复制另外一个通知程序的观察者集合
-		* @param: o 另外一个通知程序
+		* 复制另外一个通知程序的观察者集合
+		* @param o 另外一个通知程序
 		*/
 		void Copy(Observable* o)
 		{

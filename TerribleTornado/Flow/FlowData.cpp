@@ -18,6 +18,22 @@ vector<FlowChannel> FlowChannelData::GetList()
 	return channels;
 }
 
+vector<FlowLane> FlowChannelData::GetLaneList(int channelIndex, const std::string& laneId)
+{
+	vector<FlowLane> lanes;
+	SqliteReader sqlite(DbName);
+	string sql = StringEx::Combine("Select * From Flow_Lane Where ChannelIndex!=", channelIndex, " And LaneId=='", laneId, "'");
+	if (sqlite.BeginQuery(sql))
+	{
+		while (sqlite.HasRow())
+		{
+			lanes.push_back(FillLane(sqlite));
+		}
+		sqlite.EndQuery();
+	}
+	return lanes;
+}
+
 FlowChannel FlowChannelData::Get(int channelIndex)
 {
 	FlowChannel channel;
@@ -69,6 +85,7 @@ FlowLane FlowChannelData::FillLane(const SqliteReader& sqlite)
 	lane.DetectLine = sqlite.GetString(11);
 	lane.StopLine = sqlite.GetString(12);
 	lane.Region = sqlite.GetString(13);
+	lane.ReportProperties = sqlite.GetInt(14);
 	return lane;
 }
 
@@ -93,7 +110,7 @@ bool FlowChannelData::InsertChannel(const FlowChannel& channel)
 
 bool FlowChannelData::InsertLane(const FlowLane& lane)
 {
-	string laneSql(StringEx::Combine("Insert Into Flow_Lane (ChannelIndex,LaneId,LaneName,LaneIndex,LaneType,Direction,FlowDirection,Length,IOIp,IOPort,IOIndex,DetectLine,StopLine,Region) Values ("
+	string laneSql(StringEx::Combine("Insert Into Flow_Lane (ChannelIndex,LaneId,LaneName,LaneIndex,LaneType,Direction,FlowDirection,Length,IOIp,IOPort,IOIndex,DetectLine,StopLine,Region,ReportProperties) Values ("
 		, lane.ChannelIndex, ","
 		, "'", lane.LaneId, "',"
 		, "'", lane.LaneName, "',"
@@ -107,7 +124,8 @@ bool FlowChannelData::InsertLane(const FlowLane& lane)
 		, lane.IOIndex, ","
 		, "'", lane.DetectLine, "',"
 		, "'", lane.StopLine, "',"
-		, "'", lane.Region, "'"
+		, "'", lane.Region, "',"
+		, "'", lane.ReportProperties, "'"
 		, ")"));
 	return _sqlite.ExecuteRowCount(laneSql) == 1;
 }
@@ -188,6 +206,11 @@ void FlowChannelData::UpdateDb()
 			InsertLane(*it);
 		}
 	}
-	SetParameter("Version", "2.0.0.28");
-	SetParameter("VersionValue", "20028");
+	if (versionValue < 20029)
+	{
+		_sqlite.ExecuteRowCount("ALTER TABLE[Flow_Lane] ADD COLUMN [ReportProperties] INTEGER NULL;");
+	}
+
+	SetParameter("Version", "2.0.0.29");
+	SetParameter("VersionValue", "20029");
 }

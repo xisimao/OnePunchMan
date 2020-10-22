@@ -18,26 +18,26 @@ namespace OnePunchMan
 	public:
 
 		/**
-		* @brief: 析构函数
+		* 析构函数
 		*/
 		~LogPool();
 
 		/**
-		* @brief: 初始化日志
-		* @param: jd json解析
+		* 初始化日志
+		* @param jd json解析
 		*/
 		static void Init(const JsonDeserialization& jd);
 
 		/**
-		* @brief: 添加日志写入
-		* @param: logger 日志写入指针
+		* 添加日志写入
+		* @param logger 日志写入指针
 		*/
 		static void AddLogger(Logger* logger);
 
 		/**
-		* @brief: 调试日志
-		* @param: t 日志的内容
-		* @param: ...u 日志的内容
+		* 调试日志
+		* @param t 日志的内容
+		* @param ...u 日志的内容
 		*/
 		template<typename T, typename ...U>
 		static void Debug(T t, U ...u)
@@ -46,10 +46,10 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 调试日志
-		* @param: logEvent 日志事件
-		* @param: t 日志的内容
-		* @param: ...u 日志的内容
+		* 调试日志
+		* @param logEvent 日志事件
+		* @param t 日志的内容
+		* @param ...u 日志的内容
 		*/
 		template<typename T, typename ...U>
 		static void Debug(LogEvent logEvent, T t, U ...u)
@@ -61,9 +61,9 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 消息日志
-		* @param: t 日志的内容
-		* @param: ...u 日志的内容
+		* 消息日志
+		* @param t 日志的内容
+		* @param ...u 日志的内容
 		*/
 		template<typename T, typename ...U>
 		static void Information(T t, U ...u)
@@ -72,10 +72,10 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 消息日志
-		* @param: logEvent 日志事件
-		* @param: t 日志的内容
-		* @param: ...u 日志的内容
+		* 消息日志
+		* @param logEvent 日志事件
+		* @param t 日志的内容
+		* @param ...u 日志的内容
 		*/
 		template<typename T, typename ...U>
 		static void Information(LogEvent logEvent, T t, U ...u)
@@ -87,9 +87,9 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 警告日志
-		* @param: t 日志的内容
-		* @param: ...u 日志的内容
+		* 警告日志
+		* @param t 日志的内容
+		* @param ...u 日志的内容
 		*/
 		template<typename T, typename ...U>
 		static void Warning(T t, U ...u)
@@ -98,10 +98,10 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 警告日志
-		* @param: logEvent 日志事件
-		* @param: t 日志的内容
-		* @param: ...u 日志的内容
+		* 警告日志
+		* @param logEvent 日志事件
+		* @param t 日志的内容
+		* @param ...u 日志的内容
 		*/
 		template<typename T, typename ...U>
 		static void Warning(LogEvent logEvent, T t, U ...u)
@@ -113,9 +113,9 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 错误日志
-		* @param: t 日志的内容
-		* @param: ...u 日志的内容
+		* 错误日志
+		* @param t 日志的内容
+		* @param ...u 日志的内容
 		*/
 		template<typename T, typename ...U>
 		static void Error(T t, U ...u)
@@ -124,10 +124,10 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 错误日志
-		* @param: logEvent 日志事件
-		* @param: t 日志的内容
-		* @param: ...u 日志的内容
+		* 错误日志
+		* @param logEvent 日志事件
+		* @param t 日志的内容
+		* @param ...u 日志的内容
 		*/
 		template<typename T, typename ...U>
 		static void Error(LogEvent logEvent, T t, U ...u)
@@ -139,46 +139,46 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 获取文件日志保存目录
-		* @return: 文件日志保存目录
+		* 获取文件日志保存目录
+		* @return 文件日志保存目录
 		*/
 		static std::string Directory();
 
 		/**
-		* @brief: 获取文件日志保存天数
-		* @return: 文件日志保存天数
+		* 获取文件日志保存天数
+		* @return 文件日志保存天数
 		*/
 		static int HoldDays();
 
 	private:
 
 		/**
-		* @brief: 构造函数
-		* @param: jd json解析
+		* 构造函数
+		* @param jd json解析
 		*/
 		LogPool(const JsonDeserialization& jd);
 
 		/**
-		* @brief: 从配置文件读取日志类型
-		* @param: jd json解析
-		* @param: key 日志级别对应的配置项key
-		* @return: 如果读取成功返回类型,否则返回None
+		* 从配置文件读取日志类型
+		* @param jd json解析
+		* @param key 日志级别对应的配置项key
+		* @return 如果读取成功返回类型,否则返回None
 		*/
 		LogType ReadType(const JsonDeserialization& jd, const std::string& key);
 
 		/**
-		* @brief: 从配置文件读取日志级别
-		* @param: jd json解析
-		* @param: key 日志级别对应的配置项key
-		* @return: 如果读取成功返回级别,否则返回None
+		* 从配置文件读取日志级别
+		* @param jd json解析
+		* @param key 日志级别对应的配置项key
+		* @return 如果读取成功返回级别,否则返回None
 		*/
 		LogLevel ReadLevel(const JsonDeserialization& jd, const std::string& key);
 
 		/**
-		* @brief: 写日志
-		* @param: level 日志级别
-		* @param: t  日志的内容
-		* @param: ...u 日志的内容
+		* 写日志
+		* @param level 日志级别
+		* @param t  日志的内容
+		* @param ...u 日志的内容
 		*/
 		template<typename T, typename ...U>
 		void Log(LogLevel logLevel, LogEvent logEvent, T t, U ...u)
@@ -201,9 +201,9 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 日志内容格式
-		* @param: t日志内容
-		* @param: ...u 日志内容
+		* 日志内容格式
+		* @param t日志内容
+		* @param ...u 日志内容
 		*/
 		template<typename T, typename ...U>
 		void ContentFormat(std::stringstream* ss, T t, U ...u)
@@ -213,8 +213,8 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 日志内容格式
-		* @param: t日志内容
+		* 日志内容格式
+		* @param t日志内容
 		*/
 		template<typename T>
 		void ContentFormat(std::stringstream* ss, T t)

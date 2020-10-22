@@ -193,7 +193,7 @@ void EventStartup::SetDevice(HttpReceivedEventArgs* e)
     else
     {
         e->Code = HttpCode::BadRequest;
-        e->ResponseJson = GetErrorJson("db", data.LastError());
+        JsonSerialization::SerializeArray(&e->ResponseJson, "db", data.LastError());
     }
 }
 
@@ -237,7 +237,7 @@ void EventStartup::SetChannel(HttpReceivedEventArgs* e)
     else
     {
         e->Code = HttpCode::BadRequest;
-        e->ResponseJson = GetErrorJson("db", data.LastError());
+        JsonSerialization::SerializeArray(&e->ResponseJson, "db", data.LastError());
     }
 }
 

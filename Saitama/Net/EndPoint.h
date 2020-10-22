@@ -29,69 +29,69 @@ namespace OnePunchMan
 	public:
 
 		/**
-		* @brief: 构造函数
+		* 构造函数
 		*/
 		EndPoint();
 
 		/**
-		* @brief: 构造函数
-		* @param: port 端口的主机端表示方式
+		* 构造函数
+		* @param port 端口的主机端表示方式
 		*/
 		EndPoint(unsigned short port);
 
 		/**
-		* @brief: 构造函数
-		* @param: ip ip的数字表示方式
-		* @param: port 端口的网络端表示方式
+		* 构造函数
+		* @param ip ip的数字表示方式
+		* @param port 端口的网络端表示方式
 		*/
 		EndPoint(unsigned int ip, unsigned short port);
 
 		/**
-		* @brief: 构造函数
-		* @param: ip ip的文字表示方式
-		* @param: port 端口的主机端表示方式
+		* 构造函数
+		* @param ip ip的文字表示方式
+		* @param port 端口的主机端表示方式
 		*/
 		EndPoint(const std::string& ip, unsigned short port);
 
 		/**
-		* @brief: 构造函数
-		* @param: ip端口的文字表示方式,例如:127.0.0.1:8080
+		* 构造函数
+		* @param ip端口的文字表示方式,例如:127.0.0.1:8080
 		*/
 		EndPoint(const std::string& endPoint);
 
 		/**
-		* @brief:  获取ip的数字表示方式
-		* @return: ip的数字表示方式
+		*  获取ip的数字表示方式
+		* @return ip的数字表示方式
 		*/
 		unsigned int NetIp() const;
 
 		/**
-		* @brief:  获取ip的字符串表示方式
-		* @return: ip的字符串表示方式
+		*  获取ip的字符串表示方式
+		* @return ip的字符串表示方式
 		*/
 		const std::string& HostIp() const;
 
 		/**
-		* @brief:  获取端口的网络端表示方式
-		* @return: 端口的网络端表示方式
+		*  获取端口的网络端表示方式
+		* @return 端口的网络端表示方式
 		*/
 		unsigned short NetPort() const;
 
 		/**
-		* @brief:  获取端口的主机端表示方式
-		* @return: 端口的主机端表示方式
+		*  获取端口的主机端表示方式
+		* @return 端口的主机端表示方式
 		*/
 		unsigned short HostPort() const;
 
 		/**
-		* @brief:  获取地址是否为空,
-		* @return: 返回true表示地址为空
+		*  获取地址是否为空,
+		* @return 返回true表示地址为空
 		*/
 		bool Empty() const;
 
 		/**
-		* @brief:  获取地址的文字表示方式
-		* @return: 地址的文字表示方式,如192.160.0.100:10001
+		*  获取地址的文字表示方式
+		* @return 地址的文字表示方式,如192.160.0.100:10001
 		*/
 		const std::string& ToString() const;
 
@@ -104,25 +104,25 @@ namespace OnePunchMan
 		bool operator <= (const EndPoint &right) const;
 
 		/**
-		* @brief:  获取套接字对应的本地地址
-		* @param: socket 套接字
-		* @return: 本地地址
+		*  获取套接字对应的本地地址
+		* @param socket 套接字
+		* @return 本地地址
 		*/
 		static EndPoint GetLocalEndPoint(int socket);
 
 		/**
-		* @brief:  获取套接字对应的远程地址
-		* @param: socket 套接字
-		* @return: 远程地址
+		*  获取套接字对应的远程地址
+		* @param socket 套接字
+		* @return 远程地址
 		*/
 		static EndPoint GetRemoteEndPoint(int socket);
 
 	private:
 
 		/**
-		* @brief: 初始化地址字符串
-		* @param: ip ip
-		* @param: port 端口的网络端表示方式
+		* 初始化地址字符串
+		* @param ip ip
+		* @param port 端口的网络端表示方式
 		*/
 		void InitAddress(unsigned int ip, unsigned short port);
 

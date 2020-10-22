@@ -23,36 +23,36 @@ namespace OnePunchMan
 	public:
 
 		/**
-		* @brief: 获取当前程序的目录
-		* @return: 当前程序的目录
+		* 获取当前程序的目录
+		* @return 当前程序的目录
 		*/
 		static std::string GetCurrentPath();
 
 		/**
-		* @brief: 获取文件名
-		* @param: path 路径字符串
-		* @return: 获取成功时返回文件名,失败时返回空字符串
+		* 获取文件名
+		* @param path 路径字符串
+		* @return 获取成功时返回文件名,失败时返回空字符串
 		*/
 		static std::string GetFileName(const std::string& path);
 
 		/**
-		* @brief: 获取文件后缀名
-		* @param: path 路径字符串
-		* @return: 获取成功时返回后缀名,失败时返回空字符串
+		* 获取文件后缀名
+		* @param path 路径字符串
+		* @return 获取成功时返回后缀名,失败时返回空字符串
 		*/
 		static std::string GetExtension(const std::string& path);
 
 		/**
-		* @brief: 创建文件夹
-		* @param: directory 文件夹路径
+		* 创建文件夹
+		* @param directory 文件夹路径
 		*/
 		static void CreatePath(const std::string& directory);
 
 		/**
-		* @brief: 将多个元素组合成一个路径。
-		* @param: t 由路径的各部分构成的元素
-		* @param: u... 由路径的各部分构成的元素
-		* @return: 已组合的路径。
+		* 将多个元素组合成一个路径。
+		* @param t 由路径的各部分构成的元素
+		* @param u... 由路径的各部分构成的元素
+		* @return 已组合的路径。
 		*/
 		template<typename T, typename ...U>
 		static std::string Combine(T t, U ...u)
@@ -63,9 +63,9 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 将多个元素组合成一个路径。
-		* @param: t 由路径的各部分构成的元素。
-		* @param: u... 由路径的各部分构成的元素。
+		* 将多个元素组合成一个路径。
+		* @param t 由路径的各部分构成的元素。
+		* @param u... 由路径的各部分构成的元素。
 		*/
 		template<typename T, typename ...U>
 		static void Combine(std::stringstream* ss, T t, U ...u)
@@ -81,8 +81,8 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 将最后一个元素拼接到路径上,该方法不会增加目录分隔符。
-		* @param: t 组成路径的最后一个的元素
+		* 将最后一个元素拼接到路径上,该方法不会增加目录分隔符。
+		* @param t 组成路径的最后一个的元素
 		*/
 		template<typename T>
 		static void Combine(std::stringstream* ss, T t)

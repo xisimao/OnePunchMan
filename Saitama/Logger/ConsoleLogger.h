@@ -11,9 +11,9 @@ namespace OnePunchMan
 	{
 	public:
 		/**
-		* @brief: 构造函数
-		* @param: minLevel 日志最小级别
-		* @param: maxLevel 日志最大级别
+		* 构造函数
+		* @param minLevel 日志最小级别
+		* @param maxLevel 日志最大级别
 		*/
 		ConsoleLogger(LogLevel minLevel, LogLevel maxLevel);
 

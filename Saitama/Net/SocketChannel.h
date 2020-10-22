@@ -57,12 +57,12 @@ namespace OnePunchMan
 	public:
 
 		/**
-		* @brief: 构造函数
+		* 构造函数
 		*/
 		SocketChannel();
 
 		/**
-		* @brief: 析构函数
+		* 析构函数
 		*/
 		virtual ~SocketChannel()
 		{
@@ -72,16 +72,16 @@ namespace OnePunchMan
 		}
 
 		/**
-		* @brief: 添加监听套接字
-		* @param: socket 套接字
-		* @param: type 套接字类型
-		* @param: handler 套接字操作指针
+		* 添加监听套接字
+		* @param socket 套接字
+		* @param type 套接字类型
+		* @param handler 套接字操作指针
 		*/
 		void AddSocket(int socket,SocketType type, SocketHandler* handler);
 
 		/**
-		* @brief: 被动移除套接字
-		* @param: socket 套接字
+		* 被动移除套接字
+		* @param socket 套接字
 		*/
 		void RemoveSocket(int socket);
 
@@ -126,7 +126,7 @@ namespace OnePunchMan
 		};
 
 		/**
-		* @brief: 移动临时套接字集合
+		* 移动临时套接字集合
 		*/
 		void MoveTempSockets();
 
