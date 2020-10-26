@@ -193,7 +193,20 @@ void FlowChannelData::UpdateDb()
 		{
 			while (laneSqlite.HasRow())
 			{
-				FlowLane lane = FillLane(laneSqlite);
+				FlowLane lane;
+				lane.ChannelIndex = laneSqlite.GetInt(0);
+				lane.LaneId = laneSqlite.GetString(1);
+				lane.LaneName = laneSqlite.GetString(2);
+				lane.LaneIndex = laneSqlite.GetInt(3);
+				lane.LaneType = laneSqlite.GetInt(4);
+				lane.Direction = laneSqlite.GetInt(5);
+				lane.FlowDirection = laneSqlite.GetInt(6);
+				lane.Length = laneSqlite.GetInt(7);
+				lane.IOIp = laneSqlite.GetString(8);
+				lane.IOPort = laneSqlite.GetInt(9);
+				lane.IOIndex = laneSqlite.GetInt(10);
+				lane.DetectLine = laneSqlite.GetString(11);
+				lane.StopLine = laneSqlite.GetString(12);
 				lane.Region = laneSqlite.GetString(15);
 				lanes.push_back(lane);
 			}
@@ -203,7 +216,23 @@ void FlowChannelData::UpdateDb()
 		_sqlite.ExecuteRowCount("CREATE TABLE [Flow_Lane] ([ChannelIndex] text NOT NULL, [LaneId] text NOT NULL, [LaneName] text NOT NULL, [LaneIndex] int NOT NULL, [LaneType] int NOT NULL, [Direction] int NOT NULL, [FlowDirection] int NOT NULL, [Length] int NOT NULL, [IOIp] text NOT NULL, [IOPort] int NOT NULL, [IOIndex] int NOT NULL, [DetectLine] text NULL, [StopLine] text NULL, [Region] text NULL, CONSTRAINT[sqlite_autoindex_Flow_Lane] PRIMARY KEY([ChannelIndex], [LaneId])); ");
 		for (vector<FlowLane>::iterator it = lanes.begin(); it != lanes.end(); ++it)
 		{
-			InsertLane(*it);
+			string laneSql(StringEx::Combine("Insert Into Flow_Lane (ChannelIndex,LaneId,LaneName,LaneIndex,LaneType,Direction,FlowDirection,Length,IOIp,IOPort,IOIndex,DetectLine,StopLine,Region) Values ("
+				, it->ChannelIndex, ","
+				, "'", it->LaneId, "',"
+				, "'", it->LaneName, "',"
+				, it->LaneIndex, ","
+				, it->LaneType, ","
+				, it->Direction, ","
+				, it->FlowDirection, ","
+				, it->Length, ","
+				, "'", it->IOIp, "',"
+				, it->IOPort, ","
+				, it->IOIndex, ","
+				, "'", it->DetectLine, "',"
+				, "'", it->StopLine, "',"
+				, "'", it->Region, "'"
+				, ")"));
+			 _sqlite.ExecuteRowCount(laneSql);
 		}
 	}
 	if (versionValue < 20029)
