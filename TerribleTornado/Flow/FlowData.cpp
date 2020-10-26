@@ -211,6 +211,6 @@ void FlowChannelData::UpdateDb()
 		_sqlite.ExecuteRowCount("ALTER TABLE[Flow_Lane] ADD COLUMN [ReportProperties] INTEGER NULL;");
 	}
 
-	SetParameter("Version", "2.0.0.29");
-	SetParameter("VersionValue", "20029");
+	SetParameter("Version", "2.0.0.30");
+	SetParameter("VersionValue", "20030");
 }

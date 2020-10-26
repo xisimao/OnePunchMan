@@ -114,6 +114,7 @@ namespace OnePunchMan
 		Pedestrain = 3
 	};
 
+	//机动车结构化数据
 	class VideoStruct_Vehicle
 	{
 	public:
@@ -132,8 +133,28 @@ namespace OnePunchMan
 		std::string CarBrand;
 		int PlateType;
 		std::string PlateNumber;
+
+		/**
+		* 获取数据的json格式
+		* @return 数据的json格式
+		*/
+		std::string ToJson()
+		{
+			std::string vehicleJson;
+			JsonSerialization::SerializeValue(&vehicleJson, "time", StringEx::Combine(Minute, ":", Second));
+			JsonSerialization::SerializeValue(&vehicleJson, "laneId", LaneId);
+			JsonSerialization::SerializeValue(&vehicleJson, "laneName", LaneName);
+			JsonSerialization::SerializeValue(&vehicleJson, "direction", Direction);
+			JsonSerialization::SerializeValue(&vehicleJson, "carType", CarType);
+			JsonSerialization::SerializeValue(&vehicleJson, "carColor", CarColor);
+			JsonSerialization::SerializeValue(&vehicleJson, "carBrand", CarBrand);
+			JsonSerialization::SerializeValue(&vehicleJson, "plateType", PlateType);
+			JsonSerialization::SerializeValue(&vehicleJson, "plateNumber", PlateNumber);
+			return vehicleJson;
+		}
 	};
 
+	//非机动车结构化数据
 	class VideoStruct_Bike
 	{
 	public:
@@ -148,8 +169,24 @@ namespace OnePunchMan
 		int Minute;
 		int Second;
 		int BikeType;
+
+		/**
+		* 获取数据的json格式
+		* @return 数据的json格式
+		*/
+		std::string ToJson()
+		{
+			std::string bikeJson;
+			JsonSerialization::SerializeValue(&bikeJson, "time", StringEx::Combine(Minute, ":", Second));
+			JsonSerialization::SerializeValue(&bikeJson, "laneId", LaneId);
+			JsonSerialization::SerializeValue(&bikeJson, "laneName", LaneName);
+			JsonSerialization::SerializeValue(&bikeJson, "direction", Direction);
+			JsonSerialization::SerializeValue(&bikeJson, "bikeType", BikeType);
+			return bikeJson;
+		}
 	};
 
+	//行人结构化数据
 	class VideoStruct_Pedestrain
 	{
 	public:
@@ -166,6 +203,23 @@ namespace OnePunchMan
 		int Sex;
 		int Age;
 		int UpperColor;
+
+		/**
+		* 获取数据的json格式
+		* @return 数据的json格式
+		*/
+		std::string ToJson()
+		{
+			std::string pedestrainJson;
+			JsonSerialization::SerializeValue(&pedestrainJson, "time", StringEx::Combine(Minute, ":", Second));
+			JsonSerialization::SerializeValue(&pedestrainJson, "laneId", LaneId);
+			JsonSerialization::SerializeValue(&pedestrainJson, "laneName", LaneName);
+			JsonSerialization::SerializeValue(&pedestrainJson, "direction", Direction);
+			JsonSerialization::SerializeValue(&pedestrainJson, "sex", Sex);
+			JsonSerialization::SerializeValue(&pedestrainJson, "age", Age);
+			JsonSerialization::SerializeValue(&pedestrainJson, "upperColor", UpperColor);
+			return pedestrainJson;
+		}
 	};
 
 	//通道检测

@@ -139,68 +139,24 @@ void FlowDetector::GetReportJson(string* json)
 {
 	lock_guard<mutex> lock(_laneMutex);
 	string flowsJson;
-	for (vector<FlowReportCache>::iterator it = _reportCaches.begin(); it != _reportCaches.end(); ++it)
-	{
-		string flowJson;
-		JsonSerialization::SerializeValue(&flowJson, "minute", it->Minute);
-		JsonSerialization::SerializeValue(&flowJson, "laneId", it->LaneId);
-		JsonSerialization::SerializeValue(&flowJson, "laneName", it->LaneName);
-		JsonSerialization::SerializeValue(&flowJson, "direction", it->Direction);
-		JsonSerialization::SerializeValue(&flowJson, "persons", it->Persons);
-		JsonSerialization::SerializeValue(&flowJson, "bikes", it->Bikes);
-		JsonSerialization::SerializeValue(&flowJson, "motorcycles", it->Motorcycles);
-		JsonSerialization::SerializeValue(&flowJson, "cars", it->Cars);
-		JsonSerialization::SerializeValue(&flowJson, "tricycles", it->Tricycles);
-		JsonSerialization::SerializeValue(&flowJson, "buss", it->Buss);
-		JsonSerialization::SerializeValue(&flowJson, "vans", it->Vans);
-		JsonSerialization::SerializeValue(&flowJson, "trucks", it->Trucks);
-		JsonSerialization::SerializeValue(&flowJson, "averageSpeed", static_cast<int>(it->Speed));
-		JsonSerialization::SerializeValue(&flowJson, "headDistance", it->HeadDistance);
-		JsonSerialization::SerializeValue(&flowJson, "headSpace", it->HeadSpace);
-		JsonSerialization::SerializeValue(&flowJson, "timeOccupancy", static_cast<int>(it->TimeOccupancy));
-		JsonSerialization::SerializeValue(&flowJson, "trafficStatus", it->TrafficStatus);
-		JsonSerialization::SerializeValue(&flowJson, "queueLength", it->QueueLength);
-		JsonSerialization::SerializeValue(&flowJson, "spaceOccupancy", it->SpaceOccupancy);
-		JsonSerialization::AddClassItem(&flowsJson, flowJson);
+	for (vector<FlowReportData>::iterator it = _reportCaches.begin(); it != _reportCaches.end(); ++it)
+	{	
+		JsonSerialization::AddClassItem(&flowsJson, it->ToReportJson());
 	}
 	string vehiclesJson;
 	for (vector<VideoStruct_Vehicle>::iterator it = _vehicleReportCaches.begin(); it != _vehicleReportCaches.end(); ++it)
 	{
-		string vehicleJson;
-		JsonSerialization::SerializeValue(&vehicleJson, "time", StringEx::Combine(it->Minute, ":", it->Second));
-		JsonSerialization::SerializeValue(&vehicleJson, "laneId", it->LaneId);
-		JsonSerialization::SerializeValue(&vehicleJson, "laneName", it->LaneName);		
-		JsonSerialization::SerializeValue(&vehicleJson, "direction", it->Direction);		
-		JsonSerialization::SerializeValue(&vehicleJson, "carType", it->CarType);
-		JsonSerialization::SerializeValue(&vehicleJson, "carColor", it->CarColor);
-		JsonSerialization::SerializeValue(&vehicleJson, "carBrand", it->CarBrand);
-		JsonSerialization::SerializeValue(&vehicleJson, "plateType", it->PlateType);
-		JsonSerialization::SerializeValue(&vehicleJson, "plateNumber", it->PlateNumber);
-		JsonSerialization::AddClassItem(&vehiclesJson, vehicleJson);
+		JsonSerialization::AddClassItem(&vehiclesJson, it->ToJson());
 	}
 	string bikesJson;
 	for (vector<VideoStruct_Bike>::iterator it = _bikeReportCaches.begin(); it != _bikeReportCaches.end(); ++it)
 	{
-		string bikeJson;
-		JsonSerialization::SerializeValue(&bikeJson, "time", StringEx::Combine(it->Minute, ":", it->Second));
-		JsonSerialization::SerializeValue(&bikeJson, "laneId", it->LaneId);
-		JsonSerialization::SerializeValue(&bikeJson, "laneName", it->LaneName);
-		JsonSerialization::SerializeValue(&bikeJson, "direction", it->Direction);
-		JsonSerialization::SerializeValue(&bikeJson, "bikeType", it->BikeType);
-		JsonSerialization::AddClassItem(&bikesJson, bikeJson);
+		JsonSerialization::AddClassItem(&bikesJson, it->ToJson());
 	}
 	string pedestrainsJson;
 	for (vector<VideoStruct_Pedestrain>::iterator it = _pedestrainReportCaches.begin(); it != _pedestrainReportCaches.end(); ++it)
 	{
-		string pedestrainJson;
-		JsonSerialization::SerializeValue(&pedestrainJson, "time", StringEx::Combine(it->Minute, ":", it->Second));
-		JsonSerialization::SerializeValue(&pedestrainJson, "laneId", it->LaneId);
-		JsonSerialization::SerializeValue(&pedestrainJson, "laneName", it->LaneName);
-		JsonSerialization::SerializeValue(&pedestrainJson, "direction", it->Direction);
-		JsonSerialization::SerializeValue(&pedestrainJson, "sex", it->Sex);
-		JsonSerialization::SerializeValue(&pedestrainJson, "age", it->Age);
-		JsonSerialization::SerializeValue(&pedestrainJson, "upperColor", it->UpperColor);
-		JsonSerialization::AddClassItem(&pedestrainsJson, pedestrainJson);
+		JsonSerialization::AddClassItem(&pedestrainsJson, it->ToJson());
 	}
 	JsonSerialization::SerializeClass(json, "flows", flowsJson);
 	JsonSerialization::SerializeClass(json, "vehicles", vehiclesJson);
@@ -208,41 +164,85 @@ void FlowDetector::GetReportJson(string* json)
 	JsonSerialization::SerializeClass(json, "pedestrains", pedestrainsJson);
 }
 
-void FlowDetector::CalculateMinuteFlow(FlowLaneCache* laneCache)
+FlowReportData FlowDetector::CalculateMinuteFlow(FlowLaneCache* laneCache)
 {
+	FlowReportData data;
+	data.ChannelUrl = _channelUrl;
+	data.LaneId = laneCache->LaneId;
+	data.LaneName = laneCache->LaneName;
+	data.Direction = laneCache->Direction;
+	data.ReportProperties = laneCache->ReportProperties;
+
+	data.Minute = _currentReportMinute;
+	data.TimeStamp = _currentMinuteTimeStamp;
+
+	data.Persons = laneCache->Persons;
+	data.Bikes = laneCache->Bikes;
+	data.Motorcycles = laneCache->Motorcycles;
+	data.Cars = laneCache->Cars;
+	data.Tricycles = laneCache->Tricycles;
+	data.Buss = laneCache->Buss;
+	data.Vans = laneCache->Vans;
+	data.Trucks = laneCache->Trucks;
+
+	int vehicles = data.Cars + data.Tricycles + data.Buss + data.Vans + data.Trucks;
+
 	//平均速度(km/h)
-	laneCache->Speed = laneCache->TotalTime == 0 ? 0 : (laneCache->TotalDistance * laneCache->MeterPerPixel / 1000.0) / (static_cast<double>(laneCache->TotalTime) / 3600000.0);
+	data.Speed = laneCache->TotalTime == 0 ? 0 : (laneCache->TotalDistance * laneCache->MeterPerPixel / 1000.0) / (static_cast<double>(laneCache->TotalTime) / 3600000.0);
 	//车道时距(sec)
-	laneCache->HeadDistance = laneCache->Vehicles > 1 ? static_cast<double>(laneCache->TotalSpan) / static_cast<double>(laneCache->Vehicles - 1) / 1000.0 : 0;
+	data.HeadDistance = vehicles > 1 ? static_cast<double>(laneCache->TotalSpan) / static_cast<double>(vehicles - 1) / 1000.0 : 0;
 	//车头间距(m)
-	laneCache->HeadSpace = laneCache->Speed * 1000 * laneCache->HeadDistance / 3600.0;
+	data.HeadSpace = data.Speed * 1000 * data.HeadDistance / 3600.0;
 	//时间占用率(%)
-	laneCache->TimeOccupancy = static_cast<double>(laneCache->TotalInTime) / 60000.0 * 100;
-	//空间占有率(%)
-	laneCache->SpaceOccupancy= (laneCache->Length==0|| laneCache->CountQueueLength==0 )?0:laneCache->TotalQueueLength/static_cast<double>(laneCache->Length)/static_cast<double>(laneCache->CountQueueLength)*100;
+	data.TimeOccupancy = static_cast<double>(laneCache->TotalInTime) / 60000.0 * 100;
 	//交通状态
-	if (laneCache->Speed > 40)
+	if (data.Speed > 40)
 	{
-		laneCache->TrafficStatus = static_cast<int>(TrafficStatus::Good);
+		data.TrafficStatus = static_cast<int>(TrafficStatus::Good);
 	}
-	else if (laneCache->Speed <= 40 && laneCache->Speed > 30)
+	else if (data.Speed <= 40 && data.Speed > 30)
 	{
-		laneCache->TrafficStatus = static_cast<int>(TrafficStatus::Normal);
+		data.TrafficStatus = static_cast<int>(TrafficStatus::Normal);
 	}
-	else if (laneCache->Speed <= 30 && laneCache->Speed > 20)
+	else if (data.Speed <= 30 && data.Speed > 20)
 	{
-		laneCache->TrafficStatus = static_cast<int>(TrafficStatus::Warning);
+		data.TrafficStatus = static_cast<int>(TrafficStatus::Warning);
 	}
-	else if (laneCache->Speed <= 20 && laneCache->Speed > 15)
+	else if (data.Speed <= 20 && data.Speed > 15)
 	{
-		laneCache->TrafficStatus = static_cast<int>(TrafficStatus::Warning);
+		data.TrafficStatus = static_cast<int>(TrafficStatus::Warning);
 	}
 	else
 	{
-		laneCache->TrafficStatus = static_cast<int>(TrafficStatus::Dead);
+		data.TrafficStatus = static_cast<int>(TrafficStatus::Dead);
 	}
 
-	laneCache->TrafficStatus = static_cast<int>(TrafficStatus::Dead);
+	data.QueueLength = laneCache->MaxQueueLength;
+	//空间占有率(%)
+	data.SpaceOccupancy = (laneCache->Length == 0 || laneCache->CountQueueLength == 0) ? 0 : laneCache->TotalQueueLength / static_cast<double>(laneCache->Length) / static_cast<double>(laneCache->CountQueueLength) * 100;
+
+	laneCache->Persons = 0;
+	laneCache->Bikes = 0;
+	laneCache->Motorcycles = 0;
+	laneCache->Tricycles = 0;
+	laneCache->Trucks = 0;
+	laneCache->Vans = 0;
+	laneCache->Cars = 0;
+	laneCache->Buss = 0;
+
+	laneCache->TotalDistance = 0.0;
+	laneCache->TotalTime = 0;
+
+	laneCache->TotalInTime = 0;
+
+	laneCache->LastInRegion = 0;
+	laneCache->TotalSpan = 0;
+
+	laneCache->MaxQueueLength = 0;
+	laneCache->TotalQueueLength = 0;
+	laneCache->CountQueueLength = 0;
+	
+	return data;
 }
 
 void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long timeStamp, string* param, unsigned char taskId, const unsigned char* iveBuffer, unsigned int frameIndex, unsigned char frameSpan)
@@ -275,113 +275,24 @@ void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long 
 		for (unsigned int i = 0; i < _laneCaches.size(); ++i)
 		{
 			FlowLaneCache& laneCache = _laneCaches[i];
-			CalculateMinuteFlow(&laneCache);
-				
-			LogPool::Information(LogEvent::Flow, "original flow->channel url:", _channelUrl, "lane:", laneCache.LaneId,"timestamp:", DateTime::ParseTimeStamp(_currentMinuteTimeStamp).ToString(),"properties:",laneCache.ReportProperties, "cars:", laneCache.Cars, "tricycles:", laneCache.Tricycles, "buss", laneCache.Buss, "vans:", laneCache.Vans, "trucks:", laneCache.Trucks, "bikes:", laneCache.Bikes, "motorcycles:", laneCache.Motorcycles, "persons:", laneCache.Persons, "speed(km/h):", laneCache.Speed, "head distance(sec):", laneCache.HeadDistance, "head space(m)", laneCache.HeadSpace, "time occ(%):", laneCache.TimeOccupancy,"traffic status:",laneCache.TrafficStatus, "queue length(m):", laneCache.QueueLength, "space occ(%):", laneCache.SpaceOccupancy);
+			FlowReportData data=CalculateMinuteFlow(&laneCache);	
+			LogPool::Information(LogEvent::Flow, "original flow->",data.ToString());
 
-			if (laneCache.ReportProperties == AllPropertiesFlag)
-			{
-				string laneJson;
-				JsonSerialization::SerializeValue(&laneJson, "channelUrl", _channelUrl);
-				JsonSerialization::SerializeValue(&laneJson, "laneId", laneCache.LaneId);
-				JsonSerialization::SerializeValue(&laneJson, "timeStamp", _currentMinuteTimeStamp);
-
-				JsonSerialization::SerializeValue(&laneJson, "persons", laneCache.Persons);
-				JsonSerialization::SerializeValue(&laneJson, "bikes", laneCache.Bikes);
-				JsonSerialization::SerializeValue(&laneJson, "motorcycles", laneCache.Motorcycles);
-				JsonSerialization::SerializeValue(&laneJson, "cars", laneCache.Cars);
-				JsonSerialization::SerializeValue(&laneJson, "tricycles", laneCache.Tricycles);
-				JsonSerialization::SerializeValue(&laneJson, "buss", laneCache.Buss);
-				JsonSerialization::SerializeValue(&laneJson, "vans", laneCache.Vans);
-				JsonSerialization::SerializeValue(&laneJson, "trucks", laneCache.Trucks);
-
-				JsonSerialization::SerializeValue(&laneJson, "averageSpeed", static_cast<int>(laneCache.Speed));
-				JsonSerialization::SerializeValue(&laneJson, "headDistance", laneCache.HeadDistance);
-				JsonSerialization::SerializeValue(&laneJson, "headSpace", laneCache.HeadSpace);
-				JsonSerialization::SerializeValue(&laneJson, "timeOccupancy", static_cast<int>(laneCache.TimeOccupancy));
-				JsonSerialization::SerializeValue(&laneJson, "trafficStatus", laneCache.TrafficStatus);
-
-				JsonSerialization::SerializeValue(&laneJson, "queueLength", laneCache.QueueLength);
-				JsonSerialization::SerializeValue(&laneJson, "spaceOccupancy", laneCache.SpaceOccupancy);
-
-				JsonSerialization::AddClassItem(&flowLanesJson, laneJson);
+			if (laneCache.ReportProperties == AllPropertiesFlag
+				||laneCache.ReportProperties==0)
+			{			
+				JsonSerialization::AddClassItem(&flowLanesJson, data.ToMessageJson());
 			}
 			else
 			{
-				FlowReportData data;
-
-				data.ChannelUrl = _channelUrl;
-				data.LaneId = laneCache.LaneId;
-				data.TimeStamp = _currentMinuteTimeStamp;
-				data.ReportProperties = laneCache.ReportProperties;
-
-				data.Persons = laneCache.Persons;
-				data.Bikes = laneCache.Bikes;
-				data.Motorcycles = laneCache.Motorcycles;
-				data.Cars = laneCache.Cars;
-				data.Tricycles = laneCache.Tricycles;
-				data.Buss = laneCache.Buss;
-				data.Vans = laneCache.Vans;
-				data.Trucks = laneCache.Trucks;
-
-				data.Speed = laneCache.Speed;
-				data.HeadDistance = laneCache.HeadDistance;
-				data.HeadSpace = laneCache.HeadSpace;
-				data.TimeOccupancy = laneCache.TimeOccupancy;
-				data.TrafficStatus = laneCache.TrafficStatus;
-
-				data.QueueLength = laneCache.QueueLength;
-				data.SpaceOccupancy = laneCache.SpaceOccupancy;
-
 				_merge->PushData(data);
 			}
 
 			if (_outputReport)
-			{
-				FlowReportCache reportCache;
-				reportCache.Minute = _currentReportMinute;
-				reportCache.LaneId = laneCache.LaneId;
-				reportCache.LaneName = laneCache.LaneName;
-				reportCache.Direction = laneCache.Direction;
-				reportCache.Bikes = laneCache.Bikes;
-				reportCache.Buss = laneCache.Buss;
-				reportCache.Cars = laneCache.Cars;
-				reportCache.Motorcycles = laneCache.Motorcycles;
-				reportCache.Persons = laneCache.Persons;
-				reportCache.Tricycles = laneCache.Tricycles;
-				reportCache.Trucks = laneCache.Trucks;
-				reportCache.Vans = laneCache.Vans;
-				reportCache.HeadDistance = laneCache.HeadDistance;
-				reportCache.HeadSpace = laneCache.HeadSpace;
-				reportCache.Speed = laneCache.Speed;
-				reportCache.TimeOccupancy = laneCache.TimeOccupancy;
-				reportCache.QueueLength = laneCache.QueueLength;
-				reportCache.SpaceOccupancy = laneCache.SpaceOccupancy;
-				reportCache.TrafficStatus = laneCache.TrafficStatus;		
-				_reportCaches.push_back(reportCache);
+			{	
+				_reportCaches.push_back(data);
 			}
-			laneCache.Persons = 0;
-			laneCache.Bikes = 0;
-			laneCache.Motorcycles = 0;
-			laneCache.Tricycles = 0;
-			laneCache.Trucks = 0;
-			laneCache.Vans = 0;
-			laneCache.Cars = 0;
-			laneCache.Buss = 0;
-
-			laneCache.TotalDistance = 0.0;
-			laneCache.TotalTime = 0;
-
-			laneCache.TotalInTime = 0;
-
-			laneCache.LastInRegion = 0;
-			laneCache.Vehicles = 0;
-			laneCache.TotalSpan = 0;
-
-			laneCache.QueueLength = 0;
-			laneCache.TotalQueueLength = 0;
-			laneCache.CountQueueLength = 0;
-			laneCache.SpaceOccupancy = 0.0;
+		
 		}
 
 		if (!flowLanesJson.empty()
@@ -448,27 +359,22 @@ void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long 
 					if (dit->second.Type == DetectType::Car)
 					{
 						laneCache.Cars += 1;
-						laneCache.Vehicles += 1;
 					}
 					else if (dit->second.Type == DetectType::Tricycle)
 					{
 						laneCache.Tricycles += 1;
-						laneCache.Vehicles += 1;
 					}
 					else if (dit->second.Type == DetectType::Bus)
 					{
 						laneCache.Buss += 1;
-						laneCache.Vehicles += 1;
 					}
 					else if (dit->second.Type == DetectType::Van)
 					{
 						laneCache.Vans += 1;
-						laneCache.Vehicles += 1;
 					}
 					else if (dit->second.Type == DetectType::Truck)
 					{
 						laneCache.Trucks += 1;
-						laneCache.Vehicles += 1;
 					}
 					else if (dit->second.Type == DetectType::Bike)
 					{
@@ -514,9 +420,9 @@ void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long 
 			hasQueue = true;
 			laneCache.TotalQueueLength += laneCache.CurrentQueueLength;
 			laneCache.CountQueueLength += 1;
-			if (laneCache.CurrentQueueLength > laneCache.QueueLength)
+			if (laneCache.CurrentQueueLength > laneCache.MaxQueueLength)
 			{
-				laneCache.QueueLength = laneCache.CurrentQueueLength;
+				laneCache.MaxQueueLength = laneCache.CurrentQueueLength;
 			}		
 		}
 	
@@ -570,26 +476,7 @@ void FlowDetector::FinishDetect(unsigned char taskId)
 		for (unsigned int i = 0; i < _laneCaches.size(); ++i)
 		{
 			FlowLaneCache& cache = _laneCaches[i];
-			CalculateMinuteFlow(&cache);
-
-			FlowReportCache reportCache;
-			reportCache.Minute = _currentReportMinute;
-			reportCache.LaneId = cache.LaneId;
-			reportCache.Direction = cache.Direction;
-			reportCache.Bikes = cache.Bikes;
-			reportCache.Buss = cache.Buss;
-			reportCache.Cars = cache.Cars;
-			reportCache.Motorcycles = cache.Motorcycles;
-			reportCache.Persons = cache.Persons;
-			reportCache.Tricycles = cache.Tricycles;
-			reportCache.Trucks = cache.Trucks;
-			reportCache.Vans = cache.Vans;
-			reportCache.HeadDistance = cache.HeadDistance;
-			reportCache.HeadSpace = cache.HeadSpace;
-			reportCache.Speed = cache.Speed;
-			reportCache.TimeOccupancy = cache.TimeOccupancy;
-			reportCache.TrafficStatus = cache.TrafficStatus;
-			reportCache.LaneName = cache.LaneName;
+			FlowReportData reportCache=CalculateMinuteFlow(&cache);
 			_reportCaches.push_back(reportCache);
 		}
 	}

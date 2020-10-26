@@ -66,7 +66,7 @@ namespace OnePunchMan
 		{
 		public:
 			FlowDetectCache()
-				:LastTimeStamp(0),LastHitPoint()
+				:LastTimeStamp(0), LastHitPoint()
 			{
 
 			}
@@ -83,15 +83,14 @@ namespace OnePunchMan
 			FlowLaneCache()
 				: LaneId(), LaneName(), Length(0), Direction(), Region(), ReportProperties(0), MeterPerPixel(0.0), StopPoint()
 				, Persons(0), Bikes(0), Motorcycles(0), Cars(0), Tricycles(0), Buss(0), Vans(0), Trucks(0)
-				, TotalDistance(0.0), TotalTime(0), Speed(0.0)
-				, TotalInTime(0), TimeOccupancy(0.0)
-				, LastInRegion(0), Vehicles(0), TotalSpan(0), HeadDistance(0.0), HeadSpace(0.0)
-				, QueueLength(0), CurrentQueueLength(0), TotalQueueLength(0), CountQueueLength(0), SpaceOccupancy(0.0)
-				, TrafficStatus(0), IoStatus(false), Items()
+				, TotalDistance(0.0), TotalTime(0)
+				, TotalInTime(0)
+				, LastInRegion(0), TotalSpan(0)
+				, MaxQueueLength(0), CurrentQueueLength(0), TotalQueueLength(0), CountQueueLength(0)
+				, IoStatus(false), Items()
 			{
 
 			}
-
 			//车道编号
 			std::string LaneId;
 			//车道名称
@@ -131,40 +130,25 @@ namespace OnePunchMan
 			double TotalDistance;
 			//车辆行驶总时间(毫秒)
 			long long TotalTime;
-			//平均速度(km/h)
-			double Speed;
 
 			//用于计算时间占有率
 			//区域占用总时间(毫秒)
 			long long TotalInTime;
-			//时间占用率(%)
-			double TimeOccupancy;
 
 			//用于计算车头时距
 			//上一次有车进入区域的时间戳 
 			long long LastInRegion;
-			//机动车总数
-			int Vehicles;
 			//车辆进入区域时间差的和(毫秒)
 			long long TotalSpan;
-			//车道时距(sec)
-			double HeadDistance;
-			//车头间距(m)
-			double HeadSpace;
 
 			//排队长度(m)
-			int QueueLength;
+			int MaxQueueLength;
 			//当前瞬时排队长度(m)
 			int CurrentQueueLength;
 			//排队总长度(m)
 			int TotalQueueLength;
 			//排队总长度对应的计数次数
 			int CountQueueLength;
-			//空间占有率(%)
-			double SpaceOccupancy;
-
-			//交通状态
-			int TrafficStatus;
 
 			//io状态
 			bool IoStatus;
@@ -173,65 +157,12 @@ namespace OnePunchMan
 			std::map<std::string, FlowDetectCache> Items;
 		};
 
-		//流量报告缓存
-		class FlowReportCache
-		{
-		public:
-			FlowReportCache()
-				: LaneId(), LaneName(), Direction(0), Minute(0)
-				, Persons(0), Bikes(0), Motorcycles(0), Cars(0), Tricycles(0), Buss(0), Vans(0), Trucks(0)
-				, Speed(0.0), TimeOccupancy(0.0), HeadDistance(0.0), HeadSpace(0.0), QueueLength(0), SpaceOccupancy(0.0), TrafficStatus(0)
-			{
-
-			}
-
-			//车道编号
-			std::string LaneId;
-			//车道名称
-			std::string LaneName;
-			//车道方向
-			int Direction;
-			//第几分钟
-			int Minute;
-			//行人流量
-			int Persons;
-			//自行车流量
-			int Bikes;
-			//摩托车流量
-			int Motorcycles;
-			//轿车流量
-			int Cars;
-			//三轮车流量
-			int Tricycles;
-			//公交车流量
-			int Buss;
-			//面包车流量
-			int Vans;
-			//卡车流量
-			int Trucks;
-
-			//平均速度(km/h)
-			double Speed;
-			//时间占用率(%)
-			double TimeOccupancy;
-			//车道时距(sec)
-			double HeadDistance;
-			//车头间距(m)
-			double HeadSpace;
-			//排队长度(m)
-			int QueueLength;
-			//空间占有率(%)
-			double SpaceOccupancy;
-			//交通状态
-			int TrafficStatus;
-		};
-
 		//车辆的距离
 		class CarDistance
 		{
 		public:
 			CarDistance()
-				:Distance(0),Length(0)
+				:Distance(0), Length(0)
 			{
 
 			}
@@ -242,8 +173,9 @@ namespace OnePunchMan
 		/**
 		* 计算分钟流量
 		* @param laneCache 车道缓存
+		* @return 分钟流量数据
 		*/
-		void CalculateMinuteFlow(FlowLaneCache* laneCache);
+		FlowReportData CalculateMinuteFlow(FlowLaneCache* laneCache);
 
 		/**
 		* 添加车辆距离有序列表
@@ -302,7 +234,7 @@ namespace OnePunchMan
 		//检测车道集合
 		std::vector<FlowLaneCache> _laneCaches;
 		//上报缓存
-		std::vector<FlowReportCache> _reportCaches;
+		std::vector<FlowReportData> _reportCaches;
 		std::vector<VideoStruct_Vehicle> _vehicleReportCaches;
 		std::vector<VideoStruct_Bike> _bikeReportCaches;
 		std::vector<VideoStruct_Pedestrain> _pedestrainReportCaches;

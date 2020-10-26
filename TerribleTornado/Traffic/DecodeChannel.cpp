@@ -1008,11 +1008,12 @@ DecodeResult DecodeChannel::Decode(unsigned char* data,unsigned int size, unsign
 		stStream.bEndOfStream = HI_FALSE;
 		stStream.bDisplay = HI_TRUE;
 		hi_s32_ret = HI_MPI_VDEC_SendStream(_channelIndex - 1, &stStream, 0);
-		if (HI_SUCCESS != hi_s32_ret) {
+		if (HI_SUCCESS != hi_s32_ret) 
+		{
 			LogPool::Error(LogEvent::Decode,"HI_MPI_VDEC_SendStream", _channelIndex, hi_s32_ret);
 			return DecodeResult::Error;
 		}
-}
+	}
 
 	while (true)
 	{
@@ -1208,7 +1209,7 @@ void DecodeChannel::StartCore()
 	bool reportFinish = false;
 	string inputUrl;
 	ChannelType channelType = ChannelType::None;
-	AVBitStreamFilterContext* h264bsfc = av_bitstream_filter_init("h264_mp4toannexb");
+	AVBitStreamFilterContext* h264bsfc = NULL;
 	while (!_cancelled)
 	{
 		if (_channelStatus == ChannelStatus::Normal)
@@ -1301,6 +1302,11 @@ void DecodeChannel::StartCore()
 			}
 			unique_lock<mutex> lck(_mutex);
 			channelType = _channelType;
+			if (h264bsfc != NULL)
+			{
+				av_bitstream_filter_close(h264bsfc);
+				h264bsfc = NULL;
+			}
 			UninitDecoder();
 			//读取到结尾重新启动时不需要重置输出
 			if (_channelStatus != ChannelStatus::ReadEOF_Restart)
@@ -1322,6 +1328,8 @@ void DecodeChannel::StartCore()
 			{
 				UninitInput();
 			}
+
+
 
 			//循环停止和解码错误时不再重新打开视频
 			if (_channelStatus != ChannelStatus::ReadEOF_Stop
@@ -1403,6 +1411,7 @@ void DecodeChannel::StartCore()
 
 			if (_channelStatus == ChannelStatus::Normal)
 			{
+				h264bsfc = av_bitstream_filter_init("h264_mp4toannexb");
 				_frameIndex = 1;
 				_lastframeIndex = 0;
 				_handleSpan = 0;
