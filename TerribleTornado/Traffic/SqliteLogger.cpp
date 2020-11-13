@@ -6,7 +6,7 @@ using namespace OnePunchMan;
 string SqliteLogger::_dbName;
 
 SqliteLogger::SqliteLogger(const string& dbName)
-	:Logger(LogLevel::Debug,LogLevel::Error) ,_writter(dbName)
+	:Logger(LogLevel::Information,LogLevel::Error) ,_writter(dbName)
 {
 	_dbName = dbName;
 }

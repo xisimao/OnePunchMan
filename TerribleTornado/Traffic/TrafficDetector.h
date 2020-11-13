@@ -4,7 +4,6 @@
 
 #include "Shape.h"
 #include "MqttChannel.h"
-#include "IVEHandler.h"
 #include "ImageConvert.h"
 #include "TrafficData.h"
 
@@ -246,27 +245,16 @@ namespace OnePunchMan
 		bool LanesInited() const;
 
 		/**
-		* 将下一帧视频写入到bmp
-		*/
-		void WriteBmp();
-
-		/**
-		* 获取默认检测参数
-		* @return 默认检测参数
-		*/
-		std::string GetDetectParam();
-
-		/**
 		* 供子类实现的处理检测数据
 		* @param items 检测数据项集合
 		* @param timeStamp 时间戳
-		* @param param 检测参数
+		* @param streamId 视频流编号
 		* @param taskId 任务编号
 		* @param iveBuffer 图片字节流
 		* @param frameIndex 帧序号
 		* @param frameSpan 帧间隔时间(毫秒)
 		*/
-		virtual void HandleDetect(std::map<std::string, DetectItem>* detectItems, long long timeStamp, std::string* param, unsigned char taskId, const unsigned char* iveBuffer, unsigned int frameIndex, unsigned char frameSpan) = 0;
+		virtual void HandleDetect(std::map<std::string, DetectItem>* detectItems, long long timeStamp,unsigned long long streamId, unsigned char taskId, const unsigned char* iveBuffer, unsigned int frameIndex, unsigned char frameSpan) = 0;
 		
 		/**
 		* 结束检测
@@ -299,13 +287,6 @@ namespace OnePunchMan
 		virtual void HandleRecognPedestrain(const RecognItem& recognItem, const unsigned char* iveBuffer, const VideoStruct_Pedestrain& pedestrain) {}
 
 	protected:
-		/**
-		* 获取车道检测参数
-		* @param regions 车道区域集合,json字符串
-		* @return 车道检测参数
-		*/
-		std::string GetDetectParam(const std::string& regions);
-
 		//视频序号
 		int _channelIndex;
 		//视频地址
@@ -319,21 +300,11 @@ namespace OnePunchMan
 
 		//车道初始化是否成功
 		bool _lanesInited;
-		//车道算法筛选区域参数
-		std::string _param;
-		//是否设置过车道参数
-		bool _setParam;
-		//是否需要写入下一帧到bmp
-		bool _writeBmp;
 
 		//bgr字节流长度
 		int _bgrSize;
 		//jpg字节流长度
 		int _jpgSize;
-
-		//ive写入bmp
-		IVEHandler _iveHandler;
-
 	};
 
 }

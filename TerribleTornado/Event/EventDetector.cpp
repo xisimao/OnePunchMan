@@ -108,9 +108,8 @@ void EventDetector::UpdateChannel(const unsigned char taskId, const EventChannel
 		LogPool::Warning(LogEvent::Event, "not found any lane,channel index:", channel.ChannelIndex);
 	}
 	_channelIndex = channel.ChannelIndex;
-	_param = GetDetectParam(regionsParam);
-	_setParam = false;
-	_writeBmp = true;
+	//_param = GetDetectParam(regionsParam);
+	//_writeBmp = true;
 	LogPool::Information(LogEvent::Event, "init event detector,channel index:", channel.ChannelIndex, "task id:", _taskId);
 }
 
@@ -133,23 +132,18 @@ void EventDetector::ClearChannel()
 
 }
 
-void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long timeStamp, string* param, unsigned char taskId, const unsigned char* iveBuffer, unsigned int frameIndex, unsigned char frameSpan)
+void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long timeStamp, unsigned long long streamId, unsigned char taskId, const unsigned char* iveBuffer, unsigned int frameIndex, unsigned char frameSpan)
 {
 	if (_taskId != taskId)
 	{
 		return;
 	}
 	lock_guard<mutex> lck(_laneMutex);
-	if (!_setParam)
-	{
-		param->assign(_param);
-		_setParam = true;
-	}
-	if (_writeBmp)
-	{
-		_iveHandler.HandleFrame(iveBuffer, _width, _height, _channelIndex);
-		_writeBmp = false;
-	}
+	//if (_writeBmp)
+	//{
+	//	_iveHandler.HandleFrame(iveBuffer, _width, _height, _channelIndex);
+	//	_writeBmp = false;
+	//}
 	if (_encodeChannel != NULL)
 	{
 		for (vector<EventData>::iterator it = _encodeDatas.begin(); it != _encodeDatas.end();)

@@ -54,7 +54,7 @@ void EventStartup::UpdateDb()
     data.UpdateDb();
 }
 
-void EventStartup::InitThreads(MqttChannel* mqtt, vector<DecodeChannel*>* decodes, vector<TrafficDetector*>* detectors, vector<DetectChannel*>* detects, vector<RecognChannel*>* recogns,int loginHandler)
+void EventStartup::InitThreads(MqttChannel* mqtt, vector<DecodeChannel*>* decodes,vector<FrameHandler*>* handlers, vector<TrafficDetector*>* detectors)
 {
     _data = new EventDataChannel(mqtt);
     for (int i = 0; i < ChannelCount; ++i)
@@ -62,24 +62,8 @@ void EventStartup::InitThreads(MqttChannel* mqtt, vector<DecodeChannel*>* decode
         EventDetector* detector = new EventDetector(DecodeChannel::DestinationWidth, DecodeChannel::DestinationHeight, mqtt, &_encode,_data);
         _detectors.push_back(detector);
         detectors->push_back(detector);
-        DecodeChannel* decode = new DecodeChannel(i + 1, loginHandler, &_encode);
+        DecodeChannel* decode = new DecodeChannel(i + 1, NULL, NULL);
         decodes->push_back(decode);
-    }
-
-    for (int i = 0; i < DetectCount; ++i)
-    {
-        DetectChannel* detect = new DetectChannel(i, DecodeChannel::DestinationWidth, DecodeChannel::DestinationHeight);
-        detects->push_back(detect);
-    }
-
-    for (int i = 0; i < DetectCount; ++i)
-    {
-        detects->at(i)->SetRecogn(NULL);
-        for (int j = 0; j < ChannelCount / DetectCount; ++j)
-        {
-            int channelIndex = i + (j * DetectCount) + 1;
-            detects->at(i)->AddChannel(channelIndex, decodes->at(channelIndex - 1), detectors->at(channelIndex - 1));
-        }
     }
     _encode.Start();
     _data->Start();

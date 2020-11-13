@@ -48,7 +48,7 @@ void FlowStartup::UpdateDb()
     data.UpdateDb();
 }
 
-void FlowStartup::InitThreads(MqttChannel* mqtt, vector<DecodeChannel*>* decodes, vector<TrafficDetector*>* detectors, vector<DetectChannel*>* detects, vector<RecognChannel*>* recogns, int loginHandler)
+void FlowStartup::InitThreads(MqttChannel* mqtt, vector<DecodeChannel*>* decodes, vector<FrameHandler*>* handlers, vector<TrafficDetector*>* detectors)
 {
     _merge = new DataMergeMap(mqtt);
     for (int i = 0; i < ChannelCount; ++i)
@@ -56,30 +56,11 @@ void FlowStartup::InitThreads(MqttChannel* mqtt, vector<DecodeChannel*>* decodes
         FlowDetector* detector = new FlowDetector(DecodeChannel::DestinationWidth, DecodeChannel::DestinationHeight, mqtt,_merge);
         _detectors.push_back(detector);
         detectors->push_back(detector);
-        DecodeChannel* decode = new DecodeChannel(i + 1, loginHandler, NULL);
+        DG_FrameHandler* handler=new DG_FrameHandler(i + 1,DecodeChannel::DestinationWidth, DecodeChannel::DestinationHeight, detector);
+        _handlers.push_back(handler);
+        handlers->push_back(handler);
+        DecodeChannel* decode = new DecodeChannel(i + 1, NULL, handler);
         decodes->push_back(decode);
-    }
-
-    for (int i = 0; i < RecognCount; ++i)
-    {
-        RecognChannel* recogn = new RecognChannel(i, DecodeChannel::DestinationWidth, DecodeChannel::DestinationHeight, detectors);
-        recogns->push_back(recogn);
-    }
-
-    for (int i = 0; i < DetectCount; ++i)
-    {
-        DetectChannel* detect = new DetectChannel(i,DecodeChannel::DestinationWidth, DecodeChannel::DestinationHeight);
-        detects->push_back(detect);
-    }
-
-    for (int i = 0; i < DetectCount; ++i)
-    {
-        detects->at(i)->SetRecogn(recogns->at(i%RecognCount));
-        for (int j = 0; j < ChannelCount / DetectCount; ++j)
-        {
-            int channelIndex = i + (j * DetectCount) + 1;
-            detects->at(i)->AddChannel(channelIndex, decodes->at(channelIndex-1), detectors->at(channelIndex-1));
-        }
     }
 }
 
@@ -91,8 +72,9 @@ void FlowStartup::InitChannels()
         FlowChannel channel = data.Get(i + 1);
         if (!channel.ChannelUrl.empty())
         {
-            unsigned char taskId= _decodes[i]->UpdateChannel(channel.ChannelUrl, channel.RtmpUrl("127.0.0.1"), static_cast<ChannelType>(channel.ChannelType), channel.Loop);
-            _detectors[i]->UpdateChannel(taskId,channel);
+            unsigned char taskId = _decodes[i]->UpdateChannel(channel.ChannelUrl, channel.RtmpUrl("127.0.0.1"), static_cast<ChannelType>(channel.ChannelType), channel.Loop);
+            _handlers[i]->UpdateChannel(channel);
+            _detectors[i]->UpdateChannel(taskId, channel);
         }
     }
 }
@@ -201,6 +183,7 @@ void FlowStartup::SetDevice(HttpReceivedEventArgs* e)
             else
             {
                 unsigned char taskId = _decodes[i]->UpdateChannel(it->second.ChannelUrl, it->second.RtmpUrl("127.0.0.1"), static_cast<ChannelType>(it->second.ChannelType), it->second.Loop);
+                _handlers[i]->UpdateChannel(it->second);
                 _detectors[i]->UpdateChannel(taskId,it->second);
             }
         }
@@ -255,6 +238,7 @@ void FlowStartup::SetChannel(HttpReceivedEventArgs* e)
     if (data.Set(channel))
     {
         unsigned char taskId = _decodes[channel.ChannelIndex - 1]->UpdateChannel(channel.ChannelUrl, channel.RtmpUrl("127.0.0.1"), static_cast<ChannelType>(channel.ChannelType), channel.Loop);
+        _handlers[channel.ChannelIndex - 1]->UpdateChannel(channel);
         _detectors[channel.ChannelIndex - 1]->UpdateChannel(taskId,channel);
         e->Code = HttpCode::OK;
     }

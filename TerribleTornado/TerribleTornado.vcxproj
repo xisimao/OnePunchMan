@@ -153,6 +153,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Traffic\FrameHandler.cpp" />
+    <ClCompile Include="Traffic\DG_FrameHandler.cpp" />
     <ClCompile Include="Flow\DataMergeMap.cpp" />
     <ClCompile Include="Event\EventDataChannel.cpp" />
     <ClCompile Include="Image\BGR24Handler.cpp" />
@@ -175,11 +177,10 @@
     <ClCompile Include="Flow\FlowDetector.cpp" />
     <ClCompile Include="Flow\FlowStartup.cpp" />
     <ClCompile Include="Flow\FlowData.cpp" />
-    <ClCompile Include="Traffic\DetectChannel.cpp" />
-    <ClCompile Include="Traffic\RecognChannel.cpp" />
-    <ClCompile Include="Traffic\SeemmoSDK.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Traffic\FrameHandler.h" />
+    <ClInclude Include="Traffic\DG_FrameHandler.h" />
     <ClInclude Include="Flow\DataMergeMap.h" />
     <ClInclude Include="Event\EventDataChannel.h" />
     <ClInclude Include="Image\BGR24Handler.h" />
@@ -201,9 +202,6 @@
     <ClInclude Include="Traffic\TrafficData.h" />
     <ClInclude Include="Flow\FlowStartup.h" />
     <ClInclude Include="Flow\FlowData.h" />
-    <ClInclude Include="Traffic\DetectChannel.h" />
-    <ClInclude Include="Traffic\RecognChannel.h" />
-    <ClInclude Include="Traffic\SeemmoSDK.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="appsettings.json" />

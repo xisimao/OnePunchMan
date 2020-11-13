@@ -50,7 +50,7 @@ namespace OnePunchMan
 		*/
 		void GetReportJson(std::string* json);
 
-		void HandleDetect(std::map<std::string, DetectItem>* detectItems, long long timeStamp, std::string* param, unsigned char taskId, const unsigned char* iveBuffer, unsigned int frameIndex,unsigned char frameSpan);
+		void HandleDetect(std::map<std::string, DetectItem>* detectItems, long long timeStamp,unsigned long long streamId, unsigned char taskId, const unsigned char* iveBuffer, unsigned int frameIndex,unsigned char frameSpan);
 		
 		void FinishDetect(unsigned char taskId);
 

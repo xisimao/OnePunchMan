@@ -2,7 +2,9 @@
 #include "EventStartup.h"
 #include "IoAdapter.h"
 #include "EncodeChannel.h"
+#include "dg_sdk_platform.h"
 
+using namespace vega::hisi;
 using namespace std;
 using namespace OnePunchMan;
 

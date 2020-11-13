@@ -8,44 +8,18 @@ const int DecodeChannel::GbSleepSpan = 1000;
 const int DecodeChannel::MaxHandleSpan = 1000;
 const int DecodeChannel::DestinationWidth = 1920;
 const int DecodeChannel::DestinationHeight = 1080;
+int DecodeChannel::GBLoginId = -1;
 
-DecodeChannel::DecodeChannel(int channelIndex, int loginId, EncodeChannel* encodeChannel)
+DecodeChannel::DecodeChannel(int channelIndex, EncodeChannel* encodeChannel, FrameHandler* frameHandler)
 	:ThreadObject("decode")
-	, _channelIndex(channelIndex), _loginId(loginId)
+	, _channelIndex(channelIndex)
 	, _inputUrl(), _outputUrl(), _channelType(ChannelType::None), _channelStatus(ChannelStatus::Init), _taskId(0), _loop(false)
 	, _inputFormat(NULL), _inputStream(NULL), _inputVideoIndex(-1), _sourceWidth(0), _sourceHeight(0), _frameSpan(0), _frameIndex(1), _lastframeIndex(0), _handleSpan(0), _currentTaskId(0), _playHandler(-1)
 	, _outputHandler()
 	, _decodeContext(NULL), _yuvFrame(NULL), _bgrFrame(NULL), _bgrBuffer(NULL), _bgrSwsContext(NULL), _bgrHandler(3)
-	, _finished(false), _tempTaskId(0), _tempFrameIndex(0), _tempFrameSpan(0)
-	, _yuvSize(static_cast<int>(DestinationWidth* DestinationHeight * 1.5)), _yuvHasValue(false), _yuv_phy_addr(0), _yuvBuffer(NULL), _iveSize(DestinationWidth* DestinationHeight * 3), _ive_phy_addr(0), _iveBuffer(NULL)
-	, _encodeChannel(encodeChannel)
+	, _encodeChannel(encodeChannel),_frameHandler(frameHandler)
 {
-#ifndef _WIN32
-	if (HI_MPI_SYS_MmzAlloc_Cached(reinterpret_cast<HI_U64*>(&_yuv_phy_addr),
-		reinterpret_cast<HI_VOID**>(&_yuvBuffer),
-		"yuv_buffer",
-		NULL,
-		_yuvSize) != HI_SUCCESS) {
-		LogPool::Error(LogEvent::Decode, "HI_MPI_SYS_MmzAlloc_Cached yuv");
-		exit(2);
-	}
-	if (HI_MPI_SYS_MmzAlloc_Cached(reinterpret_cast<HI_U64*>(&_ive_phy_addr),
-		reinterpret_cast<HI_VOID**>(&_iveBuffer),
-		"ive_buffer",
-		NULL,
-		_iveSize) != HI_SUCCESS) {
-		LogPool::Error(LogEvent::Decode, "HI_MPI_SYS_MmzAlloc_Cached ive");
-		exit(2);
-	}
-#endif // !_WIN32
-}
 
-DecodeChannel::~DecodeChannel()
-{
-#ifndef _WIN32
-	HI_MPI_SYS_MmzFree(_yuv_phy_addr, reinterpret_cast<HI_VOID*>(_yuvBuffer));
-	HI_MPI_SYS_MmzFree(_ive_phy_addr, reinterpret_cast<HI_VOID*>(_iveBuffer));
-#endif // !_WIN32
 }
 
 void DecodeChannel::InitFFmpeg()
@@ -82,7 +56,7 @@ bool DecodeChannel::InitHisi(int videoCount)
 	hi_s32_ret = HI_MPI_VB_SetConfig(&stVbConfig);
 	if (HI_SUCCESS != hi_s32_ret)
 	{
-		LogPool::Error(LogEvent::Decode, "HI_MPI_VB_SetConfig", hi_s32_ret);
+		LogPool::Error(LogEvent::Decode, "HI_MPI_VB_SetConfig", StringEx::ToHex(hi_s32_ret));
 		return false;
 	}
 
@@ -90,7 +64,7 @@ bool DecodeChannel::InitHisi(int videoCount)
 
 	if (HI_SUCCESS != hi_s32_ret)
 	{
-		LogPool::Error(LogEvent::Decode, "HI_MPI_VB_Init", hi_s32_ret);
+		LogPool::Error(LogEvent::Decode, "HI_MPI_VB_Init", StringEx::ToHex(hi_s32_ret));
 		return false;
 	}
 
@@ -98,7 +72,7 @@ bool DecodeChannel::InitHisi(int videoCount)
 
 	if (HI_SUCCESS != hi_s32_ret)
 	{
-		LogPool::Error(LogEvent::Decode, "HI_MPI_SYS_Init", hi_s32_ret);
+		LogPool::Error(LogEvent::Decode, "HI_MPI_SYS_Init", StringEx::ToHex(hi_s32_ret));
 
 		return false;
 	}
@@ -225,19 +199,19 @@ bool DecodeChannel::InitHisi(int videoCount)
 	hi_s32_ret = HI_MPI_VB_ExitModCommPool(VB_UID_VDEC);
 	if (hi_s32_ret != HI_SUCCESS)
 	{
-		LogPool::Error(LogEvent::Decode, "HI_MPI_VB_ExitModCommPool", hi_s32_ret);
+		LogPool::Error(LogEvent::Decode, "HI_MPI_VB_ExitModCommPool", StringEx::ToHex(hi_s32_ret));
 		return false;
 	}
 	hi_s32_ret = HI_MPI_VB_SetModPoolConfig(VB_UID_VDEC, &stVbConf);
 	if (hi_s32_ret != HI_SUCCESS)
 	{
-		LogPool::Error(LogEvent::Decode, "HI_MPI_VB_SetModPoolConfig", hi_s32_ret);
+		LogPool::Error(LogEvent::Decode, "HI_MPI_VB_SetModPoolConfig", StringEx::ToHex(hi_s32_ret));
 		return false;
 	}
 	hi_s32_ret = HI_MPI_VB_InitModCommPool(VB_UID_VDEC);
 	if (hi_s32_ret != HI_SUCCESS)
 	{
-		LogPool::Error(LogEvent::Decode, "HI_MPI_VB_SetModPoolConfig", hi_s32_ret);
+		LogPool::Error(LogEvent::Decode, "HI_MPI_VB_SetModPoolConfig", StringEx::ToHex(hi_s32_ret));
 		HI_MPI_VB_ExitModCommPool(VB_UID_VDEC);
 		return false;
 	}
@@ -250,14 +224,14 @@ bool DecodeChannel::InitHisi(int videoCount)
 	hi_s32_ret = HI_MPI_VDEC_GetModParam(&stModParam);
 	if (hi_s32_ret != HI_SUCCESS)
 	{
-		LogPool::Error(LogEvent::Decode, "HI_MPI_VDEC_GetModParam", hi_s32_ret);
+		LogPool::Error(LogEvent::Decode, "HI_MPI_VDEC_GetModParam", StringEx::ToHex(hi_s32_ret));
 		return false;
 	}
 	stModParam.enVdecVBSource = VB_SOURCE_MODULE;
 	hi_s32_ret = HI_MPI_VDEC_SetModParam(&stModParam);
 	if (hi_s32_ret != HI_SUCCESS)
 	{
-		LogPool::Error(LogEvent::Decode, "HI_MPI_VDEC_SetModParam", hi_s32_ret);
+		LogPool::Error(LogEvent::Decode, "HI_MPI_VDEC_SetModParam", StringEx::ToHex(hi_s32_ret));
 		return false;
 	}
 	for (int i = 0; i < videoCount; i++)
@@ -284,14 +258,14 @@ bool DecodeChannel::InitHisi(int videoCount)
 		hi_s32_ret = HI_MPI_VDEC_CreateChn(i, &stChnAttrs[i]);
 		if (hi_s32_ret != HI_SUCCESS)
 		{
-			LogPool::Error(LogEvent::Decode, "HI_MPI_VDEC_CreateChn", hi_s32_ret);
+			LogPool::Error(LogEvent::Decode, "HI_MPI_VDEC_CreateChn", StringEx::ToHex(hi_s32_ret));
 			return false;
 		}
 
 		hi_s32_ret = HI_MPI_VDEC_GetChnParam(i, &stChnParam);
 		if (hi_s32_ret != HI_SUCCESS)
 		{
-			LogPool::Error(LogEvent::Decode, "HI_MPI_VDEC_GetChnParam", hi_s32_ret);
+			LogPool::Error(LogEvent::Decode, "HI_MPI_VDEC_GetChnParam", StringEx::ToHex(hi_s32_ret));
 			return false;
 		}
 		if (PT_H264 == pastSampleVdec[i].enType)
@@ -317,13 +291,13 @@ bool DecodeChannel::InitHisi(int videoCount)
 		hi_s32_ret = HI_MPI_VDEC_SetChnParam(i, &stChnParam);
 		if (hi_s32_ret != HI_SUCCESS)
 		{
-			LogPool::Error(LogEvent::Decode, "HI_MPI_VDEC_SetChnParam", hi_s32_ret);
+			LogPool::Error(LogEvent::Decode, "HI_MPI_VDEC_SetChnParam", StringEx::ToHex(hi_s32_ret));
 			return false;
 		}
 		hi_s32_ret = HI_MPI_VDEC_StartRecvStream(i);
 		if (hi_s32_ret != HI_SUCCESS)
 		{
-			LogPool::Error(LogEvent::Decode, "HI_MPI_VDEC_StartRecvStream", hi_s32_ret);
+			LogPool::Error(LogEvent::Decode, "HI_MPI_VDEC_StartRecvStream", StringEx::ToHex(hi_s32_ret));
 			return false;
 		}
 	}
@@ -332,7 +306,7 @@ bool DecodeChannel::InitHisi(int videoCount)
 		hi_s32_ret = HI_MPI_VDEC_SetDisplayMode(i, VIDEO_DISPLAY_MODE_PLAYBACK);
 		if (hi_s32_ret != HI_SUCCESS)
 		{
-			LogPool::Error(LogEvent::Decode, "HI_MPI_VDEC_SetDisplayMode", hi_s32_ret);
+			LogPool::Error(LogEvent::Decode, "HI_MPI_VDEC_SetDisplayMode", StringEx::ToHex(hi_s32_ret));
 			return false;
 		}
 	}
@@ -375,7 +349,7 @@ bool DecodeChannel::InitHisi(int videoCount)
 
 		if (hi_s32_ret != HI_SUCCESS)
 		{
-			LogPool::Error(LogEvent::Decode, "HI_MPI_VPSS_CreateGrp", hi_s32_ret);
+			LogPool::Error(LogEvent::Decode, "HI_MPI_VPSS_CreateGrp", StringEx::ToHex(hi_s32_ret));
 			return false;
 		}
 
@@ -389,7 +363,7 @@ bool DecodeChannel::InitHisi(int videoCount)
 
 				if (hi_s32_ret != HI_SUCCESS)
 				{
-					LogPool::Error(LogEvent::Decode, "HI_MPI_VPSS_SetChnAttr", hi_s32_ret);
+					LogPool::Error(LogEvent::Decode, "HI_MPI_VPSS_SetChnAttr", StringEx::ToHex(hi_s32_ret));
 					return false;
 				}
 
@@ -399,7 +373,7 @@ bool DecodeChannel::InitHisi(int videoCount)
 
 				if (hi_s32_ret != HI_SUCCESS)
 				{
-					LogPool::Error(LogEvent::Decode, "HI_MPI_VPSS_EnableChn", hi_s32_ret);
+					LogPool::Error(LogEvent::Decode, "HI_MPI_VPSS_EnableChn", StringEx::ToHex(hi_s32_ret));
 					return false;
 				}
 
@@ -410,7 +384,7 @@ bool DecodeChannel::InitHisi(int videoCount)
 
 		if (hi_s32_ret != HI_SUCCESS)
 		{
-			LogPool::Error(LogEvent::Decode, "HI_MPI_VPSS_StartGrp", hi_s32_ret);
+			LogPool::Error(LogEvent::Decode, "HI_MPI_VPSS_StartGrp", StringEx::ToHex(hi_s32_ret));
 			return false;
 		}
 	}
@@ -432,200 +406,200 @@ bool DecodeChannel::InitHisi(int videoCount)
 		hi_s32_ret = HI_MPI_SYS_Bind(&stSrcChn, &stDestChn);
 		if (hi_s32_ret != HI_SUCCESS)
 		{
-			LogPool::Error(LogEvent::Decode, "HI_MPI_SYS_Bind", hi_s32_ret);
+			LogPool::Error(LogEvent::Decode, "HI_MPI_SYS_Bind", StringEx::ToHex(hi_s32_ret));
 			return false;
 		}
 	}
 
 
-	//vo
-	RECT_S                 stDefDispRect = { 0, 0, static_cast<HI_U32>(DestinationWidth), static_cast<HI_U32>(DestinationHeight) };
-	SIZE_S                 stDefImageSize = { static_cast<HI_U32>(DestinationWidth), static_cast<HI_U32>(DestinationHeight) };
+	////vo
+	//RECT_S                 stDefDispRect = { 0, 0, static_cast<HI_U32>(DestinationWidth), static_cast<HI_U32>(DestinationHeight) };
+	//SIZE_S                 stDefImageSize = { static_cast<HI_U32>(DestinationWidth), static_cast<HI_U32>(DestinationHeight) };
 
-	VO_DEV                 VoDev = 0;
-	VO_LAYER               VoLayer = 0;
-	VO_INTF_TYPE_E         enVoIntfType = VO_INTF_HDMI;
+	//VO_DEV                 VoDev = 0;
+	//VO_LAYER               VoLayer = 0;
+	//VO_INTF_TYPE_E         enVoIntfType = VO_INTF_HDMI;
 
-	VO_PUB_ATTR_S          stVoPubAttr = { 0 };
-	VO_VIDEO_LAYER_ATTR_S  stLayerAttr = { 0 };
+	//VO_PUB_ATTR_S          stVoPubAttr = { 0 };
+	//VO_VIDEO_LAYER_ATTR_S  stLayerAttr = { 0 };
 
-	/********************************
-	* Set and start VO device VoDev#.
-	*********************************/
-	stVoPubAttr.enIntfType = VO_INTF_HDMI;
-	stVoPubAttr.enIntfSync = VO_OUTPUT_1080P60;
+	///********************************
+	//* Set and start VO device VoDev#.
+	//*********************************/
+	//stVoPubAttr.enIntfType = VO_INTF_HDMI;
+	//stVoPubAttr.enIntfSync = VO_OUTPUT_1080P60;
 
-	stVoPubAttr.u32BgColor = 0x222222;
-
-
-	hi_s32_ret = HI_MPI_VO_SetPubAttr(VoDev, &stVoPubAttr);
-	if (hi_s32_ret != HI_SUCCESS)
-	{
-		LogPool::Error(LogEvent::Decode, "HI_MPI_VO_SetPubAttr", hi_s32_ret);
-		return false;
-	}
-
-	hi_s32_ret = HI_MPI_VO_Enable(VoDev);
-	if (hi_s32_ret != HI_SUCCESS)
-	{
-		LogPool::Error(LogEvent::Decode, "HI_MPI_VO_Enable", hi_s32_ret);
-		return false;
-	}
+	//stVoPubAttr.u32BgColor = 0x222222;
 
 
-	/******************************
-	* Set and start layer VoDev#.
-	********************************/
-	stLayerAttr.stDispRect.u32Width = DestinationWidth;
-	stLayerAttr.stDispRect.u32Height = DestinationHeight;
-	stLayerAttr.u32DispFrmRt = 30;
-	stLayerAttr.bClusterMode = HI_FALSE;
-	stLayerAttr.bDoubleFrame = HI_FALSE;
-	stLayerAttr.enPixFormat = PIXEL_FORMAT_YVU_SEMIPLANAR_420;
+	//hi_s32_ret = HI_MPI_VO_SetPubAttr(VoDev, &stVoPubAttr);
+	//if (hi_s32_ret != HI_SUCCESS)
+	//{
+	//	LogPool::Error(LogEvent::Decode, "HI_MPI_VO_SetPubAttr", StringEx::ToHex(hi_s32_ret));
+	//	return false;
+	//}
 
-	stLayerAttr.stDispRect.s32X = 0;
-	stLayerAttr.stDispRect.s32Y = 0;
-
-	stLayerAttr.stDispRect = stDefDispRect;
-	stLayerAttr.stImageSize.u32Width = stLayerAttr.stDispRect.u32Width;
-	stLayerAttr.stImageSize.u32Height = stLayerAttr.stDispRect.u32Height;
-
-	stLayerAttr.stImageSize = stDefImageSize;
-	stLayerAttr.enDstDynamicRange = DYNAMIC_RANGE_SDR8;
+	//hi_s32_ret = HI_MPI_VO_Enable(VoDev);
+	//if (hi_s32_ret != HI_SUCCESS)
+	//{
+	//	LogPool::Error(LogEvent::Decode, "HI_MPI_VO_Enable", StringEx::ToHex(hi_s32_ret));
+	//	return false;
+	//}
 
 
-	hi_s32_ret = HI_MPI_VO_SetDisplayBufLen(VoLayer, 4);
-	if (HI_SUCCESS != hi_s32_ret)
-	{
-		LogPool::Error(LogEvent::Decode, "HI_MPI_VO_SetDisplayBufLen", hi_s32_ret);
-		return false;
-	}
+	///******************************
+	//* Set and start layer VoDev#.
+	//********************************/
+	//stLayerAttr.stDispRect.u32Width = DestinationWidth;
+	//stLayerAttr.stDispRect.u32Height = DestinationHeight;
+	//stLayerAttr.u32DispFrmRt = 30;
+	//stLayerAttr.bClusterMode = HI_FALSE;
+	//stLayerAttr.bDoubleFrame = HI_FALSE;
+	//stLayerAttr.enPixFormat = PIXEL_FORMAT_YVU_SEMIPLANAR_420;
+
+	//stLayerAttr.stDispRect.s32X = 0;
+	//stLayerAttr.stDispRect.s32Y = 0;
+
+	//stLayerAttr.stDispRect = stDefDispRect;
+	//stLayerAttr.stImageSize.u32Width = stLayerAttr.stDispRect.u32Width;
+	//stLayerAttr.stImageSize.u32Height = stLayerAttr.stDispRect.u32Height;
+
+	//stLayerAttr.stImageSize = stDefImageSize;
+	//stLayerAttr.enDstDynamicRange = DYNAMIC_RANGE_SDR8;
 
 
-	hi_s32_ret = HI_MPI_VO_SetVideoLayerAttr(VoLayer, &stLayerAttr);
-	if (hi_s32_ret != HI_SUCCESS)
-	{
-		LogPool::Error(LogEvent::Decode, "HI_MPI_VO_SetVideoLayerAttr", hi_s32_ret);
-		return false;
-	}
-
-	hi_s32_ret = HI_MPI_VO_EnableVideoLayer(VoLayer);
-	if (hi_s32_ret != HI_SUCCESS)
-	{
-		LogPool::Error(LogEvent::Decode, "HI_MPI_VO_EnableVideoLayer", hi_s32_ret);
-		return false;
-	}
-
-	/******************************
-	* start vo channels.
-	********************************/
-	hi_s32_ret = HI_SUCCESS;
-
-	HI_U32 u32Square = 3;
-	HI_U32 u32Width = 0;
-	HI_U32 u32Height = 0;
-	VO_CHN_ATTR_S         stChnAttr;
-
-	hi_s32_ret = HI_MPI_VO_GetVideoLayerAttr(VoLayer, &stLayerAttr);
-	if (hi_s32_ret != HI_SUCCESS)
-	{
-		LogPool::Error(LogEvent::Decode, "HI_MPI_VO_GetVideoLayerAttr", hi_s32_ret);
-		return false;
-	}
-	u32Width = stLayerAttr.stImageSize.u32Width;
-	u32Height = stLayerAttr.stImageSize.u32Height;
+	//hi_s32_ret = HI_MPI_VO_SetDisplayBufLen(VoLayer, 4);
+	//if (HI_SUCCESS != hi_s32_ret)
+	//{
+	//	LogPool::Error(LogEvent::Decode, "HI_MPI_VO_SetDisplayBufLen", StringEx::ToHex(hi_s32_ret));
+	//	return false;
+	//}
 
 
-	for (int i = 0; i < videoCount; i++)
-	{
-		stChnAttr.stRect.s32X = ALIGN_DOWN((u32Width / u32Square) * (i % u32Square), 2);
-		stChnAttr.stRect.s32Y = ALIGN_DOWN((u32Height / u32Square) * (i / u32Square), 2);
-		stChnAttr.stRect.u32Width = ALIGN_DOWN(u32Width / u32Square, 2);
-		stChnAttr.stRect.u32Height = ALIGN_DOWN(u32Height / u32Square, 2);
-		stChnAttr.u32Priority = 0;
-		stChnAttr.bDeflicker = HI_FALSE;
+	//hi_s32_ret = HI_MPI_VO_SetVideoLayerAttr(VoLayer, &stLayerAttr);
+	//if (hi_s32_ret != HI_SUCCESS)
+	//{
+	//	LogPool::Error(LogEvent::Decode, "HI_MPI_VO_SetVideoLayerAttr", StringEx::ToHex(hi_s32_ret));
+	//	return false;
+	//}
 
-		hi_s32_ret = HI_MPI_VO_SetChnAttr(VoLayer, i, &stChnAttr);
-		if (hi_s32_ret != HI_SUCCESS)
-		{
-			LogPool::Error(LogEvent::Decode, "HI_MPI_VO_SetChnAttr", hi_s32_ret);
-			return false;
-		}
+	//hi_s32_ret = HI_MPI_VO_EnableVideoLayer(VoLayer);
+	//if (hi_s32_ret != HI_SUCCESS)
+	//{
+	//	LogPool::Error(LogEvent::Decode, "HI_MPI_VO_EnableVideoLayer", StringEx::ToHex(hi_s32_ret));
+	//	return false;
+	//}
 
-		hi_s32_ret = HI_MPI_VO_EnableChn(VoLayer, i);
-		if (hi_s32_ret != HI_SUCCESS)
-		{
-			LogPool::Error(LogEvent::Decode, "HI_MPI_VO_EnableChn", hi_s32_ret);
-			return false;
-		}
-	}
+	///******************************
+	//* start vo channels.
+	//********************************/
+	//hi_s32_ret = HI_SUCCESS;
 
-	/******************************
-	* Start hdmi device.
-	* Note : do this after vo device started.
-	********************************/
-	if (VO_INTF_HDMI == enVoIntfType)
-	{
-		HI_HDMI_ATTR_S          stAttr;
-		HI_HDMI_VIDEO_FMT_E     enVideoFmt = HI_HDMI_VIDEO_FMT_1080P_60;
-		HI_HDMI_ID_E            enHdmiId = HI_HDMI_ID_0;
+	//HI_U32 u32Square = 3;
+	//HI_U32 u32Width = 0;
+	//HI_U32 u32Height = 0;
+	//VO_CHN_ATTR_S         stChnAttr;
 
-		hi_s32_ret = HI_MPI_HDMI_Init();
-		if (hi_s32_ret != HI_SUCCESS)
-		{
-			LogPool::Error(LogEvent::Decode, "HI_MPI_HDMI_Init", hi_s32_ret);
-			return false;
-		}
-		hi_s32_ret = HI_MPI_HDMI_Open(enHdmiId);
-		if (hi_s32_ret != HI_SUCCESS)
-		{
-			LogPool::Error(LogEvent::Decode, "HI_MPI_HDMI_Open", hi_s32_ret);
-			return false;
-		}
-		hi_s32_ret = HI_MPI_HDMI_GetAttr(enHdmiId, &stAttr);
-		if (hi_s32_ret != HI_SUCCESS)
-		{
-			LogPool::Error(LogEvent::Decode, "HI_MPI_HDMI_GetAttr", hi_s32_ret);
-			return false;
-		}
-		stAttr.bEnableHdmi = HI_TRUE;
-		stAttr.bEnableVideo = HI_TRUE;
-		stAttr.enVideoFmt = enVideoFmt;
-		stAttr.enVidOutMode = HI_HDMI_VIDEO_MODE_YCBCR444;
-		stAttr.enDeepColorMode = HI_HDMI_DEEP_COLOR_24BIT;
+	//hi_s32_ret = HI_MPI_VO_GetVideoLayerAttr(VoLayer, &stLayerAttr);
+	//if (hi_s32_ret != HI_SUCCESS)
+	//{
+	//	LogPool::Error(LogEvent::Decode, "HI_MPI_VO_GetVideoLayerAttr", StringEx::ToHex(hi_s32_ret));
+	//	return false;
+	//}
+	//u32Width = stLayerAttr.stImageSize.u32Width;
+	//u32Height = stLayerAttr.stImageSize.u32Height;
 
-		stAttr.bxvYCCMode = HI_FALSE;
-		stAttr.enOutCscQuantization = HDMI_QUANTIZATION_LIMITED_RANGE;
 
-		stAttr.bEnableAudio = HI_FALSE;
-		stAttr.enSoundIntf = HI_HDMI_SND_INTERFACE_I2S;
-		stAttr.bIsMultiChannel = HI_FALSE;
+	//for (int i = 0; i < videoCount; i++)
+	//{
+	//	stChnAttr.stRect.s32X = ALIGN_DOWN((u32Width / u32Square) * (i % u32Square), 2);
+	//	stChnAttr.stRect.s32Y = ALIGN_DOWN((u32Height / u32Square) * (i / u32Square), 2);
+	//	stChnAttr.stRect.u32Width = ALIGN_DOWN(u32Width / u32Square, 2);
+	//	stChnAttr.stRect.u32Height = ALIGN_DOWN(u32Height / u32Square, 2);
+	//	stChnAttr.u32Priority = 0;
+	//	stChnAttr.bDeflicker = HI_FALSE;
 
-		stAttr.enBitDepth = HI_HDMI_BIT_DEPTH_16;
+	//	hi_s32_ret = HI_MPI_VO_SetChnAttr(VoLayer, i, &stChnAttr);
+	//	if (hi_s32_ret != HI_SUCCESS)
+	//	{
+	//		LogPool::Error(LogEvent::Decode, "HI_MPI_VO_SetChnAttr", StringEx::ToHex(hi_s32_ret));
+	//		return false;
+	//	}
 
-		stAttr.bEnableAviInfoFrame = HI_TRUE;
-		stAttr.bEnableAudInfoFrame = HI_TRUE;
-		stAttr.bEnableSpdInfoFrame = HI_FALSE;
-		stAttr.bEnableMpegInfoFrame = HI_FALSE;
+	//	hi_s32_ret = HI_MPI_VO_EnableChn(VoLayer, i);
+	//	if (hi_s32_ret != HI_SUCCESS)
+	//	{
+	//		LogPool::Error(LogEvent::Decode, "HI_MPI_VO_EnableChn", StringEx::ToHex(hi_s32_ret));
+	//		return false;
+	//	}
+	//}
 
-		stAttr.bDebugFlag = HI_FALSE;
-		stAttr.bHDCPEnable = HI_FALSE;
+	///******************************
+	//* Start hdmi device.
+	//* Note : do this after vo device started.
+	//********************************/
+	//if (VO_INTF_HDMI == enVoIntfType)
+	//{
+	//	HI_HDMI_ATTR_S          stAttr;
+	//	HI_HDMI_VIDEO_FMT_E     enVideoFmt = HI_HDMI_VIDEO_FMT_1080P_60;
+	//	HI_HDMI_ID_E            enHdmiId = HI_HDMI_ID_0;
 
-		stAttr.b3DEnable = HI_FALSE;
-		stAttr.enDefaultMode = HI_HDMI_FORCE_HDMI;
-		hi_s32_ret = HI_MPI_HDMI_SetAttr(enHdmiId, &stAttr);
-		if (hi_s32_ret != HI_SUCCESS)
-		{
-			LogPool::Error(LogEvent::Decode, "HI_MPI_HDMI_SetAttr", hi_s32_ret);
-			return false;
-		}
-		hi_s32_ret = HI_MPI_HDMI_Start(enHdmiId);
-		if (hi_s32_ret != HI_SUCCESS)
-		{
-			LogPool::Error(LogEvent::Decode, "HI_MPI_HDMI_Start", hi_s32_ret);
-			return false;
-		}
-	}
+	//	hi_s32_ret = HI_MPI_HDMI_Init();
+	//	if (hi_s32_ret != HI_SUCCESS)
+	//	{
+	//		LogPool::Error(LogEvent::Decode, "HI_MPI_HDMI_Init", StringEx::ToHex(hi_s32_ret));
+	//		return false;
+	//	}
+	//	hi_s32_ret = HI_MPI_HDMI_Open(enHdmiId);
+	//	if (hi_s32_ret != HI_SUCCESS)
+	//	{
+	//		LogPool::Error(LogEvent::Decode, "HI_MPI_HDMI_Open", StringEx::ToHex(hi_s32_ret));
+	//		return false;
+	//	}
+	//	hi_s32_ret = HI_MPI_HDMI_GetAttr(enHdmiId, &stAttr);
+	//	if (hi_s32_ret != HI_SUCCESS)
+	//	{
+	//		LogPool::Error(LogEvent::Decode, "HI_MPI_HDMI_GetAttr", StringEx::ToHex(hi_s32_ret));
+	//		return false;
+	//	}
+	//	stAttr.bEnableHdmi = HI_TRUE;
+	//	stAttr.bEnableVideo = HI_TRUE;
+	//	stAttr.enVideoFmt = enVideoFmt;
+	//	stAttr.enVidOutMode = HI_HDMI_VIDEO_MODE_YCBCR444;
+	//	stAttr.enDeepColorMode = HI_HDMI_DEEP_COLOR_24BIT;
+
+	//	stAttr.bxvYCCMode = HI_FALSE;
+	//	stAttr.enOutCscQuantization = HDMI_QUANTIZATION_LIMITED_RANGE;
+
+	//	stAttr.bEnableAudio = HI_FALSE;
+	//	stAttr.enSoundIntf = HI_HDMI_SND_INTERFACE_I2S;
+	//	stAttr.bIsMultiChannel = HI_FALSE;
+
+	//	stAttr.enBitDepth = HI_HDMI_BIT_DEPTH_16;
+
+	//	stAttr.bEnableAviInfoFrame = HI_TRUE;
+	//	stAttr.bEnableAudInfoFrame = HI_TRUE;
+	//	stAttr.bEnableSpdInfoFrame = HI_FALSE;
+	//	stAttr.bEnableMpegInfoFrame = HI_FALSE;
+
+	//	stAttr.bDebugFlag = HI_FALSE;
+	//	stAttr.bHDCPEnable = HI_FALSE;
+
+	//	stAttr.b3DEnable = HI_FALSE;
+	//	stAttr.enDefaultMode = HI_HDMI_FORCE_HDMI;
+	//	hi_s32_ret = HI_MPI_HDMI_SetAttr(enHdmiId, &stAttr);
+	//	if (hi_s32_ret != HI_SUCCESS)
+	//	{
+	//		LogPool::Error(LogEvent::Decode, "HI_MPI_HDMI_SetAttr", StringEx::ToHex(hi_s32_ret));
+	//		return false;
+	//	}
+	//	hi_s32_ret = HI_MPI_HDMI_Start(enHdmiId);
+	//	if (hi_s32_ret != HI_SUCCESS)
+	//	{
+	//		LogPool::Error(LogEvent::Decode, "HI_MPI_HDMI_Start", StringEx::ToHex(hi_s32_ret));
+	//		return false;
+	//	}
+	//}
 
 #endif
 	LogPool::Information(LogEvent::Decode, "init hisi decode sdk");
@@ -739,6 +713,43 @@ void DecodeChannel::UninitHisi(int videoCount)
 	LogPool::Information(LogEvent::Decode, "uninit hisi decode sdk");
 }
 
+bool DecodeChannel::InitGB(const GbParameter& gbParameter)
+{
+#ifndef _WIN32
+	int gbResult = vas_sdk_startup();
+	if (gbResult >= 0)
+	{
+		LogPool::Information(LogEvent::System, "init gb sdk,login handler:", gbResult);
+	}
+	else
+	{
+		LogPool::Information(LogEvent::System, "init gb sdk failed,result:", gbResult);
+		return false;
+	}
+	if (gbParameter.ServerIp.empty())
+	{
+		LogPool::Information(LogEvent::System, "not found gb serverip,skip login");
+		return false;
+	}
+	else
+	{
+		GBLoginId = vas_sdk_login(const_cast<char*>(gbParameter.ServerIp.c_str()), gbParameter.ServerPort, const_cast<char*>(gbParameter.UserName.c_str()), const_cast<char*>(gbParameter.Password.c_str()));
+		if (GBLoginId >= 0)
+		{
+			LogPool::Information(LogEvent::System, "gb sdk login");
+			return true;
+		}
+		else
+		{
+			LogPool::Information(LogEvent::System, "gb sdk login failed,result:", GBLoginId);
+			return false;
+		}
+	}
+#else
+	return false;
+#endif // !_WIN32
+}
+
 string DecodeChannel::InputUrl()
 {
 	lock_guard<mutex> lck(_mutex);
@@ -810,7 +821,7 @@ bool DecodeChannel::InitInput(const string& inputUrl)
 			if (inputUrl.size() >= 4 && inputUrl.substr(0, 4).compare("rtsp") == 0)
 			{
 				av_dict_set(&options, "rtsp_transport", "tcp", 0);
-				av_dict_set(&options, "stimeout", "5000000", 0); 
+				av_dict_set(&options, "stimeout", "5000000", 0);
 			}
 			int result = avformat_open_input(&_inputFormat, inputUrl.c_str(), 0, &options);
 			if (result != 0) {
@@ -952,7 +963,6 @@ void DecodeChannel::UninitDecoder()
 
 DecodeResult DecodeChannel::DecodeTest(const AVPacket* packet, unsigned char taskId, unsigned int frameIndex, unsigned char frameSpan)
 {
-
 	if (avcodec_send_packet(_decodeContext, packet) == 0)
 	{
 		while (true)
@@ -984,7 +994,7 @@ DecodeResult DecodeChannel::DecodeTest(const AVPacket* packet, unsigned char tas
 	return DecodeResult::Handle;
 }
 
-DecodeResult DecodeChannel::Decode(unsigned char* data,unsigned int size, unsigned char taskId, unsigned int frameIndex, unsigned char frameSpan)
+DecodeResult DecodeChannel::Decode(unsigned char* data, unsigned int size, unsigned char taskId, unsigned int frameIndex, unsigned char frameSpan)
 {
 #ifdef _WIN32
 	return DecodeResult::Skip;
@@ -1008,9 +1018,9 @@ DecodeResult DecodeChannel::Decode(unsigned char* data,unsigned int size, unsign
 		stStream.bEndOfStream = HI_FALSE;
 		stStream.bDisplay = HI_TRUE;
 		hi_s32_ret = HI_MPI_VDEC_SendStream(_channelIndex - 1, &stStream, 0);
-		if (HI_SUCCESS != hi_s32_ret) 
+		if (HI_SUCCESS != hi_s32_ret)
 		{
-			LogPool::Error(LogEvent::Decode,"HI_MPI_VDEC_SendStream", _channelIndex, hi_s32_ret);
+			LogPool::Error(LogEvent::Decode, "HI_MPI_VDEC_SendStream", _channelIndex, StringEx::ToHex(hi_s32_ret));
 			return DecodeResult::Error;
 		}
 	}
@@ -1025,18 +1035,20 @@ DecodeResult DecodeChannel::Decode(unsigned char* data,unsigned int size, unsign
 			{
 				_encodeChannel->PushFrame(_channelIndex, &frame);
 			}
-
+			if (_frameHandler==NULL||!_frameHandler->HandleFrame(&frame))
+			{
+				HI_MPI_VPSS_ReleaseChnFrame(_channelIndex - 1, 0, &frame);
+			}
 			handled = true;
-			unsigned char* yuv = reinterpret_cast<unsigned char*>(HI_MPI_SYS_Mmap(frame.stVFrame.u64PhyAddr[0], _yuvSize));
-			//_yuvHandler.HandleFrame(yuv, DestinationWidth, DestinationHeight, frameIndex);
-			SetTempIve(frame.stVFrame.u64PTS >> 32 & 0xFF, yuv, frame.stVFrame.u64PTS & 0xFFFFFFFF, frame.stVFrame.u64PTS >> 40 & 0xFF, false);
-			HI_MPI_SYS_Munmap(reinterpret_cast<HI_VOID*>(yuv), _yuvSize);
-			HI_MPI_VPSS_ReleaseChnFrame(_channelIndex - 1, 0, &frame);
+		}
+		else if (hi_s32_ret == HI_ERR_VPSS_BUF_EMPTY)
+		{
+			break;
 		}
 		else
 		{
-			HI_MPI_VPSS_ReleaseChnFrame(_channelIndex - 1, 0, &frame);
-			break;
+			LogPool::Error(LogEvent::Decode, "HI_MPI_VPSS_GetChnFrame", _channelIndex, StringEx::ToHex(hi_s32_ret));
+			return DecodeResult::Error;
 		}
 	}
 	//结束帧强制设置
@@ -1044,7 +1056,7 @@ DecodeResult DecodeChannel::Decode(unsigned char* data,unsigned int size, unsign
 	{
 		while (true)
 		{
-			if (SetTempIve(taskId, NULL, frameIndex, frameSpan, true))
+			if (_frameHandler==NULL||_frameHandler->HandleFrame(NULL))
 			{
 				break;
 			}
@@ -1059,104 +1071,6 @@ DecodeResult DecodeChannel::Decode(unsigned char* data,unsigned int size, unsign
 
 }
 
-bool DecodeChannel::YuvToIve()
-{
-#ifndef _WIN32
-	IVE_IMAGE_S yuv_image_list;
-	IVE_IMAGE_S bgr_image_list;
-
-	IVE_HANDLE ive_handle;
-	IVE_CSC_CTRL_S ive_csc_ctrl = { IVE_CSC_MODE_PIC_BT709_YUV2RGB };
-	int hi_s32_ret = HI_SUCCESS;
-
-	yuv_image_list.enType = IVE_IMAGE_TYPE_YUV420SP;
-	yuv_image_list.u32Height = DestinationHeight;
-	yuv_image_list.u32Width = DestinationWidth;
-	yuv_image_list.au64PhyAddr[0] = _yuv_phy_addr;
-	yuv_image_list.au64PhyAddr[1] = yuv_image_list.au64PhyAddr[0] + yuv_image_list.u32Width * yuv_image_list.u32Height;
-	yuv_image_list.au32Stride[0] = yuv_image_list.u32Width;
-	yuv_image_list.au32Stride[1] = yuv_image_list.u32Width;
-
-	yuv_image_list.au64VirAddr[0] = reinterpret_cast<HI_U64>(_yuvBuffer);
-	yuv_image_list.au64VirAddr[1] = yuv_image_list.au64VirAddr[0] + yuv_image_list.u32Width * yuv_image_list.u32Height;
-
-	bgr_image_list.enType = IVE_IMAGE_TYPE_U8C3_PLANAR;
-	bgr_image_list.u32Height = DestinationHeight;
-	bgr_image_list.u32Width = DestinationWidth;
-	bgr_image_list.au64PhyAddr[0] = _ive_phy_addr;
-	bgr_image_list.au64PhyAddr[1] = bgr_image_list.au64PhyAddr[0] + bgr_image_list.u32Height * bgr_image_list.u32Width;
-	bgr_image_list.au64PhyAddr[2] = bgr_image_list.au64PhyAddr[1] + bgr_image_list.u32Height * bgr_image_list.u32Width;
-	bgr_image_list.au64VirAddr[0] = reinterpret_cast<HI_U64>(_iveBuffer);
-	bgr_image_list.au64VirAddr[1] = bgr_image_list.au64VirAddr[0] + bgr_image_list.u32Height * bgr_image_list.u32Width;
-	bgr_image_list.au64VirAddr[2] = bgr_image_list.au64VirAddr[1] + bgr_image_list.u32Height * bgr_image_list.u32Width;
-	bgr_image_list.au32Stride[0] = bgr_image_list.u32Width;
-	bgr_image_list.au32Stride[1] = bgr_image_list.u32Width;
-	bgr_image_list.au32Stride[2] = bgr_image_list.u32Width;
-
-	hi_s32_ret = HI_MPI_IVE_CSC(&ive_handle, &yuv_image_list, &bgr_image_list, &ive_csc_ctrl, HI_TRUE);
-	if (HI_SUCCESS != hi_s32_ret) {
-		LogPool::Error(LogEvent::Decode, "HI_MPI_IVE_CSC", hi_s32_ret);
-		return false;
-	}
-	HI_BOOL ive_finish = HI_FALSE;
-	hi_s32_ret = HI_SUCCESS;
-	do {
-		hi_s32_ret = HI_MPI_IVE_Query(ive_handle, &ive_finish, HI_TRUE);
-	} while (HI_ERR_IVE_QUERY_TIMEOUT == hi_s32_ret);
-
-	if (HI_SUCCESS != hi_s32_ret) {
-		LogPool::Error(LogEvent::Decode, "HI_MPI_IVE_Query", hi_s32_ret);
-		return false;
-	}
-#endif // !_WIN32
-	return true;
-}
-
-bool DecodeChannel::SetTempIve(unsigned char taskId, const unsigned char* yuv, unsigned int frameIndex, unsigned char frameSpan, bool finished)
-{
-	if (_yuvHasValue)
-	{
-		return false;
-	}
-	else
-	{
-		if (!finished)
-		{
-			memcpy(_yuvBuffer, yuv, _yuvSize);
-		}
-		_tempTaskId = taskId;
-		_tempFrameIndex = frameIndex;
-		_tempFrameSpan = frameSpan;
-		_finished = finished;
-		_yuvHasValue = true;
-		return true;
-	}
-}
-
-FrameItem DecodeChannel::GetTempIve()
-{
-	FrameItem item;
-	if (_yuvHasValue)
-	{
-		item.TaskId = _tempTaskId;
-		item.FrameIndex = _tempFrameIndex;
-		item.FrameSpan = _tempFrameSpan;
-		item.Finished = _finished;
-		//只送出一次结束
-		if (_finished)
-		{
-			_finished = false;
-		}
-		else
-		{
-			YuvToIve();
-			item.IveBuffer = _iveBuffer;
-		}
-		_yuvHasValue = false;
-	}
-	return item;
-}
-
 void DecodeChannel::ReceivePacket(int playFd, int frameType, char* buffer, unsigned int size, void* usr)
 {
 	if (frameType == 3)
@@ -1166,13 +1080,13 @@ void DecodeChannel::ReceivePacket(int playFd, int frameType, char* buffer, unsig
 	DecodeChannel* channel = static_cast<DecodeChannel*>(usr);
 	if (channel->_channelStatus == ChannelStatus::Normal)
 	{
-		long long timeStamp1 = DateTime::UtcNowTimeStamp();
+		long long timeStamp1 = DateTime::NowTimeStamp();
 		channel->_outputHandler.WritePacket(reinterpret_cast<const unsigned char*>(buffer), size, frameType == 0 ? FrameType::I : FrameType::P);
-		DecodeResult decodeResult = channel->Decode(reinterpret_cast<unsigned char*>(buffer),size, channel->_currentTaskId, channel->_frameIndex, channel->_frameSpan);
+		DecodeResult decodeResult = channel->Decode(reinterpret_cast<unsigned char*>(buffer), size, channel->_currentTaskId, channel->_frameIndex, channel->_frameSpan);
 		if (channel->_frameIndex % 100 == 0)
 		{
 			LogPool::Debug(LogEvent::Decode, "got gb data", channel->_frameIndex, static_cast<int>(channel->_channelStatus), static_cast<int>(decodeResult), frameType, size);
-		}		
+		}
 		if (decodeResult == DecodeResult::Handle)
 		{
 			channel->_handleSpan = channel->_frameIndex - channel->_lastframeIndex;
@@ -1190,7 +1104,7 @@ void DecodeChannel::ReceivePacket(int playFd, int frameType, char* buffer, unsig
 			LogPool::Error(LogEvent::Decode, "decode error", channel->_channelIndex, channel->_frameIndex);
 			channel->_channelStatus = ChannelStatus::DecodeError;
 		}
-		long long timeStamp2 = DateTime::UtcNowTimeStamp();
+		long long timeStamp2 = DateTime::NowTimeStamp();
 
 		channel->_frameIndex += 1;
 		long long sleepTime = channel->_frameSpan - (timeStamp2 - timeStamp1);
@@ -1220,7 +1134,7 @@ void DecodeChannel::StartCore()
 			}
 			else
 			{
-				long long timeStamp1 = DateTime::UtcNowTimeStamp();
+				long long timeStamp1 = DateTime::NowTimeStamp();
 				int readResult = av_read_frame(_inputFormat, packet);
 				if (readResult == AVERROR_EOF)
 				{
@@ -1247,8 +1161,8 @@ void DecodeChannel::StartCore()
 						}
 						else
 						{
-							long long timeStamp2 = DateTime::UtcNowTimeStamp();
-							DecodeResult decodeResult = Decode(tempPacket->data,tempPacket->size, _currentTaskId, _frameIndex, _frameSpan);
+							long long timeStamp2 = DateTime::NowTimeStamp();
+							DecodeResult decodeResult = Decode(tempPacket->data, tempPacket->size, _currentTaskId, _frameIndex, _frameSpan);
 							if (decodeResult == DecodeResult::Handle)
 							{
 								_handleSpan = _frameIndex - _lastframeIndex;
@@ -1263,10 +1177,10 @@ void DecodeChannel::StartCore()
 							}
 							else
 							{
-								LogPool::Error(LogEvent::Decode, "decode error,input url:", inputUrl," frame index", _frameIndex);
+								LogPool::Error(LogEvent::Decode, "decode error,input url:", inputUrl, " frame index", _frameIndex);
 								_channelStatus = ChannelStatus::DecodeError;
 							}
-							long long timeStamp3 = DateTime::UtcNowTimeStamp();
+							long long timeStamp3 = DateTime::NowTimeStamp();
 							long long sleepTime = _frameSpan - (timeStamp3 - timeStamp1);
 							if (sleepTime > 0 && sleepTime <= _frameSpan)
 							{
@@ -1275,7 +1189,7 @@ void DecodeChannel::StartCore()
 							if (_frameIndex % 100 == 0)
 							{
 								LogPool::Debug(LogEvent::Decode, "frame->channel index:", _channelIndex, "packet size:", packet->size, "task id:", static_cast<int>(_currentTaskId), "frame index:", _frameIndex, "frame span:", static_cast<int>(_frameSpan), "decode result:", static_cast<int>(decodeResult), "read and write:", timeStamp2 - timeStamp1, "decode:", timeStamp3 - timeStamp2);
-							}							
+							}
 							if (filterResult > 0)
 							{
 								av_free(tempPacket->data);
@@ -1286,7 +1200,7 @@ void DecodeChannel::StartCore()
 				}
 				else
 				{
-					LogPool::Error(LogEvent::Decode, "av_read_frame,input url:", inputUrl," frame index:", _frameIndex,"返回结果:", readResult);
+					LogPool::Error(LogEvent::Decode, "av_read_frame,input url:", inputUrl, " frame index:", _frameIndex, "返回结果:", readResult);
 					_channelStatus = ChannelStatus::ReadError;
 				}
 				av_packet_unref(packet);
@@ -1297,7 +1211,7 @@ void DecodeChannel::StartCore()
 			//播放文件结束时报一次结束
 			if (_channelStatus == ChannelStatus::ReadEOF_Stop && !reportFinish)
 			{
-				Decode(NULL,0, _currentTaskId, _frameIndex, _frameSpan);
+				Decode(NULL, 0, _currentTaskId, _frameIndex, _frameSpan);
 				reportFinish = true;
 			}
 			unique_lock<mutex> lck(_mutex);
@@ -1319,7 +1233,7 @@ void DecodeChannel::StartCore()
 				if (_playHandler >= 0)
 				{
 					int result = vas_sdk_stop_realplay(_playHandler);
-					LogPool::Information(LogEvent::Decode, "stop gb,input url:", _inputUrl,",play handler:", _playHandler, ",result:",result);
+					LogPool::Information(LogEvent::Decode, "stop gb,input url:", _inputUrl, ",play handler:", _playHandler, ",result:", result);
 					_playHandler = -1;
 				}
 #endif // !_WIN32
@@ -1348,17 +1262,17 @@ void DecodeChannel::StartCore()
 					{
 						tempStatus = ChannelStatus::Init;
 					}
-					else if (_loginId < 0)
+					else if (GBLoginId < 0)
 					{
 						tempStatus = ChannelStatus::InputError;
 					}
 					else
 					{
-						_playHandler = vas_sdk_realplay(_loginId, const_cast<char*>(_inputUrl.c_str()), ReceivePacket, this);
+						_playHandler = vas_sdk_realplay(GBLoginId, const_cast<char*>(_inputUrl.c_str()), ReceivePacket, this);
 						if (_playHandler >= 0)
 						{
 							tempStatus = ChannelStatus::Normal;
-							LogPool::Information(LogEvent::Decode, "open gb,input url:", _inputUrl,",play hanlder:", _playHandler);
+							LogPool::Information(LogEvent::Decode, "open gb,input url:", _inputUrl, ",play hanlder:", _playHandler);
 						}
 						else
 						{
@@ -1382,17 +1296,17 @@ void DecodeChannel::StartCore()
 
 				//输出
 				if (_channelStatus != ChannelStatus::ReadEOF_Restart
-					&&tempStatus == ChannelStatus::Normal)
+					&& tempStatus == ChannelStatus::Normal)
 				{
 					if (_channelType == ChannelType::GB28181)
 					{
-						tempStatus = _outputHandler.Init(_outputUrl,-1)
+						tempStatus = _outputHandler.Init(_outputUrl, -1)
 							? ChannelStatus::Normal
 							: ChannelStatus::OutputError;
 					}
 					else
 					{
-						tempStatus = _outputHandler.Init(_outputUrl, -1,_inputStream->codecpar)
+						tempStatus = _outputHandler.Init(_outputUrl, -1, _inputStream->codecpar)
 							? ChannelStatus::Normal
 							: ChannelStatus::OutputError;
 					}

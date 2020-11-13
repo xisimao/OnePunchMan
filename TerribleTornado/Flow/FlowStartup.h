@@ -1,6 +1,7 @@
 #pragma once
 #include "FlowData.h"
 #include "FlowDetector.h"
+#include "DG_FrameHandler.h"
 #include "TrafficStartup.h"
 
 namespace OnePunchMan
@@ -24,7 +25,7 @@ namespace OnePunchMan
     protected:
         void UpdateDb();
 
-        void InitThreads(MqttChannel* mqtt, std::vector<DecodeChannel*>* decodes, std::vector<TrafficDetector*>* detectors, std::vector<DetectChannel*>* detects, std::vector<RecognChannel*>* recogns,int loginHandler);
+        void InitThreads(MqttChannel* mqtt, std::vector<DecodeChannel*>* decodes,std::vector<FrameHandler*>* handlers, std::vector<TrafficDetector*>* detectors);
 
         void InitChannels();
 
@@ -46,7 +47,9 @@ namespace OnePunchMan
 
         std::string CheckFlowChannel(FlowChannel* channel);
 
-        //通道检测集合,等于视频总数
+        //帧处理集合
+        std::vector<DG_FrameHandler*> _handlers;
+        //流量检测集合
         std::vector<FlowDetector*> _detectors;
         //数据合并
         DataMergeMap* _merge;

@@ -91,10 +91,24 @@ namespace OnePunchMan
 		int Millisecond() const;
 
 		/**
-		* 返回表示时间的utc时间戳
-		* @return 表示时间的utc时间戳
+		* 返回表示时间的时间戳
+		* @return 表示时间的时间戳
 		*/
-		long long UtcTimeStamp() const;
+		long long TimeStamp() const;
+
+		bool operator == (const DateTime& right) const;
+
+		bool operator < (const DateTime& right) const;
+
+		bool operator != (const DateTime& right) const;
+
+		bool operator > (const DateTime& right) const;
+
+		bool operator >= (const DateTime& right) const;
+
+		bool operator <= (const DateTime& right) const;
+
+		long long operator - (const DateTime& right) const;
 
 		/**
 		* 增加月份
@@ -110,6 +124,12 @@ namespace OnePunchMan
 		bool Empty() const;
 
 		/**
+		* 返回表示时间的utc时间
+		* @return 表示时间的utc时间
+		*/
+		DateTime ToUtcTime() const;
+
+		/**
 		* 根据指定格式返回日期时间字符串,例如:%Y-%m-%d %H:%M:%S
 		* @return 日期时间字符串
 		*/
@@ -121,20 +141,6 @@ namespace OnePunchMan
 		*/
 		std::string ToString() const;
 
-		bool operator == (const DateTime &right) const;
-
-		bool operator < (const DateTime &right) const;
-
-		bool operator != (const DateTime &right) const;
-
-		bool operator > (const DateTime &right) const;
-
-		bool operator >= (const DateTime &right) const;
-
-		bool operator <= (const DateTime &right) const;
-
-		long long operator - (const DateTime &right) const;
-
 		/**
 		* 从字符串解析日期时间
 		* @param format 时间字符串格式 例如%d-%d-%d %d:%d:%d.%d,%4d%2d%2d
@@ -145,16 +151,22 @@ namespace OnePunchMan
 
 		/**
 		* 从时间戳解析日期时间
-		* @param utcTimeStamp utc时间戳
+		* @param timeStamp 时间戳
 		* @return 解析出的时间
 		*/
-		static DateTime  ParseTimeStamp(long long utcTimeStamp);
+		static DateTime ParseTimeStamp(long long timeStamp);
 
 		/**
 		* 返回当前的日期时间
 		* @return 当前的日期时间
 		*/
 		static DateTime Now();
+
+		/**
+		* 返回当前时间的时间戳
+		* @return 当前时间的时间戳
+		*/
+		static long long NowTimeStamp();
 
 		/**
 		* 返回当前的日期
@@ -169,19 +181,12 @@ namespace OnePunchMan
 		static DateTime Time();
 
 		/**
-		* 返回当前的UTC时间戳
-		* @return 当前的UTC时间戳
+		* 返回当前的时区
+		* @return 当前的时区
 		*/
-		static long long UtcNowTimeStamp();
-
-		/**
-		* 返回当前的UTC日期时间
-		* @return 当前的UTC日期时间
-		*/
-		static DateTime UtcNow();
+		static int TimeZone();
 
 	private:
-
 		/**
 		* 构造函数
 		* @param year 年
@@ -194,7 +199,7 @@ namespace OnePunchMan
 		* @param milliseconds 时间戳
 		*/
 		DateTime(int year, int month, int day, int hour, int minute, int second, int millisecond,long long milliseconds);
-
+		
 		//年
 		int _year;
 		//月
@@ -209,7 +214,7 @@ namespace OnePunchMan
 		int _second;
 		//毫秒
 		int _millisecond;
-		//utc时间戳
-		long long _utcTimeStamp;
+		//当前时间戳
+		long long _timeStamp;
 	};
 }

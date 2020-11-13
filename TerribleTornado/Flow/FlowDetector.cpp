@@ -39,8 +39,6 @@ void FlowDetector::Init(const JsonDeserialization& jd)
 void FlowDetector::UpdateChannel(const unsigned char taskId, const FlowChannel& channel)
 {
 	vector<FlowLaneCache> lanes;
-	string regionsParam;
-	regionsParam.append("[");
 	for (vector<FlowLane>::const_iterator it = channel.Lanes.begin(); it != channel.Lanes.end(); ++it)
 	{
 		FlowLaneCache laneCache;
@@ -64,17 +62,7 @@ void FlowDetector::UpdateChannel(const unsigned char taskId, const FlowChannel& 
 			laneCache.MeterPerPixel = it->Length / pixels;
 			laneCache.StopPoint = stopLine.Middle();
 			lanes.push_back(laneCache);
-			regionsParam.append(it->Region);
-			regionsParam.append(",");
 		}
-	}
-	if (regionsParam.size() == 1)
-	{
-		regionsParam.append("]");
-	}
-	else
-	{
-		regionsParam[regionsParam.size() - 1] = ']';
 	}
 
 	lock_guard<mutex> detectLock(_laneMutex);
@@ -88,16 +76,6 @@ void FlowDetector::UpdateChannel(const unsigned char taskId, const FlowChannel& 
 		LogPool::Warning(LogEvent::Flow, "not found any lane,channel index:", channel.ChannelIndex);
 	}
 	_channelIndex = channel.ChannelIndex;
-	if (channel.GlobalDetect)
-	{
-		_param = GetDetectParam();
-	}
-	else
-	{
-		_param = GetDetectParam(regionsParam);
-	}
-	_setParam = false;
-	_writeBmp = true;
 	remove(StringEx::Combine(TrafficDirectory::FileDir, "channel_", channel.ChannelIndex, ".bmp").c_str());
 	//输出图片时先删除旧的
 	_outputImage = channel.OutputImage;
@@ -120,10 +98,11 @@ void FlowDetector::UpdateChannel(const unsigned char taskId, const FlowChannel& 
 	{
 		date = DateTime::Now();
 	}
-	_currentMinuteTimeStamp = DateTime(date.Year(), date.Month(), date.Day(), date.Hour(), date.Minute(), 0).UtcTimeStamp();
-	_nextMinuteTimeStamp = _currentMinuteTimeStamp + 60 * 1000;
+
+	_currentMinuteTimeStamp = date.TimeStamp()/60000*60000;
+	_nextMinuteTimeStamp = _currentMinuteTimeStamp + 60000;
 	_outputRecogn = channel.OutputRecogn;
-	LogPool::Information(LogEvent::Flow, "init flow detector,channel index:", channel.ChannelIndex, " task id:", _taskId, " output report:", channel.OutputReport, " output pic:", channel.OutputImage, " output recogn:", channel.OutputRecogn, " global detect:", channel.GlobalDetect, " current detect timeStamp:", _currentMinuteTimeStamp, " next detect timeStamp:", _nextMinuteTimeStamp);
+	LogPool::Information(LogEvent::Flow, "init flow detector,channel index:", channel.ChannelIndex, " task id:", _taskId, " output report:", channel.OutputReport, " output pic:", channel.OutputImage, " output recogn:", channel.OutputRecogn, " global detect:", channel.GlobalDetect,"current date", date.Year(), date.Month(), date.Day(), date.Hour(), date.Minute(), " current detect timeStamp:", DateTime::ParseTimeStamp(_currentMinuteTimeStamp).ToString(), " next detect timeStamp:", DateTime::ParseTimeStamp(_nextMinuteTimeStamp).ToString());
 }
 
 void FlowDetector::ClearChannel()
@@ -245,23 +224,13 @@ FlowReportData FlowDetector::CalculateMinuteFlow(FlowLaneCache* laneCache)
 	return data;
 }
 
-void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long timeStamp, string* param, unsigned char taskId, const unsigned char* iveBuffer, unsigned int frameIndex, unsigned char frameSpan)
+void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long timeStamp, unsigned long long streamId, unsigned char taskId, const unsigned char* iveBuffer, unsigned int frameIndex, unsigned char frameSpan)
 {
 	if (_taskId != taskId)
 	{
 		return;
 	}
 	lock_guard<mutex> detectLock(_laneMutex);
-	if (!_setParam)
-	{
-		param->assign(_param);
-		_setParam = true;
-	}
-	if (_writeBmp)
-	{
-		_iveHandler.HandleFrame(iveBuffer, _width, _height, _channelIndex);
-		_writeBmp = false;
-	}
 	//输出检测报告时调整时间戳
 	if (_outputReport)
 	{
@@ -276,7 +245,7 @@ void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long 
 		{
 			FlowLaneCache& laneCache = _laneCaches[i];
 			FlowReportData data=CalculateMinuteFlow(&laneCache);	
-			LogPool::Information(LogEvent::Flow, "original flow->",data.ToString());
+			LogPool::Information(LogEvent::Flow, "original flow->currentTime:",DateTime::ParseTimeStamp(timeStamp).ToString(),"currentTimePoint:", DateTime::ParseTimeStamp(_currentMinuteTimeStamp).ToString(), "nextTimePoint:", DateTime::ParseTimeStamp(_nextMinuteTimeStamp).ToString(), data.ToString());
 
 			if (laneCache.ReportProperties == AllPropertiesFlag
 				||laneCache.ReportProperties==0)
@@ -299,15 +268,12 @@ void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long 
 			&& _mqtt != NULL
 			&& !_outputReport
 			&& (timeStamp - _nextMinuteTimeStamp) < ReportMaxSpan)
-		{
-		
+		{	
 			_mqtt->Send(FlowTopic, flowLanesJson);
 		}
 
 		//结算后认为该分钟结束,当前帧收到的数据结算到下一分钟
-		DateTime currentTime=DateTime::ParseTimeStamp(timeStamp);
-		DateTime currentTimePoint(currentTime.Year(), currentTime.Month(), currentTime.Day(), currentTime.Hour(), currentTime.Minute(), 0);
-		_currentMinuteTimeStamp = currentTimePoint.UtcTimeStamp();
+		_currentMinuteTimeStamp = timeStamp / 60000 * 60000;
 		_lastFrameTimeStamp = _currentMinuteTimeStamp;
 		_nextMinuteTimeStamp = _currentMinuteTimeStamp + 60 * 1000;
 	}
@@ -496,16 +462,19 @@ void FlowDetector::HandleRecognVehicle(const RecognItem& recognItem, const unsig
 			string json;
 			JsonSerialization::SerializeValue(&json, "channelUrl", _channelUrl);
 			JsonSerialization::SerializeValue(&json, "laneId", it->LaneId);
-			JsonSerialization::SerializeValue(&json, "timeStamp", DateTime::UtcNowTimeStamp());
+			JsonSerialization::SerializeValue(&json, "timeStamp", DateTime::NowTimeStamp());
 			JsonSerialization::SerializeValue(&json, "videoStructType", (int)VideoStructType::Vehicle);
 			JsonSerialization::SerializeValue(&json, "carType", vehicle.CarType);
 			JsonSerialization::SerializeValue(&json, "carColor", vehicle.CarColor);
 			JsonSerialization::SerializeValue(&json, "carBrand", vehicle.CarBrand);
 			JsonSerialization::SerializeValue(&json, "plateType", vehicle.PlateType);
 			JsonSerialization::SerializeValue(&json, "plateNumber", vehicle.PlateNumber);
-			string image;
-			ImageConvert::IveToJpgBase64(iveBuffer, recognItem.Width, recognItem.Height, _recognBgrBuffer, _recognJpgBuffer, _jpgSize, &image);
-			JsonSerialization::SerializeValue(&json, "image", image);
+			if (iveBuffer != NULL)
+			{
+				string image;
+				ImageConvert::IveToJpgBase64(iveBuffer, recognItem.Width, recognItem.Height, _recognBgrBuffer, _recognJpgBuffer, _jpgSize, &image);
+				JsonSerialization::SerializeValue(&json, "image", image);
+			}
 			if (_outputRecogn)
 			{
 				VideoStruct_Vehicle reportCache = vehicle;
@@ -543,7 +512,7 @@ void FlowDetector::HandleRecognBike(const RecognItem& recognItem, const unsigned
 			string json;
 			JsonSerialization::SerializeValue(&json, "channelUrl", _channelUrl);
 			JsonSerialization::SerializeValue(&json, "laneId", it->LaneId);
-			JsonSerialization::SerializeValue(&json, "timeStamp", DateTime::UtcNowTimeStamp());
+			JsonSerialization::SerializeValue(&json, "timeStamp", DateTime::NowTimeStamp());
 			JsonSerialization::SerializeValue(&json, "videoStructType", (int)VideoStructType::Bike);
 			JsonSerialization::SerializeValue(&json, "bikeType", bike.BikeType);
 			string image;
@@ -586,7 +555,7 @@ void FlowDetector::HandleRecognPedestrain(const RecognItem& recognItem, const un
 			string json;
 			JsonSerialization::SerializeValue(&json, "channelUrl", _channelUrl);
 			JsonSerialization::SerializeValue(&json, "laneId", it->LaneId);
-			JsonSerialization::SerializeValue(&json, "timeStamp", DateTime::UtcNowTimeStamp());
+			JsonSerialization::SerializeValue(&json, "timeStamp", DateTime::NowTimeStamp());
 			JsonSerialization::SerializeValue(&json, "videoStructType", (int)VideoStructType::Pedestrain);
 			JsonSerialization::SerializeValue(&json, "sex", pedestrain.Sex);
 			JsonSerialization::SerializeValue(&json, "age", pedestrain.Age);
@@ -730,7 +699,7 @@ void FlowDetector::DrawDetect(const map<string, DetectItem>& detectItems, bool h
 			{
 				detectText.append("/");
 			}
-			detectText.append(it->first.substr(it->first.size() - 4, 4));
+			//detectText.append(it->first.substr(it->first.size() - 4, 4));
 		}
 		//黄色在区域
 		else if (it->second.Status == DetectStatus::In)
@@ -744,7 +713,7 @@ void FlowDetector::DrawDetect(const map<string, DetectItem>& detectItems, bool h
 		}
 		if (!detectText.empty())
 		{
-			ImageConvert::DrawText(&image, detectText, it->second.Region.HitPoint(), idScalar);
+			//ImageConvert::DrawText(&image, detectText, it->second.Region.HitPoint(), idScalar);
 		}
 		ImageConvert::DrawPoint(&image, it->second.Region.HitPoint(), carScalar);
 	}

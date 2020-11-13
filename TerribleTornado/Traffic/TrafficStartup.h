@@ -4,17 +4,13 @@
 #include "JsonFormatter.h"
 #include "HttpHandler.h"
 #include "Command.h"
-#include "SeemmoSDK.h"
 #include "MqttChannel.h"
-#include "DetectChannel.h"
 #include "DecodeChannel.h"
 #include "TrafficDetector.h"
 #include "SocketMaid.h"
 #include "TrafficData.h"
 #include "SqliteLogger.h"
-#ifndef _WIN32
-#include "clientsdk.h"
-#endif // !_WIN32
+#include "DG_FrameHandler.h"
 
 namespace OnePunchMan
 {
@@ -50,6 +46,7 @@ namespace OnePunchMan
         */
         void Update(MqttDisconnectedEventArgs* e);
 
+   
     protected:
         void StartCore();
 
@@ -57,12 +54,10 @@ namespace OnePunchMan
         * 初始化线程集合
         * @param mqtt mqtt
         * @param decodes 解码类集合
+        * @param handlers 视频帧处理类
         * @param detectors 交通检测类集合
-        * @param detects 视频检测类集合
-        * @param recogns 视频识别类集合
-        * @param loginHandler 登陆句柄
         */
-        virtual void InitThreads(MqttChannel* mqtt, std::vector<DecodeChannel*>* decodes, std::vector<TrafficDetector*>* detectors, std::vector<DetectChannel*>* detects, std::vector<RecognChannel*>* recogns,int loginHandler) = 0;
+        virtual void InitThreads(MqttChannel* mqtt, std::vector<DecodeChannel*>* decodes, std::vector<FrameHandler*>* handlers, std::vector<TrafficDetector*>* detectors) = 0;
 
         /**
         * 初始化通道集合
@@ -176,15 +171,13 @@ namespace OnePunchMan
         SocketMaid* _socketMaid;
         //http消息解析
         HttpHandler _handler;
+
         //mqtt
         MqttChannel* _mqtt;
-
-        //交通检测类集合,等于视频总数
+        //帧处理集合
+        std::vector<FrameHandler*> _handlers;
+        //交通检测集合
         std::vector<TrafficDetector*> _detectors;
-        //视频检测线程集合,等于视频总数
-        std::vector<DetectChannel*> _detects;
-        //视频识别线程集合,等于视频总数/RecognChannel::ItemCount
-        std::vector<RecognChannel*> _recogns;
     };
 }
 

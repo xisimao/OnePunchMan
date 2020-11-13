@@ -196,7 +196,7 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
         int channelIndex = StringEx::Convert<int>(id);
         if (ChannelIndexEnable(channelIndex))
         {
-            _detectors[channelIndex - 1]->WriteBmp();
+            _handlers[channelIndex - 1]->WriteBmp();
             e->Code = HttpCode::OK;
         }
         else
@@ -362,7 +362,7 @@ void TrafficStartup::GetDevice(HttpReceivedEventArgs* e)
 
     string deviceJson;
     DateTime now = DateTime::Now();
-    JsonSerialization::SerializeValue(&deviceJson, "deviceTime", now.UtcTimeStamp());
+    JsonSerialization::SerializeValue(&deviceJson, "deviceTime", now.TimeStamp());
     JsonSerialization::SerializeValue(&deviceJson, "deviceTime_Desc", now.ToString());
     JsonSerialization::SerializeValue(&deviceJson, "startTime", _startTime.ToString());
     JsonSerialization::SerializeValue(&deviceJson, "diskUsed", diskUsed);
@@ -376,10 +376,6 @@ void TrafficStartup::GetDevice(HttpReceivedEventArgs* e)
     JsonSerialization::SerializeValue(&deviceJson, "destinationWidth", DecodeChannel::DestinationWidth);
     JsonSerialization::SerializeValue(&deviceJson, "destinationHeight", DecodeChannel::DestinationHeight);
     JsonSerialization::SerializeValue(&deviceJson, "mqttConnected", _mqtt==NULL?0:static_cast<int>(_mqtt->Status()));
-    for (unsigned int i = 0; i < _recogns.size(); ++i)
-    {
-        JsonSerialization::SerializeValue(&deviceJson, StringEx::Combine("recognQueue", i + 1), _recogns[i]->Size());
-    }
     JsonSerialization::SerializeClass(&deviceJson, "channels", channelsJson);
     e->Code = HttpCode::OK;
     e->ResponseJson = deviceJson;
@@ -474,6 +470,8 @@ void TrafficStartup::FillChannel(TrafficChannel* channel, const JsonDeserializat
     channel->DeviceId = jd.Get<string>(StringEx::Combine("channels:", itemIndex, ":deviceId"));
 }
 
+
+
 void TrafficStartup::StartCore()
 {
     Socket::Init();
@@ -481,11 +479,10 @@ void TrafficStartup::StartCore()
     DecodeChannel::InitFFmpeg();
 
     DecodeChannel::UninitHisi(ChannelCount);
-    if (!DecodeChannel::InitHisi(ChannelCount)
-        ||!EncodeChannel::InitHisi(ChannelCount, DecodeChannel::DestinationWidth,DecodeChannel::DestinationHeight))
-    {
-        exit(2);
-    }
+  /*  if (!DecodeChannel::InitHisi(ChannelCount)
+        ||!EncodeChannel::InitHisi(ChannelCount, DecodeChannel::DestinationWidth,DecodeChannel::DestinationHeight))*/
+    bool hisiInited = DecodeChannel::InitHisi(ChannelCount);
+    DG_FrameHandler::Init();
 
     _socketMaid = new SocketMaid(2,false);
     _handler.HttpReceived.Subscribe(this);
@@ -506,95 +503,24 @@ void TrafficStartup::StartCore()
     TrafficData data;
     _softwareVersion = data.GetParameter("Version");
 
-    //³õÊ¼»¯sdk
-    _sdkInited = SeemmoSDK::Init();
-    if (SeemmoSDK::seemmo_version != NULL)
-    {
-        _sdkVersion = SeemmoSDK::seemmo_version();
-    }
-    int loginHandler = -1;
-#ifndef _WIN32
-    int gbResult = vas_sdk_startup();
-    if (gbResult >= 0)
-    {
-        LogPool::Information(LogEvent::System, "init gb sdk,login handler:",gbResult);
-    }
-    else
-    {
-        LogPool::Information(LogEvent::System, "init gb sdk failed,result:", gbResult);
-    }
-
     GbParameter gbParameter = data.GetGbPrameter();
-    if (gbParameter.ServerIp.empty())
-    {
-        LogPool::Information(LogEvent::System, "not found gb serverip,skip login");
-    }
-    else
-    {
-        loginHandler = vas_sdk_login(const_cast<char*>(gbParameter.ServerIp.c_str()), gbParameter.ServerPort, const_cast<char*>(gbParameter.UserName.c_str()), const_cast<char*>(gbParameter.Password.c_str()));
-        if (loginHandler >= 0)
-        {
-            LogPool::Information(LogEvent::System, "gb sdk login");
-        }
-        else
-        {
-            LogPool::Information(LogEvent::System, "gb sdk login failed,result:", loginHandler);
-        }
-    }
-#endif // !_WIN32
+    DecodeChannel::InitGB(gbParameter);
 
     _mqtt = new MqttChannel("127.0.0.1", 1883);
     _mqtt->MqttDisconnected.Subscribe(this);
-    InitThreads(_mqtt, &_decodes,&_detectors,&_detects, &_recogns, loginHandler);
-    if (_sdkInited)
+    InitThreads(_mqtt, &_decodes,&_handlers,&_detectors);
+    _mqtt->Start();
+    if (hisiInited)
     {
-        _mqtt->Start();
-        for (unsigned int i = 0; i < _recogns.size(); ++i)
+        for (unsigned int i = 0; i < _decodes.size(); ++i)
         {
-            _recogns[i]->Start();
+            _decodes[i]->Start();
         }
-        for (unsigned int i = 0; i < _detects.size(); ++i)
-        {
-            _detects[i]->Start();
-        }
-        while (true)
-        {
-            bool sdkReady = true;
-#ifndef _WIN32
-            for (unsigned int i = 0; i < _detects.size(); ++i)
-            {
-                if (!_detects[i]->Inited())
-                {
-                    sdkReady = false;
-                    break;
-                }
-            }
-            for (unsigned int i = 0; i < _recogns.size(); ++i)
-            {
-                if (!_recogns[i]->Inited())
-                {
-                    sdkReady = false;
-                    break;
-                }
-            }
-#endif // !_WIN32
-            if (sdkReady)
-            {
-                break;
-            }
-            else
-            {
-                this_thread::sleep_for(chrono::milliseconds(100));
-            }
-        }
-    }
-    for (unsigned int i = 0; i < _decodes.size(); ++i)
-    {
-        _decodes[i]->Start();
     }
     InitChannels();
     _socketMaid->Start();
   
+    LogPool::Information(LogEvent::System, "time zone:", DateTime::TimeZone());
     int day = DateTime::Today().Day();
 
     while (!_cancelled)
@@ -616,7 +542,7 @@ void TrafficStartup::StartCore()
         DateTime today = DateTime::Today();
         if (day != today.Day())
         {
-            DateTime removeTime = DateTime::ParseTimeStamp(today.UtcTimeStamp() - LogPool::HoldDays() * 24 * 60 * 60 * 1000);
+            DateTime removeTime = DateTime::ParseTimeStamp(today.NowTimeStamp() - LogPool::HoldDays() * 24 * 60 * 60 * 1000);
             SqliteLogger::RemoveDatas(removeTime);
             day = today.Day();
         }
@@ -631,22 +557,11 @@ void TrafficStartup::StartCore()
         _decodes[i]->Stop();
         delete _decodes[i];
     }
-    for (unsigned int i = 0; i < _detects.size(); ++i)
-    {
-        _detects[i]->Stop();
-        delete _detects[i];
-    }
-    for (unsigned int i = 0; i < _recogns.size(); ++i)
-    {
-        _recogns[i]->Stop();
-        delete _recogns[i];
-    }
     if (_mqtt != NULL)
     {
         _mqtt->Stop();
         delete _mqtt;
     }
-    SeemmoSDK::Uninit();
     EncodeChannel::UninitHisi(ChannelCount);
     DecodeChannel::UninitHisi(ChannelCount);
     DecodeChannel::UninitFFmpeg();
