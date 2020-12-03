@@ -7,14 +7,51 @@
 #include "EncodeChannel.h"
 #include "BGR24Handler.h"
 #include "TrafficData.h"
-#include "FrameHandler.h"
 
 #ifndef _WIN32
 #include "clientsdk.h"
+#include "hi_common.h"
+#include "hi_buffer.h"
+#include "hi_comm_sys.h"
+#include "hi_comm_vb.h"
+#include "hi_comm_isp.h"
+#include "hi_comm_vi.h"
+#include "hi_comm_vo.h"
+#include "hi_comm_venc.h"
+#include "hi_comm_vdec.h"
+#include "hi_comm_vpss.h"
+#include "hi_comm_avs.h"
+#include "hi_comm_region.h"
+#include "hi_comm_adec.h"
+#include "hi_comm_aenc.h"
+#include "hi_comm_ai.h"
+#include "hi_comm_ao.h"
+#include "hi_comm_aio.h"
+#include "hi_defines.h"
+#include "hi_comm_hdmi.h"
+#include "hi_mipi.h"
+#include "hi_comm_hdr.h"
+#include "hi_comm_vgs.h"
+
 #include "mpi_sys.h"
 #include "mpi_vb.h"
+#include "mpi_vi.h"
+#include "mpi_vo.h"
+#include "mpi_venc.h"
 #include "mpi_vdec.h"
 #include "mpi_vpss.h"
+#include "mpi_avs.h"
+#include "mpi_region.h"
+#include "mpi_audio.h"
+#include "mpi_isp.h"
+#include "mpi_ae.h"
+#include "mpi_awb.h"
+#include "hi_math.h"
+#include "hi_sns_ctrl.h"
+#include "mpi_hdmi.h"
+#include "mpi_hdr.h"
+#include "mpi_vgs.h"
+#include "mpi_ive.h"
 #endif // !_WIN32
 
 namespace OnePunchMan
@@ -55,10 +92,15 @@ namespace OnePunchMan
 		/**
 		* 构造函数
 		* @param channelIndex 通道序号
+		* @param loginId 国标登陆id
 		* @param encodeChannel 编码线程
-		* @param frameHandler 帧处理
 		*/
-		DecodeChannel(int channelIndex, EncodeChannel* encodeChannel, FrameHandler* frameHandler);
+		DecodeChannel(int channelIndex, int loginId, EncodeChannel* encodeChannel);
+
+		/**
+		* 析构函数
+		*/
+		~DecodeChannel();
 
 		/**
 		* 初始化ffmpeg sdk
@@ -84,16 +126,10 @@ namespace OnePunchMan
 		static void UninitHisi(int videoCount);
 
 		/**
-		* 初始化国标视频
-		* @param gbParameter 国标参数
-		*/
-		static bool InitGB(const GbParameter& gbParameter);
-
-		/**
 		* 获取通道地址
 		* @param inputUrl 视频源地址
-		* @param outputUrl rtmp输出地址
-		* @param channelType 通道类型
+		* @param outputUrl rtmp输出地址		
+		* @param channelType 通道类型		
 		* @param loop 是否循环播放
 		* @return 当前任务编号
 		*/
@@ -141,11 +177,17 @@ namespace OnePunchMan
 		*/
 		int SourceHeight();
 
+		/**
+		* 获取临时存放的ive数据
+		* @return ive帧数据
+		*/
+		FrameItem GetTempIve();
+
 		//解码后的视频宽度
 		static const int DestinationWidth;
 		//解码后的视频高度
 		static const int DestinationHeight;
-
+	
 	protected:
 		void StartCore();
 
@@ -205,6 +247,22 @@ namespace OnePunchMan
 		*/
 		DecodeResult DecodeTest(const AVPacket* packet, unsigned char taskId, unsigned int frameIndex, unsigned char frameSpan);
 
+		/**
+		* 写入临时ive数据
+		* @param taskId 任务编号
+		* @param yuv yuv数据
+		* @param frameIndex 帧序号
+		* @param finished 视频是否读取完成
+		* @return 返回true表示成功写入,返回false表示当前已经有yuv数据
+		*/
+		bool SetTempIve(unsigned char taskId, const unsigned char* yuv, unsigned int frameIndex, unsigned char frameSpan, bool finished);
+
+		/**
+		* yuv转ive
+		* @return 转换成功返回true,否则返回false
+		*/
+		bool YuvToIve();
+
 		//重连时间(豪秒)
 		static const int ConnectSpan;
 		//国标休眠时间(毫秒)
@@ -212,12 +270,11 @@ namespace OnePunchMan
 		//最长的处理帧间隔,如果超过这个间隔就会修改通道状态
 		static const int MaxHandleSpan;
 
-		//国标登陆句柄
-		static int GBLoginId;
-
 		//构造函数时改变
 		//通道序号
 		int _channelIndex;
+		//国标登陆id
+		int _loginId;
 
 		//更新通道时改变
 		//视频状态同步锁
@@ -234,7 +291,7 @@ namespace OnePunchMan
 		unsigned char _taskId;
 		//是否循环播放
 		bool _loop;
-
+		
 		//线程中改变
 		//输入视频
 		AVFormatContext* _inputFormat;
@@ -262,7 +319,8 @@ namespace OnePunchMan
 		//视频输出
 		FFmpegOutput _outputHandler;
 
-		//debug解码相关
+		//debug
+		//解码相关
 		AVCodecContext* _decodeContext;
 		//解码后的yuv
 		AVFrame* _yuvFrame;
@@ -276,16 +334,30 @@ namespace OnePunchMan
 		BGR24Handler _bgrHandler;
 
 		//异步队列
-#ifndef _WIN32
-		bool _hasFrame;
-		VIDEO_FRAME_INFO_S _tempFrame;
-#endif // !_WIN32
+		//当前视频读取是否结束
+		bool _finished;
+		//当前yuv数据的任务号
+		unsigned char _tempTaskId;
+		//当前yuv数据的帧序号
+		unsigned int _tempFrameIndex;
+		//当前yuv数据的帧间隔时长
+		unsigned char _tempFrameSpan;
+
+		//解码相关
+		//yuv420sp
+		int _yuvSize;
+		//当前yuv字节流是否已经有了yuv数据
+		bool _yuvHasValue;
+		//yuv操作时字节流
+		unsigned long long _yuv_phy_addr;
+		uint8_t* _yuvBuffer;
+		//ive操作时字节流
+		int _iveSize;
+		unsigned long long _ive_phy_addr;
+		uint8_t* _iveBuffer;
 
 		//编码
 		EncodeChannel* _encodeChannel;
-
-		//处理帧
-		FrameHandler* _frameHandler;
 	};
 
 }

@@ -82,7 +82,6 @@ bool EncodeChannel::InitHisi(int encodeCount, int width, int height)
         s32Ret = HI_MPI_VENC_CreateChn(i, &stVencChnAttr);
         if (HI_SUCCESS != s32Ret)
         {
-            LogPool::Error(LogEvent::Decode, "HI_MPI_VENC_CreateChn", StringEx::ToHex(s32Ret));
             return false;
         }
 
@@ -94,7 +93,6 @@ bool EncodeChannel::InitHisi(int encodeCount, int width, int height)
         s32Ret = HI_MPI_VENC_StartRecvFrame(i, &stRecvParam);
         if (HI_SUCCESS != s32Ret)
         {
-            LogPool::Error(LogEvent::Decode, "HI_MPI_VENC_StartRecvFrame", StringEx::ToHex(s32Ret));
             return false;
         }
     }
