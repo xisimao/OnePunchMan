@@ -6,7 +6,7 @@ using namespace OnePunchMan;
 const int DetectChannel::SleepTime=40;
 
 DetectChannel::DetectChannel(int detectIndex, int width, int height)
-	:ThreadObject("detect"), _inited(false), _detectIndex(detectIndex), _width(width), _height(height), _recogn(NULL)
+	:ThreadObject("detect"), _inited(false), _detectIndex(detectIndex), _width(width), _height(height), _recogn(NULL), _iveHandler(TrafficDirectory::FileDir, -1)
 {
 	_indexes.resize(1);
 	_timeStamps.resize(1);
@@ -27,15 +27,63 @@ void DetectChannel::SetRecogn(RecognChannel* recogn)
 	_recogn = recogn;
 }
 
-void DetectChannel::AddChannel(int channelIndex, DecodeChannel* decode, TrafficDetector* detector)
+void DetectChannel::AddChannel(int channelIndex, DecodeChannel* decode, FlowDetector* flowDetector, EventDetector* eventDetector)
 {
 	LogPool::Information(LogEvent::Detect, "No.", channelIndex, "channel add to the",_detectIndex+1,"detect thread");
 	ChannelItem item;
 	item.ChannelIndex = channelIndex;
-	item.Param = detector->GetDetectParam();
+	item.Param = "[]";
 	item.Decode = decode;
-	item.Detector = detector;
-	_channelItems.push_back(item);
+	item.Flow = flowDetector;
+	item.Event = eventDetector;
+	_channelItems.insert(pair<int,ChannelItem>(channelIndex,item));
+}
+
+void DetectChannel::UpdateChannel(const TrafficChannel& channel)
+{
+	lock_guard<mutex> lck(_channelMutex);
+	map<int, ChannelItem>::iterator it = _channelItems.find(channel.ChannelIndex);
+	if (it != _channelItems.end())
+	{
+		if (channel.GlobalDetect)
+		{
+			it->second.Param = "[]";
+		}
+		else
+		{
+			string regionsParam;
+			regionsParam.append("[");
+			for (vector<FlowLane>::const_iterator it = channel.FlowLanes.begin(); it != channel.FlowLanes.end(); ++it)
+			{
+				regionsParam.append(it->FlowRegion);
+				regionsParam.append(",");
+				regionsParam.append(it->QueueRegion);
+				regionsParam.append(",");
+			}
+			if (regionsParam.size() == 1)
+			{
+				regionsParam.append("]");
+			}
+			else
+			{
+				regionsParam[regionsParam.size() - 1] = ']';
+			}
+			it->second.Param = StringEx::Combine("{\"Detect\":{\"DetectRegion\":", regionsParam, ",\"IsDet\":true,\"MaxCarWidth\":10,\"MinCarWidth\":10,\"Mode\":0,\"Threshold\":20,\"Version\":1001}}");
+		}	
+
+		it->second.WriteBmp = true;
+		remove(StringEx::Combine(TrafficDirectory::FileDir, "channel_", channel.ChannelIndex, ".bmp").c_str());
+	}
+}
+
+void DetectChannel::WriteBmp(int channelIndex)
+{
+	lock_guard<mutex> lck(_channelMutex);
+	map<int, ChannelItem>::iterator it = _channelItems.find(channelIndex);
+	if (it != _channelItems.end())
+	{
+		it->second.WriteBmp = true;
+	}
 }
 
 void DetectChannel::GetDetecItems(map<string, DetectItem>* items, const JsonDeserialization& jd, const string& key)
@@ -113,24 +161,30 @@ void DetectChannel::StartCore()
 	int index = 0;
 	while (!_cancelled)
 	{
+		unique_lock<mutex> lck(_channelMutex);
 		bool detected = false;
-		for (unsigned int i = 0; i < _channelItems.size(); ++i)
+		for (map<int,ChannelItem>::iterator it=_channelItems.begin();it!=_channelItems.end();++it)
 		{
-			ChannelItem& channelItem = _channelItems[i];
-			long long detectTimeStamp = DateTime::UtcNowTimeStamp();
-			FrameItem frameItem = channelItem.Decode->GetTempIve();
+			long long detectTimeStamp = DateTime::NowTimeStamp();
+			FrameItem frameItem = it->second.Decode->GetTempIve();
+
 			if (frameItem.Finished)
 			{
-				channelItem.Detector->FinishDetect(frameItem.TaskId);
+				it->second.Flow->FinishDetect(frameItem.TaskId);
 			}
 			else if(frameItem.IveBuffer != NULL)
 			{
+				if (it->second.WriteBmp)
+				{
+					_iveHandler.HandleFrame(frameItem.IveBuffer, _width, _height, it->second.ChannelIndex);
+					it->second.WriteBmp = false;
+				}
 				detected = true;
-				_indexes[0] = channelItem.ChannelIndex;
+				_indexes[0] = it->second.ChannelIndex;
 				_timeStamps[0] = frameItem.FrameIndex;
 				_ives[0] = frameItem.IveBuffer;
-				_params[0] = channelItem.Param.c_str();
-				long long detectTimeStamp1 = DateTime::UtcNowTimeStamp();
+				_params[0] = it->second.Param.c_str();
+				long long detectTimeStamp1 = DateTime::NowTimeStamp();
 				int32_t size = static_cast<int32_t>(_result.size());
 				int result = SeemmoSDK::seemmo_video_pvc(1,
 					_indexes.data(),
@@ -142,16 +196,16 @@ void DetectChannel::StartCore()
 					_result.data(),
 					&size,
 					0);
-				long long detectTimeStamp2 = DateTime::UtcNowTimeStamp();
+				long long detectTimeStamp2 = DateTime::NowTimeStamp();
 				if (result == 0)
 				{
 					JsonDeserialization detectJd(_result.data());
 					if (_recogn != NULL)
 					{
 						vector<RecognItem> recognItems;
-						GetRecognItems(&recognItems, detectJd, "Vehicles", channelItem.ChannelIndex, frameItem.FrameIndex, frameItem.FrameSpan,frameItem.TaskId);
-						GetRecognItems(&recognItems, detectJd, "Bikes", channelItem.ChannelIndex, frameItem.FrameIndex, frameItem.FrameSpan, frameItem.TaskId);
-						GetRecognItems(&recognItems, detectJd, "Pedestrains", channelItem.ChannelIndex, frameItem.FrameIndex, frameItem.FrameSpan, frameItem.TaskId);
+						GetRecognItems(&recognItems, detectJd, "Vehicles", it->second.ChannelIndex, frameItem.FrameIndex, frameItem.FrameSpan,frameItem.TaskId);
+						GetRecognItems(&recognItems, detectJd, "Bikes", it->second.ChannelIndex, frameItem.FrameIndex, frameItem.FrameSpan, frameItem.TaskId);
+						GetRecognItems(&recognItems, detectJd, "Pedestrains", it->second.ChannelIndex, frameItem.FrameIndex, frameItem.FrameSpan, frameItem.TaskId);
 						if (!recognItems.empty())
 						{
 							_recogn->PushItems(recognItems);
@@ -161,18 +215,21 @@ void DetectChannel::StartCore()
 					GetDetecItems(&detectItems, detectJd, "Vehicles");
 					GetDetecItems(&detectItems, detectJd, "Bikes");
 					GetDetecItems(&detectItems, detectJd, "Pedestrains");
-					channelItem.Detector->HandleDetect(&detectItems, detectTimeStamp, &channelItem.Param, frameItem.TaskId, frameItem.IveBuffer, frameItem.FrameIndex, frameItem.FrameSpan);
+					it->second.Flow->HandleDetect(&detectItems, detectTimeStamp, frameItem.TaskId, frameItem.IveBuffer, frameItem.FrameIndex, frameItem.FrameSpan);
+					it->second.Event->HandleDetect(&detectItems, detectTimeStamp, frameItem.TaskId, frameItem.IveBuffer, frameItem.FrameIndex, frameItem.FrameSpan);
 				}
-				long long detectTimeStamp3 = DateTime::UtcNowTimeStamp();
+				long long detectTimeStamp3 = DateTime::NowTimeStamp();
 				if (index % 100 == 0)
 				{
-					LogPool::Debug(LogEvent::Detect, "detect->channel index:", channelItem.ChannelIndex, "task id:",static_cast<int>(frameItem.TaskId), "frame index:", frameItem.FrameIndex, "result:", result, " get frame:", detectTimeStamp1 - detectTimeStamp, " sdk:", detectTimeStamp2 - detectTimeStamp1, " traffic:", detectTimeStamp3 - detectTimeStamp2);
+					LogPool::Debug(LogEvent::Detect, "detect->channel index:", it->second.ChannelIndex, "task id:",static_cast<int>(frameItem.TaskId), "frame index:", frameItem.FrameIndex, "result:", result, " get frame:", detectTimeStamp1 - detectTimeStamp, " sdk:", detectTimeStamp2 - detectTimeStamp1, " traffic:", detectTimeStamp3 - detectTimeStamp2);
 				}				
 			}
 		}
+		lck.unlock();
 		if (detected)
 		{
 			index += 1;
+			this_thread::sleep_for(chrono::milliseconds(10));
 		}
 		else
 		{

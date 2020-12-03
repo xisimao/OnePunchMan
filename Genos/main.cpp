@@ -1,5 +1,4 @@
-#include "FlowStartup.h"
-#include "EventStartup.h"
+#include "TrafficStartup.h"
 #include "IoAdapter.h"
 #include "EncodeChannel.h"
 
@@ -15,9 +14,9 @@ int main(int argc, char* argv[])
         {
             JsonDeserialization jd("appsettings.json");
             LogPool::Init(jd);
-            SqliteLogger logger(jd.Get<string>("Flow:Db"));
+            SqliteLogger logger(jd.Get<string>("flow.db"));
             LogPool::AddLogger(&logger);
-            FlowStartup startup;
+            TrafficStartup startup;
             startup.Start();
             startup.Join();
         }
@@ -25,9 +24,9 @@ int main(int argc, char* argv[])
         {
             JsonDeserialization jd("appsettings.json");
             LogPool::Init(jd);
-            SqliteLogger logger(jd.Get<string>("Event:Db"));
+            SqliteLogger logger(jd.Get<string>("flow.db"));
             LogPool::AddLogger(&logger);
-            EventStartup startup;
+            TrafficStartup startup;
             startup.Start();
             startup.Join();
         }

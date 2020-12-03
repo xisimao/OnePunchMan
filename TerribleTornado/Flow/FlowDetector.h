@@ -1,7 +1,7 @@
 #pragma once
 #include <list>
 
-#include "FlowData.h"
+#include "TrafficData.h"
 #include "TrafficDetector.h"
 #include "Command.h"
 #include "DataMergeMap.h"
@@ -37,7 +37,7 @@ namespace OnePunchMan
 		* @param taskId 任务编号
 		* @param channel 通道
 		*/
-		void UpdateChannel(const unsigned char taskId,const FlowChannel& channel);
+		void UpdateChannel(const unsigned char taskId,const TrafficChannel& channel);
 
 		/**
 		* 清空通道
@@ -50,14 +50,36 @@ namespace OnePunchMan
 		*/
 		void GetReportJson(std::string* json);
 
-		void HandleDetect(std::map<std::string, DetectItem>* detectItems, long long timeStamp, std::string* param, unsigned char taskId, const unsigned char* iveBuffer, unsigned int frameIndex,unsigned char frameSpan);
+		void HandleDetect(std::map<std::string, DetectItem>* detectItems, long long timeStamp,unsigned char taskId, const unsigned char* iveBuffer, unsigned int frameIndex,unsigned char frameSpan);
 		
+		/**
+		 * 结束检测
+		 * @param taskId 任务编号
+		 */
 		void FinishDetect(unsigned char taskId);
 
+		/**
+		* 处理机动车识别数据
+		* @param recognItem 识别数据项
+		* @param iveBuffer 图片字节流
+		* @param vehicle 机动车识别数据
+		*/
 		void HandleRecognVehicle(const RecognItem& recognItem, const unsigned char* iveBuffer, const VideoStruct_Vehicle& vehicle);
-		
+
+		/**
+		* 处理非机动车识别数据
+		* @param recognItem 识别数据项
+		* @param iveBuffer 图片字节流
+		* @param bike 非机动车识别数据
+		*/
 		void HandleRecognBike(const RecognItem& recognItem, const unsigned char* iveBuffer, const VideoStruct_Bike& bike);
-		
+
+		/**
+		* 处理行人识别数据
+		* @param recognItem 识别数据项
+		* @param iveBuffer 图片字节流
+		* @param pedestrain 行人识别数据
+		*/
 		void HandleRecognPedestrain(const RecognItem& recognItem, const unsigned char* iveBuffer, const VideoStruct_Pedestrain& pedestrain);
 
 	private:
@@ -81,7 +103,7 @@ namespace OnePunchMan
 		{
 		public:
 			FlowLaneCache()
-				: LaneId(), LaneName(), Length(0), Direction(), Region(), ReportProperties(0), MeterPerPixel(0.0), StopPoint()
+				: LaneId(), LaneName(), Length(0), Direction(), FlowRegion(), QueueRegion(),ReportProperties(0), MeterPerPixel(0.0), StopPoint()
 				, Persons(0), Bikes(0), Motorcycles(0), Cars(0), Tricycles(0), Buss(0), Vans(0), Trucks(0)
 				, TotalDistance(0.0), TotalTime(0)
 				, TotalInTime(0)
@@ -99,8 +121,10 @@ namespace OnePunchMan
 			int Length;
 			//车道方向
 			int Direction;
-			//当前检测区域
-			Polygon Region;
+			//流量检测区域
+			Polygon FlowRegion;
+			//排队检测区域
+			Polygon QueueRegion;
 			//上报的属性
 			int ReportProperties;
 			//每个像素代表的米数
@@ -157,19 +181,6 @@ namespace OnePunchMan
 			std::map<std::string, FlowDetectCache> Items;
 		};
 
-		//车辆的距离
-		class CarDistance
-		{
-		public:
-			CarDistance()
-				:Distance(0), Length(0)
-			{
-
-			}
-			double Distance;
-			int Length;
-		};
-
 		/**
 		* 计算分钟流量
 		* @param laneCache 车道缓存
@@ -180,16 +191,17 @@ namespace OnePunchMan
 		/**
 		* 添加车辆距离有序列表
 		* @param distances 车辆距离链表
-		* @param length 车辆长度
 		* @param distance 车辆距离停止线长度(px)
 		*/
-		void AddOrderedList(std::list<CarDistance>* distances, int length,double distance);
+		void AddOrderedList(std::list<double>* distances,double distance);
 
 		/**
 		* 计算排队长度
+		* @param laneCache 流量车道缓存
 		* @param distances 车辆距离链表
+		* @return 车辆排队长度(m)
 		*/
-		int CalculateQueueLength(const std::list<CarDistance>& distances);
+		int CalculateQueueLength(const FlowLaneCache& laneCache,const std::list<double>& distances);
 
 		/**
 		* 绘制检测区域
@@ -216,6 +228,7 @@ namespace OnePunchMan
 		static int QueueMinDistance;
 		//车道上报所有流量属性的标识
 		static const int AllPropertiesFlag;
+
 		//数据合并
 		DataMergeMap* _merge;
 

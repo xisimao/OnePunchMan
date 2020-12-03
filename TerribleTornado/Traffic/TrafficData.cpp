@@ -3,12 +3,12 @@
 using namespace std;
 using namespace OnePunchMan;
 
-string TrafficData::DbName("");
-
 string TrafficDirectory::TempDir("../temp/");
 string TrafficDirectory::FileDir("../files/");
 string TrafficDirectory::FileLink("files");
 string TrafficDirectory::WebDir;
+
+const string TrafficData::DbName("flow.db");
 
 TrafficData::TrafficData()
 	:_sqlite(DbName)
@@ -16,63 +16,242 @@ TrafficData::TrafficData()
 
 }
 
-void TrafficData::Init(const std::string& dbName)
-{
-	DbName = dbName;
-}
-
 string TrafficData::LastError()
 {
 	return _sqlite.LastError();
 }
 
-void TrafficData::FillChannel(const SqliteReader& sqlite, TrafficChannel* channel)
+TrafficChannel TrafficData::FillChannel(const SqliteReader& sqlite)
 {
-	channel->ChannelIndex = sqlite.GetInt(0);
-	channel->ChannelName = sqlite.GetString(1);
-	channel->ChannelUrl = sqlite.GetString(2);
-	channel->ChannelType = sqlite.GetInt(3);
-	channel->Loop = sqlite.GetInt(4);
-	channel->OutputReport = sqlite.GetInt(5);
-	channel->OutputImage = sqlite.GetInt(6);
-	channel->OutputRecogn = sqlite.GetInt(7);
-	channel->GlobalDetect = sqlite.GetInt(8);
-	channel->DeviceId = sqlite.GetString(9);
-}
-string TrafficData::GetChannelsSql()
-{
-	return string("Select * From System_Channel Order By ChannelIndex");
+	TrafficChannel channel;
+	channel.ChannelIndex = sqlite.GetInt(0);
+	channel.ChannelName = sqlite.GetString(1);
+	channel.ChannelUrl = sqlite.GetString(2);
+	channel.ChannelType = sqlite.GetInt(3);
+	channel.Loop = sqlite.GetInt(4);
+	channel.OutputReport = sqlite.GetInt(5);
+	channel.OutputImage = sqlite.GetInt(6);
+	channel.OutputRecogn = sqlite.GetInt(7);
+	channel.GlobalDetect = sqlite.GetInt(8);
+	channel.DeviceId = sqlite.GetString(9);
+
+	SqliteReader flowLaneSqlite(DbName);
+	string flowLaneSql(StringEx::Combine("Select * From Flow_Lane Where ChannelIndex=", channel.ChannelIndex, " Order By LaneIndex"));
+	if (flowLaneSqlite.BeginQuery(flowLaneSql))
+	{
+		while (flowLaneSqlite.HasRow())
+		{
+			FlowLane lane = FillFlowLane(flowLaneSqlite);
+			channel.FlowLanes.push_back(lane);
+		}
+		flowLaneSqlite.EndQuery();
+	}
+
+	SqliteReader eventLaneSqlite(DbName);
+	string eventLaneSql(StringEx::Combine("Select * From Event_Lane Where ChannelIndex=", channel.ChannelIndex, " Order By LaneIndex"));
+	if (eventLaneSqlite.BeginQuery(eventLaneSql))
+	{
+		while (eventLaneSqlite.HasRow())
+		{
+			EventLane lane = FillEventLane(eventLaneSqlite);
+			channel.EventLanes.push_back(lane);
+		}
+		eventLaneSqlite.EndQuery();
+	}
+
+	return channel;
 }
 
-string TrafficData::GetChannelSql(int channelIndex)
+FlowLane TrafficData::FillFlowLane(const SqliteReader& sqlite)
 {
-	return StringEx::Combine("Select * From System_Channel Where ChannelIndex=", channelIndex);
+	FlowLane lane;
+	lane.ChannelIndex = sqlite.GetInt(0);
+	lane.LaneId = sqlite.GetString(1);
+	lane.LaneName = sqlite.GetString(2);
+	lane.LaneIndex = sqlite.GetInt(3);
+	lane.LaneType = sqlite.GetInt(4);
+	lane.Direction = sqlite.GetInt(5);
+	lane.FlowDirection = sqlite.GetInt(6);
+	lane.Length = sqlite.GetInt(7);
+	lane.Width = sqlite.GetInt(8);
+	lane.IOIp = sqlite.GetString(9);
+	lane.IOPort = sqlite.GetInt(10);
+	lane.IOIndex = sqlite.GetInt(11);
+	lane.StopLine = sqlite.GetString(12);
+	lane.FlowDetectLine = sqlite.GetString(13);
+	lane.QueueDetectLine = sqlite.GetString(14);
+	lane.LaneLine1 = sqlite.GetString(15);
+	lane.LaneLine2 = sqlite.GetString(16);
+	lane.FlowRegion = sqlite.GetString(17);
+	lane.QueueRegion = sqlite.GetString(18);
+	lane.ReportProperties = sqlite.GetInt(19);
+	return lane;
 }
 
-string TrafficData::InsertChannelSql(const TrafficChannel* channel)
+EventLane TrafficData::FillEventLane(const SqliteReader& sqlite)
 {
-	return StringEx::Combine("Insert Into System_Channel (ChannelIndex,ChannelName,ChannelUrl,ChannelType,Loop,OutputImage,OutputReport,OutputRecogn,GlobalDetect,DeviceId) Values ("
-		, channel->ChannelIndex, ","
-		, "'", channel->ChannelName, "',"
-		, "'", channel->ChannelUrl, "',"
-		, channel->ChannelType, ","
-		, channel->Loop, ","
-		, channel->OutputImage, ","
-		, channel->OutputReport, ","
-		, channel->OutputRecogn, ","
-		, channel->GlobalDetect, ","
-		, "'",channel->DeviceId,"'"
+	EventLane lane;
+	lane.ChannelIndex = sqlite.GetInt(0);
+	lane.LaneIndex = sqlite.GetInt(1);
+	lane.LaneName = sqlite.GetString(2);
+	lane.LaneType = sqlite.GetInt(3);
+	lane.Region = sqlite.GetString(4);
+	lane.Line = sqlite.GetString(5);
+	return lane;
+}
+
+vector<TrafficChannel> TrafficData::GetChannels()
+{
+	vector<TrafficChannel> channels;
+	SqliteReader sqlite(DbName);
+	if (sqlite.BeginQuery("Select * From System_Channel Order By ChannelIndex"))
+	{
+		while (sqlite.HasRow())
+		{
+			channels.push_back(FillChannel(sqlite));
+		}
+		sqlite.EndQuery();
+	}
+	return channels;
+}
+
+TrafficChannel TrafficData::GetChannel(int channelIndex)
+{
+	TrafficChannel channel;
+	SqliteReader sqlite(DbName);
+	if (sqlite.BeginQuery(StringEx::Combine("Select * From System_Channel Where ChannelIndex=", channelIndex)))
+	{
+		if (sqlite.HasRow())
+		{
+			channel = FillChannel(sqlite);
+		}
+		sqlite.EndQuery();
+	}
+	return channel;
+}
+
+bool TrafficData::SetChannel(const TrafficChannel& channel)
+{
+	DeleteChannel(channel.ChannelIndex);
+	return InsertChannel(channel);
+}
+
+bool TrafficData::SetChannels(const vector<TrafficChannel>& channels)
+{
+	ClearChannels();
+	for (vector<TrafficChannel>::const_iterator it = channels.begin(); it != channels.end(); ++it)
+	{
+		if (!InsertChannel(*it))
+		{
+			ClearChannels();
+			return false;
+		}
+	}
+	return true;
+}
+
+bool TrafficData::InsertChannel(const TrafficChannel& channel)
+{
+	string sql = StringEx::Combine("Insert Into System_Channel (ChannelIndex,ChannelName,ChannelUrl,ChannelType,Loop,OutputImage,OutputReport,OutputRecogn,GlobalDetect,DeviceId) Values ("
+		, channel.ChannelIndex, ","
+		, "'", channel.ChannelName, "',"
+		, "'", channel.ChannelUrl, "',"
+		, channel.ChannelType, ","
+		, channel.Loop, ","
+		, channel.OutputImage, ","
+		, channel.OutputReport, ","
+		, channel.OutputRecogn, ","
+		, channel.GlobalDetect, ","
+		, "'", channel.DeviceId, "'"
 		, ")");
+
+	if (_sqlite.ExecuteRowCount(sql) == 1)
+	{
+		for (vector<FlowLane>::const_iterator it = channel.FlowLanes.begin(); it != channel.FlowLanes.end(); ++it)
+		{
+			string laneSql(StringEx::Combine("Insert Into Flow_Lane (ChannelIndex,LaneId,LaneName,LaneIndex,LaneType,Direction,FlowDirection,Length,Width,IOIp,IOPort,IOIndex,StopLine,FlowDetectLine,QueueDetectLine,LaneLine1,LaneLine2,FlowRegion,QueueRegion,ReportProperties) Values ("
+				, it->ChannelIndex, ","
+				, "'", it->LaneId, "',"
+				, "'", it->LaneName, "',"
+				, it->LaneIndex, ","
+				, it->LaneType, ","
+				, it->Direction, ","
+				, it->FlowDirection, ","
+				, it->Length, ","
+				, it->Width, ","
+				, "'", it->IOIp, "',"
+				, it->IOPort, ","
+				, it->IOIndex, ","
+				, "'", it->StopLine, "',"
+				, "'", it->FlowDetectLine, "',"
+				, "'", it->QueueDetectLine, "',"
+				, "'", it->LaneLine1, "',"
+				, "'", it->LaneLine2, "',"
+				, "'", it->FlowRegion, "',"
+				, "'", it->QueueRegion, "',"
+				, "'", it->ReportProperties, "'"
+				, ")"));
+			if (_sqlite.ExecuteRowCount(laneSql) != 1)
+			{
+				return false;
+			}
+		}
+		for (vector<EventLane>::const_iterator it = channel.EventLanes.begin(); it != channel.EventLanes.end(); ++it)
+		{
+			string laneSql(StringEx::Combine("Insert Into Event_Lane (ChannelIndex,LaneIndex,LaneName,LaneType,Region,Line) Values ("
+				, it->ChannelIndex, ","
+				, it->LaneIndex, ","
+				, "'", it->LaneName, "',"
+				, it->LaneType, ","
+				, "'", it->Region, "',"
+				, "'", it->Line, "'"
+				, ")"));
+			if (_sqlite.ExecuteRowCount(laneSql) != 1)
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+	else
+	{
+		return false;
+	}
 }
 
-string TrafficData::DeleteChannelSql(int channelIndex)
+bool TrafficData::DeleteChannel(int channelIndex)
 {
-	return StringEx::Combine("Delete From System_Channel Where ChannelIndex=", channelIndex);
+	int result = _sqlite.ExecuteRowCount(StringEx::Combine("Delete From System_Channel Where ChannelIndex=", channelIndex));
+	if (result == 1)
+	{
+		_sqlite.ExecuteRowCount(StringEx::Combine("Delete From Flow_Lane Where ChannelIndex=", channelIndex));
+		_sqlite.ExecuteRowCount(StringEx::Combine("Delete From Event_Lane Where ChannelIndex=", channelIndex));
+		return true;
+	}
+	return false;
 }
 
-string TrafficData::ClearChannelSql()
+void TrafficData::ClearChannels()
 {
-	return string("Delete From System_Channel");
+	_sqlite.ExecuteRowCount("Delete From System_Channel");
+	_sqlite.ExecuteRowCount("Delete From Flow_Lane");
+	_sqlite.ExecuteRowCount("Delete From Event_Lane");
+}
+
+vector<FlowLane> TrafficData::GetFlowLanes(int channelIndex, const std::string& laneId)
+{
+	vector<FlowLane> lanes;
+	SqliteReader sqlite(DbName);
+	string sql = StringEx::Combine("Select * From Flow_Lane Where ChannelIndex!=", channelIndex, " And LaneId=='", laneId, "'");
+	if (sqlite.BeginQuery(sql))
+	{
+		while (sqlite.HasRow())
+		{
+			lanes.push_back(FillFlowLane(sqlite));
+		}
+		sqlite.EndQuery();
+	}
+	return lanes;
 }
 
 string TrafficData::GetParameter(const string& key)
@@ -137,7 +316,7 @@ bool TrafficData::SetGbPrameter(const GbParameter& parameter)
 	return _sqlite.ExecuteRowCount(sql) == 1;
 }
 
-vector<GbDevice> TrafficData::GetGbDeviceList()
+vector<GbDevice> TrafficData::GetGbDevices()
 {
 	vector<GbDevice> devices;
 	SqliteReader sqlite(DbName);
@@ -194,7 +373,7 @@ bool TrafficData::DeleteGbDevice(int deviceId)
 	return _sqlite.ExecuteRowCount(sql) == 1;
 }
 
-vector<GbChannel> TrafficData::GetGbChannelList(const string& deviceId)
+vector<GbChannel> TrafficData::GetGbChannels(const string& deviceId)
 {
 	string sql(StringEx::Combine("Select Id,ChannelId,ChannelName From GB_Channel Where DeviceId='", deviceId,"'"));
 	SqliteReader sqlite(DbName);
@@ -216,28 +395,14 @@ vector<GbChannel> TrafficData::GetGbChannelList(const string& deviceId)
 
 void TrafficData::UpdateDb()
 {
-	SqliteReader sqlite(DbName);
-	string sql("Select * From System_Parameter Limit 1");
-	if (!sqlite.BeginQuery(sql))
+	int versionValue = StringEx::Convert<int>(GetParameter("VersionValue"));
+	if (versionValue < 20101)
 	{
-		_sqlite.ExecuteRowCount("CREATE TABLE [System_Parameter] ([Key] TEXT NOT NULL, [Value] TEXT NOT NULL, CONSTRAINT[PK_System_Parameter] PRIMARY KEY([Key]))");
-		_sqlite.ExecuteRowCount("Insert Into System_Parameter (Key,Value) Values ('Version','')");
-		_sqlite.ExecuteRowCount("Insert Into System_Parameter (Key,Value) Values ('VersionValue','')");
-		_sqlite.ExecuteRowCount("Insert Into System_Parameter (Key,Value) Values ('SN','')");
+		_sqlite.ExecuteRowCount("DROP TABLE [Flow_Lane];");
+		_sqlite.ExecuteRowCount("CREATE TABLE [Flow_Lane] ([ChannelIndex] text NOT NULL, [LaneId] text NOT NULL, [LaneName] text NOT NULL, [LaneIndex] bigint NOT NULL, [LaneType] bigint NOT NULL, [Direction] bigint NOT NULL, [FlowDirection] bigint NOT NULL, [Length] bigint NOT NULL, [Width] bigint NOT NULL, [IOIp] text NOT NULL, [IOPort] bigint NOT NULL, [IOIndex] bigint NOT NULL, [StopLine] text NOT NULL, [FlowDetectLine] text NOT NULL, [QueueDetectLine] text NOT NULL, [LaneLine1] text NOT NULL, [LaneLine2] text NOT NULL, [FlowRegion] text NOT NULL, [QueueRegion] text NOT NULL, [ReportProperties] bigint NOT NULL, CONSTRAINT[sqlite_autoindex_Flow_Lane_1] PRIMARY KEY([ChannelIndex], [LaneId])); ");
+		_sqlite.ExecuteRowCount("CREATE TABLE [Event_Data] ([Id] INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, [ChannelIndex] bigint NOT NULL, [LaneIndex] bigint NOT NULL, [Guid] text NOT NULL, [TimeStamp] bigint NOT NULL, [Type] bigint NOT NULL);");
+		_sqlite.ExecuteRowCount("CREATE TABLE [Event_Lane] ([ChannelIndex] text NOT NULL, [LaneIndex] int NOT NULL, [LaneName] text NOT NULL, [LaneType] int NULL, [Region] text NULL, [Line] text NULL, CONSTRAINT[sqlite_autoindex_Event_Lane_1] PRIMARY KEY([ChannelIndex], [LaneIndex]));");
+		SetParameter("Version", "2.1.0");
+		SetParameter("VersionValue", "20101");
 	}
-
-	sql= "Select * From GB_Config Limit 1";
-	if (!sqlite.BeginQuery(sql))
-	{
-		_sqlite.ExecuteRowCount("CREATE TABLE[GB_Config]([ServerId] text NOT NULL, [ServerIp] text NOT NULL, [ServerPort] bigint NOT NULL, [SipPort] bigint NOT NULL, [SipType] bigint NOT NULL, [GbId] text NOT NULL, [DomainId] text NOT NULL, [UserName] text NOT NULL, [Password] text NOT NULL, CONSTRAINT[sqlite_autoindex_GB_Config] PRIMARY KEY([ServerId]));");
-		_sqlite.ExecuteRowCount("CREATE TABLE[GB_Device]([DeviceId] INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, [DeviceName] text NOT NULL, [DeviceIp] text NOT NULL, [DevicePort] bigint NOT NULL, [GbId] text NOT NULL, [UserName] text NOT NULL, [Password] text NOT NULL);");	
-		_sqlite.ExecuteRowCount("CREATE TABLE[GB_Channel]([Id] INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, [ChannelId] text NOT NULL, [ChannelName] text NOT NULL, [DeviceId] text NOT NULL);CREATE UNIQUE INDEX[GB_Channel_GB_Channel_ChannelId] ON[GB_Channel]([ChannelId] ASC);");	
-	}
-
-	sql = "Select * From System_Log Limit 1";
-	if (!sqlite.BeginQuery(sql))
-	{
-		_sqlite.ExecuteRowCount("CREATE TABLE [System_Log] ([Id] INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, [LogLevel] bigint NOT NULL, [LogEvent] bigint NOT NULL, [Time] text NOT NULL, [Content] text NOT NULL);");
-	}
-
 }

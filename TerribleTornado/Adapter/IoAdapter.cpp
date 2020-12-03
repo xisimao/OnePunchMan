@@ -7,8 +7,6 @@ using namespace OnePunchMan;
 IoAdapter::IoAdapter()
 	:ThreadObject("IO"), _maid(NULL),_mqtt(NULL)
 {
-	JsonDeserialization jd("appsettings.json");
-	TrafficData::Init(jd.Get<string>("Flow:Db"));
 }
 
 void IoAdapter::Update(MqttReceivedEventArgs* e)
@@ -67,14 +65,14 @@ void IoAdapter::StartCore()
 		else
 		{
 			minute = now.Minute();
-			FlowChannelData data;
-			vector<FlowChannel> channels=data.GetList();
+			TrafficData data;
+			vector<TrafficChannel> channels=data.GetChannels();
 			lock_guard<mutex> lck(_mutex);
 			_lanes.clear();
 			set<EndPoint> ips;
-			for (vector<FlowChannel>::iterator cit=channels.begin(); cit !=channels.end();++cit)
+			for (vector<TrafficChannel>::iterator cit=channels.begin(); cit !=channels.end();++cit)
 			{
-				for (vector<FlowLane>::iterator lit=cit->Lanes.begin();lit!=cit->Lanes.end();++lit)
+				for (vector<FlowLane>::iterator lit=cit->FlowLanes.begin();lit!=cit->FlowLanes.end();++lit)
 				{
 					if (!lit->IOIp.empty())
 					{

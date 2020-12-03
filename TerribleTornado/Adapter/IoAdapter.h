@@ -1,7 +1,7 @@
 #pragma once
 #include "MqttChannel.h"
 #include "SocketMaid.h"
-#include "FlowData.h"
+#include "TrafficData.h"
 
 namespace OnePunchMan
 {

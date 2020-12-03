@@ -20,7 +20,7 @@ std::string HttpHandler::BuildResponse(HttpCode code, const string& responseJson
 {
 	stringstream ss;
 	ss << "HTTP/1.1 " << static_cast<int>(code) << "\r\n"
-		<< "Date: " << DateTime::UtcNow().ToString("%a, %d %b %Y %H:%M:%S GMT") << "\r\n"
+		<< "Date: " << DateTime::Now().ToString("%a, %d %b %Y %H:%M:%S GMT") << "\r\n"
 		<< "Server: cat\r\n"
 		<< "Content-Type: application/json;charset=UTF-8\r\n"
 		<< "Content-Length: " << responseJson.size() << "\r\n"
@@ -94,7 +94,7 @@ SocketHandler::ProtocolPacket HttpHandler::HandleCore(int socket, unsigned int i
 		{
 			stringstream ss;
 			ss << "HTTP/1.1 204 No Content\r\n"
-				<< "Date: " << DateTime::UtcNow().ToString("%a, %d %b %Y %H:%M:%S GMT") << "\r\n"
+				<< "Date: " << DateTime::Now().ToString("%a, %d %b %Y %H:%M:%S GMT") << "\r\n"
 				<< "Server: cat\r\n"
 				<< "Access-Control-Allow-Headers: authorization,content-type\r\n"
 				<< "Access-Control-Allow-Methods: GET,POST,DELETE,PUT\r\n"

@@ -3,7 +3,9 @@
 #include "MqttChannel.h"
 #include "DecodeChannel.h"
 #include "RecognChannel.h"
-#include "TrafficDetector.h"
+#include "FlowDetector.h"
+#include "EventDetector.h"
+#include "IVEHandler.h"
 
 namespace OnePunchMan
 {
@@ -34,20 +36,34 @@ namespace OnePunchMan
 		/**
 		* 添加需要检测的通道序号
 		* @param channelIndex 通道序号
+		* @param decode 解码线程
+		* @param flowDetector 流量检测
+		* @param eventDetector 事件检测
 		*/
-		void AddChannel(int channelIndex,DecodeChannel* decode,TrafficDetector* detector);
+		void AddChannel(int channelIndex,DecodeChannel* decode, FlowDetector* flowDetector,EventDetector* eventDetector);
+
+		/**
+		* 更新通道
+		* @param channel 通道
+		*/
+		void UpdateChannel(const TrafficChannel& channel);
+
+		/**
+		* 将下一帧视频写入到bmp
+		* * @param channelIndex 通道序号
+		*/
+		void WriteBmp(int channelIndex);
 
 	protected:
 		void StartCore();
 
 	private:
-
 		//视频帧数据
 		class ChannelItem
 		{
 		public:
 			ChannelItem()
-				: ChannelIndex(0), Param(), Decode(NULL),Detector(NULL)
+				: ChannelIndex(0), Param(), WriteBmp(false), Decode(NULL), Flow(NULL), Event(NULL)
 			{
 
 			}
@@ -55,13 +71,16 @@ namespace OnePunchMan
 			int ChannelIndex;
 			//车道参数
 			std::string Param;
+			//是否需要截取bmp图片
+			bool WriteBmp;
 			//解码
 			DecodeChannel* Decode;
-			//检测
-			TrafficDetector* Detector;
+			//流量检测
+			FlowDetector* Flow;
+			//事件检测
+			EventDetector* Event;
 		};
 
-	private:
 		/**
 		* 从json数据中获取检测项集合
 		* @param items 检测项集合
@@ -93,10 +112,15 @@ namespace OnePunchMan
 		int _width;
 		//图片高度
 		int _height;
+
+		//视频检测数据同步锁
+		std::mutex _channelMutex;
 		//视频帧数据
-		std::vector<ChannelItem> _channelItems;
+		std::map<int,ChannelItem> _channelItems;
 		//检测线程
 		RecognChannel* _recogn;
+		//ive写入bmp
+		IVEHandler _iveHandler;
 
 		//detect
 		std::vector<uint8_t*> _ives;
@@ -106,8 +130,6 @@ namespace OnePunchMan
 		std::vector<uint32_t> _heights;
 		std::vector<const char*> _params;
 		std::vector<char> _result;
-
 	};
-
 }
 

@@ -22,17 +22,13 @@
     <ClCompile Include="..\Saitama\Text\StringEx.cpp" />
     <ClCompile Include="..\Fubuki\Sqlite\Sqlite.cpp" />
     <ClCompile Include="..\Fubuki\Mqtt\MqttChannel.cpp" />
-    <ClCompile Include="..\TerribleTornado\Flow\FlowData.cpp" />
-    <ClCompile Include="..\TerribleTornado\Flow\FlowStartup.cpp" />
     <ClCompile Include="..\TerribleTornado\Flow\FlowDetector.cpp" />
     <ClCompile Include="..\TerribleTornado\Traffic\DetectChannel.cpp" />
     <ClCompile Include="..\TerribleTornado\Traffic\RecognChannel.cpp" />
     <ClCompile Include="..\TerribleTornado\Traffic\SeemmoSDK.cpp" />
     <ClCompile Include="..\TerribleTornado\Traffic\TrafficDetector.cpp" />
     <ClCompile Include="..\TerribleTornado\Traffic\TrafficStartup.cpp" />
-    <ClCompile Include="..\TerribleTornado\Event\EventData.cpp" />
     <ClCompile Include="..\TerribleTornado\Event\EventDetector.cpp" />
-    <ClCompile Include="..\TerribleTornado\Event\EventStartup.cpp" />
     <ClCompile Include="..\TerribleTornado\Adapter\IoAdapter.cpp" />
     <ClCompile Include="..\TerribleTornado\Traffic\TrafficData.cpp" />
     <ClCompile Include="..\TerribleTornado\Image\BGR24Handler.cpp" />
@@ -73,8 +69,6 @@
     <ClInclude Include="..\Saitama\Text\StringEx.h" />
     <ClInclude Include="..\Fubuki\Sqlite\Sqlite.h" />
     <ClInclude Include="..\Fubuki\Mqtt\MqttChannel.h" />
-    <ClInclude Include="..\TerribleTornado\Flow\FlowData.h" />
-    <ClInclude Include="..\TerribleTornado\Flow\FlowStartup.h" />
     <ClInclude Include="..\TerribleTornado\Flow\FlowDetector.h" />
     <ClInclude Include="..\TerribleTornado\Traffic\DetectChannel.h" />
     <ClInclude Include="..\TerribleTornado\Traffic\RecognChannel.h" />
@@ -82,9 +76,7 @@
     <ClInclude Include="..\TerribleTornado\Traffic\TrafficData.h" />
     <ClInclude Include="..\TerribleTornado\Traffic\TrafficDetector.h" />
     <ClInclude Include="..\TerribleTornado\Traffic\TrafficStartup.h" />
-    <ClInclude Include="..\TerribleTornado\Event\EventData.h" />
     <ClInclude Include="..\TerribleTornado\Event\EventDetector.h" />
-    <ClInclude Include="..\TerribleTornado\Event\EventStartup.h" />
     <ClInclude Include="..\TerribleTornado\Adapter\IoAdapter.h" />
     <ClInclude Include="..\TerribleTornado\Image\BGR24Handler.h" />
     <ClInclude Include="..\TerribleTornado\Image\H264Handler.h" />

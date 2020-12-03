@@ -55,14 +55,12 @@ void EventDetector::Init(const JsonDeserialization& jd)
 	OutputVideoIFrame *= 2;
 }
 
-void EventDetector::UpdateChannel(const unsigned char taskId, const EventChannel& channel)
+void EventDetector::UpdateChannel(const unsigned char taskId, const TrafficChannel& channel)
 {
 	lock_guard<mutex> lck(_laneMutex);
 	_taskId = taskId;
 	_lanes.clear();
-	string regionsParam;
-	regionsParam.append("[");
-	for (vector<EventLane>::const_iterator lit = channel.Lanes.begin(); lit != channel.Lanes.end(); ++lit)
+	for (vector<EventLane>::const_iterator lit = channel.EventLanes.begin(); lit != channel.EventLanes.end(); ++lit)
 	{
 		EventLaneCache cache;
 		cache.Region = Polygon::FromJson(lit->Region);
@@ -80,37 +78,21 @@ void EventDetector::UpdateChannel(const unsigned char taskId, const EventChannel
 					cache.BaseAsX = abs(line.Point2.X - line.Point1.X) > abs(line.Point2.Y - line.Point1.Y);
 					_lanes.push_back(cache);
 					LogPool::Information(LogEvent::Event,"init lane ,channel index:", channel.ChannelIndex, "lane index:", lit->LaneIndex, "x offset:", line.Point2.X -line.Point1.X, "y offset:", line.Point2.Y - line.Point1.Y);
-					regionsParam.append(lit->Region);
-					regionsParam.append(",");
 				}
 			}
 			else
 			{
 				_lanes.push_back(cache);
-				regionsParam.append(lit->Region);
-				regionsParam.append(",");
 			}
 		}
 	}
-	if (regionsParam.size() == 1)
-	{
-		regionsParam.append("]");
-	}
-	else
-	{
-		regionsParam[regionsParam.size() - 1] = ']';
-	}
 	_channelUrl = channel.ChannelUrl;
-
-	_lanesInited = !_lanes.empty() && _lanes.size() == channel.Lanes.size();
+	_lanesInited = !_lanes.empty() && _lanes.size() == channel.EventLanes.size();
 	if (!_lanesInited)
 	{
 		LogPool::Warning(LogEvent::Event, "not found any lane,channel index:", channel.ChannelIndex);
 	}
 	_channelIndex = channel.ChannelIndex;
-	_param = GetDetectParam(regionsParam);
-	_setParam = false;
-	_writeBmp = true;
 	LogPool::Information(LogEvent::Event, "init event detector,channel index:", channel.ChannelIndex, "task id:", _taskId);
 }
 
@@ -133,23 +115,13 @@ void EventDetector::ClearChannel()
 
 }
 
-void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long timeStamp, string* param, unsigned char taskId, const unsigned char* iveBuffer, unsigned int frameIndex, unsigned char frameSpan)
+void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long timeStamp, unsigned char taskId, const unsigned char* iveBuffer, unsigned int frameIndex, unsigned char frameSpan)
 {
 	if (_taskId != taskId)
 	{
 		return;
 	}
 	lock_guard<mutex> lck(_laneMutex);
-	if (!_setParam)
-	{
-		param->assign(_param);
-		_setParam = true;
-	}
-	if (_writeBmp)
-	{
-		_iveHandler.HandleFrame(iveBuffer, _width, _height, _channelIndex);
-		_writeBmp = false;
-	}
 	if (_encodeChannel != NULL)
 	{
 		for (vector<EventData>::iterator it = _encodeDatas.begin(); it != _encodeDatas.end();)

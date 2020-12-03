@@ -6,10 +6,107 @@
 
 namespace OnePunchMan
 {
+	//流量车道
+	class FlowLane 
+	{
+	public:
+		FlowLane()
+			: ChannelIndex(), LaneIndex(), LaneName(), LaneId(), Direction(0), StopLine(), FlowDetectLine(), QueueDetectLine(), LaneLine1(), LaneLine2()
+			, LaneType(0), FlowDirection(0), Length(0), Width(0), IOIp(), IOPort(0), IOIndex(0), ReportProperties(0)
+		{
+
+		}
+		//通道序号
+		int ChannelIndex;
+		//车道序号
+		int LaneIndex;
+		//车道名称
+		std::string LaneName;
+		//车道编号
+		std::string LaneId;
+		//车道方向
+		int Direction;
+		//停止线
+		std::string StopLine;
+		//流量检测线
+		std::string FlowDetectLine;
+		//排队检测线
+		std::string QueueDetectLine;
+		//车道线1
+		std::string LaneLine1;
+		//车道线2
+		std::string LaneLine2;
+		//流量检测区域
+		std::string FlowRegion;
+		//排队检测区域
+		std::string QueueRegion;
+		//车道类型
+		int LaneType;
+		//车道流向
+		int FlowDirection;
+		//车道长度
+		int Length;
+		//车道宽度
+		int Width;
+		//io检测器地址
+		std::string IOIp;
+		//io检测器端口
+		int IOPort;
+		//io检测器输出口
+		int IOIndex;
+		//上报属性
+		int ReportProperties;
+
+	};
+
+	//事件车道类型
+	enum class EventLaneType
+	{
+		None = 0,
+		Pedestrain = 1,
+		Park = 2,
+		Lane = 3,
+		Bike = 4
+	};
+
+	//事件类型
+	enum class EventType
+	{
+		None = 0,
+		Pedestrain = 1,
+		Park = 2,
+		Congestion = 3,
+		Retrograde = 4,
+		Bike = 5
+	};
+
+	//事件车道
+	class EventLane 
+	{
+	public:
+		EventLane()
+			:ChannelIndex(), LaneIndex(), LaneName(), LaneType(0), Line(), Region()
+		{
+
+		}
+		//通道序号
+		int ChannelIndex;
+		//车道序号
+		int LaneIndex;
+		//车道名称
+		std::string LaneName;
+		//车道类型
+		int LaneType;
+		//箭头
+		std::string Line;
+		//区域
+		std::string Region;
+	};
+
 	//通道类型
 	enum class ChannelType
 	{
-		None=0,
+		None = 0,
 		GB28181 = 1,
 		RTSP = 2,
 		File = 3
@@ -48,31 +145,6 @@ namespace OnePunchMan
 		FilterError = 14
 	};
 
-
-	//设备状态
-	enum class DeviceStatus
-	{
-		Normal = 1,
-		Error = 2
-	};
-
-	//车道
-	class TrafficLane
-	{
-	public:
-		TrafficLane()
-			:ChannelIndex(),LaneIndex(),LaneName()
-		{
-
-		}
-		//通道序号
-		int ChannelIndex;
-		//车道序号
-		int LaneIndex;
-		//车道名称
-		std::string LaneName;
-	};
-
 	//视频通道
 	class TrafficChannel
 	{
@@ -106,6 +178,11 @@ namespace OnePunchMan
 		//国标设备编号
 		std::string DeviceId;
 
+		//流量车道集合
+		std::vector<FlowLane> FlowLanes;
+		//事件车道集合
+		std::vector<EventLane> EventLanes;
+
 		/**
 		* 获取通道rtmp地址
 		* @return 通道rtmp地址
@@ -121,7 +198,149 @@ namespace OnePunchMan
 		*/
 		std::string FlvUrl(const std::string ip) const
 		{
-			return StringEx::Combine("http://",ip,":1936/live?port=1935&app=live&stream=", ChannelIndex);
+			return StringEx::Combine("http://", ip, ":1936/live?port=1935&app=live&stream=", ChannelIndex);
+		}
+	};
+
+	//交通状态
+	enum class TrafficStatus
+	{
+		Good = 1,
+		Normal = 2,
+		Warning = 3,
+		Bad = 4,
+		Dead = 5
+	};
+
+	//流量报告数据
+	class FlowReportData
+	{
+	public:
+		FlowReportData()
+			: ChannelUrl(), LaneId(), LaneName(), Direction(0), ReportProperties(0)
+			, Minute(0), TimeStamp(0)
+			, Persons(0), Bikes(0), Motorcycles(0), Cars(0), Tricycles(0), Buss(0), Vans(0), Trucks(0)
+			, Speed(0.0), TimeOccupancy(0.0), HeadDistance(0.0), HeadSpace(0.0), TrafficStatus(0)
+			, QueueLength(0), SpaceOccupancy(0.0)
+		{
+
+		}
+		//通道地址
+		std::string ChannelUrl;
+		//车道编号
+		std::string LaneId;
+		//车道名称
+		std::string LaneName;
+		//车道方向
+		int Direction;
+		//需要上报的属性
+		int ReportProperties;
+
+		//第几分钟
+		int Minute;
+		//时间戳
+		long long TimeStamp;
+
+		//行人流量
+		int Persons;
+		//自行车流量
+		int Bikes;
+		//摩托车流量
+		int Motorcycles;
+		//轿车流量
+		int Cars;
+		//三轮车流量
+		int Tricycles;
+		//公交车流量
+		int Buss;
+		//面包车流量
+		int Vans;
+		//卡车流量
+		int Trucks;
+
+		//平均速度(km/h)
+		double Speed;
+		//时间占用率(%)
+		double TimeOccupancy;
+		//车道时距(sec)
+		double HeadDistance;
+		//车头间距(m)
+		double HeadSpace;
+		//交通状态
+		int TrafficStatus;
+
+		//排队长度(m)
+		int QueueLength;
+		//空间占有率(%)
+		double SpaceOccupancy;
+
+		/**
+		* 获取数据显示的字符串
+		* @return 数据显示的字符串
+		*/
+		std::string ToString()
+		{
+			return StringEx::Combine("channel url:", ChannelUrl, " lane:", LaneId, " timestamp:", DateTime::ParseTimeStamp(TimeStamp).ToString(), " properties:", ReportProperties, " cars:", Cars, " tricycles:", Tricycles, " buss", Buss, " vans:", Vans, " trucks:", Trucks, " bikes:", Bikes, " motorcycles:", Motorcycles, " persons:", Persons, " speed(km/h):", Speed, " head distance(sec):", HeadDistance, " head space(m)", HeadSpace, " time occ(%):", TimeOccupancy, " traffic status:", TrafficStatus, " queue length(m):", QueueLength, " pace occ(%):", SpaceOccupancy);
+		}
+
+		/**
+		* 获取excel用的json
+		* @return excel用的json
+		*/
+		std::string ToReportJson()
+		{
+			std::string reportJson;
+			JsonSerialization::SerializeValue(&reportJson, "minute", Minute);
+			JsonSerialization::SerializeValue(&reportJson, "laneId", LaneId);
+			JsonSerialization::SerializeValue(&reportJson, "laneName", LaneName);
+			JsonSerialization::SerializeValue(&reportJson, "direction", Direction);
+			JsonSerialization::SerializeValue(&reportJson, "persons", Persons);
+			JsonSerialization::SerializeValue(&reportJson, "bikes", Bikes);
+			JsonSerialization::SerializeValue(&reportJson, "motorcycles", Motorcycles);
+			JsonSerialization::SerializeValue(&reportJson, "cars", Cars);
+			JsonSerialization::SerializeValue(&reportJson, "tricycles", Tricycles);
+			JsonSerialization::SerializeValue(&reportJson, "buss", Buss);
+			JsonSerialization::SerializeValue(&reportJson, "vans", Vans);
+			JsonSerialization::SerializeValue(&reportJson, "trucks", Trucks);
+			JsonSerialization::SerializeValue(&reportJson, "averageSpeed", static_cast<int>(Speed));
+			JsonSerialization::SerializeValue(&reportJson, "headDistance", HeadDistance);
+			JsonSerialization::SerializeValue(&reportJson, "headSpace", HeadSpace);
+			JsonSerialization::SerializeValue(&reportJson, "timeOccupancy", static_cast<int>(TimeOccupancy));
+			JsonSerialization::SerializeValue(&reportJson, "trafficStatus", TrafficStatus);
+			JsonSerialization::SerializeValue(&reportJson, "queueLength", QueueLength);
+			JsonSerialization::SerializeValue(&reportJson, "spaceOccupancy", SpaceOccupancy);
+			return reportJson;
+		}
+
+		/**
+		* 获取mqtt报告用的json
+		* @return mqtt报告用的json
+		*/
+		std::string ToMessageJson()
+		{
+			std::string messageJson;
+			JsonSerialization::SerializeValue(&messageJson, "channelUrl", ChannelUrl);
+			JsonSerialization::SerializeValue(&messageJson, "laneId", LaneId);
+			JsonSerialization::SerializeValue(&messageJson, "timeStamp", TimeStamp);
+
+			JsonSerialization::SerializeValue(&messageJson, "persons", Persons);
+			JsonSerialization::SerializeValue(&messageJson, "bikes", Bikes);
+			JsonSerialization::SerializeValue(&messageJson, "motorcycles", Motorcycles);
+			JsonSerialization::SerializeValue(&messageJson, "cars", Cars);
+			JsonSerialization::SerializeValue(&messageJson, "tricycles", Tricycles);
+			JsonSerialization::SerializeValue(&messageJson, "buss", Buss);
+			JsonSerialization::SerializeValue(&messageJson, "vans", Vans);
+			JsonSerialization::SerializeValue(&messageJson, "trucks", Trucks);
+
+			JsonSerialization::SerializeValue(&messageJson, "averageSpeed", static_cast<int>(Speed));
+			JsonSerialization::SerializeValue(&messageJson, "headDistance", HeadDistance);
+			JsonSerialization::SerializeValue(&messageJson, "headSpace", HeadSpace);
+			JsonSerialization::SerializeValue(&messageJson, "timeOccupancy", static_cast<int>(TimeOccupancy));
+			JsonSerialization::SerializeValue(&messageJson, "trafficStatus", TrafficStatus);
+
+			JsonSerialization::SerializeValue(&messageJson, "queueLength", QueueLength);
+			JsonSerialization::SerializeValue(&messageJson, "spaceOccupancy", SpaceOccupancy);
+			return messageJson;
 		}
 	};
 
@@ -143,7 +362,7 @@ namespace OnePunchMan
 		std::string DomainId;
 		std::string UserName;
 		std::string Password;
-		
+
 	};
 
 	//国标设备
@@ -151,13 +370,13 @@ namespace OnePunchMan
 	{
 	public:
 		GbDevice()
-			:Id(0), DeviceId(),DeviceName(),DeviceIp(),DevicePort(0),UserName(),Password()
+			:Id(0), DeviceId(), DeviceName(), DeviceIp(), DevicePort(0), UserName(), Password()
 		{
 
 		}
 		int Id;
 		std::string DeviceId;
-		std::string DeviceName;	
+		std::string DeviceName;
 		std::string DeviceIp;
 		int DevicePort;
 		std::string UserName;
@@ -169,7 +388,7 @@ namespace OnePunchMan
 	{
 	public:
 		GbChannel()
-			:Id(0),ChannelId(),ChannelName()
+			:Id(0), ChannelId(), ChannelName()
 		{
 
 		}
@@ -211,17 +430,6 @@ namespace OnePunchMan
 		TrafficData();
 
 		/**
-		* 析构函数
-		*/
-		virtual ~TrafficData()= default;
-
-		/**
-		* 初始化数据库名称
-		* @param dbName 数据库名称
-		*/
-		static void Init(const std::string& dbName);
-
-		/**
 		* 获取最后一个错误信息
 		* @return 最后一个错误信息
 		*/
@@ -259,7 +467,7 @@ namespace OnePunchMan
 		* 获取国标设备集合
 		* @return 国标设备集合
 		*/
-		std::vector<GbDevice> GetGbDeviceList();
+		std::vector<GbDevice> GetGbDevices();
 
 		/**
 		* 添加国标设备
@@ -287,7 +495,54 @@ namespace OnePunchMan
 		* @param deviceId 国标设备编号
 		* @return 查询结果
 		*/
-		std::vector<GbChannel> GetGbChannelList(const std::string& deviceId);
+		std::vector<GbChannel> GetGbChannels(const std::string& deviceId);
+
+		/**
+		* 查询通道列表
+		* @return 通道列表
+		*/
+		std::vector<TrafficChannel> GetChannels();
+
+		/**
+		* 查询单个通道
+		* @param channelIndex 通道序号
+		* @return 通道
+		*/
+		TrafficChannel GetChannel(int channelIndex);
+
+		/**
+		* 设置通道
+		* @param channel 通道
+		* @return 设置结果
+		*/
+		bool SetChannel(const TrafficChannel& channel);
+
+		/**
+		* 设置通道集合
+		* @param channels 通道集合
+		* @return 设置结果
+		*/
+		bool SetChannels(const std::vector<TrafficChannel>& channels);
+
+		/**
+		* 删除通道
+		* @param channel 通道
+		* @return 删除结果
+		*/
+		bool DeleteChannel(int channelIndex);
+
+		/**
+		* 清空通道
+		*/
+		void ClearChannels();
+
+		/**
+		* 查询车道列表
+		* @param channelIndex 通道序号
+		* @param laneId 车道编号
+		* @return 车道列表
+		*/
+		std::vector<FlowLane> GetFlowLanes(int channelIndex, const std::string& laneId);
 
 		/**
 		* 更新数据库
@@ -295,48 +550,36 @@ namespace OnePunchMan
 		virtual void UpdateDb();
 
 		//数据库名称
-		static std::string DbName;
+		const static std::string DbName;
 
-	protected:
+	private:
 		/**
 		* 填充通道
 		* @param sqlite 查询结果
 		* @param channel 要填充的通道数据
 		*/
-		void FillChannel(const SqliteReader& sqlite, TrafficChannel* channel);
+		TrafficChannel FillChannel(const SqliteReader& sqlite);
 
 		/**
-		* 获取查询集合sql语句
-		* @return 查询集合sql语句
+		* 填充流量车道
+		* @param sqlite 查询结果
+		* @return 流量车道
 		*/
-		std::string GetChannelsSql();
+		FlowLane FillFlowLane(const SqliteReader& sqlite);
 
 		/**
-		* 获取查询单个sql语句
-		* @param channelIndex 通道序号
-		* @return 查询单个sql语句
+		* 填充事件车道
+		* @param sqlite 查询结果
+		* @return 事件车道
 		*/
-		std::string GetChannelSql(int channelIndex);
+		EventLane FillEventLane(const SqliteReader& sqlite);
 
 		/**
-		* 获取添加通道sql语句
-		* @param channel 要添加的通道数据
-		* @return 添加通道sql语句
+		* 添加通道
+		* @param channel 通道
+		* @return 添加结果
 		*/
-		std::string InsertChannelSql(const TrafficChannel* channel);
-
-		/**
-		* 获取删除通道sql语句
-		* @param channelIndex 通道序号
-		* @return 删除通道sql语句
-		*/
-		std::string DeleteChannelSql(int channelIndex);
-
-		/**
-		* 获取清空通道sql语句
-		* @return 清空通道sql语句
-		*/
-		std::string ClearChannelSql();
+		bool InsertChannel(const TrafficChannel& channel);
 
 		//数据写入
 		SqliteWriter _sqlite;

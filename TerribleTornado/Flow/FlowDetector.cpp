@@ -12,7 +12,9 @@ int FlowDetector::QueueMinDistance = 200;
 const int FlowDetector::AllPropertiesFlag = 3;
 
 FlowDetector::FlowDetector(int width, int height, MqttChannel* mqtt, DataMergeMap* merge)
-	:TrafficDetector(width, height, mqtt), _merge(merge),_taskId(0), _lastFrameTimeStamp(0), _currentMinuteTimeStamp(0), _nextMinuteTimeStamp(0)
+	:TrafficDetector(width, height, mqtt), _merge(merge)
+	, _taskId(0)
+	, _lastFrameTimeStamp(0), _currentMinuteTimeStamp(0), _nextMinuteTimeStamp(0)
 	, _outputImage(false), _outputReport(false), _currentReportMinute(0), _outputRecogn(false)
 {
 	_detectBgrBuffer = new unsigned char[_bgrSize];
@@ -36,45 +38,38 @@ void FlowDetector::Init(const JsonDeserialization& jd)
 	LogPool::Information(LogEvent::Event, "QueueMinDistance", QueueMinDistance, "px");
 }
 
-void FlowDetector::UpdateChannel(const unsigned char taskId, const FlowChannel& channel)
+void FlowDetector::UpdateChannel(const unsigned char taskId, const TrafficChannel& channel)
 {
 	vector<FlowLaneCache> lanes;
-	string regionsParam;
-	regionsParam.append("[");
-	for (vector<FlowLane>::const_iterator it = channel.Lanes.begin(); it != channel.Lanes.end(); ++it)
+	for (vector<FlowLane>::const_iterator it = channel.FlowLanes.begin(); it != channel.FlowLanes.end(); ++it)
 	{
 		FlowLaneCache laneCache;
-		Line detectLine = Line::FromJson(it->DetectLine);
 		Line stopLine = Line::FromJson(it->StopLine);
-		laneCache.Region = Polygon::FromJson(it->Region);
-		if (detectLine.Empty()
-			|| stopLine.Empty()
-			|| laneCache.Region.Empty())
+		BrokeLine laneLine1 = BrokeLine::FromJson(it->LaneLine1);
+		BrokeLine laneLine2 = BrokeLine::FromJson(it->LaneLine2);
+		Point point1 = laneLine1.Intersect(stopLine);
+		Point point2 = laneLine2.Intersect(stopLine);
+		laneCache.FlowRegion = Polygon::FromJson(it->FlowRegion);
+		laneCache.QueueRegion = Polygon::FromJson(it->QueueRegion);
+		if (point1.Empty()
+			|| point2.Empty()
+			|| laneCache.FlowRegion.Empty()
+			|| laneCache.QueueRegion.Empty())
 		{
 			LogPool::Warning(LogEvent::Flow, "line empty channel:", it->ChannelIndex, "lane:", it->LaneId);
 		}
 		else
 		{
-			double pixels = detectLine.Middle().Distance(stopLine.Middle());
+			double pixels = point1.Distance(point2);
 			laneCache.LaneId = it->LaneId;
 			laneCache.LaneName = it->LaneName;
 			laneCache.Length = it->Length;
 			laneCache.Direction = it->Direction;
 			laneCache.ReportProperties = it->ReportProperties;
-			laneCache.MeterPerPixel = it->Length / pixels;
+			laneCache.MeterPerPixel = it->Width / pixels;
 			laneCache.StopPoint = stopLine.Middle();
 			lanes.push_back(laneCache);
-			regionsParam.append(it->Region);
-			regionsParam.append(",");
 		}
-	}
-	if (regionsParam.size() == 1)
-	{
-		regionsParam.append("]");
-	}
-	else
-	{
-		regionsParam[regionsParam.size() - 1] = ']';
 	}
 
 	lock_guard<mutex> detectLock(_laneMutex);
@@ -82,23 +77,13 @@ void FlowDetector::UpdateChannel(const unsigned char taskId, const FlowChannel& 
 	_laneCaches.assign(lanes.begin(), lanes.end());
 	_channelUrl = channel.ChannelUrl;
 
-	_lanesInited = !_laneCaches.empty() && _laneCaches.size() == channel.Lanes.size();
+	_lanesInited = !_laneCaches.empty() && _laneCaches.size() == channel.FlowLanes.size();
 	if (!_lanesInited)
 	{
 		LogPool::Warning(LogEvent::Flow, "not found any lane,channel index:", channel.ChannelIndex);
 	}
 	_channelIndex = channel.ChannelIndex;
-	if (channel.GlobalDetect)
-	{
-		_param = GetDetectParam();
-	}
-	else
-	{
-		_param = GetDetectParam(regionsParam);
-	}
-	_setParam = false;
-	_writeBmp = true;
-	remove(StringEx::Combine(TrafficDirectory::FileDir, "channel_", channel.ChannelIndex, ".bmp").c_str());
+
 	//输出图片时先删除旧的
 	_outputImage = channel.OutputImage;
 	if (_outputImage)
@@ -120,7 +105,7 @@ void FlowDetector::UpdateChannel(const unsigned char taskId, const FlowChannel& 
 	{
 		date = DateTime::Now();
 	}
-	_currentMinuteTimeStamp = DateTime(date.Year(), date.Month(), date.Day(), date.Hour(), date.Minute(), 0).UtcTimeStamp();
+	_currentMinuteTimeStamp = DateTime(date.Year(), date.Month(), date.Day(), date.Hour(), date.Minute(), 0).TimeStamp();
 	_nextMinuteTimeStamp = _currentMinuteTimeStamp + 60 * 1000;
 	_outputRecogn = channel.OutputRecogn;
 	LogPool::Information(LogEvent::Flow, "init flow detector,channel index:", channel.ChannelIndex, " task id:", _taskId, " output report:", channel.OutputReport, " output pic:", channel.OutputImage, " output recogn:", channel.OutputRecogn, " global detect:", channel.GlobalDetect, " current detect timeStamp:", _currentMinuteTimeStamp, " next detect timeStamp:", _nextMinuteTimeStamp);
@@ -245,23 +230,13 @@ FlowReportData FlowDetector::CalculateMinuteFlow(FlowLaneCache* laneCache)
 	return data;
 }
 
-void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long timeStamp, string* param, unsigned char taskId, const unsigned char* iveBuffer, unsigned int frameIndex, unsigned char frameSpan)
+void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long timeStamp, unsigned char taskId, const unsigned char* iveBuffer, unsigned int frameIndex, unsigned char frameSpan)
 {
 	if (_taskId != taskId)
 	{
 		return;
 	}
 	lock_guard<mutex> detectLock(_laneMutex);
-	if (!_setParam)
-	{
-		param->assign(_param);
-		_setParam = true;
-	}
-	if (_writeBmp)
-	{
-		_iveHandler.HandleFrame(iveBuffer, _width, _height, _channelIndex);
-		_writeBmp = false;
-	}
 	//输出检测报告时调整时间戳
 	if (_outputReport)
 	{
@@ -307,7 +282,7 @@ void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long 
 		//结算后认为该分钟结束,当前帧收到的数据结算到下一分钟
 		DateTime currentTime=DateTime::ParseTimeStamp(timeStamp);
 		DateTime currentTimePoint(currentTime.Year(), currentTime.Month(), currentTime.Day(), currentTime.Hour(), currentTime.Minute(), 0);
-		_currentMinuteTimeStamp = currentTimePoint.UtcTimeStamp();
+		_currentMinuteTimeStamp = currentTimePoint.TimeStamp();
 		_lastFrameTimeStamp = _currentMinuteTimeStamp;
 		_nextMinuteTimeStamp = _currentMinuteTimeStamp + 60 * 1000;
 	}
@@ -332,7 +307,7 @@ void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long 
 				++it;
 			}
 		}
-		list<CarDistance> distances;
+		list<double> distances;
 		bool ioStatus = false;
 		for (map<string, DetectItem>::iterator dit = detectItems->begin(); dit != detectItems->end(); ++dit)
 		{
@@ -340,13 +315,8 @@ void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long 
 			{
 				continue;
 			}
-			if (laneCache.Region.Contains(dit->second.Region.HitPoint()))
+			if (laneCache.FlowRegion.Contains(dit->second.Region.HitPoint()))
 			{
-				if (dit->second.GetLength() > 0)
-				{
-					dit->second.Distance = dit->second.Region.HitPoint().Distance(laneCache.StopPoint);
-					AddOrderedList(&distances, dit->second.GetLength(), dit->second.Distance);
-				}
 				ioStatus = true;
 				map<string, FlowDetectCache>::iterator mit = laneCache.Items.find(dit->first);
 				//如果是新车则计算流量和车头时距
@@ -412,9 +382,15 @@ void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long 
 					mit->second.LastTimeStamp = timeStamp;
 				}
 			}
+
+			if (laneCache.QueueRegion.Contains(dit->second.Region.HitPoint()))
+			{
+				dit->second.Distance = dit->second.Region.HitPoint().Distance(laneCache.StopPoint);
+				AddOrderedList(&distances, dit->second.Distance);
+			}
 		}
 		//计算排队长度
-		laneCache.CurrentQueueLength = CalculateQueueLength(distances);
+		laneCache.CurrentQueueLength = CalculateQueueLength(laneCache,distances);
 		if (laneCache.CurrentQueueLength != 0)
 		{
 			hasQueue = true;
@@ -496,7 +472,7 @@ void FlowDetector::HandleRecognVehicle(const RecognItem& recognItem, const unsig
 			string json;
 			JsonSerialization::SerializeValue(&json, "channelUrl", _channelUrl);
 			JsonSerialization::SerializeValue(&json, "laneId", it->LaneId);
-			JsonSerialization::SerializeValue(&json, "timeStamp", DateTime::UtcNowTimeStamp());
+			JsonSerialization::SerializeValue(&json, "timeStamp", DateTime::NowTimeStamp());
 			JsonSerialization::SerializeValue(&json, "videoStructType", (int)VideoStructType::Vehicle);
 			JsonSerialization::SerializeValue(&json, "carType", vehicle.CarType);
 			JsonSerialization::SerializeValue(&json, "carColor", vehicle.CarColor);
@@ -543,7 +519,7 @@ void FlowDetector::HandleRecognBike(const RecognItem& recognItem, const unsigned
 			string json;
 			JsonSerialization::SerializeValue(&json, "channelUrl", _channelUrl);
 			JsonSerialization::SerializeValue(&json, "laneId", it->LaneId);
-			JsonSerialization::SerializeValue(&json, "timeStamp", DateTime::UtcNowTimeStamp());
+			JsonSerialization::SerializeValue(&json, "timeStamp", DateTime::NowTimeStamp());
 			JsonSerialization::SerializeValue(&json, "videoStructType", (int)VideoStructType::Bike);
 			JsonSerialization::SerializeValue(&json, "bikeType", bike.BikeType);
 			string image;
@@ -586,7 +562,7 @@ void FlowDetector::HandleRecognPedestrain(const RecognItem& recognItem, const un
 			string json;
 			JsonSerialization::SerializeValue(&json, "channelUrl", _channelUrl);
 			JsonSerialization::SerializeValue(&json, "laneId", it->LaneId);
-			JsonSerialization::SerializeValue(&json, "timeStamp", DateTime::UtcNowTimeStamp());
+			JsonSerialization::SerializeValue(&json, "timeStamp", DateTime::NowTimeStamp());
 			JsonSerialization::SerializeValue(&json, "videoStructType", (int)VideoStructType::Pedestrain);
 			JsonSerialization::SerializeValue(&json, "sex", pedestrain.Sex);
 			JsonSerialization::SerializeValue(&json, "age", pedestrain.Age);
@@ -617,58 +593,48 @@ void FlowDetector::HandleRecognPedestrain(const RecognItem& recognItem, const un
 	LogPool::Debug(LogEvent::Flow, "lost recogn,id:", recognItem.Guid, " type:", static_cast<int>(recognItem.Type), " frame index:", recognItem.FrameIndex);
 }
 
-void FlowDetector::AddOrderedList(list<CarDistance>* distances, int length,double distance)
+void FlowDetector::AddOrderedList(list<double>* distances, double distance)
 {
-	CarDistance carDistance;
-	carDistance.Distance = distance;
-	carDistance.Length = length;
-
 	if (distances->empty())
 	{
-		distances->push_back(carDistance);
+		distances->push_back(distance);
 	}
 	else
 	{
-		for (list<CarDistance>::iterator it = distances->begin(); it != distances->end(); ++it)
+		for (list<double>::iterator it = distances->begin(); it != distances->end(); ++it)
 		{
-			if (it->Distance > carDistance.Distance)
+			if (*it > distance)
 			{
-				distances->insert(it, carDistance);
+				distances->insert(it, distance);
 				return;
 			}
 		}
-		distances->push_back(carDistance);
+		distances->push_back(distance);
 	}
 }
 
-int FlowDetector::CalculateQueueLength(const list<CarDistance>& distances)
+int FlowDetector::CalculateQueueLength(const FlowLaneCache& laneCache, const list<double>& distances)
 {
-	int queueLength = 0;
-
+	double maxDistance = 0.0;
 	if (distances.size() > 1)
 	{
-		list<CarDistance>::const_iterator preCar = distances.begin();
-		list<CarDistance>::const_iterator nextCar = ++distances.begin();
+		list<double>::const_iterator preCar = distances.begin();
+		list<double>::const_iterator nextCar = ++distances.begin();
 		while (preCar != distances.end() && nextCar != distances.end())
 		{
-			if (nextCar->Distance - preCar->Distance > QueueMinDistance)
+			if (*nextCar-*preCar > QueueMinDistance)
 			{
 				break;
 			}
 			else
 			{
-				if (queueLength==0)
-				{
-					queueLength += static_cast<int>(preCar->Length);
-				}
-
-				queueLength += static_cast<int>(nextCar->Length);
+				maxDistance = *nextCar;
 			}
 			preCar = nextCar;
 			++nextCar;
 		}
 	}
-	return queueLength;
+	return static_cast<int>(maxDistance * laneCache.MeterPerPixel);
 }
 
 void FlowDetector::DrawDetect(const map<string, DetectItem>& detectItems, bool hasIoChanged, bool hasNewCar, bool hasQueue, const unsigned char* iveBuffer, unsigned int frameIndex)
@@ -690,7 +656,8 @@ void FlowDetector::DrawDetect(const map<string, DetectItem>& detectItems, bool h
 	for (unsigned int i = 0; i < _laneCaches.size(); ++i)
 	{
 		FlowLaneCache& cache = _laneCaches[i];
-		ImageConvert::DrawPolygon(&image, cache.Region, cv::Scalar(0, 0, 255));
+		ImageConvert::DrawPolygon(&image, cache.FlowRegion, cv::Scalar(0, 0, 255));
+		ImageConvert::DrawPolygon(&image, cache.QueueRegion, cv::Scalar(0, 0, 255));
 		cv::putText(image, StringEx::ToString(cache.CurrentQueueLength), cv::Point(i * 50, 100), cv::FONT_HERSHEY_COMPLEX, 2, cv::Scalar(0, 0, 255), 2);
 	}
 	//检测项
@@ -699,7 +666,7 @@ void FlowDetector::DrawDetect(const map<string, DetectItem>& detectItems, bool h
 		string detectText;
 		if (it->second.Distance > 0)
 		{
-			detectText.append(StringEx::Combine(static_cast<int>(it->second.Distance),"/",it->second.GetLength()));
+			detectText.append(StringEx::ToString(static_cast<int>(it->second.Distance)));
 		}
 		cv::Scalar carScalar;
 		cv::Scalar idScalar;

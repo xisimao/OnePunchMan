@@ -7,7 +7,7 @@ const int RecognChannel::MaxCacheCount = 100;
 const int RecognChannel::SleepTime = 500;
 const string RecognChannel::RecognTopic("Recogn");
 
-RecognChannel::RecognChannel(int recognIndex, int width, int height, vector<TrafficDetector*>* detectors)
+RecognChannel::RecognChannel(int recognIndex, int width, int height, vector<FlowDetector*>* detectors)
 	:ThreadObject("recogn"), _inited(false), _recognIndex(recognIndex), _detectors(detectors)
 {
 	_bgrs.push_back(new uint8_t[width * height * 3]);
@@ -79,7 +79,7 @@ void RecognChannel::StartCore()
 		}
 		else
 		{
-			long long recognTimeStamp1 = DateTime::UtcNowTimeStamp();
+			long long recognTimeStamp1 = DateTime::NowTimeStamp();
 			unique_lock<mutex> lck(_queueMutex);
 			RecognItem item = _items.front();
 			_items.pop();
@@ -93,7 +93,7 @@ void RecognChannel::StartCore()
 				, &size
 				, _bgrs.data()
 				, 0);
-			long long recognTimeStamp2 = DateTime::UtcNowTimeStamp();
+			long long recognTimeStamp2 = DateTime::NowTimeStamp();
 			if (result == 0)
 			{
 				if (item.Type == DetectType::Car
@@ -140,7 +140,7 @@ void RecognChannel::StartCore()
 						_detectors->at(item.ChannelIndex - 1)->HandleRecognPedestrain(item, _bgrs[0], pedestrain);
 					}
 				}
-				long long recognTimeStamp3 = DateTime::UtcNowTimeStamp();
+				long long recognTimeStamp3 = DateTime::NowTimeStamp();
 				if (index % 100 == 0)
 				{
 					LogPool::Debug(LogEvent::Recogn, "recogn->channel index:", item.ChannelIndex,"result:", result, " sdk:", recognTimeStamp2 - recognTimeStamp1, " traffic:", recognTimeStamp3 - recognTimeStamp2);

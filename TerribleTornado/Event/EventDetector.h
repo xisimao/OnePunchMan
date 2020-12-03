@@ -1,5 +1,5 @@
 #pragma once
-#include "EventData.h"
+#include "TrafficData.h"
 #include "TrafficDetector.h"
 #include "EncodeChannel.h"
 #include "EventDataChannel.h"
@@ -36,14 +36,14 @@ namespace OnePunchMan
 		* @param taskId 任务号
 		* @param channel 通道
 		*/
-		void UpdateChannel(const unsigned char taskId, const EventChannel& channel);
+		void UpdateChannel(const unsigned char taskId, const TrafficChannel& channel);
 
 		/**
 		* 清空通道
 		*/
 		void ClearChannel();
 
-		void HandleDetect(std::map<std::string, DetectItem>* detectItems, long long timeStamp, std::string* param, unsigned char taskId, const unsigned char* iveBuffer,unsigned int frameIndex, unsigned char frameSpan);
+		void HandleDetect(std::map<std::string, DetectItem>* detectItems, long long timeStamp, unsigned char taskId, const unsigned char* iveBuffer,unsigned int frameIndex, unsigned char frameSpan);
 
 	private:
 		//事件检测缓存
@@ -134,7 +134,6 @@ namespace OnePunchMan
 		static unsigned int RetrogradeMinCount;
 		//输出视频的I帧数量
 		static int OutputVideoIFrame;
-	
 
 		//任务编号
 		int _taskId;

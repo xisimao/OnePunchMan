@@ -8,7 +8,8 @@
 #include "MqttChannel.h"
 #include "DetectChannel.h"
 #include "DecodeChannel.h"
-#include "TrafficDetector.h"
+#include "FlowDetector.h"
+#include "EventDetector.h"
 #include "SocketMaid.h"
 #include "TrafficData.h"
 #include "SqliteLogger.h"
@@ -30,6 +31,11 @@ namespace OnePunchMan
         * 构造函数
         */
         TrafficStartup();
+
+        /**
+        * 析构函数
+        */
+        ~TrafficStartup();
 
         //通道总数
         static const int ChannelCount;
@@ -53,53 +59,33 @@ namespace OnePunchMan
     protected:
         void StartCore();
 
-        /**
-        * 初始化线程集合
-        * @param mqtt mqtt
-        * @param decodes 解码类集合
-        * @param detectors 交通检测类集合
-        * @param detects 视频检测类集合
-        * @param recogns 视频识别类集合
-        * @param loginHandler 登陆句柄
-        */
-        virtual void InitThreads(MqttChannel* mqtt, std::vector<DecodeChannel*>* decodes, std::vector<TrafficDetector*>* detectors, std::vector<DetectChannel*>* detects, std::vector<RecognChannel*>* recogns,int loginHandler) = 0;
-
-        /**
-        * 初始化通道集合
-        */
-        virtual void InitChannels() = 0;
-
-        /**
-        * 升级数据库
-        */
-        virtual void UpdateDb() = 0;
-
+    private:
         /**
         * 获取通道json数据
         * @param host 请求地址
         * @param channelIndex 通道序号
         * @return 通道json数据
         */
-        virtual std::string GetChannelJson(const std::string& host, int channelIndex)=0;
+        std::string GetChannelJson(const std::string& host, int channelIndex);
 
         /**
         * 设置通道集合
         * @param e http消息接收事件参数
         */
-        virtual void SetDevice(HttpReceivedEventArgs* e)=0;
+        void SetDevice(HttpReceivedEventArgs* e);
 
         /**
         * 设置通道
         * @param e http消息接收事件参数
         */
-        virtual void SetChannel(HttpReceivedEventArgs* e)=0;
+        void SetChannel(HttpReceivedEventArgs* e);
 
         /**
         * 删除通道
         * @param channelIndex 通道序号
         * @return 删除成功返回true,否则返回false
         */
-        virtual bool DeleteChannel(int channelIndex)=0;
+        bool DeleteChannel(int channelIndex);
 
         /**
         * 检查通道数据项
@@ -154,10 +140,17 @@ namespace OnePunchMan
         */
         std::string GetId(const std::string& url, const std::string& key);
 
-        //解码线程集合,等于视频总数
-        std::vector<DecodeChannel*> _decodes;
+        /**
+         * 初始化线程集合
+         * @param loginHandler 登陆句柄
+         */
+        void InitThreads(int loginHandler);
 
-    private:
+        /**
+        * 初始化通道集合
+        */
+        void InitChannels();
+
         /**
         * 查询设备
         * @param e http消息接收事件参数
@@ -178,13 +171,24 @@ namespace OnePunchMan
         HttpHandler _handler;
         //mqtt
         MqttChannel* _mqtt;
-
-        //交通检测类集合,等于视频总数
-        std::vector<TrafficDetector*> _detectors;
+        //数据合并
+        DataMergeMap* _merge;
+        //事件数据入库线程
+        EventDataChannel* _data;
+        //编码
+        EncodeChannel* _encode;
+        //解码线程集合,等于视频总数
+        std::vector<DecodeChannel*> _decodes;
+        //流量检测类集合,等于视频总数
+        std::vector<FlowDetector*> _flowDetectors;
+        //事件检测类集合,等于视频总数
+        std::vector<EventDetector*> _eventDetectors;
         //视频检测线程集合,等于视频总数
-        std::vector<DetectChannel*> _detects;
+        std::map<int,DetectChannel*> _detects;
         //视频识别线程集合,等于视频总数/RecognChannel::ItemCount
         std::vector<RecognChannel*> _recogns;
+
+
     };
 }
 

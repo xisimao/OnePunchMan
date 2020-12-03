@@ -4,34 +4,25 @@ using namespace std;
 using namespace OnePunchMan;
 
 DateTime::DateTime()
-	:DateTime(0,0,0)
+	:DateTime(0, 0, 0)
 {
 
 }
 
 DateTime::DateTime(int year, int month, int day)
-	:DateTime(year,month,day,0,0,0)
+	: DateTime(year, month, day, 0, 0, 0)
 {
 
 }
 
 DateTime::DateTime(int year, int month, int day, int hour, int minute, int second)
-	: DateTime(year, month, day, hour,minute,second,0)
+	: DateTime(year, month, day, hour, minute, second, 0)
 {
 
 }
 
 DateTime::DateTime(int year, int month, int day, int hour, int minute, int second, int millisecond)
 {
-	if (month == 0)
-	{
-		month = 1;
-	}
-	if (day == 0)
-	{
-		day = 1;
-	}
-
 	_year = year;
 	_month = month;
 	_day = day;
@@ -40,22 +31,35 @@ DateTime::DateTime(int year, int month, int day, int hour, int minute, int secon
 	_second = second;
 	_millisecond = millisecond;
 
+	if (!Empty())
+	{
+		if (year == 0)
+		{
+			_timeStamp = hour * 24 * 60 * 60 * 1000 + minute * 60 * 1000 + second * 1000 + millisecond;
+		}
+		else
+		{
+			struct tm timeinfo;
+			timeinfo.tm_year = _year - 1900;
+			timeinfo.tm_mon = _month - 1;
+			timeinfo.tm_mday = _day;
+			timeinfo.tm_hour = _hour;
+			timeinfo.tm_min = _minute;
+			timeinfo.tm_sec = _second;
 
-	if (year == 0)
-	{
-		_utcTimeStamp = hour * 24 * 60 * 60 * 1000 + minute * 60 * 1000 + second * 1000 + millisecond;
-	}
-	else
-	{
-		struct tm timeinfo;
-		timeinfo.tm_year = _year - 1900;
-		timeinfo.tm_mon = _month - 1;
-		timeinfo.tm_mday = _day;
-		timeinfo.tm_hour = _hour;
-		timeinfo.tm_min = _minute;
-		timeinfo.tm_sec = _second;
-		time_t t = mktime(&timeinfo);
-		_utcTimeStamp = t * 1000 + millisecond;
+			timeinfo.tm_isdst = 0;
+			timeinfo.tm_wday = 0;
+			timeinfo.tm_yday = 0;
+			time_t t = mktime(&timeinfo);
+			if (t == -1)
+			{
+				_timeStamp = 0;
+			}
+			else
+			{
+				_timeStamp = t * 1000 + millisecond;
+			}
+		}
 	}
 }
 
@@ -94,41 +98,23 @@ int DateTime::Millisecond() const
 	return _millisecond;
 }
 
-long long DateTime::UtcTimeStamp() const
+long long DateTime::TimeStamp() const
 {
-	return _utcTimeStamp;
+	return _timeStamp;
 }
 
-DateTime DateTime::AddMonth(int month)
+bool DateTime::operator == (const DateTime& right) const
 {
-	int tempMonth = _month + month;
-	if (tempMonth > 12)
-	{
-		return DateTime(_year+ tempMonth / 12, tempMonth % 12, _day, _hour, _minute, _second, _millisecond);
-	}
-	else
-	{
-		return DateTime(_year, tempMonth, _day, _hour, _minute, _second, _millisecond);
-	}
+	return _year == right.Year() &&
+		_month == right.Month() &&
+		_day == right.Day() &&
+		_hour == right.Hour() &&
+		_minute == right.Minute() &&
+		_second == right.Second() &&
+		_millisecond == right.Millisecond();
 }
 
-bool DateTime::Empty() const
-{
-	return _year == 0 && _month == 0 && _day == 0 && _hour == 0 && _minute == 0 && _second == 0;
-}
-
-bool DateTime::operator == (const DateTime &right) const
-{
-	return _year == right.Year()&&
-		_month == right.Month()&&
-		_day==right.Day()&&
-		_hour==right.Hour()&&
-		_minute==right.Minute()&&
-		_second==right.Second()&&
-		_millisecond==right.Millisecond();
-}
-
-bool DateTime::operator < (const DateTime &right) const
+bool DateTime::operator < (const DateTime& right) const
 {
 	if (_year < right.Year())
 	{
@@ -196,29 +182,55 @@ bool DateTime::operator < (const DateTime &right) const
 	return false;
 }
 
-bool DateTime::operator != (const DateTime &right) const
+bool DateTime::operator != (const DateTime& right) const
 {
 	return !(*this == right);
 }
 
-bool DateTime::operator > (const DateTime &right) const
+bool DateTime::operator > (const DateTime& right) const
 {
 	return !(*this == right) && !(*this < right);
 }
 
-bool DateTime::operator >= (const DateTime &right) const
+bool DateTime::operator >= (const DateTime& right) const
 {
 	return !(*this < right);
 }
 
-bool DateTime::operator <= (const DateTime &right) const
+bool DateTime::operator <= (const DateTime& right) const
 {
 	return (*this == right) || (*this < right);
 }
 
-long long DateTime::operator - (const DateTime &right) const
+long long DateTime::operator - (const DateTime& right) const
 {
-	return this->UtcTimeStamp() - right.UtcTimeStamp();
+	return this->TimeStamp() - right.TimeStamp();
+}
+
+DateTime DateTime::AddMonth(int month)
+{
+	int tempMonth = _month + month;
+	if (tempMonth > 12)
+	{
+		return DateTime(_year + tempMonth / 12, tempMonth % 12, _day, _hour, _minute, _second, _millisecond);
+	}
+	else
+	{
+		return DateTime(_year, tempMonth, _day, _hour, _minute, _second, _millisecond);
+	}
+}
+
+bool DateTime::Empty() const
+{
+	return _year == 0 && _month == 0 && _day == 0 && _hour == 0 && _minute == 0 && _second == 0 && _millisecond == 0;
+}
+
+DateTime DateTime::ToUtcTime() const
+{
+	time_t seconds = _timeStamp / 1000;
+	tm utcTime;
+	gmtime_s(&utcTime, &seconds);
+	return DateTime(utcTime.tm_year + 1900, utcTime.tm_mon + 1, utcTime.tm_mday, utcTime.tm_hour, utcTime.tm_min, utcTime.tm_sec, static_cast<int>(_timeStamp % 1000));
 }
 
 string DateTime::ToString() const
@@ -230,9 +242,17 @@ string DateTime::ToString() const
 
 string DateTime::ToString(const string& format) const
 {
-	time_t time = _utcTimeStamp / 1000;
 	struct tm timeinfo;
-	localtime_s(&timeinfo, &time);
+	timeinfo.tm_year = _year - 1900;
+	timeinfo.tm_mon = _month - 1;
+	timeinfo.tm_mday = _day;
+	timeinfo.tm_hour = _hour;
+	timeinfo.tm_min = _minute;
+	timeinfo.tm_sec = _second;
+
+	timeinfo.tm_isdst = 0;
+	timeinfo.tm_wday = 0;
+	timeinfo.tm_yday = 0;
 	char buffer[80] = { 0 };
 	strftime(buffer, 80, format.c_str(), &timeinfo);
 	return string(buffer);
@@ -251,55 +271,74 @@ DateTime DateTime::ParseString(const string& format, const string& value)
 	return DateTime(year, month, day, hour, minute, second, millisecond);
 }
 
-DateTime DateTime::ParseTimeStamp(long long utcTimeStamp)
+DateTime DateTime::ParseTimeStamp(long long timeStamp)
 {
-	time_t time = utcTimeStamp / 1000;
-	struct tm timeinfo;
-	localtime_s(&timeinfo, &time);
-
-	return DateTime(timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec, static_cast<int>(utcTimeStamp % 1000));
+	time_t seconds = timeStamp / 1000;
+	tm localTime;
+	localtime_s(&localTime, &seconds);
+	return DateTime(localTime.tm_year + 1900, localTime.tm_mon + 1, localTime.tm_mday, localTime.tm_hour, localTime.tm_min, localTime.tm_sec, static_cast<int>(timeStamp % 1000));
+	/*long long seconds = timeStamp / 1000;
+	static const int hoursInDay = 24;
+	static const int minutesInHour = 60;
+	static const int daysFromUnixTime = 2472632;
+	static const int daysFromYear = 153;
+	static const int magicUnknownFirst = 146097;
+	static const int magicUnknownSecond = 1461;
+	int second = seconds % minutesInHour;
+	int i =static_cast<int>(seconds / minutesInHour);
+	int minute = i % minutesInHour;
+	i /= minutesInHour;
+	int hour = i % hoursInDay;
+	int day = i / hoursInDay;
+	int a = day + daysFromUnixTime;
+	int b = (a * 4 + 3) / magicUnknownFirst;
+	int c = (-b * magicUnknownFirst) / 4 + a;
+	int d = ((c * 4 + 3) / magicUnknownSecond);
+	int e = -d * magicUnknownSecond;
+	e = e / 4 + c;
+	int m = (5 * e + 2) / daysFromYear;
+	day = -(daysFromYear * m + 2) / 5 + e + 1;
+	int month = (-m / 10) * 12 + m + 2;
+	int year = b * 100 + d - 6700 + (m / 10);
+	return DateTime(year + 1900, month + 1, day, hour, minute, second, static_cast<int>(timeStamp % 1000));*/
 }
 
+DateTime DateTime::Now()
+{
+	return ParseTimeStamp(NowTimeStamp());
+}
 
-long long DateTime::UtcNowTimeStamp()
+long long DateTime::NowTimeStamp()
 {
 	struct timeb tb;
 	ftime(&tb);
 	return tb.time * 1000 + tb.millitm;
 }
 
-DateTime DateTime::Now()
-{
-	struct timeb tb;
-	ftime(&tb);
-	tm timeinfo;
-	localtime_s(&timeinfo,&tb.time);
-	return DateTime(timeinfo.tm_year+1900, timeinfo.tm_mon + 1, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec, tb.millitm);
-}
-
 DateTime DateTime::Today()
 {
-	struct timeb tb;
-	ftime(&tb);
-	tm timeinfo;
-	localtime_s(&timeinfo,&tb.time);
-	return DateTime(timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday,0,0,0,0);
+	DateTime d = DateTime::Now();
+	return DateTime(d.Year(), d.Month(), d.Day());
 }
 
 DateTime DateTime::Time()
 {
-	struct timeb tb;
-	ftime(&tb);
-	tm timeinfo;
-	localtime_s(&timeinfo, &tb.time);
-	return DateTime(0,0,0,timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec, tb.millitm);
+	DateTime d = DateTime::Now();
+	return DateTime(0, 0, 0, d.Hour(), d.Minute(), d.Second());
 }
 
-DateTime DateTime::UtcNow()
+int DateTime::TimeZone()
 {
 	struct timeb tb;
 	ftime(&tb);
-	tm timeinfo;
-	gmtime_s(&timeinfo, &tb.time);
-	return DateTime(timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec, tb.millitm);
+
+	tm localTime;
+	localtime_s(&localTime, &tb.time);
+	tm utcTime;
+	gmtime_s(&utcTime, &tb.time);
+
+	time_t localTimeStamp = mktime(&localTime);
+	time_t utcTimeStamp = mktime(&utcTime);
+
+	return static_cast<int>((localTimeStamp - utcTimeStamp) / 3600);
 }

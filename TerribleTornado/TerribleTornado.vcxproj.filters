@@ -21,17 +21,8 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Flow\FlowData.cpp">
-      <Filter>Flow</Filter>
-    </ClCompile>
-    <ClCompile Include="Flow\FlowStartup.cpp">
-      <Filter>Flow</Filter>
-    </ClCompile>
     <ClCompile Include="Flow\FlowDetector.cpp">
       <Filter>Flow</Filter>
-    </ClCompile>
-    <ClCompile Include="Event\EventData.cpp">
-      <Filter>Event</Filter>
     </ClCompile>
     <ClCompile Include="Event\EventDetector.cpp">
       <Filter>Event</Filter>
@@ -50,9 +41,6 @@
     </ClCompile>
     <ClCompile Include="Traffic\TrafficStartup.cpp">
       <Filter>Traffic</Filter>
-    </ClCompile>
-    <ClCompile Include="Event\EventStartup.cpp">
-      <Filter>Event</Filter>
     </ClCompile>
     <ClCompile Include="Adapter\IoAdapter.cpp">
       <Filter>Adapter</Filter>
@@ -73,9 +61,6 @@
     <ClCompile Include="Traffic\EncodeChannel.cpp">
       <Filter>Traffic</Filter>
     </ClCompile>
-    <ClCompile Include="Event\EventDataChannel.cpp">
-      <Filter>Event</Filter>
-    </ClCompile>
     <ClCompile Include="Traffic\SqliteLogger.cpp">
       <Filter>Traffic</Filter>
     </ClCompile>
@@ -94,16 +79,13 @@
     <ClCompile Include="Flow\DataMergeMap.cpp">
       <Filter>Flow</Filter>
     </ClCompile>
+    <ClCompile Include="Event\EventDataChannel.cpp">
+      <Filter>Event</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Flow\FlowData.h">
-      <Filter>Flow</Filter>
-    </ClInclude>
     <ClInclude Include="Flow\FlowDetector.h">
       <Filter>Flow</Filter>
-    </ClInclude>
-    <ClInclude Include="Event\EventData.h">
-      <Filter>Event</Filter>
     </ClInclude>
     <ClInclude Include="Event\EventDetector.h">
       <Filter>Event</Filter>
@@ -126,9 +108,6 @@
     <ClInclude Include="Traffic\TrafficStartup.h">
       <Filter>Traffic</Filter>
     </ClInclude>
-    <ClInclude Include="Event\EventStartup.h">
-      <Filter>Event</Filter>
-    </ClInclude>
     <ClInclude Include="Adapter\IoAdapter.h">
       <Filter>Adapter</Filter>
     </ClInclude>
@@ -143,12 +122,6 @@
     </ClInclude>
     <ClInclude Include="Traffic\EncodeChannel.h">
       <Filter>Traffic</Filter>
-    </ClInclude>
-    <ClInclude Include="Flow\FlowStartup.h">
-      <Filter>Flow</Filter>
-    </ClInclude>
-    <ClInclude Include="Event\EventDataChannel.h">
-      <Filter>Event</Filter>
     </ClInclude>
     <ClInclude Include="Traffic\SqliteLogger.h">
       <Filter>Traffic</Filter>
@@ -167,6 +140,9 @@
     </ClInclude>
     <ClInclude Include="Flow\DataMergeMap.h">
       <Filter>Flow</Filter>
+    </ClInclude>
+    <ClInclude Include="Event\EventDataChannel.h">
+      <Filter>Event</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

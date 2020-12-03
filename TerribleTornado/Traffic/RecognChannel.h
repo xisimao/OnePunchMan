@@ -4,7 +4,7 @@
 
 #include "SeemmoSDK.h"
 #include "Thread.h"
-#include "TrafficDetector.h"
+#include "FlowDetector.h"
 #include "IVEHandler.h"
 
 namespace OnePunchMan
@@ -20,7 +20,7 @@ namespace OnePunchMan
 		* @param height 图片高度
 		* @param detectors 通道检测集合
 		*/
-		RecognChannel(int recognIndex,int width, int height, std::vector<TrafficDetector*>* detectors);
+		RecognChannel(int recognIndex,int width, int height, std::vector<FlowDetector*>* detectors);
 
 		/**
 		* 析构函数
@@ -60,7 +60,7 @@ namespace OnePunchMan
 		//检测线程序号
 		int _recognIndex;
 		//通道检测集合
-		std::vector<TrafficDetector*>* _detectors;
+		std::vector<FlowDetector*>* _detectors;
 		//guid数据项集合同步锁
 		std::mutex _queueMutex;
 		//guid数据项集合

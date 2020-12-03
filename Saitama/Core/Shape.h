@@ -172,6 +172,127 @@ namespace OnePunchMan
 
 	};
 
+	//折线
+	class BrokeLine
+	{
+	public:
+
+		/**
+		* 构造函数
+		*/
+		BrokeLine()
+			:BrokeLine(std::vector<Point>())
+		{
+
+		}
+
+		/**
+		* 构造函数
+		* @param points 点集合
+		*/
+		BrokeLine(const std::vector<Point>& points)
+			:_points(points)
+		{
+
+		}
+
+		/**
+		* 添加点
+		* @param point 点
+		*/
+		void AddPoint(const Point& point)
+		{
+			_points.push_back(point);
+		}
+
+		/**
+		* 获取多边形的点集合
+		* @return 多边形的点集合
+		*/
+		const std::vector<Point>& Points() const
+		{
+			return _points;
+		}
+
+		/**
+		* 是否为空值
+		* @return 返回ture表示空值
+		*/
+		bool Empty()
+		{
+			return _points.empty();
+		}
+
+		/**
+		* 计算和另外一条线的相交点
+		* @param line 另外一条线
+		* @return 相交点
+		*/
+		Point Intersect(const Line& line)
+		{
+			for (unsigned int i = 1; i < Points().size(); ++i)
+			{
+				Line tempLine(Points()[i - 1], Points()[i]);
+				Point intersectPoint = tempLine.Intersect(line);
+				if (!intersectPoint.Empty())
+				{
+					return intersectPoint;
+				}
+			}
+			return Point();
+		}
+
+		/**
+		* 获取多边形的json数据
+		* @return 多边形的json数据
+		*/
+		std::string ToJson() const
+		{
+			std::string json;
+			json.append("[");
+			for (unsigned int i = 0; i < _points.size(); ++i)
+			{
+				json.append(_points[i].ToJson());
+				json.append(",");
+			}
+			if (json.size() == 1)
+			{
+				json.append("]");
+			}
+			else
+			{
+				json[json.size() - 1] = ']';
+			}
+			return json;
+		}
+
+		/**
+		* json转多边形
+		* @param json 多边形json数据[[1,1],[2,2],[3,3],[4,4],[5,5]]
+		* @return 转换成功返回多边形,否则返回空
+		*/
+		static BrokeLine FromJson(const std::string& json)
+		{
+			std::vector<Point> points;
+			std::vector<std::string> pointJsons = JsonDeserialization::ConvertToItems(json);
+			for (unsigned int j = 0; j < pointJsons.size(); ++j)
+			{
+				std::vector<int> coordinates = JsonDeserialization::ConvertToArray<int>(pointJsons[j]);
+				if (coordinates.size() == 2)
+				{
+					points.push_back(Point(coordinates[0], coordinates[1]));
+				}
+			}
+			return BrokeLine(points);
+		}
+
+
+	private:
+
+		//点集合
+		std::vector<Point> _points;
+	};
+
 	//矩形
 	class Rectangle
 	{
@@ -348,6 +469,121 @@ namespace OnePunchMan
 				p1 = p2;
 			}
 			return intersectCount % 2 == 1;
+		}
+
+		static Polygon Build(const BrokeLine& brokeLines1, const BrokeLine& brokeLines2, const Line& line1, const Line& line2)
+		{
+			std::vector<Point> points;
+			Point point1, point2, point3, point4;
+			int index1 = 0, index2 = 0, index3 = 0, index4 = 0;
+
+			bool hasIntersect=false;
+			for (unsigned int i = 1; i < brokeLines1.Points().size(); ++i)
+			{
+				Line tempLine(brokeLines1.Points()[i - 1], brokeLines1.Points()[i]);
+				Point intersectPoint = tempLine.Intersect(line1);
+				if (!intersectPoint.Empty())
+				{
+					point1 = intersectPoint;
+					index1 = i;
+					points.push_back(intersectPoint);
+					hasIntersect = true;
+					break;
+				}
+			}
+			if (!hasIntersect)
+			{
+				return Polygon();
+			}
+
+			hasIntersect = false;
+			for (unsigned int i = 1; i < brokeLines1.Points().size(); ++i)
+			{
+				Line tempLine(brokeLines1.Points()[i - 1], brokeLines1.Points()[i]);
+				Point intersectPoint = tempLine.Intersect(line2);
+				if (!intersectPoint.Empty())
+				{
+					point2 = intersectPoint;
+					index2 = i;
+					if (index2 > index1)
+					{
+						for (int j = index1; j< index2; ++j)
+						{
+							points.push_back((brokeLines1.Points()[j]));
+						}
+					}
+					else
+					{
+						for (int j = index1-1; j >= index2; --j)
+						{
+							points.push_back((brokeLines1.Points()[j]));
+						}
+					}
+					points.push_back(intersectPoint);
+					hasIntersect = true;
+					break;
+				}
+			}
+			if (!hasIntersect)
+			{
+				return Polygon();
+			}
+
+			hasIntersect = false;
+			for (unsigned int i = 1; i < brokeLines2.Points().size(); ++i)
+			{
+				Line tempLine(brokeLines2.Points()[i - 1], brokeLines2.Points()[i]);
+				Point intersectPoint = tempLine.Intersect(line2);
+				if (!intersectPoint.Empty())
+				{
+					point3 = intersectPoint;
+					index3 = i;
+					points.push_back(intersectPoint);
+					hasIntersect = true;
+					break;
+				}
+			}
+			if (!hasIntersect)
+			{
+				return Polygon();
+			}
+
+			hasIntersect = false;
+			for (unsigned int i = 1; i < brokeLines2.Points().size(); ++i)
+			{
+				Line tempLine(brokeLines2.Points()[i - 1], brokeLines2.Points()[i]);
+				Point intersectPoint = tempLine.Intersect(line1);
+				if (!intersectPoint.Empty())
+				{
+					point4 = intersectPoint;
+					index4 = i;
+					if (index4 > index3)
+					{
+						for (int j = index3; j < index4; ++j)
+						{
+							points.push_back((brokeLines2.Points()[j]));
+						}
+					}
+					else
+					{
+						for (int j = index3 - 1; j >= index4; --j)
+						{
+							points.push_back((brokeLines2.Points()[j]));
+						}
+					}
+					points.push_back(intersectPoint);
+					hasIntersect = true;
+					break;
+				}
+			}
+			if (!hasIntersect)
+			{
+				return Polygon();
+			}
+			else
+			{
+				return Polygon(points);
+			}
 		}
 		
 		/**
