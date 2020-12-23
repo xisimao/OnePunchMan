@@ -6,7 +6,7 @@ using namespace OnePunchMan;
 const int DetectChannel::SleepTime=40;
 
 DetectChannel::DetectChannel(int detectIndex, int width, int height)
-	:ThreadObject("detect"), _inited(false), _detectIndex(detectIndex), _width(width), _height(height), _recogn(NULL), _iveHandler(TrafficDirectory::FileDir, -1)
+	:ThreadObject("detect"), _inited(false), _detectIndex(detectIndex), _width(width), _height(height), _recogn(NULL), _image(width,height,false)
 {
 	_indexes.resize(1);
 	_timeStamps.resize(1);
@@ -29,7 +29,7 @@ void DetectChannel::SetRecogn(RecognChannel* recogn)
 
 void DetectChannel::AddChannel(int channelIndex, DecodeChannel* decode, FlowDetector* flowDetector, EventDetector* eventDetector)
 {
-	LogPool::Information(LogEvent::Detect, "No.", channelIndex, "channel add to the",_detectIndex+1,"detect thread");
+	LogPool::Debug(LogEvent::Detect, "No.", channelIndex, "channel add to the",_detectIndex+1,"detect thread");
 	ChannelItem item;
 	item.ChannelIndex = channelIndex;
 	item.Param = "[]";
@@ -55,10 +55,11 @@ void DetectChannel::UpdateChannel(const TrafficChannel& channel)
 			regionsParam.append("[");
 			for (vector<FlowLane>::const_iterator it = channel.FlowLanes.begin(); it != channel.FlowLanes.end(); ++it)
 			{
-				regionsParam.append(it->FlowRegion);
-				regionsParam.append(",");
-				regionsParam.append(it->QueueRegion);
-				regionsParam.append(",");
+				if (it->QueueRegion.size() > 2)
+				{
+					regionsParam.append(it->QueueRegion);
+					regionsParam.append(",");
+				}
 			}
 			if (regionsParam.size() == 1)
 			{
@@ -72,6 +73,7 @@ void DetectChannel::UpdateChannel(const TrafficChannel& channel)
 		}	
 
 		it->second.WriteBmp = true;
+		it->second.GlobalDetect = channel.GlobalDetect;
 		remove(StringEx::Combine(TrafficDirectory::FileDir, "channel_", channel.ChannelIndex, ".bmp").c_str());
 	}
 }
@@ -101,6 +103,7 @@ void DetectChannel::GetDetecItems(map<string, DetectItem>* items, const JsonDese
 		if (rect.size() >= 4)
 		{
 			DetectItem item;
+			item.Id = id;
 			item.Region = Rectangle(Point(rect[0], rect[1]), rect[2], rect[3]);
 			item.Type = static_cast<DetectType>(type);
 			items->insert(pair<string, DetectItem>(id, item));
@@ -149,7 +152,7 @@ void DetectChannel::StartCore()
 		int result = SeemmoSDK::seemmo_thread_init(1, _detectIndex % 2, 1);
 		if (result == 0)
 		{
-			LogPool::Information(LogEvent::Detect, "init seemmo thread");
+			LogPool::Information(LogEvent::Detect, "初始化Seemmo检测线程");
 		}
 		else
 		{
@@ -166,7 +169,7 @@ void DetectChannel::StartCore()
 		for (map<int,ChannelItem>::iterator it=_channelItems.begin();it!=_channelItems.end();++it)
 		{
 			long long detectTimeStamp = DateTime::NowTimeStamp();
-			FrameItem frameItem = it->second.Decode->GetTempIve();
+			FrameItem frameItem = it->second.Decode->GetIve();
 
 			if (frameItem.Finished)
 			{
@@ -176,7 +179,7 @@ void DetectChannel::StartCore()
 			{
 				if (it->second.WriteBmp)
 				{
-					_iveHandler.HandleFrame(frameItem.IveBuffer, _width, _height, it->second.ChannelIndex);
+					_image.IveToJpgFile(frameItem.IveBuffer,_width, _height, StringEx::Combine(TrafficDirectory::FileDir, "channel_", it->second.ChannelIndex, ".jpg"));
 					it->second.WriteBmp = false;
 				}
 				detected = true;
@@ -215,6 +218,24 @@ void DetectChannel::StartCore()
 					GetDetecItems(&detectItems, detectJd, "Vehicles");
 					GetDetecItems(&detectItems, detectJd, "Bikes");
 					GetDetecItems(&detectItems, detectJd, "Pedestrains");
+
+					if (it->second.GlobalDetect && !detectItems.empty())
+					{
+						string json;
+						JsonSerialization::SerializeValue(&json,"channelIndex", it->second.ChannelIndex);
+						JsonSerialization::SerializeValue(&json,"taskId", static_cast<int>(frameItem.TaskId));
+						JsonSerialization::SerializeValue(&json,"frameIndex", frameItem.FrameIndex);
+						JsonSerialization::SerializeValue(&json,"frameSpan", static_cast<int>(frameItem.FrameSpan));
+						string itemsJson;
+						for (map<string, DetectItem>::iterator it = detectItems.begin(); it != detectItems.end(); ++it)
+						{
+							JsonSerialization::AddClassItem(&itemsJson, it->second.ToJson());
+						}
+						JsonSerialization::SerializeClass(&json, "items", itemsJson);
+						LogPool::Information(LogEvent::DetectData, json);
+						_image.IveToJpgFile(frameItem.IveBuffer, _width, _height, StringEx::Combine(TrafficDirectory::TempDir, it->second.ChannelIndex, "_", frameItem.FrameIndex, ".jpg"));
+					}
+
 					it->second.Flow->HandleDetect(&detectItems, detectTimeStamp, frameItem.TaskId, frameItem.IveBuffer, frameItem.FrameIndex, frameItem.FrameSpan);
 					it->second.Event->HandleDetect(&detectItems, detectTimeStamp, frameItem.TaskId, frameItem.IveBuffer, frameItem.FrameIndex, frameItem.FrameSpan);
 				}

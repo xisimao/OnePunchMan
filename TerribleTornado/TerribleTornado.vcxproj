@@ -155,11 +155,8 @@
   <ItemGroup>
     <ClCompile Include="Event\EventDataChannel.cpp" />
     <ClCompile Include="Flow\DataMergeMap.cpp" />
-    <ClCompile Include="Image\BGR24Handler.cpp" />
-    <ClCompile Include="Image\H264Handler.cpp" />
-    <ClCompile Include="Image\IVEHandler.cpp" />
-    <ClCompile Include="Image\YUV420PHandler.cpp" />
-    <ClCompile Include="Image\YUV420SPHandler.cpp" />
+    <ClCompile Include="Traffic\ImageConvert.cpp" />
+    <ClCompile Include="Traffic\ImageDrawing.cpp" />
     <ClCompile Include="Traffic\SqliteLogger.cpp" />
     <ClCompile Include="TerribleTornado.cpp" />
     <ClCompile Include="Traffic\DecodeChannel.cpp" />
@@ -167,7 +164,6 @@
     <ClCompile Include="Event\EventDetector.cpp" />
     <ClCompile Include="Adapter\IoAdapter.cpp" />
     <ClCompile Include="Traffic\TrafficData.cpp" />
-    <ClCompile Include="Image\ImageConvert.cpp" />
     <ClCompile Include="Traffic\TrafficStartup.cpp" />
     <ClCompile Include="Traffic\TrafficDetector.cpp" />
     <ClCompile Include="Flow\FlowDetector.cpp" />
@@ -178,17 +174,13 @@
   <ItemGroup>
     <ClInclude Include="Event\EventDataChannel.h" />
     <ClInclude Include="Flow\DataMergeMap.h" />
-    <ClInclude Include="Image\BGR24Handler.h" />
-    <ClInclude Include="Image\H264Handler.h" />
-    <ClInclude Include="Image\IVEHandler.h" />
-    <ClInclude Include="Image\YUV420PHandler.h" />
-    <ClInclude Include="Image\YUV420SPHandler.h" />
+    <ClInclude Include="Traffic\ImageConvert.h" />
+    <ClInclude Include="Traffic\ImageDrawing.h" />
     <ClInclude Include="Traffic\SqliteLogger.h" />
     <ClInclude Include="Traffic\DecodeChannel.h" />
     <ClInclude Include="Traffic\EncodeChannel.h" />
     <ClInclude Include="Event\EventDetector.h" />
     <ClInclude Include="Adapter\IoAdapter.h" />
-    <ClInclude Include="Image\ImageConvert.h" />
     <ClInclude Include="Traffic\TrafficStartup.h" />
     <ClInclude Include="Traffic\TrafficDetector.h" />
     <ClInclude Include="Flow\FlowDetector.h" />
@@ -199,8 +191,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="appsettings.json" />
-    <None Include="event.db" />
-    <None Include="flow.db" />
+    <None Include="traffic.db" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

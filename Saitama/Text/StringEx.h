@@ -6,6 +6,8 @@
 #include <numeric>
 #include <map>
 #include <iomanip>
+#include <codecvt>
+
 
 namespace OnePunchMan
 {
@@ -73,6 +75,12 @@ namespace OnePunchMan
 		* @param value 字符串
 		*/
 		static std::string ToUpper(const std::string& value);
+
+		/**
+		* 将字符串变为小写
+		* @param value 字符串
+		*/
+		static std::string ToLower(const std::string& value);
 
 		/**
 		* 移除字符串前后的空白字符
@@ -205,6 +213,18 @@ namespace OnePunchMan
 			ss << (value?"true":"false");
 			return std::string(ss.str());
 		}
+
+		/**
+		* wstring转string
+		* @param value wstring
+		* @return string
+		*/
+		static std::string ToString(const std::wstring& value)
+		{
+			std::wstring_convert<std::codecvt_utf8<wchar_t>> cv;
+			return cv.to_bytes(value);
+		}
+
 		/**
 		* 四舍五入浮点数
 		* @param value 源浮点数
@@ -258,15 +278,15 @@ namespace OnePunchMan
 		}
 		private:
 
-			/**
-			* 判断字符是否是base64字符串范围内
-			* @param value 字符串
-			* @return 转换成功返回转换结果否则返回空字符串
-			*/
-			static inline bool IsBase64(unsigned char c);
+		/**
+		* 判断字符是否是base64字符串范围内
+		* @param value 字符串
+		* @return 转换成功返回转换结果否则返回空字符串
+		*/
+		static inline bool IsBase64(unsigned char c);
 
-			//base64字符集合
-			static const std::string Base64Chars;
+		//base64字符集合
+		static const std::string Base64Chars;
 
 	};
 
@@ -280,5 +300,58 @@ namespace OnePunchMan
 	{
 		return Convert(value, std::string());
 	}
+
+
+	//文本操作类
+	class WStringEx
+	{
+	public:
+		/**
+		* 将多个元素组合成一个字符串。
+		* @param t 由字符串的各部分构成的元素
+		* @param u... 由字符串的各部分构成的元素
+		* @return 已组合的字符串。
+		*/
+		template<typename T, typename ...U>
+		static std::string Combine(const T& t, const U& ...u)
+		{
+			std::wstringstream ss;
+			Combine(&ss, t, u...);
+			return StringEx::ToString(ss.str());
+		}
+
+		/**
+		* 将多个元素组合成一个字符串。
+		* @param t 由字符串的各部分构成的元素。
+		* @param u... 由字符串的各部分构成的元素。
+		*/
+		template<typename T, typename ...U>
+		static void Combine(std::wstringstream* ss, const T& t, const U& ...u)
+		{
+			(*ss) << t;
+			Combine(ss, u...);
+		}
+
+		/**
+		* 将最后一个元素拼接到字符串上。
+		* @param t 组成字符串的最后一个的元素。
+		*/
+		template<typename T>
+		static void Combine(std::wstringstream* ss, const T& t)
+		{
+			(*ss) << t;
+		}
+
+		/**
+		* string转wstring
+		* @param value string
+		* @return wstring
+		*/
+		static std::wstring ToWString(const std::string& value)
+		{
+			std::wstring_convert<std::codecvt_utf8<wchar_t>> cv;
+			return cv.from_bytes(value);
+		}
+	};
 }
 

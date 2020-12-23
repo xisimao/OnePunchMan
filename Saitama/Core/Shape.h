@@ -173,15 +173,15 @@ namespace OnePunchMan
 	};
 
 	//折线
-	class BrokeLine
+	class BrokenLine
 	{
 	public:
 
 		/**
 		* 构造函数
 		*/
-		BrokeLine()
-			:BrokeLine(std::vector<Point>())
+		BrokenLine()
+			:BrokenLine(std::vector<Point>())
 		{
 
 		}
@@ -190,7 +190,7 @@ namespace OnePunchMan
 		* 构造函数
 		* @param points 点集合
 		*/
-		BrokeLine(const std::vector<Point>& points)
+		BrokenLine(const std::vector<Point>& points)
 			:_points(points)
 		{
 
@@ -271,7 +271,7 @@ namespace OnePunchMan
 		* @param json 多边形json数据[[1,1],[2,2],[3,3],[4,4],[5,5]]
 		* @return 转换成功返回多边形,否则返回空
 		*/
-		static BrokeLine FromJson(const std::string& json)
+		static BrokenLine FromJson(const std::string& json)
 		{
 			std::vector<Point> points;
 			std::vector<std::string> pointJsons = JsonDeserialization::ConvertToItems(json);
@@ -283,7 +283,7 @@ namespace OnePunchMan
 					points.push_back(Point(coordinates[0], coordinates[1]));
 				}
 			}
-			return BrokeLine(points);
+			return BrokenLine(points);
 		}
 
 
@@ -380,6 +380,38 @@ namespace OnePunchMan
 			return _points;
 		}
 
+		/**
+		* 获取矩形的json数据
+		* @return 矩形的json数据
+		*/
+		std::string ToJson() const
+		{
+			std::string json;
+			JsonSerialization::AddValueItem(&json, _top.X);
+			JsonSerialization::AddValueItem(&json, _top.Y);
+			JsonSerialization::AddValueItem(&json, _width);
+			JsonSerialization::AddValueItem(&json, _height);
+			return json;
+		}
+
+		/**
+		* json转矩形
+		* @param json 矩形json数据[1,2,3,4]
+		* @return 转换成功返回矩形,否则返回空
+		*/
+		static Rectangle FromJson(const std::string& json)
+		{
+			std::vector<int> coordinates=JsonDeserialization::ConvertToArray<int>(json);
+			if (coordinates.size() == 4)
+			{
+				return Rectangle(coordinates[0], coordinates[1], coordinates[2], coordinates[3]);
+			}
+			else
+			{
+				return Rectangle();
+			}
+		}
+
 	private:
 		//矩形顶点
 		Point _top;
@@ -471,7 +503,7 @@ namespace OnePunchMan
 			return intersectCount % 2 == 1;
 		}
 
-		static Polygon Build(const BrokeLine& brokeLines1, const BrokeLine& brokeLines2, const Line& line1, const Line& line2)
+		static Polygon Build(const BrokenLine& brokeLines1, const BrokenLine& brokeLines2, const Line& line1, const Line& line2)
 		{
 			std::vector<Point> points;
 			Point point1, point2, point3, point4;

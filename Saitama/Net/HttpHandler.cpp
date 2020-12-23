@@ -38,7 +38,7 @@ SocketHandler::ProtocolPacket HttpHandler::HandleCore(int socket, unsigned int i
 	e.Socket = socket;
 	if (lines.empty())
 	{
-		LogPool::Warning(LogEvent::Socket, "http empty", httpProtocol);
+		LogPool::Warning(LogEvent::Socket, "http buffer empty", httpProtocol);
 		return ProtocolPacket(AnalysisResult::Empty, 0, static_cast<unsigned int>(httpProtocol.size()), 0,0);
 	}
 	else
@@ -47,11 +47,11 @@ SocketHandler::ProtocolPacket HttpHandler::HandleCore(int socket, unsigned int i
 		vector<string> datas = StringEx::Split(lines[0], " ", true);
 		if (datas.size() <2)
 		{
-			LogPool::Warning(LogEvent::Socket, "first line empty", httpProtocol);
+			LogPool::Warning(LogEvent::Socket, "http first line empty", httpProtocol);
 			return ProtocolPacket(AnalysisResult::Empty, 0, static_cast<unsigned int>(httpProtocol.size()), 0, 0);
 		}
 		e.Function = StringEx::ToUpper(datas[0]);
-		e.Url = datas[1];
+		e.Url = StringEx::ToLower(datas[1]);
 		//默认设置为404,如果后续没有处理则认为无效的url
 		e.Code = HttpCode::NotFound;
 

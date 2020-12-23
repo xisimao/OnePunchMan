@@ -106,6 +106,18 @@ long long SqliteReader::GetLong(int index) const
 	}
 }
 
+double SqliteReader::GetDouble(int index) const
+{
+	if (_stmt == NULL)
+	{
+		return -1;
+	}
+	else
+	{
+		return sqlite3_column_double(_stmt, index);
+	}
+}
+
 void SqliteReader::EndQuery()
 {
 	if (_stmt != NULL)

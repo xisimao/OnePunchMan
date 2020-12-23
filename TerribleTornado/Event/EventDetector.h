@@ -3,6 +3,7 @@
 #include "TrafficDetector.h"
 #include "EncodeChannel.h"
 #include "EventDataChannel.h"
+#include "ImageDrawing.h"
 
 namespace OnePunchMan
 {
@@ -144,19 +145,16 @@ namespace OnePunchMan
 		std::vector<EventLaneCache> _lanes;
 		//等待编码的集合
 		std::vector<EventData> _encodeDatas;
-		//bgr字节流
-		unsigned char* _bgrBuffer;
-		//jpg字节流
-		unsigned char* _jpgBuffer;
+		//图像转换
+		ImageConvert _image;
 		//编码线程
 		EncodeChannel* _encodeChannel;
+		//事件数据线程
+		EventDataChannel* _dataChannel;
 		//视频文件临时存放字节流长度
 		int _videoSize;
 		//视频文件临时存放字节流
 		unsigned char* _videoBuffer;
-		//事件数据线程
-		EventDataChannel* _dataChannel;
-		
 	};
 
 }

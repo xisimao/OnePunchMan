@@ -18,18 +18,14 @@ int EventDetector::OutputVideoIFrame = 20;
 
 
 EventDetector::EventDetector(int width, int height, MqttChannel* mqtt, EncodeChannel* encodeChannel, EventDataChannel* dataChannel)
-	:TrafficDetector(width, height, mqtt), _taskId(0), _encodeChannel(encodeChannel), _dataChannel(dataChannel)
+	:TrafficDetector(width, height, mqtt), _taskId(0), _image(width,height,false),_encodeChannel(encodeChannel), _dataChannel(dataChannel)
 {
-	_bgrBuffer = new unsigned char[_bgrSize];
-	_jpgBuffer = tjAlloc(_jpgSize);
 	_videoSize = 10 * 1024 * 1024;
 	_videoBuffer = new unsigned char[_videoSize];
 }
 
 EventDetector::~EventDetector()
 {
-	tjFree(_jpgBuffer);
-	delete[] _bgrBuffer;
 	delete[] _videoBuffer;
 }
 
@@ -42,13 +38,13 @@ void EventDetector::Init(const JsonDeserialization& jd)
 	RetrogradeMinMove = jd.Get<int>("Event:RetrogradeMinMove");
 	RetrogradeMinCount = jd.Get<unsigned int>("Event:RetrogradeMinCount");
 	OutputVideoIFrame = jd.Get<int>("Event:OutputVideoSpan");
-	LogPool::Information(LogEvent::Event, "ParkStartSpan", ParkStartSpan,"sec");
-	LogPool::Information(LogEvent::Event, "ParkEndSpan", ParkEndSpan, "sec");
-	LogPool::Information(LogEvent::Event, "CongestionCarCount", CongestionCarCount);
-	LogPool::Information(LogEvent::Event, "CongestionReportSpan", CongestionReportSpan, "sec");
-	LogPool::Information(LogEvent::Event, "RetrogradeMinMove", RetrogradeMinMove, "px");
-	LogPool::Information(LogEvent::Event, "RetrogradeMinCount", RetrogradeMinCount);
-	LogPool::Information(LogEvent::Event, "OutputVideoSpan", OutputVideoIFrame, "sec");
+	LogPool::Information(LogEvent::Event, "配置 ParkStartSpan", ParkStartSpan,"sec");
+	LogPool::Information(LogEvent::Event, "配置 ParkEndSpan", ParkEndSpan, "sec");
+	LogPool::Information(LogEvent::Event, "配置 CongestionCarCount", CongestionCarCount);
+	LogPool::Information(LogEvent::Event, "配置 CongestionReportSpan", CongestionReportSpan, "sec");
+	LogPool::Information(LogEvent::Event, "配置 RetrogradeMinMove", RetrogradeMinMove, "px");
+	LogPool::Information(LogEvent::Event, "配置 RetrogradeMinCount", RetrogradeMinCount);
+	LogPool::Information(LogEvent::Event, "配置 OutputVideoSpan", OutputVideoIFrame, "sec");
 	ParkStartSpan *= 1000;
 	ParkEndSpan *= 1000;
 	CongestionReportSpan *= 1000;
@@ -60,6 +56,7 @@ void EventDetector::UpdateChannel(const unsigned char taskId, const TrafficChann
 	lock_guard<mutex> lck(_laneMutex);
 	_taskId = taskId;
 	_lanes.clear();
+	string log(StringEx::Combine("事件检测初始化,通道序号:", channel.ChannelIndex,"任务编号:", _taskId));
 	for (vector<EventLane>::const_iterator lit = channel.EventLanes.begin(); lit != channel.EventLanes.end(); ++lit)
 	{
 		EventLaneCache cache;
@@ -77,7 +74,7 @@ void EventDetector::UpdateChannel(const unsigned char taskId, const TrafficChann
 					cache.YTrend = line.Point2.Y > line.Point1.Y;
 					cache.BaseAsX = abs(line.Point2.X - line.Point1.X) > abs(line.Point2.Y - line.Point1.Y);
 					_lanes.push_back(cache);
-					LogPool::Information(LogEvent::Event,"init lane ,channel index:", channel.ChannelIndex, "lane index:", lit->LaneIndex, "x offset:", line.Point2.X -line.Point1.X, "y offset:", line.Point2.Y - line.Point1.Y);
+					log.append(StringEx::Combine("初始化车道,", "车道序号:", lit->LaneIndex, "车道是否根据x轴判断位移:", cache.BaseAsX));	
 				}
 			}
 			else
@@ -88,12 +85,16 @@ void EventDetector::UpdateChannel(const unsigned char taskId, const TrafficChann
 	}
 	_channelUrl = channel.ChannelUrl;
 	_lanesInited = !_lanes.empty() && _lanes.size() == channel.EventLanes.size();
-	if (!_lanesInited)
+	if (_lanesInited)
 	{
-		LogPool::Warning(LogEvent::Event, "not found any lane,channel index:", channel.ChannelIndex);
+		LogPool::Information(LogEvent::Event, log);
+	}
+	else
+	{
+		log.append("没有任何车道配置");
+		LogPool::Warning(LogEvent::Event, log);
 	}
 	_channelIndex = channel.ChannelIndex;
-	LogPool::Information(LogEvent::Event, "init event detector,channel index:", channel.ChannelIndex, "task id:", _taskId);
 }
 
 void EventDetector::ClearChannel()
@@ -104,7 +105,6 @@ void EventDetector::ClearChannel()
 	{
 		for (vector<EventData>::iterator it = _encodeDatas.begin(); it != _encodeDatas.end();++it)
 		{
-			LogPool::Information(LogEvent::Event, "clear event cache,channel index:", _channelIndex, "temp file:", it->GetTempVideo());
 			_encodeChannel->RemoveOutput(_channelIndex,it->GetTempVideo());
 		}
 		_encodeDatas.clear();
@@ -128,7 +128,7 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 		{
 			if (_encodeChannel->OutputFinished(_channelIndex,it->GetTempVideo()))
 			{
-				ImageConvert::IveToJpgFile(iveBuffer, _width, _height, _bgrBuffer, _jpgBuffer, _jpgSize,it->GetTempImage(2));
+				_image.IveToJpgFile(iveBuffer, _width, _height,it->GetTempImage(2));
 				_dataChannel->AddData(*it);
 				it = _encodeDatas.erase(it);
 			}
@@ -183,7 +183,7 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 								mit->second.StopPark = true;
 								if (_encodeChannel != NULL)
 								{
-									LogPool::Information(LogEvent::Event, "start park event encode,channel index:", _channelIndex, "detect id:", dit->first);
+									LogPool::Debug(LogEvent::Event, "开始停车事件检测,通道序号:", _channelIndex, "detect id:", dit->first);
 									EventData data;
 									data.Guid = dit->first;
 									data.ChannelIndex = _channelIndex;
@@ -199,12 +199,7 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 											_encodeDatas.push_back(data);
 										}
 									}
-									else
-									{
-										LogPool::Warning(LogEvent::Event, "event cache queue is full,channel index:", _channelIndex, "lane index:", i + 1, "detect id:", dit->first, "current cache count:", laneCache.Items.size(), "config max cache count:", MaxCacheCount);
-									}
 								}
-								LogPool::Debug(LogEvent::Event, _channelIndex, "park event");
 							}
 						}
 						else
@@ -213,7 +208,8 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 							if (mit->second.LastTimeStamp - mit->second.FirstTimeStamp > ParkStartSpan)
 							{
 								mit->second.StartPark = true;
-								ImageConvert::IveToJpgBase64(iveBuffer, _width, _height, _bgrBuffer, _jpgBuffer, _jpgSize, &mit->second.StartParkImage);
+								mit->second.StartParkImage= _image.IveToJpgBase64(iveBuffer, _width, _height);
+							
 							}
 						}
 					}
@@ -227,7 +223,7 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 						{
 							if (_encodeChannel != NULL)
 							{
-								LogPool::Information(LogEvent::Event, "start congestion event encode,channel index:", _channelIndex, "detect id:", dit->first);
+								LogPool::Debug(LogEvent::Event, "开始拥堵检测,通道序号:", _channelIndex, "detect id:", dit->first);
 								EventData data;
 								data.Guid = dit->first;
 								data.ChannelIndex = _channelIndex;
@@ -243,13 +239,8 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 										_encodeDatas.push_back(data);
 									}
 								}
-								else
-								{
-									LogPool::Warning(LogEvent::Event, "event cache queue is full,channel index:", _channelIndex, "lane index:", i + 1, "detect id:", dit->first, "current cache count:", laneCache.Items.size(), "config max cache count:", MaxCacheCount);
-								}
 							}
 							laneCache.LastReportTimeStamp = timeStamp;
-							LogPool::Debug(LogEvent::Event, _channelIndex, "congestion event");
 						}
 					}
 					//处于拥堵状态不检测逆行
@@ -295,7 +286,7 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 										cit->second.RetrogradePoints.push_back(dit->second.Region.HitPoint());
 										if (_encodeChannel != NULL)
 										{
-											LogPool::Information(LogEvent::Event, "start retrograde event encode,channel index:", _channelIndex, "detect id:", dit->first);
+											LogPool::Debug(LogEvent::Event, "开始逆行检测,通道序号:", _channelIndex, "detect id:", dit->first);
 											EventData data;
 											data.Guid = dit->first;
 											data.ChannelIndex = _channelIndex;
@@ -311,12 +302,7 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 													_encodeDatas.push_back(data);
 												}
 											}
-											else
-											{
-												LogPool::Warning(LogEvent::Event, "event cache queue is full,channel index:", _channelIndex, "lane index:", i + 1, "detect id:", dit->first, "current cache count:", laneCache.Items.size(), "config max cache count:", MaxCacheCount);
-											}
 										}
-										LogPool::Debug(LogEvent::Event, _channelIndex, "retrograde event");
 									}
 								}
 							}
@@ -349,7 +335,7 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 					laneCache.Items.insert(pair<string, EventDetectCache>(dit->first, eventItem));
 					if (_encodeChannel != NULL)
 					{
-						LogPool::Information(LogEvent::Event, "start",eventType==EventType::Pedestrain?"pedestrain":"bike","event encode,channel index:", _channelIndex, "detect id:", dit->first);
+						LogPool::Debug(LogEvent::Event, "开始",eventType==EventType::Pedestrain?"行人":"非机动车","检测,通道序号:", _channelIndex, "detect id:", dit->first);
 						EventData data;
 						data.Guid = dit->first;
 						data.ChannelIndex = _channelIndex;
@@ -365,12 +351,7 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 								_encodeDatas.push_back(data);
 							}
 						}
-						else
-						{
-							LogPool::Warning(LogEvent::Event, "event cache queue is full,channel index:", _channelIndex, "lane index:", i + 1, "detect id:", dit->first, "current cache count:", laneCache.Items.size(), "config max cache count:", MaxCacheCount);
-						}
 					}
-					LogPool::Debug(LogEvent::Event, _channelIndex, dit->first, eventType == EventType::Pedestrain ? "pedestrain event" : "bike event");
 				}
 				else
 				{
@@ -385,10 +366,10 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 
 void EventDetector::DrawDetect(const string& filePath, const unsigned char* iveBuffer, const Rectangle& detectRegion)
 {
-	ImageConvert::IveToBgr(iveBuffer, _width, _height, _bgrBuffer);
-	cv::Mat image(_height, _width, CV_8UC3, _bgrBuffer);
+	_image.IveToBgr(iveBuffer, _width, _height);
+	cv::Mat image(_height, _width, CV_8UC3, _image.GetBgrBuffer());
 	//绿色检测项区域
-	ImageConvert::DrawRectangle(&image, detectRegion, cv::Scalar(0, 255,0));
-	ImageConvert::BgrToJpgFile(image.data, _width, _height, _jpgBuffer, _jpgSize,filePath);
+	ImageDrawing::DrawRectangle(&image, detectRegion, cv::Scalar(0, 255,0));
+	_image.BgrToJpgFile(image.data, _width, _height,filePath);
 }
 

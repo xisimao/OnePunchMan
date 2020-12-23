@@ -53,7 +53,7 @@ bool SeemmoSDK::Init()
 			return false;
 		}
 	}
-	LogPool::Information(LogEvent::System, "init seemmo sdk");
+	LogPool::Information(LogEvent::System, "≥ı ºªØSeemmo sdk");
 	return true;
 #endif // !_WIN32
 

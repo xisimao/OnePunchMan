@@ -39,10 +39,11 @@ namespace OnePunchMan
 	{
 	public:
 		DetectItem()
-			:Region(),Type(DetectType::None),Status(DetectStatus::Out), Distance(0.0)
+			:Id(),Region(),Type(DetectType::None),Status(DetectStatus::Out), Distance(0.0)
 		{
 
 		}
+		std::string Id;
 		//输入
 		//检测区域
 		Rectangle Region;
@@ -54,6 +55,15 @@ namespace OnePunchMan
 		DetectStatus Status;
 		//车辆距离停止线距离(px)
 		double Distance;
+
+		std::string ToJson()
+		{
+			std::string json;
+			JsonSerialization::SerializeValue(&json, "id", Id);
+			JsonSerialization::SerializeValue(&json, "region", Region.ToJson());
+			JsonSerialization::SerializeValue(&json, "type", static_cast<int>(Type));
+			return json;
+		}
 	};
 
 	//识别项

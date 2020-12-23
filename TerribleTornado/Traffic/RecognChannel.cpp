@@ -61,7 +61,7 @@ void RecognChannel::StartCore()
 		int result = SeemmoSDK::seemmo_thread_init(2, _recognIndex %2, 1);
 		if (result == 0)
 		{
-			LogPool::Information(LogEvent::Recogn, "init seemmo recogn thread");
+			LogPool::Information(LogEvent::Recogn, "初始化Seemmo识别线程");
 		}
 		else
 		{

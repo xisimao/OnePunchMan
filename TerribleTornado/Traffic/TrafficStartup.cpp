@@ -63,11 +63,6 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
             }
             else
             {
-                JsonSerialization::SerializeValue(&channelJson, "channelStatus", static_cast<int>(_decodes[channelIndex - 1]->Status()));
-                JsonSerialization::SerializeValue(&channelJson, "handleSpan",  _decodes[channelIndex - 1]->HandleSpan());
-                JsonSerialization::SerializeValue(&channelJson, "frameSpan",  _decodes[channelIndex - 1]->FrameSpan());
-                JsonSerialization::SerializeValue(&channelJson, "sourceWidth", _decodes[channelIndex - 1]->SourceWidth());
-                JsonSerialization::SerializeValue(&channelJson, "sourceHeight",  _decodes[channelIndex - 1]->SourceHeight());
                 e->ResponseJson = channelJson;
                 e->Code = HttpCode::OK;
             }
@@ -224,14 +219,14 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
     }
     else if (UrlStartWith(e->Url, "/api/update/licence"))
     {
-        LogPool::Information(LogEvent::System, "update licence");
+        LogPool::Information(LogEvent::System, "更新授权文件");
         string filePath("/mtd/seemmo/programs/aisdk/data/licence");
         HttpHandler::WriteFile(e->RequestJson, filePath);
         e->Code = HttpCode::OK;
     }
     else if (UrlStartWith(e->Url, "/api/update/system"))
     {
-        LogPool::Information(LogEvent::System, "update system");
+        LogPool::Information(LogEvent::System, "更新系统");
         string filePath = Path::Combine(Path::GetCurrentPath(), "service.tar");
         HttpHandler::WriteFile(e->RequestJson, filePath);
         Command::Execute("tar xf service.tar -C ../../");
@@ -331,7 +326,7 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
             e->Code = HttpCode::NotFound;
         }
     }
-    if (UrlStartWith(e->Url, "/api/data"))
+    else if (UrlStartWith(e->Url, "/api/data"))
     {
         int channelIndex = StringEx::Convert<int>(GetId(e->Url, "/api/data"));
         vector<EventData> datas = EventDataChannel::GetDatas(channelIndex);
@@ -350,6 +345,20 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
             JsonSerialization::AddClassItem(&e->ResponseJson, json);
         }
         e->Code = HttpCode::OK;
+    }
+    else if (UrlStartWith(e->Url, "/api/account/login"))
+    {
+        JsonDeserialization jd(e->RequestJson);
+        string userName=jd.Get<string>("userName");
+        string password=jd.Get<string>("password");
+        if (userName.compare("admin") == 0 && password.compare("admin") == 0)
+        {
+            e->Code = HttpCode::OK;
+        }
+        else
+        {
+            e->Code = HttpCode::BadRequest;
+        }
     }
 }
 
@@ -403,11 +412,6 @@ void TrafficStartup::GetDevice(HttpReceivedEventArgs* e)
         string channelJson = GetChannelJson(e->Host, i + 1);
         if (!channelJson.empty())
         {
-            JsonSerialization::SerializeValue(&channelJson, "channelStatus", static_cast<int>(_decodes[i]->Status()));
-            JsonSerialization::SerializeValue(&channelJson, "handleSpan", _decodes[i]->HandleSpan());
-            JsonSerialization::SerializeValue(&channelJson, "frameSpan", _decodes[i]->FrameSpan());
-            JsonSerialization::SerializeValue(&channelJson, "sourceWidth", _decodes[i]->SourceWidth());
-            JsonSerialization::SerializeValue(&channelJson, "sourceHeight", _decodes[i]->SourceHeight());
             JsonSerialization::AddClassItem(&channelsJson, channelJson);
         }
     }
@@ -425,8 +429,6 @@ void TrafficStartup::GetDevice(HttpReceivedEventArgs* e)
     JsonSerialization::SerializeValue(&deviceJson, "softwareVersion", _softwareVersion);
     JsonSerialization::SerializeValue(&deviceJson, "webVersion", webVersion);
     JsonSerialization::SerializeValue(&deviceJson, "sdkVersion", _sdkVersion);
-    JsonSerialization::SerializeValue(&deviceJson, "destinationWidth", DecodeChannel::DestinationWidth);
-    JsonSerialization::SerializeValue(&deviceJson, "destinationHeight", DecodeChannel::DestinationHeight);
     JsonSerialization::SerializeValue(&deviceJson, "mqttConnected", _mqtt==NULL?0:static_cast<int>(_mqtt->Status()));
     for (unsigned int i = 0; i < _recogns.size(); ++i)
     {
@@ -463,11 +465,8 @@ void TrafficStartup::SetDevice(HttpReceivedEventArgs* e)
             lane.ChannelIndex = channel.ChannelIndex;
             lane.LaneName = jd.Get<string>(StringEx::Combine("channels:", itemIndex, ":flowLans:", flowLaneIndex, ":laneName"));
             lane.LaneIndex = jd.Get<int>(StringEx::Combine("channels:", itemIndex, ":flowLans:", flowLaneIndex, ":laneIndex"));
-            lane.LaneType = jd.Get<int>(StringEx::Combine("channels:", itemIndex, ":flowLans:", flowLaneIndex, ":laneType"));
             lane.Direction = jd.Get<int>(StringEx::Combine("channels:", itemIndex, ":flowLans:", flowLaneIndex, ":direction"));
             lane.FlowDirection = jd.Get<int>(StringEx::Combine("channels:", itemIndex, ":flowLans:", flowLaneIndex, ":flowDirection"));
-            lane.Length = jd.Get<int>(StringEx::Combine("channels:", itemIndex, ":flowLans:", flowLaneIndex, ":length"));
-            lane.Width = jd.Get<int>(StringEx::Combine("channels:", itemIndex, ":flowLans:", flowLaneIndex, ":width"));
             lane.IOIp = jd.Get<string>(StringEx::Combine("channels:", itemIndex, ":flowLans:", flowLaneIndex, ":ioIp"));
             lane.IOPort = jd.Get<int>(StringEx::Combine("channels:", itemIndex, ":flowLans:", flowLaneIndex, ":ioPort"));
             lane.IOIndex = jd.Get<int>(StringEx::Combine("channels:", itemIndex, ":flowLans:", flowLaneIndex, ":ioIndex"));
@@ -524,7 +523,7 @@ void TrafficStartup::SetDevice(HttpReceivedEventArgs* e)
             }
             else
             {
-                unsigned char taskId = _decodes[i]->UpdateChannel(it->second.ChannelUrl, it->second.RtmpUrl("127.0.0.1"), static_cast<ChannelType>(it->second.ChannelType), it->second.Loop);
+                unsigned char taskId = _decodes[i]->UpdateChannel(it->second);
                 _detects[i + 1]->UpdateChannel(it->second);
                 _flowDetectors[i]->UpdateChannel(taskId, it->second);
                 _eventDetectors[i]->UpdateChannel(taskId, it->second);
@@ -556,19 +555,16 @@ void TrafficStartup::SetChannel(HttpReceivedEventArgs* e)
         lane.ChannelIndex = channel.ChannelIndex;
         lane.LaneName = jd.Get<string>(StringEx::Combine("flowLanes:", flowLaneIndex, ":laneName"));
         lane.LaneIndex = jd.Get<int>(StringEx::Combine("flowLanes:", flowLaneIndex, ":laneIndex"));
-        lane.LaneType = jd.Get<int>(StringEx::Combine("flowLanes:", flowLaneIndex, ":laneType"));
         lane.Direction = jd.Get<int>(StringEx::Combine("flowLanes:", flowLaneIndex, ":direction"));
         lane.FlowDirection = jd.Get<int>(StringEx::Combine("flowLanes:", flowLaneIndex, ":flowDirection"));
-        lane.Length = jd.Get<int>(StringEx::Combine("flowLanes:", flowLaneIndex, ":length"));
-        lane.Width = jd.Get<int>(StringEx::Combine("flowLanes:", flowLaneIndex, ":width"));
-        lane.IOIp = jd.Get<string>(StringEx::Combine("flowLanes:", flowLaneIndex, ":ioIp"));
-        lane.IOPort = jd.Get<int>(StringEx::Combine("flowLanes:", flowLaneIndex, ":ioPort"));
-        lane.IOIndex = jd.Get<int>(StringEx::Combine("flowLanes:", flowLaneIndex, ":ioIndex"));
         lane.StopLine = jd.Get<string>(StringEx::Combine("flowLanes:", flowLaneIndex, ":stopLine"));
         lane.FlowDetectLine = jd.Get<string>(StringEx::Combine("flowLanes:", flowLaneIndex, ":flowDetectLine"));
         lane.QueueDetectLine = jd.Get<string>(StringEx::Combine("flowLanes:", flowLaneIndex, ":queueDetectLine"));
         lane.LaneLine1 = jd.Get<string>(StringEx::Combine("flowLanes:", flowLaneIndex, ":laneLine1"));
         lane.LaneLine2 = jd.Get<string>(StringEx::Combine("flowLanes:", flowLaneIndex, ":laneLine2"));
+        lane.IOIp = jd.Get<string>(StringEx::Combine("flowLanes:", flowLaneIndex, ":ioIp"));
+        lane.IOPort = jd.Get<int>(StringEx::Combine("flowLanes:", flowLaneIndex, ":ioPort"));
+        lane.IOIndex = jd.Get<int>(StringEx::Combine("flowLanes:", flowLaneIndex, ":ioIndex"));
         lane.ReportProperties = jd.Get<int>(StringEx::Combine("flowLanes:", flowLaneIndex, ":reportProperties"));
         channel.FlowLanes.push_back(lane);
         flowLaneIndex += 1;
@@ -602,7 +598,7 @@ void TrafficStartup::SetChannel(HttpReceivedEventArgs* e)
     TrafficData data;
     if (data.SetChannel(channel))
     {
-        unsigned char taskId = _decodes[channel.ChannelIndex - 1]->UpdateChannel(channel.ChannelUrl, channel.RtmpUrl("127.0.0.1"), static_cast<ChannelType>(channel.ChannelType), channel.Loop);
+        unsigned char taskId = _decodes[channel.ChannelIndex - 1]->UpdateChannel(channel);
         _detects[channel.ChannelIndex]->UpdateChannel(channel);
         _flowDetectors[channel.ChannelIndex - 1]->UpdateChannel(taskId, channel);
         _eventDetectors[channel.ChannelIndex - 1]->UpdateChannel(taskId, channel);
@@ -638,54 +634,61 @@ bool TrafficStartup::ChannelIndexEnable(int channelIndex)
 
 string TrafficStartup::CheckChannel(TrafficChannel* channel)
 {
-    if (ChannelIndexEnable(channel->ChannelIndex))
-    {
-        //调整文件模式下的设置
-        if (channel->ChannelType != static_cast<int>(ChannelType::File)
-            || channel->Loop)
-        {
-            channel->Loop = true;
-            channel->OutputImage = false;
-            channel->OutputReport = false;
-            channel->OutputRecogn = false;
-            channel->GlobalDetect = false;
-        }
-        TrafficData data;
-        string message;
-        for (vector<FlowLane>::iterator it = channel->FlowLanes.begin(); it != channel->FlowLanes.end(); ++it)
-        {
-            //构建检测区域
-            BrokeLine laneLine1 = BrokeLine::FromJson(it->LaneLine1);
-            BrokeLine laneLine2 = BrokeLine::FromJson(it->LaneLine2);
-            Line stopLine = Line::FromJson(it->StopLine);
-            Line flowDetectLine = Line::FromJson(it->FlowDetectLine);
-            Line queueDetectLine = Line::FromJson(it->QueueDetectLine);
-            it->FlowRegion = Polygon::Build(laneLine1, laneLine2, stopLine, flowDetectLine).ToJson();
-            it->QueueRegion = Polygon::Build(laneLine1, laneLine2, stopLine, queueDetectLine).ToJson();
-
-            vector<FlowLane> lanes = data.GetFlowLanes(channel->ChannelIndex, it->LaneId);
-            for (vector<FlowLane>::iterator lit = lanes.begin(); lit != lanes.end(); ++lit)
-            {
-                if (it->ReportProperties & lit->ReportProperties)
-                {
-                    JsonSerialization::AddValueItem(&message, StringEx::Combine("channel:", it->ChannelIndex, " lane:", it->LaneId, " conflicts with channel:", lit->ChannelIndex, " lane:", lit->LaneId));
-                }
-            }
-        }
-        if (!message.empty())
-        {
-            string json;
-            JsonSerialization::SerializeArray(&json, "lanes", message);
-            return json;
-        }
-        return string();
-    }
-    else
+    if (!ChannelIndexEnable(channel->ChannelIndex))
     {
         string json;
-        JsonSerialization::SerializeArray(&json, "channelIndex", StringEx::Combine("channelIndex is limited to 1-", ChannelCount));
+        JsonSerialization::SerializeValue(&json, "message", WStringEx::Combine(L"\u901a\u9053\u5e8f\u53f7\u5fc5\u987b\u5728 1-", ChannelCount, L"\u4e4b\u95f4"));
         return json;
     }
+  
+    TrafficData data;
+    for (vector<FlowLane>::iterator it = channel->FlowLanes.begin(); it != channel->FlowLanes.end(); ++it)
+    {
+        //构建检测区域
+        BrokenLine laneLine1 = BrokenLine::FromJson(it->LaneLine1);
+        BrokenLine laneLine2 = BrokenLine::FromJson(it->LaneLine2);
+        Line stopLine = Line::FromJson(it->StopLine);
+        Line flowDetectLine = Line::FromJson(it->FlowDetectLine);
+        Line queueDetectLine = Line::FromJson(it->QueueDetectLine);
+        Polygon flowRegion = Polygon::Build(laneLine1, laneLine2, stopLine, flowDetectLine);
+        if (flowRegion.Empty())
+        {
+            string json;
+            JsonSerialization::SerializeValue(&json, "message", StringEx::ToString(L"\u6d41\u91cf\u68c0\u6d4b\u533a\u57df\u6ca1\u6709\u95ed\u5408"));
+            return json;
+        }
+        Polygon queueRegion = Polygon::Build(laneLine1, laneLine2, stopLine, queueDetectLine);
+        if (queueRegion.Empty())
+        {
+            string json;
+            JsonSerialization::SerializeValue(&json, "message", StringEx::ToString(L"\u6392\u961f\u68c0\u6d4b\u533a\u57df\u6ca1\u6709\u95ed\u5408"));
+            return json;
+        }
+        it->FlowRegion = flowRegion.ToJson();
+        it->QueueRegion = queueRegion.ToJson();
+        vector<FlowLane> lanes = data.GetFlowLanes(channel->ChannelIndex, it->LaneId);
+        for (vector<FlowLane>::iterator lit = lanes.begin(); lit != lanes.end(); ++lit)
+        {
+            if (it->ReportProperties & lit->ReportProperties)
+            {
+                string json;
+                JsonSerialization::SerializeValue(&json, "message", WStringEx::Combine(L"\u7b2c", it->ChannelIndex, L"\u4e2a\u901a\u9053\u7684\u7b2c", it->LaneIndex, L"\u4e2a\u8f66\u9053\u914d\u7f6e\u7684\u68c0\u6d4b\u9879\u4e0e\u7b2c", lit->ChannelIndex, L"\u4e2a\u901a\u9053\u7684\u7b2c", lit->LaneIndex,L"\u4e2a\u8f66\u9053\u91cd\u590d"));
+                return json;
+            }
+        }
+    }
+
+    //调整文件模式下的设置
+    if (channel->ChannelType != static_cast<int>(ChannelType::File)
+        || channel->Loop)
+    {
+        channel->Loop = true;
+        channel->OutputImage = false;
+        channel->OutputReport = false;
+        channel->OutputRecogn = false;
+        channel->GlobalDetect = false;
+    }
+    return string();
 }
 
 bool TrafficStartup::UrlStartWith(const string& url, const string& key)
@@ -718,6 +721,13 @@ void TrafficStartup::FillChannelJson(string* channelJson,const TrafficChannel* c
     JsonSerialization::SerializeValue(channelJson, "rtmpUrl", channel->RtmpUrl(host));
     JsonSerialization::SerializeValue(channelJson, "flvUrl", channel->FlvUrl(host));
     JsonSerialization::SerializeValue(channelJson, "channelType", channel->ChannelType);
+    JsonSerialization::SerializeValue(channelJson, "channelStatus", static_cast<int>(_decodes[channel->ChannelIndex-1]->Status()));
+    JsonSerialization::SerializeValue(channelJson, "frameSpan", static_cast<int>(_decodes[channel->ChannelIndex-1]->FrameSpan()));
+    JsonSerialization::SerializeValue(channelJson, "sourceWidth", static_cast<int>(_decodes[channel->ChannelIndex-1]->SourceWidth()));
+    JsonSerialization::SerializeValue(channelJson, "sourceHeight", static_cast<int>(_decodes[channel->ChannelIndex-1]->SourceHeight()));
+    JsonSerialization::SerializeValue(channelJson, "destinationWidth", DecodeChannel::DestinationWidth);
+    JsonSerialization::SerializeValue(channelJson, "destinationHeight", DecodeChannel::DestinationHeight);
+    JsonSerialization::SerializeValue(channelJson, "laneWidth", channel->LaneWidth);
     JsonSerialization::SerializeValue(channelJson, "deviceId", channel->DeviceId);
     JsonSerialization::SerializeValue(channelJson, "loop", channel->Loop);
     JsonSerialization::SerializeValue(channelJson, "outputReport", channel->OutputReport);
@@ -732,6 +742,7 @@ void TrafficStartup::FillChannel(TrafficChannel* channel,const JsonDeserializati
     channel->ChannelName = jd.Get<string>("channelName");
     channel->ChannelUrl = jd.Get<string>("channelUrl");
     channel->ChannelType = jd.Get<int>("channelType");
+    channel->LaneWidth = jd.Get<double>("laneWidth");
     channel->DeviceId = jd.Get<string>("deviceId");
     channel->Loop = jd.Get<bool>("loop");
     channel->OutputImage = jd.Get<bool>("outputImage");
@@ -746,6 +757,7 @@ void TrafficStartup::FillChannel(TrafficChannel* channel, const JsonDeserializat
     channel->ChannelName = jd.Get<string>(StringEx::Combine("channels:", itemIndex, ":channelName"));
     channel->ChannelUrl = jd.Get<string>(StringEx::Combine("channels:", itemIndex, ":channelUrl"));
     channel->ChannelType = jd.Get<int>(StringEx::Combine("channels:", itemIndex, ":channelType"));
+    channel->LaneWidth = jd.Get<double>(StringEx::Combine("channels:", itemIndex, ":laneWidth"));
     channel->DeviceId = jd.Get<string>(StringEx::Combine("channels:", itemIndex, ":deviceId"));
 }
 
@@ -770,18 +782,15 @@ string TrafficStartup::GetChannelJson(const string& host, int channelIndex)
             JsonSerialization::SerializeValue(&laneJson, "laneId", lit->LaneId);
             JsonSerialization::SerializeValue(&laneJson, "laneName", lit->LaneName);
             JsonSerialization::SerializeValue(&laneJson, "laneIndex", lit->LaneIndex);
-            JsonSerialization::SerializeValue(&laneJson, "laneType", lit->LaneType);
             JsonSerialization::SerializeValue(&laneJson, "direction", lit->Direction);
             JsonSerialization::SerializeValue(&laneJson, "flowDirection", lit->FlowDirection);
-            JsonSerialization::SerializeValue(&laneJson, "length", lit->Length);
-            JsonSerialization::SerializeValue(&laneJson, "width", lit->Width);
             JsonSerialization::SerializeValue(&laneJson, "ioIp", lit->IOIp);
             JsonSerialization::SerializeValue(&laneJson, "ioPort", lit->IOPort);
             JsonSerialization::SerializeValue(&laneJson, "ioIndex", lit->IOIndex);
             JsonSerialization::SerializeValue(&laneJson, "stopLine", lit->StopLine);
             JsonSerialization::SerializeValue(&laneJson, "flowDetectLine", lit->FlowDetectLine);
             JsonSerialization::SerializeValue(&laneJson, "queueDetectLine", lit->QueueDetectLine);
-            JsonSerialization::SerializeValue(&laneJson, "laneLine2", lit->LaneLine1);
+            JsonSerialization::SerializeValue(&laneJson, "laneLine1", lit->LaneLine1);
             JsonSerialization::SerializeValue(&laneJson, "laneLine2", lit->LaneLine2);
             JsonSerialization::SerializeValue(&laneJson, "flowRegion", lit->FlowRegion);
             JsonSerialization::SerializeValue(&laneJson, "queueRegion", lit->QueueRegion);
@@ -851,7 +860,7 @@ void TrafficStartup::InitChannels()
         TrafficChannel channel = data.GetChannel(i + 1);
         if (!channel.ChannelUrl.empty())
         {
-            unsigned char taskId = _decodes[i]->UpdateChannel(channel.ChannelUrl, channel.RtmpUrl("127.0.0.1"), static_cast<ChannelType>(channel.ChannelType), channel.Loop);
+            unsigned char taskId = _decodes[i]->UpdateChannel(channel);
             _detects[i+1]->UpdateChannel(channel);
             _flowDetectors[i]->UpdateChannel(taskId, channel);
             _eventDetectors[i]->UpdateChannel(taskId, channel);
@@ -902,28 +911,28 @@ void TrafficStartup::StartCore()
     int gbResult = vas_sdk_startup();
     if (gbResult >= 0)
     {
-        LogPool::Information(LogEvent::System, "init gb sdk,login handler:",gbResult);
+        LogPool::Information(LogEvent::System, "初始化国标sdk");
     }
     else
     {
-        LogPool::Information(LogEvent::System, "init gb sdk failed,result:", gbResult);
+        LogPool::Information(LogEvent::System, "初始化国标sdk失败,返回结果：", gbResult);
     }
 
     GbParameter gbParameter = data.GetGbPrameter();
     if (gbParameter.ServerIp.empty())
     {
-        LogPool::Information(LogEvent::System, "not found gb serverip,skip login");
+        LogPool::Information(LogEvent::System, "未找到国标配置，将不使用国标视频");
     }
     else
     {
         loginHandler = vas_sdk_login(const_cast<char*>(gbParameter.ServerIp.c_str()), gbParameter.ServerPort, const_cast<char*>(gbParameter.UserName.c_str()), const_cast<char*>(gbParameter.Password.c_str()));
         if (loginHandler >= 0)
         {
-            LogPool::Information(LogEvent::System, "gb sdk login");
+            LogPool::Information(LogEvent::System, "国标登陆成功,登陆句柄:",loginHandler);
         }
         else
         {
-            LogPool::Information(LogEvent::System, "gb sdk login failed,result:", loginHandler);
+            LogPool::Information(LogEvent::System, "国标登陆失败,登陆句柄:", loginHandler);
         }
     }
 #endif // !_WIN32
@@ -1002,7 +1011,7 @@ void TrafficStartup::StartCore()
                 vector<string> datas = StringEx::Split(columns[4], "m", true);
                 if (!datas.empty())
                 {
-                    LogPool::Information(LogEvent::Monitor, "memory(MB):", datas[0]);
+                    LogPool::Information(LogEvent::Monitor, "内存使用(MB):", datas[0]);
                 }
             }
         }

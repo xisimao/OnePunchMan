@@ -5,7 +5,6 @@
 #include "RecognChannel.h"
 #include "FlowDetector.h"
 #include "EventDetector.h"
-#include "IVEHandler.h"
 
 namespace OnePunchMan
 {
@@ -63,7 +62,7 @@ namespace OnePunchMan
 		{
 		public:
 			ChannelItem()
-				: ChannelIndex(0), Param(), WriteBmp(false), Decode(NULL), Flow(NULL), Event(NULL)
+				: ChannelIndex(0), Param(), WriteBmp(false), Decode(NULL), Flow(NULL), Event(NULL), GlobalDetect(false)
 			{
 
 			}
@@ -79,6 +78,8 @@ namespace OnePunchMan
 			FlowDetector* Flow;
 			//事件检测
 			EventDetector* Event;
+			//是否全局检测，全局检测时需要输出数据
+			bool GlobalDetect;
 		};
 
 		/**
@@ -119,8 +120,8 @@ namespace OnePunchMan
 		std::map<int,ChannelItem> _channelItems;
 		//检测线程
 		RecognChannel* _recogn;
-		//ive写入bmp
-		IVEHandler _iveHandler;
+		//图像转换
+		ImageConvert _image;
 
 		//detect
 		std::vector<uint8_t*> _ives;

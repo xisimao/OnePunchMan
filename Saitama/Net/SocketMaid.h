@@ -174,9 +174,10 @@ namespace OnePunchMan
 		
 		/**
 		* 向连入的tcp客户端发出通知
+		* @param tag 客户端标记
 		* @param buffer 字节流缓冲
 		*/
-		void SendTcp(const std::string& buffer);
+		void Notice(unsigned short tag,const std::string& buffer);
 
 		/**
 		* 发送字节流

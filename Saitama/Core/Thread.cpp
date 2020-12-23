@@ -42,9 +42,9 @@ void ThreadObject::Start()
 void ThreadObject::StartThread()
 {
 	_status = ThreadStatus::Running;
-	LogPool::Information(LogEvent::System,"start thread", _name);
+	LogPool::Debug(LogEvent::System,"开始线程", _name);
 	StartCore();
-	LogPool::Information(LogEvent::System,"stop thread",_name);
+	LogPool::Debug(LogEvent::System,"结束线程",_name);
 	_status = ThreadStatus::Stopped;
 }
 

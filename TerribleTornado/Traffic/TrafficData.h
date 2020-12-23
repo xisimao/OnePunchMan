@@ -11,8 +11,9 @@ namespace OnePunchMan
 	{
 	public:
 		FlowLane()
-			: ChannelIndex(), LaneIndex(), LaneName(), LaneId(), Direction(0), StopLine(), FlowDetectLine(), QueueDetectLine(), LaneLine1(), LaneLine2()
-			, LaneType(0), FlowDirection(0), Length(0), Width(0), IOIp(), IOPort(0), IOIndex(0), ReportProperties(0)
+			: ChannelIndex(), LaneIndex(), LaneName(), LaneId(), Direction(0), FlowDirection(0)
+			, StopLine(), FlowDetectLine(), QueueDetectLine(), LaneLine1(), LaneLine2(), FlowRegion(),QueueRegion()
+			, IOIp(), IOPort(0), IOIndex(0), ReportProperties(0)
 		{
 
 		}
@@ -26,6 +27,8 @@ namespace OnePunchMan
 		std::string LaneId;
 		//车道方向
 		int Direction;
+		//车道流向
+		int FlowDirection;
 		//停止线
 		std::string StopLine;
 		//流量检测线
@@ -40,14 +43,6 @@ namespace OnePunchMan
 		std::string FlowRegion;
 		//排队检测区域
 		std::string QueueRegion;
-		//车道类型
-		int LaneType;
-		//车道流向
-		int FlowDirection;
-		//车道长度
-		int Length;
-		//车道宽度
-		int Width;
 		//io检测器地址
 		std::string IOIp;
 		//io检测器端口
@@ -56,7 +51,6 @@ namespace OnePunchMan
 		int IOIndex;
 		//上报属性
 		int ReportProperties;
-
 	};
 
 	//事件车道类型
@@ -150,8 +144,9 @@ namespace OnePunchMan
 	{
 	public:
 		TrafficChannel()
-			:ChannelIndex(0), ChannelName(), ChannelUrl(), ChannelType(0), ChannelStatus(0)
+			:ChannelIndex(0), ChannelName(), ChannelUrl(), ChannelType(0),LaneWidth(0)
 			, Loop(true), OutputImage(false), OutputReport(false), OutputRecogn(false), GlobalDetect(false), DeviceId()
+			, ChannelStatus(0)
 		{
 
 		}
@@ -163,8 +158,8 @@ namespace OnePunchMan
 		std::string ChannelUrl;
 		//通道类型
 		int ChannelType;
-		//通道状态
-		int ChannelStatus;
+		//车道宽度
+		double LaneWidth;
 		//是否循环
 		bool Loop;
 		//是否输出图片
@@ -182,6 +177,9 @@ namespace OnePunchMan
 		std::vector<FlowLane> FlowLanes;
 		//事件车道集合
 		std::vector<EventLane> EventLanes;
+
+		//通道状态
+		int ChannelStatus;
 
 		/**
 		* 获取通道rtmp地址
@@ -273,15 +271,6 @@ namespace OnePunchMan
 		int QueueLength;
 		//空间占有率(%)
 		double SpaceOccupancy;
-
-		/**
-		* 获取数据显示的字符串
-		* @return 数据显示的字符串
-		*/
-		std::string ToString()
-		{
-			return StringEx::Combine("channel url:", ChannelUrl, " lane:", LaneId, " timestamp:", DateTime::ParseTimeStamp(TimeStamp).ToString(), " properties:", ReportProperties, " cars:", Cars, " tricycles:", Tricycles, " buss", Buss, " vans:", Vans, " trucks:", Trucks, " bikes:", Bikes, " motorcycles:", Motorcycles, " persons:", Persons, " speed(km/h):", Speed, " head distance(sec):", HeadDistance, " head space(m)", HeadSpace, " time occ(%):", TimeOccupancy, " traffic status:", TrafficStatus, " queue length(m):", QueueLength, " pace occ(%):", SpaceOccupancy);
-		}
 
 		/**
 		* 获取excel用的json
@@ -403,6 +392,8 @@ namespace OnePunchMan
 	public:
 		//文件临时存放目录
 		static std::string TempDir;
+		//数据存放目录
+		static std::string DataDir;
 		//文件存放目录
 		static std::string FileDir;
 		//文件目录连接
@@ -426,8 +417,9 @@ namespace OnePunchMan
 	public:
 		/**
 		* 构造函数
+		* @param dbName 数据库地址
 		*/
-		TrafficData();
+		TrafficData(const std::string& dbName="traffic.db");
 
 		/**
 		* 获取最后一个错误信息
@@ -549,9 +541,6 @@ namespace OnePunchMan
 		*/
 		virtual void UpdateDb();
 
-		//数据库名称
-		const static std::string DbName;
-
 	private:
 		/**
 		* 填充通道
@@ -580,6 +569,9 @@ namespace OnePunchMan
 		* @return 添加结果
 		*/
 		bool InsertChannel(const TrafficChannel& channel);
+
+		//数据库地址
+		std::string _dbName;
 
 		//数据写入
 		SqliteWriter _sqlite;

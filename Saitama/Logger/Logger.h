@@ -41,7 +41,8 @@ namespace OnePunchMan
 		Flow = 9,
 		Event = 10,
 		Adapter = 11,
-		Monitor = 12
+		Monitor = 12,
+		DetectData=13
 	};
 	
 	// 日志类

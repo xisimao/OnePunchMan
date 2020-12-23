@@ -151,7 +151,7 @@ int SocketMaid::AddListenEndPoint(const EndPoint& endPoint, SocketHandler* handl
 	SocketChannel* channel = Select();
 	if (channel == NULL)
 	{
-		LogPool::Warning(LogEvent::Socket, "channel is null");
+		LogPool::Warning(LogEvent::Socket, "没有可用的socket通道");
 		return -1;
 	}
 	else
@@ -541,7 +541,7 @@ SocketResult SocketMaid::SendTcp(unsigned short tag, const string& buffer, long 
 	}
 }
 
-void SocketMaid::SendTcp(const std::string& buffer)
+void SocketMaid::Notice(unsigned short tag,const std::string& buffer)
 {
 	lock_guard<mutex> lck(_socketMutex);
 	for (map<int, SocketItem>::iterator it = _sockets.begin(); it != _sockets.end(); ++it)

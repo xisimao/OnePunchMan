@@ -81,8 +81,6 @@ void DataMergeMap::PushData(const FlowReportData& data)
 		//新时间段数据，有选择的清空旧数据
 		else if (it->second.TimeStamp < data.TimeStamp)
 		{
-			LogPool::Information(LogEvent::Flow, "merge flow->", it->second.ToString());
-			
 			if (_mqtt != NULL
 				&& data.TimeStamp-it->second.TimeStamp==60000)
 			{

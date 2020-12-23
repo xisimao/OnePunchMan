@@ -97,7 +97,7 @@ bool EncodeChannel::InitHisi(int encodeCount, int width, int height)
         }
     }
 #endif
-    LogPool::Information(LogEvent::Decode, "init hisi encode sdk");
+    LogPool::Information(LogEvent::Decode, "初始化海思编码");
     return true;
 }
 

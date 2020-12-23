@@ -4,14 +4,13 @@ using namespace std;
 using namespace OnePunchMan;
 
 string TrafficDirectory::TempDir("../temp/");
+string TrafficDirectory::DataDir("../data/");
 string TrafficDirectory::FileDir("../files/");
 string TrafficDirectory::FileLink("files");
 string TrafficDirectory::WebDir;
 
-const string TrafficData::DbName("flow.db");
-
-TrafficData::TrafficData()
-	:_sqlite(DbName)
+TrafficData::TrafficData(const std::string& dbName)
+	:_dbName(dbName),_sqlite(dbName)
 {
 
 }
@@ -28,14 +27,15 @@ TrafficChannel TrafficData::FillChannel(const SqliteReader& sqlite)
 	channel.ChannelName = sqlite.GetString(1);
 	channel.ChannelUrl = sqlite.GetString(2);
 	channel.ChannelType = sqlite.GetInt(3);
-	channel.Loop = sqlite.GetInt(4);
-	channel.OutputReport = sqlite.GetInt(5);
-	channel.OutputImage = sqlite.GetInt(6);
-	channel.OutputRecogn = sqlite.GetInt(7);
-	channel.GlobalDetect = sqlite.GetInt(8);
-	channel.DeviceId = sqlite.GetString(9);
+	channel.LaneWidth = sqlite.GetDouble(4);
+	channel.Loop = sqlite.GetInt(5);
+	channel.OutputReport = sqlite.GetInt(6);
+	channel.OutputImage = sqlite.GetInt(7);
+	channel.OutputRecogn = sqlite.GetInt(8);
+	channel.GlobalDetect = sqlite.GetInt(9);
+	channel.DeviceId = sqlite.GetString(10);
 
-	SqliteReader flowLaneSqlite(DbName);
+	SqliteReader flowLaneSqlite(_dbName);
 	string flowLaneSql(StringEx::Combine("Select * From Flow_Lane Where ChannelIndex=", channel.ChannelIndex, " Order By LaneIndex"));
 	if (flowLaneSqlite.BeginQuery(flowLaneSql))
 	{
@@ -47,7 +47,7 @@ TrafficChannel TrafficData::FillChannel(const SqliteReader& sqlite)
 		flowLaneSqlite.EndQuery();
 	}
 
-	SqliteReader eventLaneSqlite(DbName);
+	SqliteReader eventLaneSqlite(_dbName);
 	string eventLaneSql(StringEx::Combine("Select * From Event_Lane Where ChannelIndex=", channel.ChannelIndex, " Order By LaneIndex"));
 	if (eventLaneSqlite.BeginQuery(eventLaneSql))
 	{
@@ -69,22 +69,19 @@ FlowLane TrafficData::FillFlowLane(const SqliteReader& sqlite)
 	lane.LaneId = sqlite.GetString(1);
 	lane.LaneName = sqlite.GetString(2);
 	lane.LaneIndex = sqlite.GetInt(3);
-	lane.LaneType = sqlite.GetInt(4);
-	lane.Direction = sqlite.GetInt(5);
-	lane.FlowDirection = sqlite.GetInt(6);
-	lane.Length = sqlite.GetInt(7);
-	lane.Width = sqlite.GetInt(8);
-	lane.IOIp = sqlite.GetString(9);
-	lane.IOPort = sqlite.GetInt(10);
-	lane.IOIndex = sqlite.GetInt(11);
-	lane.StopLine = sqlite.GetString(12);
-	lane.FlowDetectLine = sqlite.GetString(13);
-	lane.QueueDetectLine = sqlite.GetString(14);
-	lane.LaneLine1 = sqlite.GetString(15);
-	lane.LaneLine2 = sqlite.GetString(16);
-	lane.FlowRegion = sqlite.GetString(17);
-	lane.QueueRegion = sqlite.GetString(18);
-	lane.ReportProperties = sqlite.GetInt(19);
+	lane.Direction = sqlite.GetInt(4);
+	lane.FlowDirection = sqlite.GetInt(5);
+	lane.StopLine = sqlite.GetString(6);
+	lane.FlowDetectLine = sqlite.GetString(7);
+	lane.QueueDetectLine = sqlite.GetString(8);
+	lane.LaneLine1 = sqlite.GetString(9);
+	lane.LaneLine2 = sqlite.GetString(10);
+	lane.FlowRegion = sqlite.GetString(11);
+	lane.QueueRegion = sqlite.GetString(12);
+	lane.IOIp = sqlite.GetString(13);
+	lane.IOPort = sqlite.GetInt(14);
+	lane.IOIndex = sqlite.GetInt(15);
+	lane.ReportProperties = sqlite.GetInt(16);
 	return lane;
 }
 
@@ -103,7 +100,7 @@ EventLane TrafficData::FillEventLane(const SqliteReader& sqlite)
 vector<TrafficChannel> TrafficData::GetChannels()
 {
 	vector<TrafficChannel> channels;
-	SqliteReader sqlite(DbName);
+	SqliteReader sqlite(_dbName);
 	if (sqlite.BeginQuery("Select * From System_Channel Order By ChannelIndex"))
 	{
 		while (sqlite.HasRow())
@@ -118,7 +115,7 @@ vector<TrafficChannel> TrafficData::GetChannels()
 TrafficChannel TrafficData::GetChannel(int channelIndex)
 {
 	TrafficChannel channel;
-	SqliteReader sqlite(DbName);
+	SqliteReader sqlite(_dbName);
 	if (sqlite.BeginQuery(StringEx::Combine("Select * From System_Channel Where ChannelIndex=", channelIndex)))
 	{
 		if (sqlite.HasRow())
@@ -152,11 +149,12 @@ bool TrafficData::SetChannels(const vector<TrafficChannel>& channels)
 
 bool TrafficData::InsertChannel(const TrafficChannel& channel)
 {
-	string sql = StringEx::Combine("Insert Into System_Channel (ChannelIndex,ChannelName,ChannelUrl,ChannelType,Loop,OutputImage,OutputReport,OutputRecogn,GlobalDetect,DeviceId) Values ("
+	string sql = StringEx::Combine("Insert Into System_Channel (ChannelIndex,ChannelName,ChannelUrl,ChannelType,LaneWidth,Loop,OutputImage,OutputReport,OutputRecogn,GlobalDetect,DeviceId) Values ("
 		, channel.ChannelIndex, ","
 		, "'", channel.ChannelName, "',"
 		, "'", channel.ChannelUrl, "',"
 		, channel.ChannelType, ","
+		, channel.LaneWidth, ","
 		, channel.Loop, ","
 		, channel.OutputImage, ","
 		, channel.OutputReport, ","
@@ -169,19 +167,13 @@ bool TrafficData::InsertChannel(const TrafficChannel& channel)
 	{
 		for (vector<FlowLane>::const_iterator it = channel.FlowLanes.begin(); it != channel.FlowLanes.end(); ++it)
 		{
-			string laneSql(StringEx::Combine("Insert Into Flow_Lane (ChannelIndex,LaneId,LaneName,LaneIndex,LaneType,Direction,FlowDirection,Length,Width,IOIp,IOPort,IOIndex,StopLine,FlowDetectLine,QueueDetectLine,LaneLine1,LaneLine2,FlowRegion,QueueRegion,ReportProperties) Values ("
+			string laneSql(StringEx::Combine("Insert Into Flow_Lane (ChannelIndex,LaneId,LaneName,LaneIndex,Direction,FlowDirection,StopLine,FlowDetectLine,QueueDetectLine,LaneLine1,LaneLine2,FlowRegion,QueueRegion,IOIp,IOPort,IOIndex,ReportProperties) Values ("
 				, it->ChannelIndex, ","
 				, "'", it->LaneId, "',"
 				, "'", it->LaneName, "',"
 				, it->LaneIndex, ","
-				, it->LaneType, ","
 				, it->Direction, ","
 				, it->FlowDirection, ","
-				, it->Length, ","
-				, it->Width, ","
-				, "'", it->IOIp, "',"
-				, it->IOPort, ","
-				, it->IOIndex, ","
 				, "'", it->StopLine, "',"
 				, "'", it->FlowDetectLine, "',"
 				, "'", it->QueueDetectLine, "',"
@@ -189,6 +181,9 @@ bool TrafficData::InsertChannel(const TrafficChannel& channel)
 				, "'", it->LaneLine2, "',"
 				, "'", it->FlowRegion, "',"
 				, "'", it->QueueRegion, "',"
+				, "'", it->IOIp, "',"
+				, it->IOPort, ","
+				, it->IOIndex, ","
 				, "'", it->ReportProperties, "'"
 				, ")"));
 			if (_sqlite.ExecuteRowCount(laneSql) != 1)
@@ -241,7 +236,7 @@ void TrafficData::ClearChannels()
 vector<FlowLane> TrafficData::GetFlowLanes(int channelIndex, const std::string& laneId)
 {
 	vector<FlowLane> lanes;
-	SqliteReader sqlite(DbName);
+	SqliteReader sqlite(_dbName);
 	string sql = StringEx::Combine("Select * From Flow_Lane Where ChannelIndex!=", channelIndex, " And LaneId=='", laneId, "'");
 	if (sqlite.BeginQuery(sql))
 	{
@@ -257,7 +252,7 @@ vector<FlowLane> TrafficData::GetFlowLanes(int channelIndex, const std::string& 
 string TrafficData::GetParameter(const string& key)
 {
 	string sql(StringEx::Combine("Select Value From System_Parameter Where Key='", key, "'"));
-	SqliteReader sqlite(DbName);
+	SqliteReader sqlite(_dbName);
 	string value;
 	if (sqlite.BeginQuery(sql))
 	{
@@ -279,7 +274,7 @@ bool TrafficData::SetParameter(const string& key, const string& value)
 GbParameter TrafficData::GetGbPrameter()
 {
 	string sql("Select * From GB_Config Limit 1");
-	SqliteReader sqlite(DbName);
+	SqliteReader sqlite(_dbName);
 	GbParameter parameter;
 	if (sqlite.BeginQuery(sql))
 	{
@@ -319,7 +314,7 @@ bool TrafficData::SetGbPrameter(const GbParameter& parameter)
 vector<GbDevice> TrafficData::GetGbDevices()
 {
 	vector<GbDevice> devices;
-	SqliteReader sqlite(DbName);
+	SqliteReader sqlite(_dbName);
 	if (sqlite.BeginQuery("Select DeviceId,GbId,DeviceName,DeviceIp,DevicePort,UserName,Password From GB_Device"))
 	{
 		while (sqlite.HasRow())
@@ -376,7 +371,7 @@ bool TrafficData::DeleteGbDevice(int deviceId)
 vector<GbChannel> TrafficData::GetGbChannels(const string& deviceId)
 {
 	string sql(StringEx::Combine("Select Id,ChannelId,ChannelName From GB_Channel Where DeviceId='", deviceId,"'"));
-	SqliteReader sqlite(DbName);
+	SqliteReader sqlite(_dbName);
 	vector<GbChannel> channels;
 	if (sqlite.BeginQuery(sql))
 	{
@@ -395,14 +390,6 @@ vector<GbChannel> TrafficData::GetGbChannels(const string& deviceId)
 
 void TrafficData::UpdateDb()
 {
-	int versionValue = StringEx::Convert<int>(GetParameter("VersionValue"));
-	if (versionValue < 20101)
-	{
-		_sqlite.ExecuteRowCount("DROP TABLE [Flow_Lane];");
-		_sqlite.ExecuteRowCount("CREATE TABLE [Flow_Lane] ([ChannelIndex] text NOT NULL, [LaneId] text NOT NULL, [LaneName] text NOT NULL, [LaneIndex] bigint NOT NULL, [LaneType] bigint NOT NULL, [Direction] bigint NOT NULL, [FlowDirection] bigint NOT NULL, [Length] bigint NOT NULL, [Width] bigint NOT NULL, [IOIp] text NOT NULL, [IOPort] bigint NOT NULL, [IOIndex] bigint NOT NULL, [StopLine] text NOT NULL, [FlowDetectLine] text NOT NULL, [QueueDetectLine] text NOT NULL, [LaneLine1] text NOT NULL, [LaneLine2] text NOT NULL, [FlowRegion] text NOT NULL, [QueueRegion] text NOT NULL, [ReportProperties] bigint NOT NULL, CONSTRAINT[sqlite_autoindex_Flow_Lane_1] PRIMARY KEY([ChannelIndex], [LaneId])); ");
-		_sqlite.ExecuteRowCount("CREATE TABLE [Event_Data] ([Id] INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, [ChannelIndex] bigint NOT NULL, [LaneIndex] bigint NOT NULL, [Guid] text NOT NULL, [TimeStamp] bigint NOT NULL, [Type] bigint NOT NULL);");
-		_sqlite.ExecuteRowCount("CREATE TABLE [Event_Lane] ([ChannelIndex] text NOT NULL, [LaneIndex] int NOT NULL, [LaneName] text NOT NULL, [LaneType] int NULL, [Region] text NULL, [Line] text NULL, CONSTRAINT[sqlite_autoindex_Event_Lane_1] PRIMARY KEY([ChannelIndex], [LaneIndex]));");
-		SetParameter("Version", "2.1.0");
-		SetParameter("VersionValue", "20101");
-	}
+	SetParameter("Version", "2.1.0");
+	SetParameter("VersionValue", "20101");
 }

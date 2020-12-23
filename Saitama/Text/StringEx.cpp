@@ -171,6 +171,13 @@ string StringEx::ToUpper(const string& str)
 	return result;
 }
 
+string StringEx::ToLower(const string& str)
+{
+	string result(str);
+	transform(result.begin(), result.end(), result.begin(), ::tolower);
+	return result;
+}
+
 string StringEx::Trim(const string& str)
 {
 	string result(str);

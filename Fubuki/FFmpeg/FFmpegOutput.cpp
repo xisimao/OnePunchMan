@@ -121,7 +121,7 @@ bool FFmpegOutput::Init(const std::string& outputUrl, int iFrameCount, const AVC
 	_iFrameCount = iFrameCount;
 	if (_outputFormat != NULL)
 	{
-		LogPool::Warning(LogEvent::Encode, "already inited output file:", outputUrl);
+		LogPool::Warning(LogEvent::Encode, "重复输出视频文件:", outputUrl);
 		return true;
 	}
 	int result = 0;
@@ -193,7 +193,7 @@ bool FFmpegOutput::Init(const std::string& outputUrl, int iFrameCount, const AVC
 		Uninit();
 		return false;
 	}
-	LogPool::Information(LogEvent::Encode, "init output file:", outputUrl, "I frame count:", _iFrameCount);
+	LogPool::Information(LogEvent::Encode, "开始输出视频文件:", outputUrl, "I帧数量:", _iFrameCount);
 	return true;
 }
 
@@ -214,7 +214,7 @@ void FFmpegOutput::Uninit()
 		_outputCodec = NULL;
 		_outputStream = NULL;
 		_outputFormat = NULL;
-		LogPool::Information(LogEvent::Encode,"uninit output file:", _outputUrl, "total:", _frameIndex, " frames");
+		LogPool::Information(LogEvent::Encode,"完成输出视频文件:", _outputUrl, "总帧数:", _frameIndex, " frames");
 	}
 
 }

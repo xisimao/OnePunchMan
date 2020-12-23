@@ -51,18 +51,19 @@ namespace OnePunchMan
 		int GetInt(int index) const;
 
 		/**
-		* 读取32位数字列
-		* @param index 列序号
-		* @return 列的数字值
-		*/
-		unsigned int GetUInt(int index) const;
-
-		/**
 		* 读取64位数字列
 		* @param index 列序号
 		* @return 列的数字值
 		*/
 		long long GetLong(int index) const;
+
+		/**
+		* 读取64位浮点数
+		* @param index 列序号
+		* @return 列的浮点数值
+		*/
+		double GetDouble(int index) const;
+
 
 		/**
 		* 结束查询

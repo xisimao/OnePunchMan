@@ -8,14 +8,14 @@ const int EventDataChannel::MaxDataCount = 50;
 const string EventDataChannel::EventTopic("Event");
 
 EventDataChannel::EventDataChannel(MqttChannel* mqtt)
-	:ThreadObject("event data"), _writer(TrafficData::DbName), _mqtt(mqtt),_datas(),_tempDatas()
+	:ThreadObject("event data"), _writer("traffic.db"), _mqtt(mqtt),_datas(),_tempDatas()
 {
 
 }
 
 vector<EventData> EventDataChannel::GetDatas(int channelIndex)
 {
-	SqliteReader reader(TrafficData::DbName);
+	SqliteReader reader("traffic.db");
 	string sql = "Select * From Event_Data Where ";
 	sql.append(channelIndex==0? "1=1" : StringEx::Combine("ChannelIndex=", channelIndex));
 	sql.append(" Order By TimeStamp Desc");
@@ -74,7 +74,6 @@ void EventDataChannel::StartCore()
 			int id = _writer.ExecuteKey(insertSql);
 			if (id != -1)
 			{
-				LogPool::Debug(LogEvent::Event, "add event data ", data.Guid);
 				data.Id = id;
 				rename(data.GetTempImage(1).c_str(), data.GetImage(1).c_str());
 				rename(data.GetTempImage(2).c_str(), data.GetImage(2).c_str());
@@ -104,7 +103,6 @@ void EventDataChannel::StartCore()
 					remove(removeData.GetImage(1).c_str());
 					remove(removeData.GetImage(2).c_str());
 					remove(removeData.GetVideo().c_str());
-					LogPool::Debug(LogEvent::Event, "remove event data ", removeData.TimeStamp);
 				}
 			}
 		}

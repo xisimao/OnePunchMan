@@ -37,13 +37,13 @@ bool H264Cache::AddOutputUrl(const std::string& outputUrl, int iFrameCount)
 {
 	if (_spsSize==0 || _ppsSize==0)
 	{
-		LogPool::Information(LogEvent::Encode,"not found sps or pps data. sps:", _spsSize,"pps:", _ppsSize, outputUrl);
+		LogPool::Warning(LogEvent::Encode,"未找到sps或pps数据. sps:", _spsSize,"pps:", _ppsSize, outputUrl);
 		return false;
 	}
 	lock_guard<mutex> lck(_mutex);
 	if (_outputItems.size() >= MaxOutputCount)
 	{
-		LogPool::Information(LogEvent::Encode, "output files over max config,output file:", outputUrl," config:", MaxOutputCount);
+		LogPool::Warning(LogEvent::Encode, "视频输出文件数量超过最大配置,输出文件:", outputUrl," 配置:", MaxOutputCount);
 		return false;
 	}
 	if (_outputItems.find(outputUrl) == _outputItems.end())
@@ -60,7 +60,7 @@ bool H264Cache::AddOutputUrl(const std::string& outputUrl, int iFrameCount)
 	}
 	else
 	{
-		LogPool::Warning(LogEvent::Encode, "output file alread existed:", outputUrl);
+		LogPool::Warning(LogEvent::Encode, "视频输出文件已存在:", outputUrl);
 	}
 	return true;
 }
@@ -71,7 +71,6 @@ void H264Cache::RemoveOutputUrl(const std::string& outputUrl)
 	map<string, FFmpegOutput*>::iterator it = _outputItems.find(outputUrl);
 	if (it != _outputItems.end())
 	{
-		LogPool::Debug(LogEvent::Encode, "remove output file:", it->first);
 		delete it->second;
 		_outputItems.erase(it);
 	}
@@ -83,14 +82,13 @@ bool H264Cache::OutputFinished(const std::string& outputUrl)
 	map<string, FFmpegOutput*>::iterator it = _outputItems.find(outputUrl);
 	if (it == _outputItems.end())
 	{
-		LogPool::Information(LogEvent::Encode, "not found check finish output file:", outputUrl);
+		LogPool::Warning(LogEvent::Encode, "未找到要结束的视频输出文件:", outputUrl);
 		return true;
 	}
 	else
 	{
 		if (it->second->Finished())
 		{
-			LogPool::Debug(LogEvent::Encode, "aotu remove out file when check finish:", outputUrl);
 			delete it->second;
 			_outputItems.erase(it);
 			return true;
@@ -117,7 +115,6 @@ void H264Cache::PushPacket(unsigned char* data, int size)
 					LogPool::Error(LogEvent::Encode,"sps too large,channel index:",_channelIndex, "sps length:", size, "pps length:", _ppsSize);
 					return;
 				}
-				LogPool::Information(LogEvent::Encode,"got sps,channel index:", _channelIndex);
 				memcpy(_extraData, data, size);
 				_spsSize = size;
 			}
@@ -131,7 +128,6 @@ void H264Cache::PushPacket(unsigned char* data, int size)
 					LogPool::Error(LogEvent::Encode, "pps too large,channel index:", _channelIndex, "sps length:", _spsSize, "pps length:", size);
 					return;
 				}
-				LogPool::Information(LogEvent::Encode, "got pps,channel index:", _channelIndex);
 				memcpy(_extraData + _spsSize, data, size);
 				_ppsSize = size;
 			}

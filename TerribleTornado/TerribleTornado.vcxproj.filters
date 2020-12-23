@@ -13,12 +13,6 @@
     <Filter Include="Adapter">
       <UniqueIdentifier>{f79af6b7-945c-4374-8e16-4c607f69036b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Image">
-      <UniqueIdentifier>{dba4bd3d-dc77-4194-9a41-1fbb91d77a63}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Image\Debug">
-      <UniqueIdentifier>{2a60d150-410d-4616-b93d-68cc056659c4}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Flow\FlowDetector.cpp">
@@ -49,12 +43,6 @@
       <Filter>Traffic</Filter>
     </ClCompile>
     <ClCompile Include="TerribleTornado.cpp" />
-    <ClCompile Include="Image\ImageConvert.cpp">
-      <Filter>Image</Filter>
-    </ClCompile>
-    <ClCompile Include="Image\IVEHandler.cpp">
-      <Filter>Image</Filter>
-    </ClCompile>
     <ClCompile Include="Traffic\DecodeChannel.cpp">
       <Filter>Traffic</Filter>
     </ClCompile>
@@ -64,23 +52,17 @@
     <ClCompile Include="Traffic\SqliteLogger.cpp">
       <Filter>Traffic</Filter>
     </ClCompile>
-    <ClCompile Include="Image\BGR24Handler.cpp">
-      <Filter>Image\Debug</Filter>
-    </ClCompile>
-    <ClCompile Include="Image\H264Handler.cpp">
-      <Filter>Image\Debug</Filter>
-    </ClCompile>
-    <ClCompile Include="Image\YUV420PHandler.cpp">
-      <Filter>Image\Debug</Filter>
-    </ClCompile>
-    <ClCompile Include="Image\YUV420SPHandler.cpp">
-      <Filter>Image\Debug</Filter>
-    </ClCompile>
     <ClCompile Include="Flow\DataMergeMap.cpp">
       <Filter>Flow</Filter>
     </ClCompile>
     <ClCompile Include="Event\EventDataChannel.cpp">
       <Filter>Event</Filter>
+    </ClCompile>
+    <ClCompile Include="Traffic\ImageConvert.cpp">
+      <Filter>Traffic</Filter>
+    </ClCompile>
+    <ClCompile Include="Traffic\ImageDrawing.cpp">
+      <Filter>Traffic</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -111,12 +93,6 @@
     <ClInclude Include="Adapter\IoAdapter.h">
       <Filter>Adapter</Filter>
     </ClInclude>
-    <ClInclude Include="Image\ImageConvert.h">
-      <Filter>Image</Filter>
-    </ClInclude>
-    <ClInclude Include="Image\IVEHandler.h">
-      <Filter>Image</Filter>
-    </ClInclude>
     <ClInclude Include="Traffic\DecodeChannel.h">
       <Filter>Traffic</Filter>
     </ClInclude>
@@ -126,28 +102,21 @@
     <ClInclude Include="Traffic\SqliteLogger.h">
       <Filter>Traffic</Filter>
     </ClInclude>
-    <ClInclude Include="Image\BGR24Handler.h">
-      <Filter>Image\Debug</Filter>
-    </ClInclude>
-    <ClInclude Include="Image\H264Handler.h">
-      <Filter>Image\Debug</Filter>
-    </ClInclude>
-    <ClInclude Include="Image\YUV420PHandler.h">
-      <Filter>Image\Debug</Filter>
-    </ClInclude>
-    <ClInclude Include="Image\YUV420SPHandler.h">
-      <Filter>Image\Debug</Filter>
-    </ClInclude>
     <ClInclude Include="Flow\DataMergeMap.h">
       <Filter>Flow</Filter>
     </ClInclude>
     <ClInclude Include="Event\EventDataChannel.h">
       <Filter>Event</Filter>
     </ClInclude>
+    <ClInclude Include="Traffic\ImageConvert.h">
+      <Filter>Traffic</Filter>
+    </ClInclude>
+    <ClInclude Include="Traffic\ImageDrawing.h">
+      <Filter>Traffic</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="appsettings.json" />
-    <None Include="flow.db" />
-    <None Include="event.db" />
+    <None Include="traffic.db" />
   </ItemGroup>
 </Project>

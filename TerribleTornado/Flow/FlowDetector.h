@@ -5,6 +5,7 @@
 #include "TrafficDetector.h"
 #include "Command.h"
 #include "DataMergeMap.h"
+#include "ImageDrawing.h"
 
 namespace OnePunchMan
 {
@@ -20,11 +21,6 @@ namespace OnePunchMan
 		* @param merge 数据合并
 		*/
 		FlowDetector(int width, int height,MqttChannel* mqtt, DataMergeMap* merge);
-		
-		/**
-		* 析构函数
-		*/
-		~FlowDetector();
 
 		/**
 		* 初始化流量参数配置
@@ -43,6 +39,11 @@ namespace OnePunchMan
 		* 清空通道
 		*/
 		void ClearChannel();
+
+		/**
+		* 重置时间范围
+		*/
+		void ResetTimeRange();
 
 		/**
 		* 获取报告json数据
@@ -103,7 +104,7 @@ namespace OnePunchMan
 		{
 		public:
 			FlowLaneCache()
-				: LaneId(), LaneName(), Length(0), Direction(), FlowRegion(), QueueRegion(),ReportProperties(0), MeterPerPixel(0.0), StopPoint()
+				: LaneIndex(0),LaneId(), LaneName(), Length(0),Direction(0), FlowRegion(), QueueRegion(),ReportProperties(0), MeterPerPixel(0.0), StopPoint()
 				, Persons(0), Bikes(0), Motorcycles(0), Cars(0), Tricycles(0), Buss(0), Vans(0), Trucks(0)
 				, TotalDistance(0.0), TotalTime(0)
 				, TotalInTime(0)
@@ -113,12 +114,14 @@ namespace OnePunchMan
 			{
 
 			}
+			//车道序号
+			int LaneIndex;
 			//车道编号
 			std::string LaneId;
 			//车道名称
 			std::string LaneName;
 			//车道长度
-			int Length;
+			double Length;
 			//车道方向
 			int Direction;
 			//流量检测区域
@@ -206,13 +209,10 @@ namespace OnePunchMan
 		/**
 		* 绘制检测区域
 		* @param detectItems 检测项集合
-		* @param hasIoChanged io是否变化
-		* @param hasNewCar 是否有新车
-		* @param hasQueue 是否有排队
 		* @param iveBuffer ive字节流
 		* @param frameIndex 帧序号
 		*/
-		void DrawDetect(const std::map<std::string, DetectItem>& detectItems,bool hasIoChanged,bool hasNewCar,bool hasQueue, const unsigned char* iveBuffer, unsigned int frameIndex);
+		void DrawDetect(const std::map<std::string, DetectItem>& detectItems, const unsigned char* iveBuffer, unsigned int frameIndex);
 
 		//IO mqtt主题
 		static const std::string IOTopic;
@@ -252,14 +252,10 @@ namespace OnePunchMan
 		std::vector<VideoStruct_Bike> _bikeReportCaches;
 		std::vector<VideoStruct_Pedestrain> _pedestrainReportCaches;
 
-		//监测时用到的bgr字节流
-		unsigned char* _detectBgrBuffer;
-		//监测时用到的jpg字节流
-		unsigned char* _detectJpgBuffer;
-		//识别时用到的bgr字节流
-		unsigned char* _recognBgrBuffer;
-		//识别时用到的jpg字节流
-		unsigned char* _recognJpgBuffer;
+		//监测图像转换
+		ImageConvert _detectImage;
+		//识别图像转换
+		ImageConvert _recognImage;
 
 		//是否输出图片
 		bool _outputImage;
