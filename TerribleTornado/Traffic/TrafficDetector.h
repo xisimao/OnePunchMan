@@ -234,17 +234,6 @@ namespace OnePunchMan
 		*/
 		bool LanesInited() const;
 
-		/**
-		* 供子类实现的处理检测数据
-		* @param items 检测数据项集合
-		* @param timeStamp 时间戳
-		* @param taskId 任务编号
-		* @param iveBuffer 图片字节流
-		* @param frameIndex 帧序号
-		* @param frameSpan 帧间隔时间(毫秒)
-		*/
-		virtual void HandleDetect(std::map<std::string, DetectItem>* detectItems, long long timeStamp, unsigned char taskId, const unsigned char* iveBuffer, unsigned int frameIndex, unsigned char frameSpan) = 0;
-		
 	protected:
 		//视频序号
 		int _channelIndex;

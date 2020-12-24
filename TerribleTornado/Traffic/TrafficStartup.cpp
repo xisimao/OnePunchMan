@@ -10,7 +10,7 @@ const int TrafficStartup::RecognCount = 2;
 TrafficStartup::TrafficStartup()
     :ThreadObject("startup")
     , _startTime(DateTime::Now()),_sdkInited(false), _socketMaid(NULL)
-    , _mqtt(NULL), _merge(NULL), _encode(NULL)
+    , _mqtt(NULL), _merge(NULL), _data(NULL),_encode(NULL)
 {
     JsonDeserialization jd("appsettings.json");
     TrafficDirectory::Init(jd.Get<string>("Flow:Web"));
@@ -475,7 +475,6 @@ void TrafficStartup::SetDevice(HttpReceivedEventArgs* e)
             lane.QueueDetectLine = jd.Get<string>(StringEx::Combine("channels:", itemIndex, ":flowLans:", flowLaneIndex, ":queueDetectLine"));
             lane.LaneLine1 = jd.Get<string>(StringEx::Combine("channels:", itemIndex, ":flowLans:", flowLaneIndex, ":laneLine1"));
             lane.LaneLine2 = jd.Get<string>(StringEx::Combine("channels:", itemIndex, ":flowLans:", flowLaneIndex, ":laneLine2"));
-            lane.ReportProperties = jd.Get<int>(StringEx::Combine("channels:", itemIndex, ":flowLans:", flowLaneIndex, ":reportProperties"));
             channel.FlowLanes.push_back(lane);
             flowLaneIndex += 1;
         }
@@ -534,7 +533,7 @@ void TrafficStartup::SetDevice(HttpReceivedEventArgs* e)
     else
     {
         e->Code = HttpCode::BadRequest;
-        JsonSerialization::SerializeArray(&e->ResponseJson, "db", data.LastError());
+        JsonSerialization::SerializeValue(&e->ResponseJson, "message", data.LastError());
     }
 }
 
@@ -565,7 +564,6 @@ void TrafficStartup::SetChannel(HttpReceivedEventArgs* e)
         lane.IOIp = jd.Get<string>(StringEx::Combine("flowLanes:", flowLaneIndex, ":ioIp"));
         lane.IOPort = jd.Get<int>(StringEx::Combine("flowLanes:", flowLaneIndex, ":ioPort"));
         lane.IOIndex = jd.Get<int>(StringEx::Combine("flowLanes:", flowLaneIndex, ":ioIndex"));
-        lane.ReportProperties = jd.Get<int>(StringEx::Combine("flowLanes:", flowLaneIndex, ":reportProperties"));
         channel.FlowLanes.push_back(lane);
         flowLaneIndex += 1;
     }
@@ -607,7 +605,7 @@ void TrafficStartup::SetChannel(HttpReceivedEventArgs* e)
     else
     {
         e->Code = HttpCode::BadRequest;
-        JsonSerialization::SerializeArray(&e->ResponseJson, "db", data.LastError());
+        JsonSerialization::SerializeValue(&e->ResponseJson, "message", data.LastError());
     }
 }
 
@@ -669,7 +667,7 @@ string TrafficStartup::CheckChannel(TrafficChannel* channel)
         vector<FlowLane> lanes = data.GetFlowLanes(channel->ChannelIndex, it->LaneId);
         for (vector<FlowLane>::iterator lit = lanes.begin(); lit != lanes.end(); ++lit)
         {
-            if (it->ReportProperties & lit->ReportProperties)
+            if (channel->ReportProperties & lit->ReportProperties)
             {
                 string json;
                 JsonSerialization::SerializeValue(&json, "message", WStringEx::Combine(L"\u7b2c", it->ChannelIndex, L"\u4e2a\u901a\u9053\u7684\u7b2c", it->LaneIndex, L"\u4e2a\u8f66\u9053\u914d\u7f6e\u7684\u68c0\u6d4b\u9879\u4e0e\u7b2c", lit->ChannelIndex, L"\u4e2a\u901a\u9053\u7684\u7b2c", lit->LaneIndex,L"\u4e2a\u8f66\u9053\u91cd\u590d"));
@@ -683,6 +681,7 @@ string TrafficStartup::CheckChannel(TrafficChannel* channel)
         || channel->Loop)
     {
         channel->Loop = true;
+        channel->OutputDetect = false;
         channel->OutputImage = false;
         channel->OutputReport = false;
         channel->OutputRecogn = false;
@@ -727,13 +726,16 @@ void TrafficStartup::FillChannelJson(string* channelJson,const TrafficChannel* c
     JsonSerialization::SerializeValue(channelJson, "sourceHeight", static_cast<int>(_decodes[channel->ChannelIndex-1]->SourceHeight()));
     JsonSerialization::SerializeValue(channelJson, "destinationWidth", DecodeChannel::DestinationWidth);
     JsonSerialization::SerializeValue(channelJson, "destinationHeight", DecodeChannel::DestinationHeight);
-    JsonSerialization::SerializeValue(channelJson, "laneWidth", channel->LaneWidth);
     JsonSerialization::SerializeValue(channelJson, "deviceId", channel->DeviceId);
     JsonSerialization::SerializeValue(channelJson, "loop", channel->Loop);
-    JsonSerialization::SerializeValue(channelJson, "outputReport", channel->OutputReport);
+    JsonSerialization::SerializeValue(channelJson, "outputDetect", channel->OutputDetect);
     JsonSerialization::SerializeValue(channelJson, "outputImage", channel->OutputImage);
+    JsonSerialization::SerializeValue(channelJson, "outputReport", channel->OutputReport);
     JsonSerialization::SerializeValue(channelJson, "outputRecogn", channel->OutputRecogn);
     JsonSerialization::SerializeValue(channelJson, "globalDetect", channel->GlobalDetect);
+    JsonSerialization::SerializeValue(channelJson, "laneWidth", channel->LaneWidth);
+    JsonSerialization::SerializeValue(channelJson, "reportProperties", channel->ReportProperties);
+
 }
 
 void TrafficStartup::FillChannel(TrafficChannel* channel,const JsonDeserialization& jd)
@@ -742,13 +744,17 @@ void TrafficStartup::FillChannel(TrafficChannel* channel,const JsonDeserializati
     channel->ChannelName = jd.Get<string>("channelName");
     channel->ChannelUrl = jd.Get<string>("channelUrl");
     channel->ChannelType = jd.Get<int>("channelType");
-    channel->LaneWidth = jd.Get<double>("laneWidth");
     channel->DeviceId = jd.Get<string>("deviceId");
+
     channel->Loop = jd.Get<bool>("loop");
+    channel->OutputDetect = jd.Get<bool>("outputDetect");
     channel->OutputImage = jd.Get<bool>("outputImage");
     channel->OutputReport = jd.Get<bool>("outputReport");
     channel->OutputRecogn = jd.Get<bool>("outputRecogn");
     channel->GlobalDetect = jd.Get<bool>("globalDetect");
+
+    channel->LaneWidth = jd.Get<double>("laneWidth");
+    channel->ReportProperties = jd.Get<int>("reportProperties");
 }
 
 void TrafficStartup::FillChannel(TrafficChannel* channel, const JsonDeserialization& jd, int itemIndex)
@@ -757,8 +763,17 @@ void TrafficStartup::FillChannel(TrafficChannel* channel, const JsonDeserializat
     channel->ChannelName = jd.Get<string>(StringEx::Combine("channels:", itemIndex, ":channelName"));
     channel->ChannelUrl = jd.Get<string>(StringEx::Combine("channels:", itemIndex, ":channelUrl"));
     channel->ChannelType = jd.Get<int>(StringEx::Combine("channels:", itemIndex, ":channelType"));
-    channel->LaneWidth = jd.Get<double>(StringEx::Combine("channels:", itemIndex, ":laneWidth"));
     channel->DeviceId = jd.Get<string>(StringEx::Combine("channels:", itemIndex, ":deviceId"));
+    
+    channel->Loop = jd.Get<bool>(StringEx::Combine("channels:", itemIndex, ":loop"));
+    channel->OutputDetect = jd.Get<bool>(StringEx::Combine("channels:", itemIndex, ":outputDetect"));
+    channel->OutputImage = jd.Get<bool>(StringEx::Combine("channels:", itemIndex, ":outputImage"));
+    channel->OutputReport = jd.Get<bool>(StringEx::Combine("channels:", itemIndex, ":outputReport"));
+    channel->OutputRecogn = jd.Get<bool>(StringEx::Combine("channels:", itemIndex, ":outputRecogn"));
+    channel->GlobalDetect = jd.Get<bool>(StringEx::Combine("channels:", itemIndex, ":globalDetect"));
+
+    channel->LaneWidth = jd.Get<double>(StringEx::Combine("channels:", itemIndex, ":laneWidth"));
+    channel->ReportProperties = jd.Get<int>(StringEx::Combine("channels:", itemIndex, ":reportProperties"));
 }
 
 string TrafficStartup::GetChannelJson(const string& host, int channelIndex)
@@ -794,7 +809,6 @@ string TrafficStartup::GetChannelJson(const string& host, int channelIndex)
             JsonSerialization::SerializeValue(&laneJson, "laneLine2", lit->LaneLine2);
             JsonSerialization::SerializeValue(&laneJson, "flowRegion", lit->FlowRegion);
             JsonSerialization::SerializeValue(&laneJson, "queueRegion", lit->QueueRegion);
-            JsonSerialization::SerializeValue(&laneJson, "reportProperties", lit->ReportProperties);
             JsonSerialization::AddClassItem(&flowLanesJson, laneJson);
         }
         JsonSerialization::SerializeArray(&channelJson, "flowLanes", flowLanesJson);

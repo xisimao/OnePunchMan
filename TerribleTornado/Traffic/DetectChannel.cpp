@@ -73,7 +73,13 @@ void DetectChannel::UpdateChannel(const TrafficChannel& channel)
 		}	
 
 		it->second.WriteBmp = true;
-		it->second.GlobalDetect = channel.GlobalDetect;
+		it->second.OutputDetect = channel.OutputDetect;
+		it->second.OutputImage = channel.OutputImage;
+		//输出图片时先删除旧的
+		if (it->second.OutputImage)
+		{
+			Command::Execute(StringEx::Combine("rm -rf ", TrafficDirectory::TempDir, it->second.ChannelIndex, "_*.jpg"));
+		}
 		remove(StringEx::Combine(TrafficDirectory::FileDir, "channel_", channel.ChannelIndex, ".bmp").c_str());
 	}
 }
@@ -219,7 +225,7 @@ void DetectChannel::StartCore()
 					GetDetecItems(&detectItems, detectJd, "Bikes");
 					GetDetecItems(&detectItems, detectJd, "Pedestrains");
 
-					if (it->second.GlobalDetect && !detectItems.empty())
+					if (it->second.OutputDetect && !detectItems.empty())
 					{
 						string json;
 						JsonSerialization::SerializeValue(&json,"channelIndex", it->second.ChannelIndex);
@@ -233,10 +239,12 @@ void DetectChannel::StartCore()
 						}
 						JsonSerialization::SerializeClass(&json, "items", itemsJson);
 						LogPool::Information(LogEvent::DetectData, json);
+					}
+					if (it->second.OutputImage && !detectItems.empty())
+					{
 						_image.IveToJpgFile(frameItem.IveBuffer, _width, _height, StringEx::Combine(TrafficDirectory::TempDir, it->second.ChannelIndex, "_", frameItem.FrameIndex, ".jpg"));
 					}
-
-					it->second.Flow->HandleDetect(&detectItems, detectTimeStamp, frameItem.TaskId, frameItem.IveBuffer, frameItem.FrameIndex, frameItem.FrameSpan);
+					it->second.Flow->HandleDetect(&detectItems, detectTimeStamp, frameItem.TaskId, frameItem.FrameIndex, frameItem.FrameSpan);
 					it->second.Event->HandleDetect(&detectItems, detectTimeStamp, frameItem.TaskId, frameItem.IveBuffer, frameItem.FrameIndex, frameItem.FrameSpan);
 				}
 				long long detectTimeStamp3 = DateTime::NowTimeStamp();

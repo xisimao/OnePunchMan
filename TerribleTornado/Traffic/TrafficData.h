@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <math.h>
 
 #include "StringEx.h"
 #include "Sqlite.h"
@@ -144,8 +145,9 @@ namespace OnePunchMan
 	{
 	public:
 		TrafficChannel()
-			:ChannelIndex(0), ChannelName(), ChannelUrl(), ChannelType(0),LaneWidth(0)
-			, Loop(true), OutputImage(false), OutputReport(false), OutputRecogn(false), GlobalDetect(false), DeviceId()
+			:ChannelIndex(0), ChannelName(), ChannelUrl(), ChannelType(0), DeviceId()
+			, Loop(true), OutputDetect(false), OutputImage(false), OutputReport(false), OutputRecogn(false), GlobalDetect(false)
+			, LaneWidth(0.0), ReportProperties(3)
 			, ChannelStatus(0)
 		{
 
@@ -158,10 +160,13 @@ namespace OnePunchMan
 		std::string ChannelUrl;
 		//通道类型
 		int ChannelType;
-		//车道宽度
-		double LaneWidth;
+		//国标设备编号
+		std::string DeviceId;
+
 		//是否循环
 		bool Loop;
+		//是否输出检测数据
+		bool OutputDetect;
 		//是否输出图片
 		bool OutputImage;
 		//是否输出检测报告
@@ -170,8 +175,11 @@ namespace OnePunchMan
 		bool OutputRecogn;
 		//是否全局检测
 		bool GlobalDetect;
-		//国标设备编号
-		std::string DeviceId;
+	
+		//车道宽度
+		double LaneWidth;
+		//上报属性
+		int ReportProperties;
 
 		//流量车道集合
 		std::vector<FlowLane> FlowLanes;
@@ -322,8 +330,8 @@ namespace OnePunchMan
 			JsonSerialization::SerializeValue(&messageJson, "trucks", Trucks);
 
 			JsonSerialization::SerializeValue(&messageJson, "averageSpeed", static_cast<int>(Speed));
-			JsonSerialization::SerializeValue(&messageJson, "headDistance", HeadDistance);
-			JsonSerialization::SerializeValue(&messageJson, "headSpace", HeadSpace);
+			JsonSerialization::SerializeValue(&messageJson, "headDistance", StringEx::Rounding(HeadDistance,2));
+			JsonSerialization::SerializeValue(&messageJson, "headSpace", StringEx::Rounding(HeadSpace, 2));
 			JsonSerialization::SerializeValue(&messageJson, "timeOccupancy", static_cast<int>(TimeOccupancy));
 			JsonSerialization::SerializeValue(&messageJson, "trafficStatus", TrafficStatus);
 

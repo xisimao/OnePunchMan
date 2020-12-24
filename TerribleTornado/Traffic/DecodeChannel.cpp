@@ -12,7 +12,7 @@ const int DecodeChannel::DestinationHeight = 1080;
 DecodeChannel::DecodeChannel(int channelIndex, int loginId, EncodeChannel* encodeChannel)
 	:ThreadObject("decode")
 	, _channelIndex(channelIndex), _loginId(loginId)
-	, _inputUrl(), _outputUrl(), _channelType(ChannelType::None), _channelStatus(ChannelStatus::Init), _taskId(0), _loop(false), _globalDetect(false)
+	, _inputUrl(), _outputUrl(), _channelType(ChannelType::None), _channelStatus(ChannelStatus::Init), _taskId(0), _loop(false), _syncDetect(false)
 	, _inputFormat(NULL), _inputStream(NULL), _inputVideoIndex(-1), _sourceWidth(0), _sourceHeight(0), _frameSpan(0), _frameIndex(1), _totalFrameCount(0), _handleFrameCount(0), _currentTaskId(0), _playHandler(-1)
 	, _outputHandler()
 	, _yuvHasData(false), _image(DestinationWidth, DestinationHeight, true)
@@ -752,7 +752,14 @@ unsigned char DecodeChannel::UpdateChannel(const TrafficChannel& channel)
 	_inputUrl.assign(channel.ChannelUrl);
 	_outputUrl.assign(channel.RtmpUrl("127.0.0.1"));
 	_loop = channel.Loop;
-	_globalDetect = channel.GlobalDetect;
+	if (_channelType == ChannelType::File && channel.GlobalDetect)
+	{
+		_syncDetect = true;
+	}
+	else
+	{
+		_syncDetect = false;
+	}
 	LogPool::Information(LogEvent::Decode, "添加检测通道，通道序号:", channel.ChannelIndex, " 通道地址:", channel.ChannelUrl, " 通道类型：", channel.ChannelType, " 是否循环:", channel.Loop, " 全局检测:", channel.GlobalDetect, " 是否输出图片:", channel.OutputImage);
 	return _taskId;
 }
@@ -882,7 +889,7 @@ bool DecodeChannel::Decode(unsigned char* data,unsigned int size, unsigned char 
 				_encodeChannel->PushFrame(_channelIndex, &frame);
 			}
 			while (!SetFrame(&frame)
-				&& _globalDetect)
+				&& _syncDetect)
 			{
 				this_thread::sleep_for(chrono::milliseconds(10));
 			}

@@ -16,7 +16,7 @@ FlowDetector::FlowDetector(int width, int height, MqttChannel* mqtt, DataMergeMa
 	, _taskId(0)
 	, _lastFrameTimeStamp(0), _currentMinuteTimeStamp(0), _nextMinuteTimeStamp(0)
 	, _detectImage(width,height,false),_recognImage(width,height,false)
-	, _outputImage(false), _outputReport(false), _currentReportMinute(0), _outputRecogn(false)
+	, _outputReport(false), _currentReportMinute(0), _outputRecogn(false)
 {
 
 }
@@ -73,17 +73,12 @@ void FlowDetector::UpdateChannel(const unsigned char taskId, const TrafficChanne
 	_lanesInited = !_laneCaches.empty() && _laneCaches.size() == channel.FlowLanes.size();
 	_channelIndex = channel.ChannelIndex;
 
-	//输出图片时先删除旧的
-	_outputImage = channel.OutputImage;
-	if (_outputImage)
-	{
-		Command::Execute(StringEx::Combine("rm -rf ", TrafficDirectory::TempDir,"jpg_", channel.ChannelIndex, "*"));
-	}
 	_reportCaches.clear();
 	_vehicleReportCaches.clear();
 	_bikeReportCaches.clear();
 	_pedestrainReportCaches.clear();
 	_outputReport = channel.OutputReport;
+	_outputRecogn = channel.OutputRecogn;
 	_currentReportMinute = 0;
 	DateTime date;
 	if (channel.OutputReport)
@@ -96,7 +91,6 @@ void FlowDetector::UpdateChannel(const unsigned char taskId, const TrafficChanne
 	}
 	_currentMinuteTimeStamp = DateTime(date.Year(), date.Month(), date.Day(), date.Hour(), date.Minute(), 0).TimeStamp();
 	_nextMinuteTimeStamp = _currentMinuteTimeStamp + 60 * 1000;
-	_outputRecogn = channel.OutputRecogn;
 	log.append(StringEx::Combine("时间段:", DateTime::ParseTimeStamp(_currentMinuteTimeStamp).ToString(), "->", DateTime::ParseTimeStamp(_nextMinuteTimeStamp).ToString()));
 	if (_lanesInited)
 	{
@@ -244,7 +238,7 @@ FlowReportData FlowDetector::CalculateMinuteFlow(FlowLaneCache* laneCache)
 	return data;
 }
 
-void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long timeStamp, unsigned char taskId, const unsigned char* iveBuffer, unsigned int frameIndex, unsigned char frameSpan)
+void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long timeStamp, unsigned char taskId, unsigned int frameIndex, unsigned char frameSpan)
 {
 	if (_taskId != taskId)
 	{
@@ -441,9 +435,6 @@ void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long 
 	{
 		_mqtt->Send(IOTopic, ioLanesJson);
 	}
-
-	//画线
-	DrawDetect(*detectItems, iveBuffer, frameIndex);
 }
 
 void FlowDetector::FinishDetect(unsigned char taskId)
@@ -641,23 +632,14 @@ int FlowDetector::CalculateQueueLength(const FlowLaneCache& laneCache, const lis
 	return static_cast<int>(maxDistance * laneCache.MeterPerPixel);
 }
 
-void FlowDetector::DrawDetect(const map<string, DetectItem>& detectItems, const unsigned char* iveBuffer, unsigned int frameIndex)
+void FlowDetector::DrawDetect(const map<string, DetectItem>& detectItems, unsigned int frameIndex)
 {
-	if (!_outputImage)
+	cv::Mat image = cv::imread(StringEx::Combine(TrafficDirectory::DataDir, "images/", _channelIndex, "_", frameIndex, ".jpg"));
+
+	if (image.empty())
 	{
 		return;
 	}
-	cv::Mat image;
-	if (iveBuffer == NULL)
-	{
-		image = cv::imread(StringEx::Combine(TrafficDirectory::DataDir,"images/",_channelIndex,"_",frameIndex,".jpg"));
-	}
-	else
-	{
-		_detectImage.IveToBgr(iveBuffer, _width, _height);
-		image = cv::Mat(_height, _width, CV_8UC3, _detectImage.GetBgrBuffer());
-	}
-
 	//车道
 	for (unsigned int i = 0; i < _laneCaches.size(); ++i)
 	{
@@ -670,29 +652,23 @@ void FlowDetector::DrawDetect(const map<string, DetectItem>& detectItems, const 
 	//检测项
 	for (map<string, DetectItem>::const_iterator it = detectItems.begin(); it != detectItems.end(); ++it)
 	{
-
 		cv::Scalar carScalar;
 		//绿色新车
 		if (it->second.Status == DetectStatus::New)
 		{
-			ImageDrawing::DrawRectangle(&image, it->second.Region, cv::Scalar(0, 255, 0));
-			ImageDrawing::DrawText(&image, StringEx::Combine(it->first.substr(it->first.size() - 4, 4), "-", static_cast<int>(it->second.Type)), it->second.Region.HitPoint(), cv::Scalar(0, 255, 0));
+			carScalar = cv::Scalar(0, 255, 0);
 		}
 		//黄色在区域
 		else if (it->second.Status == DetectStatus::In)
 		{
-			ImageDrawing::DrawRectangle(&image, it->second.Region, cv::Scalar(0, 255, 255));
-			ImageDrawing::DrawText(&image, StringEx::Combine(it->first.substr(it->first.size() - 4, 4), "-", static_cast<int>(it->second.Type)), it->second.Region.HitPoint(), cv::Scalar(0, 255, 255));
+			carScalar = cv::Scalar(0, 255, 255);
 		}
-		//蓝色不在区域
 		else
 		{
-			if (iveBuffer != NULL)
-			{
-				ImageDrawing::DrawRectangle(&image, it->second.Region, cv::Scalar(255, 0, 0));
-				ImageDrawing::DrawText(&image, StringEx::Combine(it->first.substr(it->first.size() - 4, 4), "-", static_cast<int>(it->second.Type)), it->second.Region.HitPoint(), cv::Scalar(255,0, 0));
-			}
+			continue;
 		}
+		ImageDrawing::DrawRectangle(&image, it->second.Region, carScalar);
+		ImageDrawing::DrawText(&image, StringEx::Combine(it->first.substr(it->first.size() - 4, 4), "-", static_cast<int>(it->second.Type)), it->second.Region.HitPoint(), carScalar);
 	}
 	_detectImage.BgrToJpgFile(image.data, _width, _height, StringEx::Combine(TrafficDirectory::TempDir,_channelIndex,"_",frameIndex,".jpg"));
 }

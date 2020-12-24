@@ -44,6 +44,15 @@ namespace OnePunchMan
 		*/
 		void ClearChannel();
 
+		/**
+		* 事件检测
+		* @param items 检测数据项集合
+		* @param timeStamp 时间戳
+		* @param taskId 任务编号
+		* @param iveBuffer 图片字节流
+		* @param frameIndex 帧序号
+		* @param frameSpan 帧间隔时间(毫秒)
+		*/
 		void HandleDetect(std::map<std::string, DetectItem>* detectItems, long long timeStamp, unsigned char taskId, const unsigned char* iveBuffer,unsigned int frameIndex, unsigned char frameSpan);
 
 	private:

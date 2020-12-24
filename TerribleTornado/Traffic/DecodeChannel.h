@@ -211,8 +211,8 @@ namespace OnePunchMan
 		unsigned char _taskId;
 		//是否循环播放
 		bool _loop;
-		//是否全局检测，全局检测时执行同步检测
-		bool _globalDetect;
+		//是否同步检测，全局检测文件视频时执行同步检测
+		bool _syncDetect;
 		
 		//线程中改变
 		//输入视频

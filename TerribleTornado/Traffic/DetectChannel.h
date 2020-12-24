@@ -62,7 +62,7 @@ namespace OnePunchMan
 		{
 		public:
 			ChannelItem()
-				: ChannelIndex(0), Param(), WriteBmp(false), Decode(NULL), Flow(NULL), Event(NULL), GlobalDetect(false)
+				: ChannelIndex(0), Param(), WriteBmp(false), Decode(NULL), Flow(NULL), Event(NULL), OutputDetect(false), OutputImage(false)
 			{
 
 			}
@@ -78,8 +78,10 @@ namespace OnePunchMan
 			FlowDetector* Flow;
 			//事件检测
 			EventDetector* Event;
-			//是否全局检测，全局检测时需要输出数据
-			bool GlobalDetect;
+			//是否输出检测数据
+			bool OutputDetect;
+			//是否输出图片
+			bool OutputImage;
 		};
 
 		/**

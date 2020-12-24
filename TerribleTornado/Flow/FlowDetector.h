@@ -51,7 +51,15 @@ namespace OnePunchMan
 		*/
 		void GetReportJson(std::string* json);
 
-		void HandleDetect(std::map<std::string, DetectItem>* detectItems, long long timeStamp,unsigned char taskId, const unsigned char* iveBuffer, unsigned int frameIndex,unsigned char frameSpan);
+		/**
+		* 流量检测
+		* @param items 检测数据项集合
+		* @param timeStamp 时间戳
+		* @param taskId 任务编号
+		* @param frameIndex 帧序号
+		* @param frameSpan 帧间隔时间(毫秒)
+		*/
+		void HandleDetect(std::map<std::string, DetectItem>* detectItems, long long timeStamp,unsigned char taskId, unsigned int frameIndex,unsigned char frameSpan);
 		
 		/**
 		 * 结束检测
@@ -82,6 +90,13 @@ namespace OnePunchMan
 		* @param pedestrain 行人识别数据
 		*/
 		void HandleRecognPedestrain(const RecognItem& recognItem, const unsigned char* iveBuffer, const VideoStruct_Pedestrain& pedestrain);
+		
+		/**
+		* 绘制检测区域
+		* @param detectItems 检测项集合
+		* @param frameIndex 帧序号
+		*/
+		void DrawDetect(const std::map<std::string, DetectItem>& detectItems, unsigned int frameIndex);
 
 	private:
 		//流量检测缓存
@@ -206,14 +221,6 @@ namespace OnePunchMan
 		*/
 		int CalculateQueueLength(const FlowLaneCache& laneCache,const std::list<double>& distances);
 
-		/**
-		* 绘制检测区域
-		* @param detectItems 检测项集合
-		* @param iveBuffer ive字节流
-		* @param frameIndex 帧序号
-		*/
-		void DrawDetect(const std::map<std::string, DetectItem>& detectItems, const unsigned char* iveBuffer, unsigned int frameIndex);
-
 		//IO mqtt主题
 		static const std::string IOTopic;
 		//流量mqtt主题
@@ -257,8 +264,6 @@ namespace OnePunchMan
 		//识别图像转换
 		ImageConvert _recognImage;
 
-		//是否输出图片
-		bool _outputImage;
 		//是否输出检测报告
 		bool _outputReport;
 		//当前报告的分钟

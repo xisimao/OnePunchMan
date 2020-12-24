@@ -7,7 +7,7 @@
 using namespace std;
 using namespace OnePunchMan;
 
-int main(int argc, char* argv[])
+void DebugByDevice()
 {
     string ip = "192.168.2.100";
     int channelIndex = 1;
@@ -23,7 +23,7 @@ int main(int argc, char* argv[])
     while (true)
     {
         stringstream ss;
-        ss << "GET /api/channels/"<<channelIndex<<" HTTP/1.1\r\n"
+        ss << "GET /api/channels/" << channelIndex << " HTTP/1.1\r\n"
             << "Host: 127.0.0.1:7772\r\n"
             << "\r\n";
 
@@ -37,13 +37,15 @@ int main(int argc, char* argv[])
             channel.ChannelName = jd.Get<string>("channelName");
             channel.ChannelUrl = jd.Get<string>("channelUrl");
             channel.ChannelType = jd.Get<int>("channelType");
-            channel.LaneWidth = jd.Get<double>("laneWidth");
             channel.DeviceId = jd.Get<string>("deviceId");
             channel.Loop = jd.Get<bool>("loop");
             channel.OutputImage = jd.Get<bool>("outputImage");
             channel.OutputReport = jd.Get<bool>("outputReport");
             channel.OutputRecogn = jd.Get<bool>("outputRecogn");
             channel.GlobalDetect = jd.Get<bool>("globalDetect");
+            channel.LaneWidth = jd.Get<double>("laneWidth");
+            channel.ReportProperties = jd.Get<int>("reportProperties");
+
             int flowLaneIndex = 0;
             while (true)
             {
@@ -66,7 +68,6 @@ int main(int argc, char* argv[])
                 lane.IOIp = jd.Get<string>(StringEx::Combine("flowLanes:", flowLaneIndex, ":ioIp"));
                 lane.IOPort = jd.Get<int>(StringEx::Combine("flowLanes:", flowLaneIndex, ":ioPort"));
                 lane.IOIndex = jd.Get<int>(StringEx::Combine("flowLanes:", flowLaneIndex, ":ioIndex"));
-                lane.ReportProperties = jd.Get<int>(StringEx::Combine("flowLanes:", flowLaneIndex, ":reportProperties"));
 
                 //构建检测区域
                 BrokenLine laneLine1 = BrokenLine::FromJson(lane.LaneLine1);
@@ -86,18 +87,15 @@ int main(int argc, char* argv[])
     }
     maid.Stop();
 
-    //TrafficData data("C:\\Users\\Administrator\\Desktop\\traffic.db");
-    //TrafficChannel channel=data.GetChannel(channelIndex);
-    channel.OutputImage = true;
     vector<FlowDetector*> detectors;
     for (int i = 0; i < 8; ++i)
     {
         FlowDetector* detector = new FlowDetector(1920, 1080, NULL, NULL);
         if (i == channelIndex - 1)
         {
-            detector->UpdateChannel(1,channel);
+            detector->UpdateChannel(1, channel);
             detector->ResetTimeRange();
-        } 
+        }
         detectors.push_back(detector);
     }
 
@@ -122,9 +120,9 @@ int main(int argc, char* argv[])
                 continue;
             }
             string eventId = s.substr(eventBegin + 1, eventEnd - eventBegin - 1);
-            if (eventId.compare("13")==0)
+            if (eventId.compare("13") == 0)
             {
-                string content = s.substr(eventEnd + 2, s.size() - eventEnd - 2); 
+                string content = s.substr(eventEnd + 2, s.size() - eventEnd - 2);
                 JsonDeserialization jd(content);
                 int channelIndex = jd.Get<int>("channelIndex");
                 int frameIndex = jd.Get<int>("frameIndex");
@@ -144,16 +142,97 @@ int main(int argc, char* argv[])
                     items.insert(pair<string, DetectItem>(item.Id, item));
                     itemIndex += 1;
                 }
-                detectors[channelIndex - 1]->HandleDetect(&items, frameIndex*frameSpan, 1, NULL, frameIndex, frameSpan);
+                detectors[channelIndex - 1]->HandleDetect(&items, frameIndex * frameSpan, 1, frameIndex, frameSpan);
+                detectors[channelIndex - 1]->DrawDetect(items, frameIndex);
             }
         }
     }
     file.close();
+}
 
+void DebugByFile()
+{
+    string ip = "192.168.2.100";
+    int channelIndex = 1;
+    JsonDeserialization jd("appsettings.json");
+    LogPool::Init(jd);
+    TrafficData data("C:\\Users\\Administrator\\Desktop\\traffic.db");
+    TrafficChannel channel=data.GetChannel(channelIndex);
+    vector<FlowDetector*> detectors;
+    for (int i = 0; i < 8; ++i)
+    {
+        FlowDetector* detector = new FlowDetector(1920, 1080, NULL, NULL);
+        if (i == channelIndex - 1)
+        {
+            detector->UpdateChannel(1, channel);
+            detector->ResetTimeRange();
+        }
+        detectors.push_back(detector);
+    }
 
-    //TrafficStartup startup;
-    //startup.Start();
-    //startup.Join();
+    //文件流 
+    ifstream file;
+    file.open("D:\\code\\OnePunchMan\\data\\Traffic_20191223.log", ofstream::in);
+    string s;
+    while (getline(file, s))
+    {
+        if (s.size() > 33)
+        {
+            string time = s.substr(1, 23);
+            string level = s.substr(26, 1);
+            int eventBegin = s.find('[', 26);
+            if (eventBegin == string::npos)
+            {
+                continue;
+            }
+            int eventEnd = s.find(']', eventBegin);
+            if (eventEnd == string::npos)
+            {
+                continue;
+            }
+            string eventId = s.substr(eventBegin + 1, eventEnd - eventBegin - 1);
+            if (eventId.compare("13") == 0)
+            {
+                string content = s.substr(eventEnd + 2, s.size() - eventEnd - 2);
+                JsonDeserialization jd(content);
+                int channelIndex = jd.Get<int>("channelIndex");
+                int frameIndex = jd.Get<int>("frameIndex");
+                int frameSpan = jd.Get<int>("frameSpan");
+                int itemIndex = 0;
+                map<string, DetectItem> items;
+                while (true)
+                {
+                    DetectItem item;
+                    item.Id = jd.Get<string>(StringEx::Combine("items:", itemIndex, ":id"));
+                    if (item.Id.empty())
+                    {
+                        break;
+                    }
+                    item.Type = static_cast<DetectType>(jd.Get<int>(StringEx::Combine("items:", itemIndex, ":type")));
+                    item.Region = OnePunchMan::Rectangle::FromJson(jd.Get<string>(StringEx::Combine("items:", itemIndex, ":region")));
+                    items.insert(pair<string, DetectItem>(item.Id, item));
+                    itemIndex += 1;
+                }
+                detectors[channelIndex - 1]->HandleDetect(&items, frameIndex * frameSpan, 1, frameIndex, frameSpan);
+                detectors[channelIndex - 1]->DrawDetect(items, frameIndex);
+            }
+        }
+    }
+    file.close();
+}
+
+void DebugHttp()
+{
+    JsonDeserialization jd("appsettings.json");
+    LogPool::Init(jd);
+    TrafficStartup startup;
+    startup.Start();
+    startup.Join();
+}
+
+int main(int argc, char* argv[])
+{
+    DebugByDevice();
 
 
     return 0;
