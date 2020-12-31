@@ -11,6 +11,8 @@
 #include <unistd.h>
 #include <netdb.h>
 #include <string.h>
+#include <linux/route.h>
+#include <sys/ioctl.h>    
 #endif
 
 #include "LogPool.h"
@@ -117,8 +119,62 @@ namespace OnePunchMan
 		*/
 		static EndPoint GetRemoteEndPoint(int socket);
 
-	private:
+#ifndef _WIN32
+		/**
+		*  获取网卡ip
+		* @param deviceName 网卡名
+		* @return 网卡ip
+		*/
+		static std::string GetIp(const std::string& deviceName);
 
+		/**
+		*  设置网卡ip
+		* @param deviceName 网卡名
+		* @param ip ip
+		* @return 操作结果
+		*/
+		static bool SetIp(const std::string& deviceName, const std::string& ip);
+
+		/**
+		*  获取子网掩码
+		* @param deviceName 网卡名
+		* @return 子网掩码
+		*/
+		static std::string GetMask(const std::string& deviceName);
+
+		/**
+		*  设置子网掩码
+		* @param deviceName 网卡名
+		* @param mask 子网掩码
+		* @return 操作结果
+		*/
+		static bool SetMask(const std::string& deviceName, const std::string& mask);
+
+		/**
+		*  获取网关地址
+		* @param deviceName 网卡名
+		* @return 网关地址
+		*/
+		static std::string GetGateway(const std::string& deviceName);
+
+		/**
+		*  设置网关地址
+		* @param deviceName 网卡名
+		* @param mask 网关地址
+		* @return 操作结果
+		*/
+		static bool SetGateway(const std::string& deviceName, const std::string& gateway);
+		
+		/**
+		*  获取MAC地址
+		* @param deviceName 网卡名
+		* @return MAC地址
+		*/
+		static std::string GetMac(const std::string& deviceName);
+
+#endif // !_WIN32
+
+	private:
 		/**
 		* 初始化地址字符串
 		* @param ip ip

@@ -26,7 +26,7 @@ void ImageDrawing::DrawPolygon(cv::Mat* image, const Polygon& polygon, const cv:
 	cv::polylines(*image, polygons, true, scalar, 3);
 }
 
-void ImageDrawing::DrawText(cv::Mat* image, const std::string& text, const Point& point, const cv::Scalar& scalar)
+void ImageDrawing::DrawString(cv::Mat* image, const std::string& text, const Point& point, const cv::Scalar& scalar)
 {
 	cv::Point cvPoint(point.X, point.Y);
 	cv::putText(*image, text, cvPoint, cv::FONT_HERSHEY_COMPLEX, 2, scalar, 2);

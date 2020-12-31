@@ -78,9 +78,8 @@ void DetectChannel::UpdateChannel(const TrafficChannel& channel)
 		//输出图片时先删除旧的
 		if (it->second.OutputImage)
 		{
-			Command::Execute(StringEx::Combine("rm -rf ", TrafficDirectory::TempDir, it->second.ChannelIndex, "_*.jpg"));
+			Command::Execute(StringEx::Combine("rm -rf ",TrafficDirectory::GetAllTempFrameJpg(channel.ChannelIndex)));
 		}
-		remove(StringEx::Combine(TrafficDirectory::FileDir, "channel_", channel.ChannelIndex, ".bmp").c_str());
 	}
 }
 
@@ -185,7 +184,7 @@ void DetectChannel::StartCore()
 			{
 				if (it->second.WriteBmp)
 				{
-					_image.IveToJpgFile(frameItem.IveBuffer,_width, _height, StringEx::Combine(TrafficDirectory::FileDir, "channel_", it->second.ChannelIndex, ".jpg"));
+					_image.IveToJpgFile(frameItem.IveBuffer,_width, _height, TrafficDirectory::GetChannelJpg(it->second.ChannelIndex));
 					it->second.WriteBmp = false;
 				}
 				detected = true;
@@ -242,7 +241,7 @@ void DetectChannel::StartCore()
 					}
 					if (it->second.OutputImage && !detectItems.empty())
 					{
-						_image.IveToJpgFile(frameItem.IveBuffer, _width, _height, StringEx::Combine(TrafficDirectory::TempDir, it->second.ChannelIndex, "_", frameItem.FrameIndex, ".jpg"));
+						_image.IveToJpgFile(frameItem.IveBuffer, _width, _height, TrafficDirectory::GetTempFrameJpg(it->second.ChannelIndex,frameItem.FrameIndex));
 					}
 					it->second.Flow->HandleDetect(&detectItems, detectTimeStamp, frameItem.TaskId, frameItem.FrameIndex, frameItem.FrameSpan);
 					it->second.Event->HandleDetect(&detectItems, detectTimeStamp, frameItem.TaskId, frameItem.IveBuffer, frameItem.FrameIndex, frameItem.FrameSpan);

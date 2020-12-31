@@ -257,19 +257,3 @@ string StringEx::Replace(const string& value, const string& oldValue, const stri
 	}
 	return temp;
 }
-
-string StringEx::Rounding(float value, int precision)
-{
-	stringstream ss;
-	ss << setiosflags(ios::fixed) << setprecision(precision);
-	ss << value;
-	return ss.str();
-}
-
-string StringEx::Rounding(double value, int precision)
-{
-	stringstream ss;
-	ss << setiosflags(ios::fixed) << setprecision(precision);
-	ss << value;
-	return ss.str();
-}

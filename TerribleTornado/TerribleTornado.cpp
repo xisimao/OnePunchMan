@@ -1,5 +1,4 @@
 ﻿#include "TrafficStartup.h"
-#include "IoAdapter.h"
 #include "EncodeChannel.h"
 #include "DecodeChannel.h"
 #include "SqliteLogger.h"
@@ -90,7 +89,7 @@ void DebugByDevice()
     vector<FlowDetector*> detectors;
     for (int i = 0; i < 8; ++i)
     {
-        FlowDetector* detector = new FlowDetector(1920, 1080, NULL, NULL);
+        FlowDetector* detector = new FlowDetector(1920, 1080,NULL, NULL, NULL);
         if (i == channelIndex - 1)
         {
             detector->UpdateChannel(1, channel);
@@ -156,12 +155,12 @@ void DebugByFile()
     int channelIndex = 1;
     JsonDeserialization jd("appsettings.json");
     LogPool::Init(jd);
-    TrafficData data("C:\\Users\\Administrator\\Desktop\\traffic.db");
+    TrafficData data("D:\\code\\OnePunchMan\\data\\flow.db");
     TrafficChannel channel=data.GetChannel(channelIndex);
     vector<FlowDetector*> detectors;
     for (int i = 0; i < 8; ++i)
     {
-        FlowDetector* detector = new FlowDetector(1920, 1080, NULL, NULL);
+        FlowDetector* detector = new FlowDetector(1920, 1080,NULL, NULL, NULL);
         if (i == channelIndex - 1)
         {
             detector->UpdateChannel(1, channel);
@@ -227,13 +226,96 @@ void DebugHttp()
     LogPool::Init(jd);
     TrafficStartup startup;
     startup.Start();
-    startup.Join();
 }
 
 int main(int argc, char* argv[])
 {
-    DebugByDevice();
+    TrafficData data;
+    //data.DeleteFlowDatas(10);
+    //for (int i = 0; i < 30; ++i)
+    //{
+    //    FlowData flowData;
+    //    flowData.ChannelUrl = "1";
+    //    flowData.LaneId = "2";
+    //    flowData.TimeStamp = DateTime(2020,12,i+1).TimeStamp();
+    //    flowData.Persons = 4;
+    //    flowData.Bikes = 5;
+    //    flowData.Motorcycles = 6;
+    //    flowData.Cars = 7;
+    //    flowData.Tricycles = 8;
+    //    flowData.Buss = 9;
+    //    flowData.Vans = 10;
+    //    flowData.Trucks = 11;
+    //    flowData.Speed = 12;
+    //    flowData.TotalDistance = 13;
+    //    flowData.MeterPerPixel = 14;
+    //    flowData.TotalInTime = 15;
+    //    flowData.HeadDistance = 16;
+    //    flowData.TotalSpan = 17;
+    //    flowData.HeadSpace = 18;
+    //    flowData.TimeOccupancy = 19;
+    //    flowData.TotalInTime = 20;
+    //    flowData.QueueLength = 21;
+    //    flowData.SpaceOccupancy = 22;
+    //    flowData.TotalQueueLength = 23;
+    //    flowData.LaneLength = 24;
+    //    flowData.CountQueueLength = 25;
+    //    flowData.TrafficStatus = 26;
+    //    flowData.FreeSpeed = 27;
+    //    bool b = data.InsertFlowData(flowData);
+    //}
+    //
 
+    vector<FlowData> datas=data.GetFlowDatas("", "", 0, 0);
+    for (vector<FlowData>::iterator it = datas.begin(); it != datas.end(); ++it)
+    {
+        cout << DateTime::ParseTimeStamp(it->TimeStamp).ToString() << endl;
+    }
+    //EventData eventData;
+    //eventData.ChannelIndex = 1;
+    //eventData.ChannelUrl = "123";
+    //eventData.Guid = "123";
+    //eventData.LaneIndex = 1;
+    //eventData.TimeStamp = 2;
+    //eventData.Type = 3;
+    //bool b1= data.InsertEventData(eventData);
+
+    //for (int i = 0; i < 102; ++i)
+    //{
+    //    VehicleData vehicleData;
+    //    vehicleData.ChannelUrl = "1";
+    //    vehicleData.LaneId = "2";
+    //    vehicleData.TimeStamp = i;
+    //    vehicleData.Image = "4";
+    //    vehicleData.CarType = 5;
+    //    vehicleData.CarColor = 6;
+    //    vehicleData.CarBrand = "7";
+    //    vehicleData.PlateType = 8;
+    //    vehicleData.PlateNumber = "9";
+    //    bool b2=data.InsertVehicleData(vehicleData);
+    //}
+
+    //vector<VehicleData> vehicleDatas = data.GetVehicleDatas("", "", 0, 0);
+    //data.DeleteVehicleDatas(100);
+    //BikeData bikeData;
+    //bikeData.ChannelUrl = "1";
+    //bikeData.LaneId = "2";
+    //bikeData.TimeStamp = 3;
+    //bikeData.Image = "4";
+    //bikeData.BikeType = 5;
+    //bool b3=data.InsertBikeData(bikeData);
+    //vector<BikeData> bikeDatas = data.GetBikeDatas("", "", 0, 0);
+
+    //PedestrainData pedestrainData;
+    //pedestrainData.ChannelUrl = "1";
+    //pedestrainData.LaneId = "2";
+    //pedestrainData.TimeStamp = 3;
+    //pedestrainData.Image = "4";
+    //pedestrainData.Sex = 5;
+    //pedestrainData.Age = 6;
+    //pedestrainData.UpperColor = 7;
+    //bool b4 = data.InsertPedestrainData(pedestrainData);
+    //vector<PedestrainData> pedestrainDatas = data.GetPedestrainDatas("", "", 0, 0);
 
     return 0;
 }

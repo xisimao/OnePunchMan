@@ -2,7 +2,7 @@
 #include "TrafficData.h"
 #include "TrafficDetector.h"
 #include "EncodeChannel.h"
-#include "EventDataChannel.h"
+#include "DataChannel.h"
 #include "ImageDrawing.h"
 
 namespace OnePunchMan
@@ -19,7 +19,7 @@ namespace OnePunchMan
 		* @param encodeChannel 编码线程
 		* @param dataChannel 数据线程
 		*/
-		EventDetector(int width, int height,MqttChannel* mqtt, EncodeChannel* encodeChannel, EventDataChannel* dataChannel);
+		EventDetector(int width, int height,MqttChannel* mqtt, EncodeChannel* encodeChannel, DataChannel* dataChannel);
 		
 		/**
 		* 析构函数
@@ -159,7 +159,7 @@ namespace OnePunchMan
 		//编码线程
 		EncodeChannel* _encodeChannel;
 		//事件数据线程
-		EventDataChannel* _dataChannel;
+		DataChannel* _dataChannel;
 		//视频文件临时存放字节流长度
 		int _videoSize;
 		//视频文件临时存放字节流

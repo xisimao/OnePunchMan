@@ -32,13 +32,13 @@ namespace OnePunchMan
 		static void DrawPolygon(cv::Mat* image, const Polygon& polygon, const cv::Scalar& scalar);
 
 		/**
-		* 绘制检测点
+		* 绘制文本
 		* @param image 绘制的图片
 		* @param text 绘制的文本
 		* @param point 文本基于的绘制点
 		* @param scalar 颜色
 		*/
-		static void DrawText(cv::Mat* image, const std::string& text, const Point& point, const cv::Scalar& scalar);
+		static void DrawString(cv::Mat* image, const std::string& text, const Point& point, const cv::Scalar& scalar);
 	};
 }
 

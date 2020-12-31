@@ -8,13 +8,10 @@ const int TrafficStartup::DetectCount = 4;
 const int TrafficStartup::RecognCount = 2;
 
 TrafficStartup::TrafficStartup()
-    :ThreadObject("startup")
-    , _startTime(DateTime::Now()),_sdkInited(false), _socketMaid(NULL)
-    , _mqtt(NULL), _merge(NULL), _data(NULL),_encode(NULL)
+    :_startTime(DateTime::Now()),_sdkInited(false), _socketMaid(NULL)
+    , _mqtt(NULL), _data(NULL),_encode(NULL)
 {
     JsonDeserialization jd("appsettings.json");
-    TrafficDirectory::Init(jd.Get<string>("Flow:Web"));
-    TrafficDirectory::Init(jd.Get<string>("Event:Web"));
     FlowDetector::Init(jd);
     EventDetector::Init(jd);
 }
@@ -85,7 +82,7 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
             }
         }
     }
-    else if (UrlStartWith(e->Url, "/api/gbParameter"))
+    else if (UrlStartWith(e->Url, "/api/gbparameter"))
     {
         TrafficData data;
         if (e->Function.compare(HttpFunction::Get) == 0)
@@ -118,7 +115,7 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
             e->Code = HttpCode::OK;
         }
     }
-    else if (UrlStartWith(e->Url, "/api/gbDevices"))
+    else if (UrlStartWith(e->Url, "/api/gbdevices"))
     {
         TrafficData data;
         if (e->Function.compare(HttpFunction::Get) == 0)
@@ -174,7 +171,7 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
         }
         else if (e->Function.compare(HttpFunction::Delete) == 0)
         {
-            string id = GetId(e->Url, "/api/gbDevices");
+            string id = GetId(e->Url, "/api/gbdevices");
             if (data.DeleteGbDevice(StringEx::Convert<int>(id)))
             {
                 e->Code = HttpCode::OK;
@@ -185,7 +182,7 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
             }
         }
     }
-    else if (UrlStartWith(e->Url, "/api/gbChannels"))
+    else if (UrlStartWith(e->Url, "/api/gbchannels"))
     {
         if (e->Function.compare(HttpFunction::Get) == 0)
         {
@@ -241,77 +238,77 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
         data.SetParameter("SN", sn);
         e->Code = HttpCode::OK;
     }
-    else if (UrlStartWith(e->Url, "/api/logs"))
-    {
-        vector<string> datas = StringEx::Split(e->Url, "?", true);
-        if (datas.size() > 1)
-        {
-            int logLevel = 0;
-            int logEvent = 0;
-            string startTime;
-            string endTime;
-            int pageNum = 0;
-            int pageSize = 0;
-            vector<string> params = StringEx::Split(datas[1], "&", true);
-            for (vector<string>::iterator mit = params.begin(); mit != params.end(); ++mit)
-            {
-                vector<string> pair = StringEx::Split(*mit, "=", true);
-                if (pair.size() >= 2)
-                {
-                    if (pair[0].compare("logLevel") == 0)
-                    {
-                        logLevel = StringEx::Convert<int>(pair[1]);
-                    }
-                    else if (pair[0].compare("logEvent") == 0)
-                    {
-                        logEvent = StringEx::Convert<int>(pair[1]);
-                    }
-                    else if (pair[0].compare("startTime") == 0)
-                    {
-                        startTime = pair[1];
-                        if (startTime.size() >= 19)
-                        {
-                            startTime = StringEx::Replace(startTime, "%20", " ");
-                            startTime = StringEx::Replace(startTime, "%3A", ":");
-                        }
-                    }
-                    else if (pair[0].compare("endTime") == 0)
-                    {
-                        endTime = pair[1];
-                        if (endTime.size() >= 19)
-                        {
-                            endTime = StringEx::Replace(endTime, "%20", " ");
-                            endTime = StringEx::Replace(endTime, "%3A", ":");
-                        }
-                    }
-                    else if (pair[0].compare("pageNum") == 0)
-                    {
-                        pageNum = StringEx::Convert<int>(pair[1]);
-                    }
-                    else if (pair[0].compare("pageSize") == 0)
-                    {
-                        pageSize = StringEx::Convert<int>(pair[1]);
-                    }
-                }
-            }
-            int total = 0;
-            vector<LogData> logDatas = SqliteLogger::GetDatas(logLevel, logEvent, startTime, endTime, pageNum, pageSize,&total);
-            string datasJson;
-            for (vector<LogData>::iterator it = logDatas.begin(); it != logDatas.end(); ++it)
-            {
-                string json;
-                JsonSerialization::SerializeValue(&json, "id", it->Id);
-                JsonSerialization::SerializeValue(&json, "logLevel", it->LogLevel);
-                JsonSerialization::SerializeValue(&json, "logEvent", it->LogEvent);
-                JsonSerialization::SerializeValue(&json, "time", it->Time);
-                JsonSerialization::SerializeValue(&json, "content", it->Content);
-                JsonSerialization::AddClassItem(&datasJson, json);
-            }
-            JsonSerialization::SerializeValue(&e->ResponseJson, "total", total);
-            JsonSerialization::SerializeArray(&e->ResponseJson, "datas", datasJson);
-        }
-        e->Code = HttpCode::OK;
-    }
+    //else if (UrlStartWith(e->Url, "/api/logs"))
+    //{
+    //    vector<string> datas = StringEx::Split(e->Url, "?", true);
+    //    if (datas.size() > 1)
+    //    {
+    //        int logLevel = 0;
+    //        int logEvent = 0;
+    //        string startTime;
+    //        string endTime;
+    //        int pageNum = 0;
+    //        int pageSize = 0;
+    //        vector<string> params = StringEx::Split(datas[1], "&", true);
+    //        for (vector<string>::iterator mit = params.begin(); mit != params.end(); ++mit)
+    //        {
+    //            vector<string> pair = StringEx::Split(*mit, "=", true);
+    //            if (pair.size() >= 2)
+    //            {
+    //                if (pair[0].compare("logLevel") == 0)
+    //                {
+    //                    logLevel = StringEx::Convert<int>(pair[1]);
+    //                }
+    //                else if (pair[0].compare("logEvent") == 0)
+    //                {
+    //                    logEvent = StringEx::Convert<int>(pair[1]);
+    //                }
+    //                else if (pair[0].compare("startTime") == 0)
+    //                {
+    //                    startTime = pair[1];
+    //                    if (startTime.size() >= 19)
+    //                    {
+    //                        startTime = StringEx::Replace(startTime, "%20", " ");
+    //                        startTime = StringEx::Replace(startTime, "%3A", ":");
+    //                    }
+    //                }
+    //                else if (pair[0].compare("endTime") == 0)
+    //                {
+    //                    endTime = pair[1];
+    //                    if (endTime.size() >= 19)
+    //                    {
+    //                        endTime = StringEx::Replace(endTime, "%20", " ");
+    //                        endTime = StringEx::Replace(endTime, "%3A", ":");
+    //                    }
+    //                }
+    //                else if (pair[0].compare("pageNum") == 0)
+    //                {
+    //                    pageNum = StringEx::Convert<int>(pair[1]);
+    //                }
+    //                else if (pair[0].compare("pageSize") == 0)
+    //                {
+    //                    pageSize = StringEx::Convert<int>(pair[1]);
+    //                }
+    //            }
+    //        }
+    //        int total = 0;
+    //        vector<LogData> logDatas = SqliteLogger::GetDatas(logLevel, logEvent, startTime, endTime, pageNum, pageSize,&total);
+    //        string datasJson;
+    //        for (vector<LogData>::iterator it = logDatas.begin(); it != logDatas.end(); ++it)
+    //        {
+    //            string json;
+    //            JsonSerialization::SerializeValue(&json, "id", it->Id);
+    //            JsonSerialization::SerializeValue(&json, "logLevel", it->LogLevel);
+    //            JsonSerialization::SerializeValue(&json, "logEvent", it->LogEvent);
+    //            JsonSerialization::SerializeValue(&json, "time", it->Time);
+    //            JsonSerialization::SerializeValue(&json, "content", it->Content);
+    //            JsonSerialization::AddClassItem(&datasJson, json);
+    //        }
+    //        JsonSerialization::SerializeValue(&e->ResponseJson, "total", total);
+    //        JsonSerialization::SerializeArray(&e->ResponseJson, "datas", datasJson);
+    //    }
+    //    e->Code = HttpCode::OK;
+    //}
     else if (UrlStartWith(e->Url, "/api/report"))
     {
         string id = GetId(e->Url, "/api/report");
@@ -329,7 +326,8 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
     else if (UrlStartWith(e->Url, "/api/data"))
     {
         int channelIndex = StringEx::Convert<int>(GetId(e->Url, "/api/data"));
-        vector<EventData> datas = EventDataChannel::GetDatas(channelIndex);
+        TrafficData data;
+        vector<EventData> datas = data.GetEventDatas(channelIndex,0,0);
         for (vector<EventData>::iterator it = datas.begin(); it != datas.end(); ++it)
         {
             string json;
@@ -339,9 +337,9 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
             JsonSerialization::SerializeValue(&json, "laneIndex", it->LaneIndex);
             JsonSerialization::SerializeValue(&json, "timeStamp", it->TimeStamp);
             JsonSerialization::SerializeValue(&json, "type", it->Type);
-            JsonSerialization::SerializeValue(&json, "image1", EventData::GetImageLink(guid, 1));
-            JsonSerialization::SerializeValue(&json, "image2", EventData::GetImageLink(guid, 2));
-            JsonSerialization::SerializeValue(&json, "video", EventData::GetVideoLink(guid));
+            JsonSerialization::SerializeValue(&json, "image1", TrafficDirectory::GetImageLink(guid, 1));
+            JsonSerialization::SerializeValue(&json, "image2", TrafficDirectory::GetImageLink(guid, 2));
+            JsonSerialization::SerializeValue(&json, "video", TrafficDirectory::GetVideoLink(guid));
             JsonSerialization::AddClassItem(&e->ResponseJson, json);
         }
         e->Code = HttpCode::OK;
@@ -360,6 +358,72 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
             e->Code = HttpCode::BadRequest;
         }
     }
+    else if (UrlStartWith(e->Url, "/api/system/time"))
+    {
+        if (e->Function.compare(HttpFunction::Get) == 0)
+        {
+            JsonSerialization::SerializeValue(&e->ResponseJson,"dateTime", DateTime::Now().ToString());
+            e->Code = HttpCode::OK;
+        }
+        else if (e->Function.compare(HttpFunction::Post) == 0)
+        {
+            JsonDeserialization jd(e->RequestJson);
+            string value = jd.Get<string>("dateTime");
+            DateTime dateTime = DateTime::ParseString("%d-%d-%d %d:%d:%d", value);
+            Command::Execute(StringEx::Combine("date -s ", dateTime.ToString("%Y%m%d%H%M.%S")));
+            e->Code = HttpCode::OK;
+        }     
+    }
+#ifndef _WIN32
+    else if (UrlStartWith(e->Url, "/api/system/ip"))
+    {
+    if (e->Function.compare(HttpFunction::Get) == 0)
+    {
+        string id = GetId(e->Url, "/api/system/ip");
+        JsonSerialization::SerializeValue(&e->ResponseJson, "ip", EndPoint::GetIp(id));
+        JsonSerialization::SerializeValue(&e->ResponseJson, "mask", EndPoint::GetMask(id));
+        JsonSerialization::SerializeValue(&e->ResponseJson, "gateway", EndPoint::GetGateway(id));
+        JsonSerialization::SerializeValue(&e->ResponseJson, "mac", EndPoint::GetMac(id));
+        e->Code = HttpCode::OK;
+    }
+    else if (e->Function.compare(HttpFunction::Post) == 0)
+    {
+        JsonDeserialization jd(e->RequestJson);
+        string deviceName = jd.Get<string>("deviceName");
+        string ip = jd.Get<string>("ip");
+        string mask = jd.Get<string>("mask");
+        string gateway = jd.Get<string>("gateway");
+
+        string oldIp = EndPoint::GetIp(deviceName);
+        string oldMask = EndPoint::GetMask(deviceName);
+        string oldGateway = EndPoint::GetGateway(deviceName);
+        if (EndPoint::SetIp(deviceName, ip)
+            && EndPoint::SetMask(deviceName, mask)
+            && EndPoint::SetGateway(deviceName, gateway))
+        {
+            e->Code = HttpCode::OK;
+        }
+        else
+        {
+            EndPoint::SetIp(deviceName, oldIp);
+            EndPoint::SetMask(deviceName, oldMask);
+            EndPoint::SetGateway(deviceName, oldGateway);
+            e->Code = HttpCode::BadRequest;
+        }
+    }
+    }
+#endif // !_WIN32
+    else if (UrlStartWith(e->Url, "/api/system/reboot"))
+    {
+        Command::Execute("reboot");
+        e->Code = HttpCode::OK;
+    }
+    else if (UrlStartWith(e->Url, "/api/system/export"))
+    {
+        Command::Execute("tar cf logs.tar logs flow.db");
+        JsonSerialization::SerializeValue(&e->ResponseJson, "url", "bin/logs.tar");
+        e->Code = HttpCode::OK;
+    }
 }
 
 void TrafficStartup::GetDevice(HttpReceivedEventArgs* e)
@@ -368,7 +432,7 @@ void TrafficStartup::GetDevice(HttpReceivedEventArgs* e)
     string sn = data.GetParameter("SN");
     string guid = StringEx::Trim(Command::Execute("cat /mtd/basesys/data/devguid"));
     string webVersion;
-    string cat = Command::Execute(StringEx::Combine("cat ",TrafficDirectory::WebDir,"static/config/base.js"));
+    string cat = Command::Execute(StringEx::Combine("cat ",TrafficDirectory::WebConfigPath));
     vector<string> catRows = StringEx::Split(cat, "\n", true);
     for (unsigned int i = 0; i < catRows.size(); ++i)
     {
@@ -418,8 +482,9 @@ void TrafficStartup::GetDevice(HttpReceivedEventArgs* e)
 
     string deviceJson;
     DateTime now = DateTime::Now();
-    JsonSerialization::SerializeValue(&deviceJson, "deviceTime", now.TimeStamp());
-    JsonSerialization::SerializeValue(&deviceJson, "deviceTime_Desc", now.ToString());
+    DateTime adjustTime = DateTime(now.Year() + 1, now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second(), now.Millisecond());
+    JsonSerialization::SerializeValue(&deviceJson, "deviceTime", adjustTime.TimeStamp());
+    JsonSerialization::SerializeValue(&deviceJson, "deviceTime_Desc", adjustTime.ToString());
     JsonSerialization::SerializeValue(&deviceJson, "startTime", _startTime.ToString());
     JsonSerialization::SerializeValue(&deviceJson, "diskUsed", diskUsed);
     JsonSerialization::SerializeValue(&deviceJson, "diskTotal", diskTotal);
@@ -635,7 +700,7 @@ string TrafficStartup::CheckChannel(TrafficChannel* channel)
     if (!ChannelIndexEnable(channel->ChannelIndex))
     {
         string json;
-        JsonSerialization::SerializeValue(&json, "message", WStringEx::Combine(L"\u901a\u9053\u5e8f\u53f7\u5fc5\u987b\u5728 1-", ChannelCount, L"\u4e4b\u95f4"));
+        JsonSerialization::SerializeValue(&json, "message", WStringEx::Combine(L"\u901a\u9053\u5e8f\u53f7\u5fc5\u987b\u5728 1-", ChannelCount, L" \u4e4b\u95f4"));
         return json;
     }
   
@@ -649,17 +714,17 @@ string TrafficStartup::CheckChannel(TrafficChannel* channel)
         Line flowDetectLine = Line::FromJson(it->FlowDetectLine);
         Line queueDetectLine = Line::FromJson(it->QueueDetectLine);
         Polygon flowRegion = Polygon::Build(laneLine1, laneLine2, stopLine, flowDetectLine);
-        if (flowRegion.Empty())
+        if (!flowDetectLine.Empty()&&flowRegion.Empty())
         {
             string json;
-            JsonSerialization::SerializeValue(&json, "message", StringEx::ToString(L"\u6d41\u91cf\u68c0\u6d4b\u533a\u57df\u6ca1\u6709\u95ed\u5408"));
+            JsonSerialization::SerializeValue(&json, "message", WStringEx::ToString(L"\u6d41\u91cf\u68c0\u6d4b\u533a\u57df\u6ca1\u6709\u95ed\u5408"));
             return json;
         }
         Polygon queueRegion = Polygon::Build(laneLine1, laneLine2, stopLine, queueDetectLine);
-        if (queueRegion.Empty())
+        if (!queueDetectLine.Empty()&&queueRegion.Empty())
         {
             string json;
-            JsonSerialization::SerializeValue(&json, "message", StringEx::ToString(L"\u6392\u961f\u68c0\u6d4b\u533a\u57df\u6ca1\u6709\u95ed\u5408"));
+            JsonSerialization::SerializeValue(&json, "message", WStringEx::ToString(L"\u6392\u961f\u68c0\u6d4b\u533a\u57df\u6ca1\u6709\u95ed\u5408"));
             return json;
         }
         it->FlowRegion = flowRegion.ToJson();
@@ -735,6 +800,7 @@ void TrafficStartup::FillChannelJson(string* channelJson,const TrafficChannel* c
     JsonSerialization::SerializeValue(channelJson, "globalDetect", channel->GlobalDetect);
     JsonSerialization::SerializeValue(channelJson, "laneWidth", channel->LaneWidth);
     JsonSerialization::SerializeValue(channelJson, "reportProperties", channel->ReportProperties);
+    JsonSerialization::SerializeValue(channelJson, "freeSpeed", channel->FreeSpeed);
 
 }
 
@@ -755,6 +821,7 @@ void TrafficStartup::FillChannel(TrafficChannel* channel,const JsonDeserializati
 
     channel->LaneWidth = jd.Get<double>("laneWidth");
     channel->ReportProperties = jd.Get<int>("reportProperties");
+    channel->FreeSpeed = jd.Get<double>("freeSpeed");
 }
 
 void TrafficStartup::FillChannel(TrafficChannel* channel, const JsonDeserialization& jd, int itemIndex)
@@ -774,6 +841,7 @@ void TrafficStartup::FillChannel(TrafficChannel* channel, const JsonDeserializat
 
     channel->LaneWidth = jd.Get<double>(StringEx::Combine("channels:", itemIndex, ":laneWidth"));
     channel->ReportProperties = jd.Get<int>(StringEx::Combine("channels:", itemIndex, ":reportProperties"));
+    channel->FreeSpeed = jd.Get<double>(StringEx::Combine("channels:", itemIndex, ":freeSpeed"));
 }
 
 string TrafficStartup::GetChannelJson(const string& host, int channelIndex)
@@ -834,7 +902,7 @@ void TrafficStartup::InitThreads(int loginHandler)
 {
     for (int i = 0; i < ChannelCount; ++i)
     {
-        FlowDetector* flowDetector = new FlowDetector(DecodeChannel::DestinationWidth, DecodeChannel::DestinationHeight, _mqtt, _merge);
+        FlowDetector* flowDetector = new FlowDetector(DecodeChannel::DestinationWidth, DecodeChannel::DestinationHeight,_socketMaid, _mqtt, _data);
         _flowDetectors.push_back(flowDetector);
         EventDetector* eventDetector = new EventDetector(DecodeChannel::DestinationWidth, DecodeChannel::DestinationHeight, _mqtt, _encode, _data);
         _eventDetectors.push_back(eventDetector);
@@ -869,20 +937,34 @@ void TrafficStartup::InitThreads(int loginHandler)
 void TrafficStartup::InitChannels()
 {
     TrafficData data;
+    set<EndPoint> ips;
     for (int i = 0; i < ChannelCount; ++i)
     {
         TrafficChannel channel = data.GetChannel(i + 1);
         if (!channel.ChannelUrl.empty())
         {
+            //io转换器地址
+            for (vector<FlowLane>::iterator lit = channel.FlowLanes.begin(); lit != channel.FlowLanes.end(); ++lit)
+            {
+                if (!lit->IOIp.empty())
+                {
+                    ips.insert(EndPoint(lit->IOIp, 24000));
+                }
+            }
             unsigned char taskId = _decodes[i]->UpdateChannel(channel);
             _detects[i+1]->UpdateChannel(channel);
             _flowDetectors[i]->UpdateChannel(taskId, channel);
             _eventDetectors[i]->UpdateChannel(taskId, channel);
         }
     }
+    for (set<EndPoint>::iterator it = ips.begin(); it != ips.end(); ++it)
+    {
+        LogPool::Information(LogEvent::System, "连接到io转换器", it->HostIp());
+        _socketMaid->AddConnectEndPoint(*it, NULL);
+    }
 }
 
-void TrafficStartup::StartCore()
+void TrafficStartup::Start()
 {
     Socket::Init();
     MqttChannel::Init();
@@ -895,7 +977,7 @@ void TrafficStartup::StartCore()
         exit(2);
     }
 
-    _socketMaid = new SocketMaid(2,false);
+    _socketMaid = new SocketMaid(2,true);
     _handler.HttpReceived.Subscribe(this);
     if (_socketMaid->AddListenEndPoint(EndPoint(7772), &_handler) == -1)
     {
@@ -953,8 +1035,7 @@ void TrafficStartup::StartCore()
 
     _mqtt = new MqttChannel("127.0.0.1", 1883);
     _mqtt->MqttDisconnected.Subscribe(this);
-    _merge = new DataMergeMap(_mqtt);
-    _data = new EventDataChannel(_mqtt);
+    _data = new DataChannel();
     _encode = new EncodeChannel(ChannelCount);
 
     _mqtt->Start();
@@ -1011,33 +1092,34 @@ void TrafficStartup::StartCore()
     InitChannels();
     _socketMaid->Start();
   
-    int day = DateTime::Today().Day();
+    _socketMaid->Join();
+    //int day = DateTime::Today().Day();
 
-    while (!_cancelled)
-    {
-        string ps = Command::Execute("top -n 1|grep Genos.out");
-        vector<string> psRows = StringEx::Split(ps, "\n", true);
-        if (!psRows.empty())
-        {
-            vector<string> columns = StringEx::Split(psRows[0], " ", true);
-            if (columns.size() >= 5)
-            {
-                vector<string> datas = StringEx::Split(columns[4], "m", true);
-                if (!datas.empty())
-                {
-                    LogPool::Information(LogEvent::Monitor, "内存使用(MB):", datas[0]);
-                }
-            }
-        }
-        DateTime today = DateTime::Today();
-        if (day != today.Day())
-        {
-            DateTime removeTime = DateTime::ParseTimeStamp(today.TimeStamp() - LogPool::HoldDays() * 24 * 60 * 60 * 1000);
-            SqliteLogger::RemoveDatas(removeTime);
-            day = today.Day();
-        }
-        this_thread::sleep_for(chrono::minutes(1));
-    }
+    //while (!_cancelled)
+    //{
+    //    string ps = Command::Execute("top -n 1|grep Genos.out");
+    //    vector<string> psRows = StringEx::Split(ps, "\n", true);
+    //    if (!psRows.empty())
+    //    {
+    //        vector<string> columns = StringEx::Split(psRows[0], " ", true);
+    //        if (columns.size() >= 5)
+    //        {
+    //            vector<string> datas = StringEx::Split(columns[4], "m", true);
+    //            if (!datas.empty())
+    //            {
+    //                LogPool::Information(LogEvent::Monitor, "内存使用(MB):", datas[0]);
+    //            }
+    //        }
+    //    }
+    //    DateTime today = DateTime::Today();
+    //    if (day != today.Day())
+    //    {
+    //        DateTime removeTime = DateTime::ParseTimeStamp(today.TimeStamp() - LogPool::HoldDays() * 24 * 60 * 60 * 1000);
+    //        SqliteLogger::RemoveDatas(removeTime);
+    //        day = today.Day();
+    //    }
+    //    this_thread::sleep_for(chrono::minutes(1));
+    //}
 
     _socketMaid->Stop();
     delete _socketMaid;

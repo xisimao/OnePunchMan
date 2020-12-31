@@ -213,25 +213,6 @@ namespace OnePunchMan
 			ss << (value?"true":"false");
 			return std::string(ss.str());
 		}
-
-		/**
-		* wstring转string
-		* @param value wstring
-		* @return string
-		*/
-		static std::string ToString(const std::wstring& value)
-		{
-			std::wstring_convert<std::codecvt_utf8<wchar_t>> cv;
-			return cv.to_bytes(value);
-		}
-
-		/**
-		* 四舍五入浮点数
-		* @param value 源浮点数
-		* @param precision 精确位数
-		* @return 四舍五入后的字符串
-		*/
-		static std::string Rounding(float value, int precision);
 		
 		/**
 		* 四舍五入浮点数
@@ -239,7 +220,16 @@ namespace OnePunchMan
 		* @param precision 精确位数
 		* @return 四舍五入后的字符串
 		*/
-		static std::string Rounding(double value, int precision);
+		template<typename T>
+		static T Rounding(T value, int precision)
+		{
+			std::stringstream ss;
+			ss << std::setiosflags(std::ios::fixed) << std::setprecision(precision);
+			ss << value;
+			T t = 0.0;
+			ss >> t;
+			return t;
+		}
 
 		/**
 		* 将多个元素组合成一个字符串。
@@ -317,7 +307,7 @@ namespace OnePunchMan
 		{
 			std::wstringstream ss;
 			Combine(&ss, t, u...);
-			return StringEx::ToString(ss.str());
+			return ToString(ss.str());
 		}
 
 		/**
@@ -343,14 +333,14 @@ namespace OnePunchMan
 		}
 
 		/**
-		* string转wstring
-		* @param value string
-		* @return wstring
+		* wstring转string
+		* @param value wstring
+		* @return string
 		*/
-		static std::wstring ToWString(const std::string& value)
+		static std::string ToString(const std::wstring& value)
 		{
 			std::wstring_convert<std::codecvt_utf8<wchar_t>> cv;
-			return cv.from_bytes(value);
+			return cv.to_bytes(value);
 		}
 	};
 }

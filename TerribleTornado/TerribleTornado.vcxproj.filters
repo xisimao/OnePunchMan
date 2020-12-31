@@ -1,25 +1,19 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Event">
-      <UniqueIdentifier>{b78f9762-1585-4b36-a879-2482ad94d8cf}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Flow">
       <UniqueIdentifier>{6f2d6901-9f1a-40e4-a1cd-1f65cf0bfbb4}</UniqueIdentifier>
     </Filter>
     <Filter Include="Traffic">
       <UniqueIdentifier>{b3a923ed-eada-4a0a-b328-41057c054f38}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Adapter">
-      <UniqueIdentifier>{f79af6b7-945c-4374-8e16-4c607f69036b}</UniqueIdentifier>
+    <Filter Include="Event">
+      <UniqueIdentifier>{fed1152d-37b3-4891-9bd4-ec884204e15b}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Flow\FlowDetector.cpp">
       <Filter>Flow</Filter>
-    </ClCompile>
-    <ClCompile Include="Event\EventDetector.cpp">
-      <Filter>Event</Filter>
     </ClCompile>
     <ClCompile Include="Traffic\DetectChannel.cpp">
       <Filter>Traffic</Filter>
@@ -36,9 +30,6 @@
     <ClCompile Include="Traffic\TrafficStartup.cpp">
       <Filter>Traffic</Filter>
     </ClCompile>
-    <ClCompile Include="Adapter\IoAdapter.cpp">
-      <Filter>Adapter</Filter>
-    </ClCompile>
     <ClCompile Include="Traffic\TrafficData.cpp">
       <Filter>Traffic</Filter>
     </ClCompile>
@@ -52,25 +43,22 @@
     <ClCompile Include="Traffic\SqliteLogger.cpp">
       <Filter>Traffic</Filter>
     </ClCompile>
-    <ClCompile Include="Flow\DataMergeMap.cpp">
-      <Filter>Flow</Filter>
-    </ClCompile>
-    <ClCompile Include="Event\EventDataChannel.cpp">
-      <Filter>Event</Filter>
-    </ClCompile>
     <ClCompile Include="Traffic\ImageConvert.cpp">
       <Filter>Traffic</Filter>
     </ClCompile>
     <ClCompile Include="Traffic\ImageDrawing.cpp">
       <Filter>Traffic</Filter>
     </ClCompile>
+    <ClCompile Include="Traffic\DataChannel.cpp">
+      <Filter>Traffic</Filter>
+    </ClCompile>
+    <ClCompile Include="Event\EventDetector.cpp">
+      <Filter>Event</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Flow\FlowDetector.h">
       <Filter>Flow</Filter>
-    </ClInclude>
-    <ClInclude Include="Event\EventDetector.h">
-      <Filter>Event</Filter>
     </ClInclude>
     <ClInclude Include="Traffic\DetectChannel.h">
       <Filter>Traffic</Filter>
@@ -90,9 +78,6 @@
     <ClInclude Include="Traffic\TrafficStartup.h">
       <Filter>Traffic</Filter>
     </ClInclude>
-    <ClInclude Include="Adapter\IoAdapter.h">
-      <Filter>Adapter</Filter>
-    </ClInclude>
     <ClInclude Include="Traffic\DecodeChannel.h">
       <Filter>Traffic</Filter>
     </ClInclude>
@@ -102,21 +87,21 @@
     <ClInclude Include="Traffic\SqliteLogger.h">
       <Filter>Traffic</Filter>
     </ClInclude>
-    <ClInclude Include="Flow\DataMergeMap.h">
-      <Filter>Flow</Filter>
-    </ClInclude>
-    <ClInclude Include="Event\EventDataChannel.h">
-      <Filter>Event</Filter>
-    </ClInclude>
     <ClInclude Include="Traffic\ImageConvert.h">
       <Filter>Traffic</Filter>
     </ClInclude>
     <ClInclude Include="Traffic\ImageDrawing.h">
       <Filter>Traffic</Filter>
     </ClInclude>
+    <ClInclude Include="Traffic\DataChannel.h">
+      <Filter>Traffic</Filter>
+    </ClInclude>
+    <ClInclude Include="Event\EventDetector.h">
+      <Filter>Event</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="appsettings.json" />
-    <None Include="traffic.db" />
+    <None Include="flow.db" />
   </ItemGroup>
 </Project>

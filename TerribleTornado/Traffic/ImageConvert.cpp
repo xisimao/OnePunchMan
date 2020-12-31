@@ -221,6 +221,12 @@ void ImageConvert::BufferToFile(const unsigned char* buffer, int size, const str
 	}
 }
 
+void ImageConvert::IveToBmp(const unsigned char* iveBuffer, int width, int height, const string& filePath)
+{
+	IveToBgr(iveBuffer, width, height);
+	BgrToBmp(_bgrBuffer, width, height, filePath);
+}
+
 void ImageConvert::IveToJpgFile(const unsigned char* iveBuffer, int width, int height, const string& filePath)
 {
 	IveToBgr(iveBuffer, width, height);

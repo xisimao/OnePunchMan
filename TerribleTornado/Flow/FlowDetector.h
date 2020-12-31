@@ -4,8 +4,10 @@
 #include "TrafficData.h"
 #include "TrafficDetector.h"
 #include "Command.h"
-#include "DataMergeMap.h"
+#include "DataChannel.h"
+#include "SocketMaid.h"
 #include "ImageDrawing.h"
+
 
 namespace OnePunchMan
 {
@@ -17,10 +19,11 @@ namespace OnePunchMan
 		* 构造函数
 		* @param width 图片宽度
 		* @param height 图片高度
+		* @param maid socket
 		* @param mqtt mqtt
-		* @param merge 数据合并
+		* @param data 数据线程
 		*/
-		FlowDetector(int width, int height,MqttChannel* mqtt, DataMergeMap* merge);
+		FlowDetector(int width, int height,SocketMaid* maid,MqttChannel* mqtt, DataChannel* data);
 
 		/**
 		* 初始化流量参数配置
@@ -73,7 +76,7 @@ namespace OnePunchMan
 		* @param iveBuffer 图片字节流
 		* @param vehicle 机动车识别数据
 		*/
-		void HandleRecognVehicle(const RecognItem& recognItem, const unsigned char* iveBuffer, const VideoStruct_Vehicle& vehicle);
+		void HandleRecognVehicle(const RecognItem& recognItem, const unsigned char* iveBuffer, VehicleData* vehicle);
 
 		/**
 		* 处理非机动车识别数据
@@ -81,7 +84,7 @@ namespace OnePunchMan
 		* @param iveBuffer 图片字节流
 		* @param bike 非机动车识别数据
 		*/
-		void HandleRecognBike(const RecognItem& recognItem, const unsigned char* iveBuffer, const VideoStruct_Bike& bike);
+		void HandleRecognBike(const RecognItem& recognItem, const unsigned char* iveBuffer, BikeData* bike);
 
 		/**
 		* 处理行人识别数据
@@ -89,7 +92,7 @@ namespace OnePunchMan
 		* @param iveBuffer 图片字节流
 		* @param pedestrain 行人识别数据
 		*/
-		void HandleRecognPedestrain(const RecognItem& recognItem, const unsigned char* iveBuffer, const VideoStruct_Pedestrain& pedestrain);
+		void HandleRecognPedestrain(const RecognItem& recognItem, const unsigned char* iveBuffer, PedestrainData* pedestrain);
 		
 		/**
 		* 绘制检测区域
@@ -99,112 +102,12 @@ namespace OnePunchMan
 		void DrawDetect(const std::map<std::string, DetectItem>& detectItems, unsigned int frameIndex);
 
 	private:
-		//流量检测缓存
-		class FlowDetectCache
-		{
-		public:
-			FlowDetectCache()
-				:LastTimeStamp(0), LastHitPoint()
-			{
-
-			}
-			//检测项最后一次出现的时间戳
-			long long LastTimeStamp;
-			//检测项最后一次检测点
-			Point LastHitPoint;
-		};
-
-		//流量车道缓存
-		class FlowLaneCache
-		{
-		public:
-			FlowLaneCache()
-				: LaneIndex(0),LaneId(), LaneName(), Length(0),Direction(0), FlowRegion(), QueueRegion(),ReportProperties(0), MeterPerPixel(0.0), StopPoint()
-				, Persons(0), Bikes(0), Motorcycles(0), Cars(0), Tricycles(0), Buss(0), Vans(0), Trucks(0)
-				, TotalDistance(0.0), TotalTime(0)
-				, TotalInTime(0)
-				, LastInRegion(0), TotalSpan(0)
-				, MaxQueueLength(0), CurrentQueueLength(0), TotalQueueLength(0), CountQueueLength(0)
-				, IoStatus(false), Items()
-			{
-
-			}
-			//车道序号
-			int LaneIndex;
-			//车道编号
-			std::string LaneId;
-			//车道名称
-			std::string LaneName;
-			//车道长度
-			double Length;
-			//车道方向
-			int Direction;
-			//流量检测区域
-			Polygon FlowRegion;
-			//排队检测区域
-			Polygon QueueRegion;
-			//上报的属性
-			int ReportProperties;
-			//每个像素代表的米数
-			double MeterPerPixel;
-			//停止线检测的点
-			Point StopPoint;
-
-			//行人流量
-			int Persons;
-			//自行车流量
-			int Bikes;
-			//摩托车流量
-			int Motorcycles;
-			//轿车流量
-			int Cars;
-			//三轮车流量
-			int Tricycles;
-			//公交车流量
-			int Buss;
-			//面包车流量
-			int Vans;
-			//卡车流量
-			int Trucks;
-
-			//用于计算平均速度
-			//车辆行驶总距离(像素值) 
-			double TotalDistance;
-			//车辆行驶总时间(毫秒)
-			long long TotalTime;
-
-			//用于计算时间占有率
-			//区域占用总时间(毫秒)
-			long long TotalInTime;
-
-			//用于计算车头时距
-			//上一次有车进入区域的时间戳 
-			long long LastInRegion;
-			//车辆进入区域时间差的和(毫秒)
-			long long TotalSpan;
-
-			//排队长度(m)
-			int MaxQueueLength;
-			//当前瞬时排队长度(m)
-			int CurrentQueueLength;
-			//排队总长度(m)
-			int TotalQueueLength;
-			//排队总长度对应的计数次数
-			int CountQueueLength;
-
-			//io状态
-			bool IoStatus;
-
-			//车道内检测项集合
-			std::map<std::string, FlowDetectCache> Items;
-		};
-
 		/**
 		* 计算分钟流量
 		* @param laneCache 车道缓存
 		* @return 分钟流量数据
 		*/
-		FlowReportData CalculateMinuteFlow(FlowLaneCache* laneCache);
+		FlowData CalculateMinuteFlow(FlowData* laneCache);
 
 		/**
 		* 添加车辆距离有序列表
@@ -219,7 +122,7 @@ namespace OnePunchMan
 		* @param distances 车辆距离链表
 		* @return 车辆排队长度(m)
 		*/
-		int CalculateQueueLength(const FlowLaneCache& laneCache,const std::list<double>& distances);
+		int CalculateQueueLength(const FlowData& laneCache,const std::list<double>& distances);
 
 		//IO mqtt主题
 		static const std::string IOTopic;
@@ -233,11 +136,10 @@ namespace OnePunchMan
 		static const int DeleteSpan;
 		//计算两车是否处于排队状态的最小距离(px)
 		static int QueueMinDistance;
-		//车道上报所有流量属性的标识
-		static const int AllPropertiesFlag;
 
-		//数据合并
-		DataMergeMap* _merge;
+		SocketMaid* _maid;
+		//数据处理线程
+		DataChannel* _data;
 
 		//任务编号
 		int _taskId;
@@ -252,12 +154,12 @@ namespace OnePunchMan
 		//检测车道集合同步锁
 		std::mutex _laneMutex;
 		//检测车道集合
-		std::vector<FlowLaneCache> _laneCaches;
+		std::vector<FlowData> _laneCaches;
 		//上报缓存
-		std::vector<FlowReportData> _reportCaches;
-		std::vector<VideoStruct_Vehicle> _vehicleReportCaches;
-		std::vector<VideoStruct_Bike> _bikeReportCaches;
-		std::vector<VideoStruct_Pedestrain> _pedestrainReportCaches;
+		std::vector<FlowData> _reportCaches;
+		std::vector<VehicleData> _vehicleReportCaches;
+		std::vector<BikeData> _bikeReportCaches;
+		std::vector<PedestrainData> _pedestrainReportCaches;
 
 		//监测图像转换
 		ImageConvert _detectImage;

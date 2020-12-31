@@ -15,8 +15,18 @@ namespace OnePunchMan
 	{
 	
 	public:
+
+		/**
+		* 构造函数
+		* @param width 宽度
+		* @param height 高度
+		* @param useYuvBuffer 是否使用yuvizjieliu
+		*/
 		ImageConvert(int width, int height,bool useYuvBuffer);
 
+		/**
+		* 析构函数
+		*/
 		~ImageConvert();
 
 		/**
@@ -84,6 +94,15 @@ namespace OnePunchMan
 		* @param filePath 写入文件的路径
 		*/
 		void BufferToFile(const unsigned char* buffer, int size, const std::string& filePath);
+		
+		/**
+		* ive转bmp文件
+		* @param iveBuffer ive字节流
+		* @param width 图片宽度
+		* @param height 图片高度
+		* @param filePath 写入文件路径
+		*/
+		void IveToBmp(const unsigned char* iveBuffer, int width, int height, const std::string& filePath);
 
 		/**
 		* ive转jpg文件

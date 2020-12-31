@@ -21,8 +21,7 @@ namespace OnePunchMan
 {
     //流量系统启动线程
     class TrafficStartup 
-        : public ThreadObject
-        , public IObserver<HttpReceivedEventArgs>
+        : public IObserver<HttpReceivedEventArgs>
         , public IObserver<MqttDisconnectedEventArgs>
     {
     public:
@@ -56,9 +55,10 @@ namespace OnePunchMan
         */
         void Update(MqttDisconnectedEventArgs* e);
 
-    protected:
-        void StartCore();
-
+        /**
+        * 启动系统
+        */
+        void Start();
     private:
         /**
         * 获取通道json数据
@@ -171,10 +171,8 @@ namespace OnePunchMan
         HttpHandler _handler;
         //mqtt
         MqttChannel* _mqtt;
-        //数据合并
-        DataMergeMap* _merge;
         //事件数据入库线程
-        EventDataChannel* _data;
+        DataChannel* _data;
         //编码
         EncodeChannel* _encode;
         //解码线程集合,等于视频总数

@@ -106,13 +106,13 @@ void RecognChannel::StartCore()
 					int vehicleType = jd.Get<int>(StringEx::Combine("ImageResults:0:Vehicles:0:Type"));
 					if (vehicleType != 0)
 					{
-						VideoStruct_Vehicle vehicle;
+						VehicleData vehicle;
 						vehicle.CarType = jd.Get<int>(StringEx::Combine("ImageResults:0:Vehicles:0:Recognize:Type:TopList:0:Code"));
 						vehicle.CarColor = jd.Get<int>(StringEx::Combine("ImageResults:0:Vehicles:0:Recognize:Color:TopList:0:Code"));
 						vehicle.CarBrand = jd.Get<string>(StringEx::Combine("ImageResults:0:Vehicles:0:Recognize:Brand:TopList:0:Name"));
 						vehicle.PlateType = jd.Get<int>(StringEx::Combine("ImageResults:0:Vehicles:0:Recognize:Plate:Type"));
 						vehicle.PlateNumber = jd.Get<string>(StringEx::Combine("ImageResults:0:Vehicles:0:Recognize:Plate:Licence"));
-						_detectors->at(item.ChannelIndex - 1)->HandleRecognVehicle(item, _bgrs[0], vehicle);
+						_detectors->at(item.ChannelIndex - 1)->HandleRecognVehicle(item, _bgrs[0], &vehicle);
 					}
 				}
 				else if (item.Type == DetectType::Bike
@@ -122,9 +122,9 @@ void RecognChannel::StartCore()
 					int bikeType = jd.Get<int>(StringEx::Combine("ImageResults:0:Bikes:0:Type"));
 					if (bikeType != 0)
 					{
-						VideoStruct_Bike bike;
+						BikeData bike;
 						bike.BikeType = bikeType;
-						_detectors->at(item.ChannelIndex - 1)->HandleRecognBike(item, _bgrs[0], bike);
+						_detectors->at(item.ChannelIndex - 1)->HandleRecognBike(item, _bgrs[0], &bike);
 					}
 				}
 				else if (item.Type == DetectType::Pedestrain)
@@ -133,11 +133,11 @@ void RecognChannel::StartCore()
 					int pedestrainType = jd.Get<int>(StringEx::Combine("ImageResults:0:Pedestrains:0:Type"));
 					if (pedestrainType != 0)
 					{
-						VideoStruct_Pedestrain pedestrain;
+						PedestrainData pedestrain;
 						pedestrain.Sex = jd.Get<int>(StringEx::Combine("ImageResults:0:Pedestrains:0:Recognize:Sex:TopList:0:Code"));
 						pedestrain.Age = jd.Get<int>(StringEx::Combine("ImageResults:0:Pedestrains:0:Recognize:Age:TopList:0:Code"));
 						pedestrain.UpperColor = jd.Get<int>(StringEx::Combine("ImageResults:0:Pedestrains:0:Recognize:UpperColor:TopList:0:Code"));
-						_detectors->at(item.ChannelIndex - 1)->HandleRecognPedestrain(item, _bgrs[0], pedestrain);
+						_detectors->at(item.ChannelIndex - 1)->HandleRecognPedestrain(item, _bgrs[0], &pedestrain);
 					}
 				}
 				long long recognTimeStamp3 = DateTime::NowTimeStamp();

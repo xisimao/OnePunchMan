@@ -17,7 +17,7 @@ unsigned int EventDetector::RetrogradeMinCount = 3;
 int EventDetector::OutputVideoIFrame = 20;
 
 
-EventDetector::EventDetector(int width, int height, MqttChannel* mqtt, EncodeChannel* encodeChannel, EventDataChannel* dataChannel)
+EventDetector::EventDetector(int width, int height, MqttChannel* mqtt, EncodeChannel* encodeChannel, DataChannel* dataChannel)
 	:TrafficDetector(width, height, mqtt), _taskId(0), _image(width,height,false),_encodeChannel(encodeChannel), _dataChannel(dataChannel)
 {
 	_videoSize = 10 * 1024 * 1024;
@@ -105,7 +105,7 @@ void EventDetector::ClearChannel()
 	{
 		for (vector<EventData>::iterator it = _encodeDatas.begin(); it != _encodeDatas.end();++it)
 		{
-			_encodeChannel->RemoveOutput(_channelIndex,it->GetTempVideo());
+			_encodeChannel->RemoveOutput(_channelIndex, TrafficDirectory::GetEventMp4(it->Guid));
 		}
 		_encodeDatas.clear();
 	}
@@ -126,10 +126,10 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 	{
 		for (vector<EventData>::iterator it = _encodeDatas.begin(); it != _encodeDatas.end();)
 		{
-			if (_encodeChannel->OutputFinished(_channelIndex,it->GetTempVideo()))
+			if (_encodeChannel->OutputFinished(_channelIndex,TrafficDirectory::GetEventMp4(it->Guid)))
 			{
-				_image.IveToJpgFile(iveBuffer, _width, _height,it->GetTempImage(2));
-				_dataChannel->AddData(*it);
+				_image.IveToJpgFile(iveBuffer, _width, _height, TrafficDirectory::GetEventJpg(it->Guid,2));
+				_dataChannel->PushEventData(*it);
 				it = _encodeDatas.erase(it);
 			}
 			else
@@ -193,9 +193,9 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 									data.Type = (int)EventType::Park;
 									if (laneCache.Items.size() < MaxCacheCount)
 									{
-										if (_encodeChannel->AddOutput(_channelIndex, data.GetTempVideo(), OutputVideoIFrame))
+										if (_encodeChannel->AddOutput(_channelIndex, TrafficDirectory::GetEventMp4(data.Guid), OutputVideoIFrame))
 										{
-											DrawDetect(data.GetTempImage(1), iveBuffer, dit->second.Region);
+											DrawDetect(TrafficDirectory::GetEventJpg(data.Guid,1), iveBuffer, dit->second.Region);
 											_encodeDatas.push_back(data);
 										}
 									}
@@ -233,9 +233,9 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 								data.Type = (int)EventType::Congestion;
 								if (laneCache.Items.size() < MaxCacheCount)
 								{
-									if (_encodeChannel->AddOutput(_channelIndex, data.GetTempVideo(), OutputVideoIFrame))
+									if (_encodeChannel->AddOutput(_channelIndex, TrafficDirectory::GetEventMp4(data.Guid), OutputVideoIFrame))
 									{
-										DrawDetect(data.GetTempImage(1), iveBuffer, dit->second.Region);
+										DrawDetect(TrafficDirectory::GetEventJpg(data.Guid, 1), iveBuffer, dit->second.Region);
 										_encodeDatas.push_back(data);
 									}
 								}
@@ -296,9 +296,9 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 											data.Type = (int)EventType::Retrograde;
 											if (laneCache.Items.size() < MaxCacheCount)
 											{
-												if (_encodeChannel->AddOutput(_channelIndex, data.GetTempVideo(), OutputVideoIFrame))
+												if (_encodeChannel->AddOutput(_channelIndex, TrafficDirectory::GetEventMp4(data.Guid), OutputVideoIFrame))
 												{
-													DrawDetect(data.GetTempImage(1), iveBuffer, dit->second.Region);
+													DrawDetect(TrafficDirectory::GetEventJpg(data.Guid, 1), iveBuffer, dit->second.Region);
 													_encodeDatas.push_back(data);
 												}
 											}
@@ -345,9 +345,9 @@ void EventDetector::HandleDetect(map<string, DetectItem>* detectItems, long long
 						data.Type = (int)eventType;
 						if (laneCache.Items.size() < MaxCacheCount)
 						{
-							if (_encodeChannel->AddOutput(_channelIndex, data.GetTempVideo(), OutputVideoIFrame))
+							if (_encodeChannel->AddOutput(_channelIndex, TrafficDirectory::GetEventMp4(data.Guid), OutputVideoIFrame))
 							{
-								DrawDetect(data.GetTempImage(1), iveBuffer, dit->second.Region);
+								DrawDetect(TrafficDirectory::GetEventJpg(data.Guid, 1), iveBuffer, dit->second.Region);
 								_encodeDatas.push_back(data);
 							}
 						}

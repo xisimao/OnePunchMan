@@ -23,7 +23,7 @@ namespace OnePunchMan
 	class SqliteLogger:public Logger
 	{
 	public:
-		SqliteLogger(const std::string& dbName);
+		SqliteLogger(const std::string& dbName="flow.db");
 
 		static std::vector<LogData> GetDatas(int logLevel,int logEvent,const std::string& startTime,const std::string& endTime,int pageNum,int pageSize,int* total);
 
