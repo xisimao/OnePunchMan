@@ -4,12 +4,10 @@ using namespace std;
 using namespace OnePunchMan;
 
 const int TrafficStartup::ChannelCount = 8;
-const int TrafficStartup::DetectCount = 4;
-const int TrafficStartup::RecognCount = 2;
 
 TrafficStartup::TrafficStartup()
-    :_startTime(DateTime::Now()),_sdkInited(false), _socketMaid(NULL)
-    , _mqtt(NULL), _data(NULL),_encode(NULL)
+    :_startTime(DateTime::Now()), _sdkInited(false), _socketMaid(NULL)
+    , _data(NULL), _encode(NULL)
 {
     JsonDeserialization jd("appsettings.json");
     FlowDetector::Init(jd);
@@ -26,12 +24,6 @@ TrafficStartup::~TrafficStartup()
     {
         delete _eventDetectors[i];
     }
-}
-
-void TrafficStartup::Update(MqttDisconnectedEventArgs* e)
-{
-    LogPool::Information(LogEvent::System,"system restart");
-    exit(1);
 }
 
 void TrafficStartup::Update(HttpReceivedEventArgs* e)
@@ -87,7 +79,7 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
         TrafficData data;
         if (e->Function.compare(HttpFunction::Get) == 0)
         {
-            GbParameter parameter=data.GetGbPrameter();
+            GbParameter parameter = data.GetGbPrameter();
             string json;
             JsonSerialization::SerializeValue(&json, "serverIp", parameter.ServerIp);
             JsonSerialization::SerializeValue(&json, "serverPort", parameter.ServerPort);
@@ -110,7 +102,7 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
             parameter.GbId = jd.Get<string>("gbId");
             parameter.DomainId = jd.Get<string>("domainId");
             parameter.UserName = jd.Get<string>("userName");
-            parameter.Password = jd.Get<string>("password");  
+            parameter.Password = jd.Get<string>("password");
             data.SetGbPrameter(parameter);
             e->Code = HttpCode::OK;
         }
@@ -121,7 +113,7 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
         if (e->Function.compare(HttpFunction::Get) == 0)
         {
             vector<GbDevice> devices = data.GetGbDevices();
-            for (vector<GbDevice>::iterator it = devices.begin();it!=devices.end();++it)
+            for (vector<GbDevice>::iterator it = devices.begin(); it != devices.end(); ++it)
             {
                 string deviceJson;
                 JsonSerialization::SerializeValue(&deviceJson, "id", it->Id);
@@ -142,7 +134,7 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
             device.DeviceId = jd.Get<string>("deviceId");
             device.DeviceName = jd.Get<string>("deviceName");
             device.DeviceIp = jd.Get<string>("deviceIp");
-            device.DevicePort = jd.Get<int>("devicePort");      
+            device.DevicePort = jd.Get<int>("devicePort");
             device.UserName = jd.Get<string>("userName");
             device.Password = jd.Get<string>("password");
             data.InsertGbDevice(device);
@@ -156,7 +148,7 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
             device.DeviceId = jd.Get<string>("deviceId");
             device.DeviceName = jd.Get<string>("deviceName");
             device.DeviceIp = jd.Get<string>("deviceIp");
-            device.DevicePort = jd.Get<int>("devicePort");   
+            device.DevicePort = jd.Get<int>("devicePort");
             device.UserName = jd.Get<string>("userName");
             device.Password = jd.Get<string>("password");
             if (data.UpdateGbDevice(device))
@@ -188,7 +180,7 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
         {
             string gbId = GetId(e->Url, "/api/gbChannels");
             TrafficData data;
-            vector<GbChannel> channels=data.GetGbChannels(gbId);
+            vector<GbChannel> channels = data.GetGbChannels(gbId);
             for (vector<GbChannel>::iterator it = channels.begin(); it != channels.end(); ++it)
             {
                 string channelJson;
@@ -204,9 +196,9 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
     {
         string id = GetId(e->Url, "/api/images");
         int channelIndex = StringEx::Convert<int>(id);
-        if (ChannelIndexEnable(channelIndex))
+        if (CheckChannelIndex(channelIndex))
         {
-            _detects[channelIndex]->WriteBmp(channelIndex);
+            Screenshot(channelIndex);
             e->Code = HttpCode::OK;
         }
         else
@@ -233,87 +225,108 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
     else if (UrlStartWith(e->Url, "/api/update/sn"))
     {
         JsonDeserialization jd(e->RequestJson);
-        string sn=jd.Get<string>("sn");
+        string sn = jd.Get<string>("sn");
         TrafficData data;
         data.SetParameter("SN", sn);
         e->Code = HttpCode::OK;
     }
-    //else if (UrlStartWith(e->Url, "/api/logs"))
-    //{
-    //    vector<string> datas = StringEx::Split(e->Url, "?", true);
-    //    if (datas.size() > 1)
-    //    {
-    //        int logLevel = 0;
-    //        int logEvent = 0;
-    //        string startTime;
-    //        string endTime;
-    //        int pageNum = 0;
-    //        int pageSize = 0;
-    //        vector<string> params = StringEx::Split(datas[1], "&", true);
-    //        for (vector<string>::iterator mit = params.begin(); mit != params.end(); ++mit)
-    //        {
-    //            vector<string> pair = StringEx::Split(*mit, "=", true);
-    //            if (pair.size() >= 2)
-    //            {
-    //                if (pair[0].compare("logLevel") == 0)
-    //                {
-    //                    logLevel = StringEx::Convert<int>(pair[1]);
-    //                }
-    //                else if (pair[0].compare("logEvent") == 0)
-    //                {
-    //                    logEvent = StringEx::Convert<int>(pair[1]);
-    //                }
-    //                else if (pair[0].compare("startTime") == 0)
-    //                {
-    //                    startTime = pair[1];
-    //                    if (startTime.size() >= 19)
-    //                    {
-    //                        startTime = StringEx::Replace(startTime, "%20", " ");
-    //                        startTime = StringEx::Replace(startTime, "%3A", ":");
-    //                    }
-    //                }
-    //                else if (pair[0].compare("endTime") == 0)
-    //                {
-    //                    endTime = pair[1];
-    //                    if (endTime.size() >= 19)
-    //                    {
-    //                        endTime = StringEx::Replace(endTime, "%20", " ");
-    //                        endTime = StringEx::Replace(endTime, "%3A", ":");
-    //                    }
-    //                }
-    //                else if (pair[0].compare("pageNum") == 0)
-    //                {
-    //                    pageNum = StringEx::Convert<int>(pair[1]);
-    //                }
-    //                else if (pair[0].compare("pageSize") == 0)
-    //                {
-    //                    pageSize = StringEx::Convert<int>(pair[1]);
-    //                }
-    //            }
-    //        }
-    //        int total = 0;
-    //        vector<LogData> logDatas = SqliteLogger::GetDatas(logLevel, logEvent, startTime, endTime, pageNum, pageSize,&total);
-    //        string datasJson;
-    //        for (vector<LogData>::iterator it = logDatas.begin(); it != logDatas.end(); ++it)
-    //        {
-    //            string json;
-    //            JsonSerialization::SerializeValue(&json, "id", it->Id);
-    //            JsonSerialization::SerializeValue(&json, "logLevel", it->LogLevel);
-    //            JsonSerialization::SerializeValue(&json, "logEvent", it->LogEvent);
-    //            JsonSerialization::SerializeValue(&json, "time", it->Time);
-    //            JsonSerialization::SerializeValue(&json, "content", it->Content);
-    //            JsonSerialization::AddClassItem(&datasJson, json);
-    //        }
-    //        JsonSerialization::SerializeValue(&e->ResponseJson, "total", total);
-    //        JsonSerialization::SerializeArray(&e->ResponseJson, "datas", datasJson);
-    //    }
-    //    e->Code = HttpCode::OK;
-    //}
-    else if (UrlStartWith(e->Url, "/api/report"))
+    else if (UrlStartWith(e->Url, "/api/flow/data"))
+    {
+        vector<string> datas = StringEx::Split(e->Url, "?", true);
+        if (datas.size() > 1)
+        {
+            string channelUrl;
+            string laneId;
+            DateTime startTime;
+            DateTime endTime;
+            int pageNum = 0;
+            int pageSize = 0;
+            vector<string> params = StringEx::Split(datas[1], "&", true);
+            for (vector<string>::iterator mit = params.begin(); mit != params.end(); ++mit)
+            {
+                vector<string> pair = StringEx::Split(*mit, "=", true);
+                if (pair.size() >= 1)
+                {
+                    if (pair[0].compare("channelurl") == 0)
+                    {
+                        if (pair.size() >= 2)
+                        {
+                            channelUrl = StringEx::Convert<string>(pair[1]);
+                        }
+                    }
+                    else if (pair[0].compare("laneid") == 0)
+                    {
+                        if (pair.size() >= 2)
+                        {
+                            laneId = StringEx::Convert<string>(pair[1]);
+                        }
+                    }
+                    else if (pair[0].compare("starttime") == 0)
+                    {
+                        if (pair.size() >= 2)
+                        {
+                            string value = pair[1];
+                            if (value.size() >= 19)
+                            {
+                                value = StringEx::Replace(value, "%20", " ");
+                                value = StringEx::Replace(value, "%3A", ":");
+                                startTime = DateTime::ParseString("%d-%d-%d %d:%d:%d", value);
+                            }
+                        }
+                    }
+                    else if (pair[0].compare("endtime") == 0)
+                    {
+                        if (pair.size() >= 2)
+                        {
+                            string value = pair[1];
+                            if (value.size() >= 19)
+                            {
+                                value = StringEx::Replace(value, "%20", " ");
+                                value = StringEx::Replace(value, "%3A", ":");
+                                endTime = DateTime::ParseString("%d-%d-%d %d:%d:%d", value);
+                            }
+                        }
+                    }
+                    else if (pair[0].compare("pagenum") == 0)
+                    {
+                        if (pair.size() >= 2)
+                        {
+                            pageNum = StringEx::Convert<int>(pair[1]);
+                        }
+
+                    }
+                    else if (pair[0].compare("pagesize") == 0)
+                    {
+                        if (pair.size() >= 2)
+                        {
+                            pageSize = StringEx::Convert<int>(pair[1]);
+                        }
+                    }
+                }
+            }
+            if (endTime - startTime > 60 * 60 * 1000)
+            {
+                JsonSerialization::SerializeValue(&e->ResponseJson, "message", WStringEx::ToString(L"\x67E5\x8BE2\x65F6\x95F4\x4E0D\x80FD\x8D85\x8FC7\x4E00\x5C0F\x65F6"));
+                e->Code = HttpCode::BadRequest;
+                return;
+            }
+            TrafficData data;
+            tuple< vector<FlowData>, int> t = data.GetFlowDatas(channelUrl, laneId, startTime.TimeStamp(), endTime.TimeStamp(), pageNum, pageSize);
+            string datasJson;
+            for (vector<FlowData>::iterator it = get<0>(t).begin(); it != get<0>(t).end(); ++it)
+            {
+                JsonSerialization::AddClassItem(&datasJson, it->ToJson());
+            }
+            JsonSerialization::SerializeValue(&e->ResponseJson, "total", get<1>(t));
+            JsonSerialization::SerializeArray(&e->ResponseJson, "datas", datasJson);
+        }
+        e->Code = HttpCode::OK;
+    }
+    else if (UrlStartWith(e->Url, "/api/flow/report"))
     {
         string id = GetId(e->Url, "/api/report");
         int channelIndex = StringEx::Convert<int>(id);
-        if (ChannelIndexEnable(channelIndex))
+        if (CheckChannelIndex(channelIndex))
         {
             _flowDetectors[channelIndex - 1]->GetReportJson(&e->ResponseJson);
             e->Code = HttpCode::OK;
@@ -323,32 +336,416 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
             e->Code = HttpCode::NotFound;
         }
     }
-    else if (UrlStartWith(e->Url, "/api/data"))
+    else if (UrlStartWith(e->Url, "/api/event/data"))
     {
-        int channelIndex = StringEx::Convert<int>(GetId(e->Url, "/api/data"));
-        TrafficData data;
-        vector<EventData> datas = data.GetEventDatas(channelIndex,0,0);
-        for (vector<EventData>::iterator it = datas.begin(); it != datas.end(); ++it)
+        vector<string> datas = StringEx::Split(e->Url, "?", true);
+        if (datas.size() > 1)
         {
-            string json;
-            JsonSerialization::SerializeValue(&json, "id", it->Id);
-            string guid = it->Guid;
-            JsonSerialization::SerializeValue(&json, "channelIndex", it->ChannelIndex);
-            JsonSerialization::SerializeValue(&json, "laneIndex", it->LaneIndex);
-            JsonSerialization::SerializeValue(&json, "timeStamp", it->TimeStamp);
-            JsonSerialization::SerializeValue(&json, "type", it->Type);
-            JsonSerialization::SerializeValue(&json, "image1", TrafficDirectory::GetImageLink(guid, 1));
-            JsonSerialization::SerializeValue(&json, "image2", TrafficDirectory::GetImageLink(guid, 2));
-            JsonSerialization::SerializeValue(&json, "video", TrafficDirectory::GetVideoLink(guid));
-            JsonSerialization::AddClassItem(&e->ResponseJson, json);
+            string channelUrl;
+            DateTime startTime;
+            DateTime endTime;
+            int pageNum = 0;
+            int pageSize = 0;
+            vector<string> params = StringEx::Split(datas[1], "&", true);
+            for (vector<string>::iterator mit = params.begin(); mit != params.end(); ++mit)
+            {
+                vector<string> pair = StringEx::Split(*mit, "=", true);
+                if (pair.size() >= 1)
+                {
+                    if (pair[0].compare("channelurl") == 0)
+                    {
+                        if (pair.size() >= 2)
+                        {
+                            channelUrl = StringEx::Convert<string>(pair[1]);
+                        }
+                    }
+                    else if (pair[0].compare("starttime") == 0)
+                    {
+                        if (pair.size() >= 2)
+                        {
+                            string value = pair[1];
+                            if (value.size() >= 19)
+                            {
+                                value = StringEx::Replace(value, "%20", " ");
+                                value = StringEx::Replace(value, "%3A", ":");
+                                startTime = DateTime::ParseString("%d-%d-%d %d:%d:%d", value);
+                            }
+                        }
+                    }
+                    else if (pair[0].compare("endtime") == 0)
+                    {
+                        if (pair.size() >= 2)
+                        {
+                            string value = pair[1];
+                            if (value.size() >= 19)
+                            {
+                                value = StringEx::Replace(value, "%20", " ");
+                                value = StringEx::Replace(value, "%3A", ":");
+                                endTime = DateTime::ParseString("%d-%d-%d %d:%d:%d", value);
+                            }
+                        }
+                    }
+                    else if (pair[0].compare("pagenum") == 0)
+                    {
+                        if (pair.size() >= 2)
+                        {
+                            pageNum = StringEx::Convert<int>(pair[1]);
+                        }
+
+                    }
+                    else if (pair[0].compare("pagesize") == 0)
+                    {
+                        if (pair.size() >= 2)
+                        {
+                            pageSize = StringEx::Convert<int>(pair[1]);
+                        }
+                    }
+                }
+            }
+            if (endTime - startTime > 60 * 60 * 1000)
+            {
+                JsonSerialization::SerializeValue(&e->ResponseJson, "message", WStringEx::ToString(L"\x67E5\x8BE2\x65F6\x95F4\x4E0D\x80FD\x8D85\x8FC7\x4E00\x5C0F\x65F6"));
+                e->Code = HttpCode::BadRequest;
+                return;
+            }
+            TrafficData data;
+            tuple<vector<EventData>, int> t = data.GetEventDatas(channelUrl, startTime.TimeStamp(), endTime.TimeStamp(), pageNum, pageSize);
+            string datasJson;
+            for (vector<EventData>::iterator it = get<0>(t).begin(); it != get<0>(t).end(); ++it)
+            {
+                JsonSerialization::AddClassItem(&datasJson, it->ToJson());
+            }
+            JsonSerialization::SerializeValue(&e->ResponseJson, "total", get<1>(t));
+            JsonSerialization::SerializeArray(&e->ResponseJson, "datas", datasJson);
+        }
+        e->Code = HttpCode::OK;
+    }
+    else if (UrlStartWith(e->Url, "/api/videostruct/vehicle"))
+    {
+        vector<string> datas = StringEx::Split(e->Url, "?", true);
+        if (datas.size() > 1)
+        {
+            string channelUrl;
+            string laneId;
+            DateTime startTime;
+            DateTime endTime;
+            int pageNum = 0;
+            int pageSize = 0;
+            vector<string> params = StringEx::Split(datas[1], "&", true);
+            for (vector<string>::iterator mit = params.begin(); mit != params.end(); ++mit)
+            {
+                vector<string> pair = StringEx::Split(*mit, "=", true);
+                if (pair.size() >= 1)
+                {
+                    if (pair[0].compare("channelurl") == 0)
+                    {
+                        if (pair.size() >= 2)
+                        {
+                            channelUrl = StringEx::Convert<string>(pair[1]);
+                        }
+                    }
+                    else if (pair[0].compare("laneid") == 0)
+                    {
+                        if (pair.size() >= 2)
+                        {
+                            laneId = StringEx::Convert<string>(pair[1]);
+                        }
+                    }
+                    else if (pair[0].compare("starttime") == 0)
+                    {
+                        if (pair.size() >= 2)
+                        {
+                            string value = pair[1];
+                            if (value.size() >= 19)
+                            {
+                                value = StringEx::Replace(value, "%20", " ");
+                                value = StringEx::Replace(value, "%3A", ":");
+                                startTime = DateTime::ParseString("%d-%d-%d %d:%d:%d", value);
+                            }
+                        }
+                    }
+                    else if (pair[0].compare("endtime") == 0)
+                    {
+                        if (pair.size() >= 2)
+                        {
+                            string value = pair[1];
+                            if (value.size() >= 19)
+                            {
+                                value = StringEx::Replace(value, "%20", " ");
+                                value = StringEx::Replace(value, "%3A", ":");
+                                endTime = DateTime::ParseString("%d-%d-%d %d:%d:%d", value);
+                            }
+                        }
+                    }
+                    else if (pair[0].compare("pagenum") == 0)
+                    {
+                        if (pair.size() >= 2)
+                        {
+                            pageNum = StringEx::Convert<int>(pair[1]);
+                        }
+
+                    }
+                    else if (pair[0].compare("pagesize") == 0)
+                    {
+                        if (pair.size() >= 2)
+                        {
+                            pageSize = StringEx::Convert<int>(pair[1]);
+                        }
+                    }
+                }
+            }
+            if (endTime - startTime > 60 * 60 * 1000)
+            {
+                JsonSerialization::SerializeValue(&e->ResponseJson, "message", WStringEx::ToString(L"\x67E5\x8BE2\x65F6\x95F4\x4E0D\x80FD\x8D85\x8FC7\x4E00\x5C0F\x65F6"));
+                e->Code = HttpCode::BadRequest;
+                return;
+            }
+            TrafficData data;
+            tuple< vector<VehicleData>, int> t = data.GetVehicleDatas(channelUrl, laneId, startTime.TimeStamp(), endTime.TimeStamp(), pageNum, pageSize);
+            string datasJson;
+            for (vector<VehicleData>::iterator it = get<0>(t).begin(); it != get<0>(t).end(); ++it)
+            {
+                JsonSerialization::AddClassItem(&datasJson, it->ToJson());
+            }
+            JsonSerialization::SerializeValue(&e->ResponseJson, "total", get<1>(t));
+            JsonSerialization::SerializeArray(&e->ResponseJson, "datas", datasJson);
+        }
+        e->Code = HttpCode::OK;
+    }
+    else if (UrlStartWith(e->Url, "/api/videostruct/bike"))
+    {
+        vector<string> datas = StringEx::Split(e->Url, "?", true);
+        if (datas.size() > 1)
+        {
+            string channelUrl;
+            string laneId;
+            DateTime startTime;
+            DateTime endTime;
+            int pageNum = 0;
+            int pageSize = 0;
+            vector<string> params = StringEx::Split(datas[1], "&", true);
+            for (vector<string>::iterator mit = params.begin(); mit != params.end(); ++mit)
+            {
+                vector<string> pair = StringEx::Split(*mit, "=", true);
+                if (pair.size() >= 1)
+                {
+                    if (pair[0].compare("channelurl") == 0)
+                    {
+                        if (pair.size() >= 2)
+                        {
+                            channelUrl = StringEx::Convert<string>(pair[1]);
+                        }
+                    }
+                    else if (pair[0].compare("laneid") == 0)
+                    {
+                        if (pair.size() >= 2)
+                        {
+                            laneId = StringEx::Convert<string>(pair[1]);
+                        }
+                    }
+                    else if (pair[0].compare("starttime") == 0)
+                    {
+                        if (pair.size() >= 2)
+                        {
+                            string value = pair[1];
+                            if (value.size() >= 19)
+                            {
+                                value = StringEx::Replace(value, "%20", " ");
+                                value = StringEx::Replace(value, "%3A", ":");
+                                startTime = DateTime::ParseString("%d-%d-%d %d:%d:%d", value);
+                            }
+                        }
+                    }
+                    else if (pair[0].compare("endtime") == 0)
+                    {
+                        if (pair.size() >= 2)
+                        {
+                            string value = pair[1];
+                            if (value.size() >= 19)
+                            {
+                                value = StringEx::Replace(value, "%20", " ");
+                                value = StringEx::Replace(value, "%3A", ":");
+                                endTime = DateTime::ParseString("%d-%d-%d %d:%d:%d", value);
+                            }
+                        }
+                    }
+                    else if (pair[0].compare("pagenum") == 0)
+                    {
+                        if (pair.size() >= 2)
+                        {
+                            pageNum = StringEx::Convert<int>(pair[1]);
+                        }
+
+                    }
+                    else if (pair[0].compare("pagesize") == 0)
+                    {
+                        if (pair.size() >= 2)
+                        {
+                            pageSize = StringEx::Convert<int>(pair[1]);
+                        }
+                    }
+                }
+            }
+            if (endTime - startTime > 60 * 60 * 1000)
+            {
+                JsonSerialization::SerializeValue(&e->ResponseJson, "message", WStringEx::ToString(L"\x67E5\x8BE2\x65F6\x95F4\x4E0D\x80FD\x8D85\x8FC7\x4E00\x5C0F\x65F6"));
+                e->Code = HttpCode::BadRequest;
+                return;
+            }
+            TrafficData data;
+            tuple< vector<BikeData>, int> t = data.GetBikeDatas(channelUrl, laneId, startTime.TimeStamp(), endTime.TimeStamp(), pageNum, pageSize);
+            string datasJson;
+            for (vector<BikeData>::iterator it = get<0>(t).begin(); it != get<0>(t).end(); ++it)
+            {
+                JsonSerialization::AddClassItem(&datasJson, it->ToJson());
+            }
+            JsonSerialization::SerializeValue(&e->ResponseJson, "total", get<1>(t));
+            JsonSerialization::SerializeArray(&e->ResponseJson, "datas", datasJson);
+        }
+        e->Code = HttpCode::OK;
+    }
+    else if (UrlStartWith(e->Url, "/api/videostruct/pedestrain"))
+    {
+        vector<string> datas = StringEx::Split(e->Url, "?", true);
+        if (datas.size() > 1)
+        {
+            string channelUrl;
+            string laneId;
+            DateTime startTime;
+            DateTime endTime;
+            int pageNum = 0;
+            int pageSize = 0;
+            vector<string> params = StringEx::Split(datas[1], "&", true);
+            for (vector<string>::iterator mit = params.begin(); mit != params.end(); ++mit)
+            {
+                vector<string> pair = StringEx::Split(*mit, "=", true);
+                if (pair.size() >= 1)
+                {
+                    if (pair[0].compare("channelurl") == 0)
+                    {
+                        if (pair.size() >= 2)
+                        {
+                            channelUrl = StringEx::Convert<string>(pair[1]);
+                        }
+                    }
+                    else if (pair[0].compare("laneid") == 0)
+                    {
+                        if (pair.size() >= 2)
+                        {
+                            laneId = StringEx::Convert<string>(pair[1]);
+                        }
+                    }
+                    else if (pair[0].compare("starttime") == 0)
+                    {
+                        if (pair.size() >= 2)
+                        {
+                            string value = pair[1];
+                            if (value.size() >= 19)
+                            {
+                                value = StringEx::Replace(value, "%20", " ");
+                                value = StringEx::Replace(value, "%3A", ":");
+                                startTime = DateTime::ParseString("%d-%d-%d %d:%d:%d", value);
+                            }
+                        }
+                    }
+                    else if (pair[0].compare("endtime") == 0)
+                    {
+                        if (pair.size() >= 2)
+                        {
+                            string value = pair[1];
+                            if (value.size() >= 19)
+                            {
+                                value = StringEx::Replace(value, "%20", " ");
+                                value = StringEx::Replace(value, "%3A", ":");
+                                endTime = DateTime::ParseString("%d-%d-%d %d:%d:%d", value);
+                            }
+                        }
+                    }
+                    else if (pair[0].compare("pagenum") == 0)
+                    {
+                        if (pair.size() >= 2)
+                        {
+                            pageNum = StringEx::Convert<int>(pair[1]);
+                        }
+
+                    }
+                    else if (pair[0].compare("pagesize") == 0)
+                    {
+                        if (pair.size() >= 2)
+                        {
+                            pageSize = StringEx::Convert<int>(pair[1]);
+                        }
+                    }
+                }
+            }
+            if (endTime - startTime > 60 * 60 * 1000)
+            {
+                JsonSerialization::SerializeValue(&e->ResponseJson, "message", WStringEx::ToString(L"\x67E5\x8BE2\x65F6\x95F4\x4E0D\x80FD\x8D85\x8FC7\x4E00\x5C0F\x65F6"));
+                e->Code = HttpCode::BadRequest;
+                return;
+            }
+            TrafficData data;
+            tuple< vector<PedestrainData>, int> t = data.GetPedestrainDatas(channelUrl, laneId, startTime.TimeStamp(), endTime.TimeStamp(), pageNum, pageSize);
+            string datasJson;
+            for (vector<PedestrainData>::iterator it = get<0>(t).begin(); it != get<0>(t).end(); ++it)
+            {
+                JsonSerialization::AddClassItem(&datasJson, it->ToJson());
+            }
+            JsonSerialization::SerializeValue(&e->ResponseJson, "total", get<1>(t));
+            JsonSerialization::SerializeArray(&e->ResponseJson, "datas", datasJson);
+        }
+        e->Code = HttpCode::OK;
+    }
+    else if (UrlStartWith(e->Url, "/api/io/data"))
+    {
+        vector<string> datas = StringEx::Split(e->Url, "?", true);
+        if (datas.size() > 1)
+        {
+            int channelIndex = 0;
+            string laneId;
+            vector<string> params = StringEx::Split(datas[1], "&", true);
+            for (vector<string>::iterator mit = params.begin(); mit != params.end(); ++mit)
+            {
+                vector<string> pair = StringEx::Split(*mit, "=", true);
+                if (pair.size() >= 1)
+                {
+                    if (pair[0].compare("channelindex") == 0)
+                    {
+                        if (pair.size() >= 2)
+                        {
+                            channelIndex = StringEx::Convert<int>(pair[1]);
+                        }
+                    }
+                    else if (pair[0].compare("laneid") == 0)
+                    {
+                        if (pair.size() >= 2)
+                        {
+                            laneId = StringEx::Convert<string>(pair[1]);
+                        }
+                    }
+                }
+            }
+            if (!CheckChannelIndex(channelIndex))
+            {
+                JsonSerialization::SerializeValue(&e->ResponseJson, "message", WStringEx::Combine(L"\x901A\x9053\x5E8F\x53F7\x5FC5\x987B\x5728 1-", ChannelCount, L" \x4E4B\x95F4"));
+                e->Code = HttpCode::BadRequest;
+                return;
+            }
+            vector<IoData> ioDatas = _flowDetectors[channelIndex - 1]->GetIoDatas(laneId);
+
+            for (vector<IoData>::iterator it = ioDatas.begin(); it != ioDatas.end(); ++it)
+            {
+                JsonSerialization::AddClassItem(&e->ResponseJson, it->ToJson());
+            }
+
         }
         e->Code = HttpCode::OK;
     }
     else if (UrlStartWith(e->Url, "/api/account/login"))
     {
         JsonDeserialization jd(e->RequestJson);
-        string userName=jd.Get<string>("userName");
-        string password=jd.Get<string>("password");
+        string userName = jd.Get<string>("userName");
+        string password = jd.Get<string>("password");
         if (userName.compare("admin") == 0 && password.compare("admin") == 0)
         {
             e->Code = HttpCode::OK;
@@ -362,7 +759,7 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
     {
         if (e->Function.compare(HttpFunction::Get) == 0)
         {
-            JsonSerialization::SerializeValue(&e->ResponseJson,"dateTime", DateTime::Now().ToString());
+            JsonSerialization::SerializeValue(&e->ResponseJson, "dateTime", DateTime::Now().ToString());
             e->Code = HttpCode::OK;
         }
         else if (e->Function.compare(HttpFunction::Post) == 0)
@@ -372,45 +769,45 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
             DateTime dateTime = DateTime::ParseString("%d-%d-%d %d:%d:%d", value);
             Command::Execute(StringEx::Combine("date -s ", dateTime.ToString("%Y%m%d%H%M.%S")));
             e->Code = HttpCode::OK;
-        }     
+        }
     }
 #ifndef _WIN32
     else if (UrlStartWith(e->Url, "/api/system/ip"))
     {
-    if (e->Function.compare(HttpFunction::Get) == 0)
-    {
-        string id = GetId(e->Url, "/api/system/ip");
-        JsonSerialization::SerializeValue(&e->ResponseJson, "ip", EndPoint::GetIp(id));
-        JsonSerialization::SerializeValue(&e->ResponseJson, "mask", EndPoint::GetMask(id));
-        JsonSerialization::SerializeValue(&e->ResponseJson, "gateway", EndPoint::GetGateway(id));
-        JsonSerialization::SerializeValue(&e->ResponseJson, "mac", EndPoint::GetMac(id));
-        e->Code = HttpCode::OK;
-    }
-    else if (e->Function.compare(HttpFunction::Post) == 0)
-    {
-        JsonDeserialization jd(e->RequestJson);
-        string deviceName = jd.Get<string>("deviceName");
-        string ip = jd.Get<string>("ip");
-        string mask = jd.Get<string>("mask");
-        string gateway = jd.Get<string>("gateway");
-
-        string oldIp = EndPoint::GetIp(deviceName);
-        string oldMask = EndPoint::GetMask(deviceName);
-        string oldGateway = EndPoint::GetGateway(deviceName);
-        if (EndPoint::SetIp(deviceName, ip)
-            && EndPoint::SetMask(deviceName, mask)
-            && EndPoint::SetGateway(deviceName, gateway))
+        if (e->Function.compare(HttpFunction::Get) == 0)
         {
+            string id = GetId(e->Url, "/api/system/ip");
+            JsonSerialization::SerializeValue(&e->ResponseJson, "ip", EndPoint::GetIp(id));
+            JsonSerialization::SerializeValue(&e->ResponseJson, "mask", EndPoint::GetMask(id));
+            JsonSerialization::SerializeValue(&e->ResponseJson, "gateway", EndPoint::GetGateway(id));
+            JsonSerialization::SerializeValue(&e->ResponseJson, "mac", EndPoint::GetMac(id));
             e->Code = HttpCode::OK;
         }
-        else
+        else if (e->Function.compare(HttpFunction::Post) == 0)
         {
-            EndPoint::SetIp(deviceName, oldIp);
-            EndPoint::SetMask(deviceName, oldMask);
-            EndPoint::SetGateway(deviceName, oldGateway);
-            e->Code = HttpCode::BadRequest;
+            JsonDeserialization jd(e->RequestJson);
+            string deviceName = jd.Get<string>("deviceName");
+            string ip = jd.Get<string>("ip");
+            string mask = jd.Get<string>("mask");
+            string gateway = jd.Get<string>("gateway");
+
+            string oldIp = EndPoint::GetIp(deviceName);
+            string oldMask = EndPoint::GetMask(deviceName);
+            string oldGateway = EndPoint::GetGateway(deviceName);
+            if (EndPoint::SetIp(deviceName, ip)
+                && EndPoint::SetMask(deviceName, mask)
+                && EndPoint::SetGateway(deviceName, gateway))
+            {
+                e->Code = HttpCode::OK;
+            }
+            else
+            {
+                EndPoint::SetIp(deviceName, oldIp);
+                EndPoint::SetMask(deviceName, oldMask);
+                EndPoint::SetGateway(deviceName, oldGateway);
+                e->Code = HttpCode::BadRequest;
+            }
         }
-    }
     }
 #endif // !_WIN32
     else if (UrlStartWith(e->Url, "/api/system/reboot"))
@@ -432,7 +829,7 @@ void TrafficStartup::GetDevice(HttpReceivedEventArgs* e)
     string sn = data.GetParameter("SN");
     string guid = StringEx::Trim(Command::Execute("cat /mtd/basesys/data/devguid"));
     string webVersion;
-    string cat = Command::Execute(StringEx::Combine("cat ",TrafficDirectory::WebConfigPath));
+    string cat = Command::Execute(StringEx::Combine("cat ", TrafficDirectory::WebConfigPath));
     vector<string> catRows = StringEx::Split(cat, "\n", true);
     for (unsigned int i = 0; i < catRows.size(); ++i)
     {
@@ -481,10 +878,7 @@ void TrafficStartup::GetDevice(HttpReceivedEventArgs* e)
     }
 
     string deviceJson;
-    DateTime now = DateTime::Now();
-    DateTime adjustTime = DateTime(now.Year() + 1, now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second(), now.Millisecond());
-    JsonSerialization::SerializeValue(&deviceJson, "deviceTime", adjustTime.TimeStamp());
-    JsonSerialization::SerializeValue(&deviceJson, "deviceTime_Desc", adjustTime.ToString());
+    JsonSerialization::SerializeValue(&deviceJson, "deviceTime", DateTime::Now().ToString());
     JsonSerialization::SerializeValue(&deviceJson, "startTime", _startTime.ToString());
     JsonSerialization::SerializeValue(&deviceJson, "diskUsed", diskUsed);
     JsonSerialization::SerializeValue(&deviceJson, "diskTotal", diskTotal);
@@ -494,11 +888,6 @@ void TrafficStartup::GetDevice(HttpReceivedEventArgs* e)
     JsonSerialization::SerializeValue(&deviceJson, "softwareVersion", _softwareVersion);
     JsonSerialization::SerializeValue(&deviceJson, "webVersion", webVersion);
     JsonSerialization::SerializeValue(&deviceJson, "sdkVersion", _sdkVersion);
-    JsonSerialization::SerializeValue(&deviceJson, "mqttConnected", _mqtt==NULL?0:static_cast<int>(_mqtt->Status()));
-    for (unsigned int i = 0; i < _recogns.size(); ++i)
-    {
-        JsonSerialization::SerializeValue(&deviceJson, StringEx::Combine("recognQueue", i + 1), _recogns[i]->Size());
-    }
     JsonSerialization::SerializeClass(&deviceJson, "channels", channelsJson);
     e->Code = HttpCode::OK;
     e->ResponseJson = deviceJson;
@@ -581,16 +970,11 @@ void TrafficStartup::SetDevice(HttpReceivedEventArgs* e)
             map<int, TrafficChannel>::iterator it = tempChannels.find(i + 1);
             if (it == tempChannels.end())
             {
-                _decodes[i]->ClearChannel();
-                _flowDetectors[i]->ClearChannel();
-                _eventDetectors[i]->ClearChannel();
+                ClearChannel(i + 1);
             }
             else
             {
-                unsigned char taskId = _decodes[i]->UpdateChannel(it->second);
-                _detects[i + 1]->UpdateChannel(it->second);
-                _flowDetectors[i]->UpdateChannel(taskId, it->second);
-                _eventDetectors[i]->UpdateChannel(taskId, it->second);
+                UpdateChannel(it->second);
             }
         }
         e->Code = HttpCode::OK;
@@ -661,10 +1045,7 @@ void TrafficStartup::SetChannel(HttpReceivedEventArgs* e)
     TrafficData data;
     if (data.SetChannel(channel))
     {
-        unsigned char taskId = _decodes[channel.ChannelIndex - 1]->UpdateChannel(channel);
-        _detects[channel.ChannelIndex]->UpdateChannel(channel);
-        _flowDetectors[channel.ChannelIndex - 1]->UpdateChannel(taskId, channel);
-        _eventDetectors[channel.ChannelIndex - 1]->UpdateChannel(taskId, channel);
+        UpdateChannel(channel);
         e->Code = HttpCode::OK;
     }
     else
@@ -679,9 +1060,7 @@ bool TrafficStartup::DeleteChannel(int channelIndex)
     TrafficData data;
     if (data.DeleteChannel(channelIndex))
     {
-        _decodes[channelIndex - 1]->ClearChannel();
-        _flowDetectors[channelIndex - 1]->ClearChannel();
-        _eventDetectors[channelIndex - 1]->ClearChannel();
+        ClearChannel(channelIndex);
         return true;
     }
     else
@@ -690,20 +1069,27 @@ bool TrafficStartup::DeleteChannel(int channelIndex)
     }
 }
 
-bool TrafficStartup::ChannelIndexEnable(int channelIndex)
+void TrafficStartup::ClearChannel(int channelIndex)
+{
+    _decodes[channelIndex-1]->ClearChannel();
+    _flowDetectors[channelIndex - 1]->ClearChannel();
+    _eventDetectors[channelIndex - 1]->ClearChannel();
+}
+
+bool TrafficStartup::CheckChannelIndex(int channelIndex)
 {
     return channelIndex >= 1 && channelIndex <= ChannelCount;
 }
 
 string TrafficStartup::CheckChannel(TrafficChannel* channel)
 {
-    if (!ChannelIndexEnable(channel->ChannelIndex))
+    if (!CheckChannelIndex(channel->ChannelIndex))
     {
         string json;
-        JsonSerialization::SerializeValue(&json, "message", WStringEx::Combine(L"\u901a\u9053\u5e8f\u53f7\u5fc5\u987b\u5728 1-", ChannelCount, L" \u4e4b\u95f4"));
+        JsonSerialization::SerializeValue(&json, "message", WStringEx::Combine(L"\x901A\x9053\x5E8F\x53F7\x5FC5\x987B\x5728 1-", ChannelCount, L" \x4E4B\x95F4"));
         return json;
     }
-  
+
     TrafficData data;
     for (vector<FlowLane>::iterator it = channel->FlowLanes.begin(); it != channel->FlowLanes.end(); ++it)
     {
@@ -714,17 +1100,17 @@ string TrafficStartup::CheckChannel(TrafficChannel* channel)
         Line flowDetectLine = Line::FromJson(it->FlowDetectLine);
         Line queueDetectLine = Line::FromJson(it->QueueDetectLine);
         Polygon flowRegion = Polygon::Build(laneLine1, laneLine2, stopLine, flowDetectLine);
-        if (!flowDetectLine.Empty()&&flowRegion.Empty())
+        if (!flowDetectLine.Empty() && flowRegion.Empty())
         {
             string json;
-            JsonSerialization::SerializeValue(&json, "message", WStringEx::ToString(L"\u6d41\u91cf\u68c0\u6d4b\u533a\u57df\u6ca1\u6709\u95ed\u5408"));
+            JsonSerialization::SerializeValue(&json, "message", WStringEx::ToString(L"\x6D41\x91CF\x68C0\x6D4B\x533A\x57DF\x6CA1\x6709\x95ED\x5408"));
             return json;
         }
         Polygon queueRegion = Polygon::Build(laneLine1, laneLine2, stopLine, queueDetectLine);
-        if (!queueDetectLine.Empty()&&queueRegion.Empty())
+        if (!queueDetectLine.Empty() && queueRegion.Empty())
         {
             string json;
-            JsonSerialization::SerializeValue(&json, "message", WStringEx::ToString(L"\u6392\u961f\u68c0\u6d4b\u533a\u57df\u6ca1\u6709\u95ed\u5408"));
+            JsonSerialization::SerializeValue(&json, "message", WStringEx::ToString(L"\x6392\x961F\x68C0\x6D4B\x533A\x57DF\x6CA1\x6709\x95ED\x5408"));
             return json;
         }
         it->FlowRegion = flowRegion.ToJson();
@@ -735,7 +1121,7 @@ string TrafficStartup::CheckChannel(TrafficChannel* channel)
             if (channel->ReportProperties & lit->ReportProperties)
             {
                 string json;
-                JsonSerialization::SerializeValue(&json, "message", WStringEx::Combine(L"\u7b2c", it->ChannelIndex, L"\u4e2a\u901a\u9053\u7684\u7b2c", it->LaneIndex, L"\u4e2a\u8f66\u9053\u914d\u7f6e\u7684\u68c0\u6d4b\u9879\u4e0e\u7b2c", lit->ChannelIndex, L"\u4e2a\u901a\u9053\u7684\u7b2c", lit->LaneIndex,L"\u4e2a\u8f66\u9053\u91cd\u590d"));
+                JsonSerialization::SerializeValue(&json, "message", WStringEx::Combine(L"\x7B2C", it->ChannelIndex, L"\x4E2A\x901A\x9053\x7684\x7B2C", it->LaneIndex, L"\x4E2A\x8F66\x9053\x914D\x7F6E\x7684\x68C0\x6D4B\x9879\x4E0E\x7B2C", lit->ChannelIndex, L"\x4E2A\x901A\x9053\x7684\x7B2C", lit->LaneIndex, L"\x4E2A\x8F66\x9053\x91CD\x590D"));
                 return json;
             }
         }
@@ -755,6 +1141,13 @@ string TrafficStartup::CheckChannel(TrafficChannel* channel)
     return string();
 }
 
+void TrafficStartup::UpdateChannel(const TrafficChannel& channel)
+{
+    unsigned char taskId = _decodes[channel.ChannelIndex-1]->UpdateChannel(channel);
+    _flowDetectors[channel.ChannelIndex - 1]->UpdateChannel(taskId,channel);
+    _eventDetectors[channel.ChannelIndex - 1]->UpdateChannel(taskId, channel);
+}
+
 bool TrafficStartup::UrlStartWith(const string& url, const string& key)
 {
     if (url.size() == key.size())
@@ -764,7 +1157,7 @@ bool TrafficStartup::UrlStartWith(const string& url, const string& key)
     else if (url.size() >= key.size())
     {
         return url.substr(0, key.size()).compare(key) == 0
-            && (url[key.size()] == '/'|| url[key.size()] == '?');
+            && (url[key.size()] == '/' || url[key.size()] == '?');
     }
     else
     {
@@ -772,39 +1165,12 @@ bool TrafficStartup::UrlStartWith(const string& url, const string& key)
     }
 }
 
-string TrafficStartup::GetId(const std::string& url, const std::string& key)
+string TrafficStartup::GetId(const string& url, const string& key)
 {
     return url.size() > key.size() ? url.substr(key.size() + 1, url.size() - key.size() - 1) : string();
 }
 
-void TrafficStartup::FillChannelJson(string* channelJson,const TrafficChannel* channel,const string& host)
-{
-    JsonSerialization::SerializeValue(channelJson, "channelIndex", channel->ChannelIndex);
-    JsonSerialization::SerializeValue(channelJson, "channelName", channel->ChannelName);
-    JsonSerialization::SerializeValue(channelJson, "channelUrl", channel->ChannelUrl);
-    JsonSerialization::SerializeValue(channelJson, "rtmpUrl", channel->RtmpUrl(host));
-    JsonSerialization::SerializeValue(channelJson, "flvUrl", channel->FlvUrl(host));
-    JsonSerialization::SerializeValue(channelJson, "channelType", channel->ChannelType);
-    JsonSerialization::SerializeValue(channelJson, "channelStatus", static_cast<int>(_decodes[channel->ChannelIndex-1]->Status()));
-    JsonSerialization::SerializeValue(channelJson, "frameSpan", static_cast<int>(_decodes[channel->ChannelIndex-1]->FrameSpan()));
-    JsonSerialization::SerializeValue(channelJson, "sourceWidth", static_cast<int>(_decodes[channel->ChannelIndex-1]->SourceWidth()));
-    JsonSerialization::SerializeValue(channelJson, "sourceHeight", static_cast<int>(_decodes[channel->ChannelIndex-1]->SourceHeight()));
-    JsonSerialization::SerializeValue(channelJson, "destinationWidth", DecodeChannel::DestinationWidth);
-    JsonSerialization::SerializeValue(channelJson, "destinationHeight", DecodeChannel::DestinationHeight);
-    JsonSerialization::SerializeValue(channelJson, "deviceId", channel->DeviceId);
-    JsonSerialization::SerializeValue(channelJson, "loop", channel->Loop);
-    JsonSerialization::SerializeValue(channelJson, "outputDetect", channel->OutputDetect);
-    JsonSerialization::SerializeValue(channelJson, "outputImage", channel->OutputImage);
-    JsonSerialization::SerializeValue(channelJson, "outputReport", channel->OutputReport);
-    JsonSerialization::SerializeValue(channelJson, "outputRecogn", channel->OutputRecogn);
-    JsonSerialization::SerializeValue(channelJson, "globalDetect", channel->GlobalDetect);
-    JsonSerialization::SerializeValue(channelJson, "laneWidth", channel->LaneWidth);
-    JsonSerialization::SerializeValue(channelJson, "reportProperties", channel->ReportProperties);
-    JsonSerialization::SerializeValue(channelJson, "freeSpeed", channel->FreeSpeed);
-
-}
-
-void TrafficStartup::FillChannel(TrafficChannel* channel,const JsonDeserialization& jd)
+void TrafficStartup::FillChannel(TrafficChannel* channel, const JsonDeserialization& jd)
 {
     channel->ChannelIndex = jd.Get<int>("channelIndex");
     channel->ChannelName = jd.Get<string>("channelName");
@@ -831,7 +1197,7 @@ void TrafficStartup::FillChannel(TrafficChannel* channel, const JsonDeserializat
     channel->ChannelUrl = jd.Get<string>(StringEx::Combine("channels:", itemIndex, ":channelUrl"));
     channel->ChannelType = jd.Get<int>(StringEx::Combine("channels:", itemIndex, ":channelType"));
     channel->DeviceId = jd.Get<string>(StringEx::Combine("channels:", itemIndex, ":deviceId"));
-    
+
     channel->Loop = jd.Get<bool>(StringEx::Combine("channels:", itemIndex, ":loop"));
     channel->OutputDetect = jd.Get<bool>(StringEx::Combine("channels:", itemIndex, ":outputDetect"));
     channel->OutputImage = jd.Get<bool>(StringEx::Combine("channels:", itemIndex, ":outputImage"));
@@ -849,306 +1215,18 @@ string TrafficStartup::GetChannelJson(const string& host, int channelIndex)
     string channelJson;
     TrafficData data;
     TrafficChannel channel = data.GetChannel(channelIndex);
-    if (!channel.ChannelUrl.empty())
+    if (!channel.ChannelUrl.empty() && CheckChannelIndex(channel.ChannelIndex))
     {
-        FillChannelJson(&channelJson, &channel, host);
-        if (ChannelIndexEnable(channel.ChannelIndex))
-        {
-            JsonSerialization::SerializeValue(&channelJson, "lanesInited", _flowDetectors[channel.ChannelIndex - 1]->LanesInited());
-        }
-
-        string flowLanesJson;
-        for (vector<FlowLane>::const_iterator lit = channel.FlowLanes.begin(); lit != channel.FlowLanes.end(); ++lit)
-        {
-            string laneJson;
-            JsonSerialization::SerializeValue(&laneJson, "channelIndex", lit->ChannelIndex);
-            JsonSerialization::SerializeValue(&laneJson, "laneId", lit->LaneId);
-            JsonSerialization::SerializeValue(&laneJson, "laneName", lit->LaneName);
-            JsonSerialization::SerializeValue(&laneJson, "laneIndex", lit->LaneIndex);
-            JsonSerialization::SerializeValue(&laneJson, "direction", lit->Direction);
-            JsonSerialization::SerializeValue(&laneJson, "flowDirection", lit->FlowDirection);
-            JsonSerialization::SerializeValue(&laneJson, "ioIp", lit->IOIp);
-            JsonSerialization::SerializeValue(&laneJson, "ioPort", lit->IOPort);
-            JsonSerialization::SerializeValue(&laneJson, "ioIndex", lit->IOIndex);
-            JsonSerialization::SerializeValue(&laneJson, "stopLine", lit->StopLine);
-            JsonSerialization::SerializeValue(&laneJson, "flowDetectLine", lit->FlowDetectLine);
-            JsonSerialization::SerializeValue(&laneJson, "queueDetectLine", lit->QueueDetectLine);
-            JsonSerialization::SerializeValue(&laneJson, "laneLine1", lit->LaneLine1);
-            JsonSerialization::SerializeValue(&laneJson, "laneLine2", lit->LaneLine2);
-            JsonSerialization::SerializeValue(&laneJson, "flowRegion", lit->FlowRegion);
-            JsonSerialization::SerializeValue(&laneJson, "queueRegion", lit->QueueRegion);
-            JsonSerialization::AddClassItem(&flowLanesJson, laneJson);
-        }
-        JsonSerialization::SerializeArray(&channelJson, "flowLanes", flowLanesJson);
-
-        string eventLanesJson;
-        for (vector<EventLane>::const_iterator lit = channel.EventLanes.begin(); lit != channel.EventLanes.end(); ++lit)
-        {
-            string laneJson;
-            JsonSerialization::SerializeValue(&laneJson, "channelIndex", lit->ChannelIndex);
-            JsonSerialization::SerializeValue(&laneJson, "laneIndex", lit->LaneIndex);
-            JsonSerialization::SerializeValue(&laneJson, "laneName", lit->LaneName);
-            JsonSerialization::SerializeValue(&laneJson, "laneType", lit->LaneType);
-            JsonSerialization::SerializeValue(&laneJson, "region", lit->Region);
-            JsonSerialization::SerializeValue(&laneJson, "line", lit->Line);
-            JsonSerialization::AddClassItem(&eventLanesJson, laneJson);
-        }
-        JsonSerialization::SerializeArray(&channelJson, "eventLanes", eventLanesJson);
+        channelJson = channel.ToJson();
+        JsonSerialization::SerializeValue(&channelJson, "rtmpUrl", channel.RtmpUrl(host));
+        JsonSerialization::SerializeValue(&channelJson, "flvUrl", channel.FlvUrl(host));
+        JsonSerialization::SerializeValue(&channelJson, "channelStatus", static_cast<int>(_decodes[channel.ChannelIndex - 1]->Status()));
+        JsonSerialization::SerializeValue(&channelJson, "frameSpan", static_cast<int>(_decodes[channel.ChannelIndex - 1]->FrameSpan()));
+        JsonSerialization::SerializeValue(&channelJson, "sourceWidth", static_cast<int>(_decodes[channel.ChannelIndex - 1]->SourceWidth()));
+        JsonSerialization::SerializeValue(&channelJson, "sourceHeight", static_cast<int>(_decodes[channel.ChannelIndex - 1]->SourceHeight()));
+        JsonSerialization::SerializeValue(&channelJson, "destinationWidth", DecodeChannel::DestinationWidth);
+        JsonSerialization::SerializeValue(&channelJson, "destinationHeight", DecodeChannel::DestinationHeight);
+        JsonSerialization::SerializeValue(&channelJson, "lanesInited", _flowDetectors[channel.ChannelIndex - 1]->LanesInited());
     }
     return channelJson;
-}
-
-void TrafficStartup::InitThreads(int loginHandler)
-{
-    for (int i = 0; i < ChannelCount; ++i)
-    {
-        FlowDetector* flowDetector = new FlowDetector(DecodeChannel::DestinationWidth, DecodeChannel::DestinationHeight,_socketMaid, _mqtt, _data);
-        _flowDetectors.push_back(flowDetector);
-        EventDetector* eventDetector = new EventDetector(DecodeChannel::DestinationWidth, DecodeChannel::DestinationHeight, _mqtt, _encode, _data);
-        _eventDetectors.push_back(eventDetector);
-        DecodeChannel* decode = new DecodeChannel(i + 1, loginHandler, _encode);
-        _decodes.push_back(decode);
-    }
-
-    for (int i = 0; i < RecognCount; ++i)
-    {
-        RecognChannel* recogn = new RecognChannel(i, DecodeChannel::DestinationWidth, DecodeChannel::DestinationHeight, &_flowDetectors);
-        _recogns.push_back(recogn);
-    }
-    vector<DetectChannel*> detects;
-    for (int i = 0; i < DetectCount; ++i)
-    {
-        DetectChannel* detect = new DetectChannel(i, DecodeChannel::DestinationWidth, DecodeChannel::DestinationHeight);
-        detects.push_back(detect);
-    }
-
-    for (int i = 0; i < DetectCount; ++i)
-    {
-        detects.at(i)->SetRecogn(_recogns.at(i % RecognCount));
-        for (int j = 0; j < ChannelCount / DetectCount; ++j)
-        {
-            int channelIndex = i + (j * DetectCount) + 1;
-            detects.at(i)->AddChannel(channelIndex, _decodes.at(channelIndex - 1), _flowDetectors.at(channelIndex - 1), _eventDetectors.at(channelIndex - 1));
-            _detects.insert(pair<int, DetectChannel*>(channelIndex, detects.at(i)));
-        }
-    }
-}
-
-void TrafficStartup::InitChannels()
-{
-    TrafficData data;
-    set<EndPoint> ips;
-    for (int i = 0; i < ChannelCount; ++i)
-    {
-        TrafficChannel channel = data.GetChannel(i + 1);
-        if (!channel.ChannelUrl.empty())
-        {
-            //io转换器地址
-            for (vector<FlowLane>::iterator lit = channel.FlowLanes.begin(); lit != channel.FlowLanes.end(); ++lit)
-            {
-                if (!lit->IOIp.empty())
-                {
-                    ips.insert(EndPoint(lit->IOIp, 24000));
-                }
-            }
-            unsigned char taskId = _decodes[i]->UpdateChannel(channel);
-            _detects[i+1]->UpdateChannel(channel);
-            _flowDetectors[i]->UpdateChannel(taskId, channel);
-            _eventDetectors[i]->UpdateChannel(taskId, channel);
-        }
-    }
-    for (set<EndPoint>::iterator it = ips.begin(); it != ips.end(); ++it)
-    {
-        LogPool::Information(LogEvent::System, "连接到io转换器", it->HostIp());
-        _socketMaid->AddConnectEndPoint(*it, NULL);
-    }
-}
-
-void TrafficStartup::Start()
-{
-    Socket::Init();
-    MqttChannel::Init();
-    DecodeChannel::InitFFmpeg();
-
-    DecodeChannel::UninitHisi(ChannelCount);
-    if (!DecodeChannel::InitHisi(ChannelCount)
-        ||!EncodeChannel::InitHisi(ChannelCount, DecodeChannel::DestinationWidth,DecodeChannel::DestinationHeight))
-    {
-        exit(2);
-    }
-
-    _socketMaid = new SocketMaid(2,true);
-    _handler.HttpReceived.Subscribe(this);
-    if (_socketMaid->AddListenEndPoint(EndPoint(7772), &_handler) == -1)
-    {
-        exit(2);
-    }
-
-    //删除临时目录
-    Command::Execute(StringEx::Combine("mkdir -p ", TrafficDirectory::TempDir));
-    Command::Execute(StringEx::Combine("mkdir -p ", TrafficDirectory::FileDir));
-    Command::Execute(StringEx::Combine("rm -rf ", TrafficDirectory::TempDir, "*"));
-
-    //升级数据库
-    TrafficData data;
-    data.UpdateDb();
-
-    //软件版本
-    _softwareVersion = data.GetParameter("Version");
-
-    //初始化sdk
-    _sdkInited = SeemmoSDK::Init();
-    if (SeemmoSDK::seemmo_version != NULL)
-    {
-        _sdkVersion = SeemmoSDK::seemmo_version();
-    }
-    int loginHandler = -1;
-#ifndef _WIN32
-    int gbResult = vas_sdk_startup();
-    if (gbResult >= 0)
-    {
-        LogPool::Information(LogEvent::System, "初始化国标sdk");
-    }
-    else
-    {
-        LogPool::Information(LogEvent::System, "初始化国标sdk失败,返回结果：", gbResult);
-    }
-
-    GbParameter gbParameter = data.GetGbPrameter();
-    if (gbParameter.ServerIp.empty())
-    {
-        LogPool::Information(LogEvent::System, "未找到国标配置，将不使用国标视频");
-    }
-    else
-    {
-        loginHandler = vas_sdk_login(const_cast<char*>(gbParameter.ServerIp.c_str()), gbParameter.ServerPort, const_cast<char*>(gbParameter.UserName.c_str()), const_cast<char*>(gbParameter.Password.c_str()));
-        if (loginHandler >= 0)
-        {
-            LogPool::Information(LogEvent::System, "国标登陆成功,登陆句柄:",loginHandler);
-        }
-        else
-        {
-            LogPool::Information(LogEvent::System, "国标登陆失败,登陆句柄:", loginHandler);
-        }
-    }
-#endif // !_WIN32
-
-    _mqtt = new MqttChannel("127.0.0.1", 1883);
-    _mqtt->MqttDisconnected.Subscribe(this);
-    _data = new DataChannel();
-    _encode = new EncodeChannel(ChannelCount);
-
-    _mqtt->Start();
-    _data->Start();
-    _encode->Start();
-
-    InitThreads(loginHandler);
-    if (_sdkInited)
-    {
-        for (unsigned int i = 0; i < _recogns.size(); ++i)
-        {
-            _recogns[i]->Start();
-        }
-        for (map<int, DetectChannel*>::iterator it= _detects.begin();it!= _detects.end();++it)
-        {
-            it->second->Start();
-        }
-        while (true)
-        {
-            bool sdkReady = true;
-#ifndef _WIN32
-            for (map<int, DetectChannel*>::iterator it = _detects.begin(); it != _detects.end(); ++it)
-            {
-                if (!it->second->Inited())
-                {
-                    sdkReady = false;
-                    break;
-                }
-            }
-            for (unsigned int i = 0; i < _recogns.size(); ++i)
-            {
-                if (!_recogns[i]->Inited())
-                {
-                    sdkReady = false;
-                    break;
-                }
-            }
-#endif // !_WIN32
-            if (sdkReady)
-            {
-                break;
-            }
-            else
-            {
-                this_thread::sleep_for(chrono::milliseconds(100));
-            }
-        }
-    }
-   
-    for (unsigned int i = 0; i < _decodes.size(); ++i)
-    {
-        _decodes[i]->Start();
-    }
-    InitChannels();
-    _socketMaid->Start();
-  
-    _socketMaid->Join();
-    //int day = DateTime::Today().Day();
-
-    //while (!_cancelled)
-    //{
-    //    string ps = Command::Execute("top -n 1|grep Genos.out");
-    //    vector<string> psRows = StringEx::Split(ps, "\n", true);
-    //    if (!psRows.empty())
-    //    {
-    //        vector<string> columns = StringEx::Split(psRows[0], " ", true);
-    //        if (columns.size() >= 5)
-    //        {
-    //            vector<string> datas = StringEx::Split(columns[4], "m", true);
-    //            if (!datas.empty())
-    //            {
-    //                LogPool::Information(LogEvent::Monitor, "内存使用(MB):", datas[0]);
-    //            }
-    //        }
-    //    }
-    //    DateTime today = DateTime::Today();
-    //    if (day != today.Day())
-    //    {
-    //        DateTime removeTime = DateTime::ParseTimeStamp(today.TimeStamp() - LogPool::HoldDays() * 24 * 60 * 60 * 1000);
-    //        SqliteLogger::RemoveDatas(removeTime);
-    //        day = today.Day();
-    //    }
-    //    this_thread::sleep_for(chrono::minutes(1));
-    //}
-
-    _socketMaid->Stop();
-    delete _socketMaid;
-
-    for (unsigned int i = 0; i < _decodes.size(); ++i)
-    {
-        _decodes[i]->Stop();
-        delete _decodes[i];
-    }
-    for (map<int, DetectChannel*>::iterator it = _detects.begin(); it != _detects.end(); ++it)
-    {
-        it->second->Stop();
-        delete it->second;
-    }
-
-    for (unsigned int i = 0; i < _recogns.size(); ++i)
-    {
-        _recogns[i]->Stop();
-        delete _recogns[i];
-    }
-    if (_mqtt != NULL)
-    {
-        _mqtt->Stop();
-        delete _mqtt;
-    }
-    SeemmoSDK::Uninit();
-    EncodeChannel::UninitHisi(ChannelCount);
-    DecodeChannel::UninitHisi(ChannelCount);
-    DecodeChannel::UninitFFmpeg();
-    MqttChannel::Uninit();
-    Socket::Uninit();
 }

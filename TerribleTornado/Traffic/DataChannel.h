@@ -2,7 +2,6 @@
 #include "Thread.h"
 #include "Sqlite.h"
 #include "TrafficData.h"
-#include "MqttChannel.h"
 
 namespace OnePunchMan
 {

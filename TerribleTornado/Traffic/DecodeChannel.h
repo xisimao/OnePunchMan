@@ -18,14 +18,6 @@
 
 namespace OnePunchMan
 {
-	//解码结果
-	enum class DecodeResult
-	{
-		Handle,
-		Skip,
-		Error
-	};
-
 	//帧数据
 	class FrameItem
 	{
@@ -59,6 +51,11 @@ namespace OnePunchMan
 		*/
 		DecodeChannel(int channelIndex, int loginId, EncodeChannel* encodeChannel);
 
+		virtual ~DecodeChannel()
+		{
+
+		}
+
 		/**
 		* 初始化ffmpeg sdk
 		*/
@@ -72,9 +69,10 @@ namespace OnePunchMan
 		/**
 		* 初始化hisi sdk
 		* @param videoCount 通道总数
+		* @param blockCount 缓存池数量
 		* @return 初始化成功返回true,否则返回false
 		*/
-		static bool InitHisi(int videoCount);
+		static bool InitHisi(int videoCount,int blockCount);
 
 		/**
 		* 卸载hisi sdk
@@ -93,7 +91,6 @@ namespace OnePunchMan
 		* 清空通道
 		*/
 		void ClearChannel();
-
 
 		/**
 		* 获取输入通道地址
@@ -125,42 +122,13 @@ namespace OnePunchMan
 		*/
 		int SourceHeight();
 
-		/**
-		* 获取临时存放的ive数据
-		* @return ive帧数据
-		*/
-		FrameItem GetIve();
-
 		//解码后的视频宽度
 		static const int DestinationWidth;
 		//解码后的视频高度
 		static const int DestinationHeight;
-	
+
 	protected:
 		void StartCore();
-
-	private:
-		/**
-		* 初始化解码器
-		* @param playFd 视频句柄
-		* @param frameType 帧类型
-		* @param buffer 帧字节流
-		* @param size 帧字节流长度
-		* @param usr 用户自定义数据
-		*/
-		static void ReceivePacket(int playFd, int frameType, char* buffer, unsigned int size, void* usr);
-
-		/**
-		* 初始化视频输入
-		* @param inputUrl 视频输入地址
-		* @return 视频状态
-		*/
-		bool InitInput(const std::string& inputUrl);
-
-		/**
-		* 结束视频输入
-		*/
-		void UninitInput();
 
 		/**
 		* 解码
@@ -169,26 +137,9 @@ namespace OnePunchMan
 		* @param taskId 任务号
 		* @param frameIndex 视频帧序号
 		* @param frameSpan 两帧的间隔时间(毫秒)
-		* @return 解码成功返回Handle,略过返回Ski,否则返回Error,解码失败会结束线程
+		* @return 解码成功返回true，否则返回false
 		*/
-		bool Decode(unsigned char* buffer, unsigned int size, unsigned char taskId, unsigned int frameIndex, unsigned char frameSpan);
-
-#ifndef _WIN32
-		/**
-		* 写入临时ive数据
-		* @param frame 视频帧,传入NULL表示完成解码
-		* @return 返回true表示成功写入,返回false表示当前已经有yuv数据
-		*/
-		bool SetFrame(VIDEO_FRAME_INFO_S* frame);
-#endif // !_WIN32
-
-
-		//重连时间(豪秒)
-		static const int ConnectSpan;
-		//国标休眠时间(毫秒)
-		static const int GbSleepSpan;
-		//最长的处理帧间隔,如果超过这个间隔就会修改通道状态
-		static const int MaxHandleSpan;
+		virtual bool Decode(unsigned char* buffer, unsigned int size, unsigned char taskId, unsigned int frameIndex, unsigned char frameSpan) = 0;
 
 		//构造函数时改变
 		//通道序号
@@ -213,7 +164,7 @@ namespace OnePunchMan
 		bool _loop;
 		//是否同步检测，全局检测文件视频时执行同步检测
 		bool _syncDetect;
-		
+
 		//线程中改变
 		//输入视频
 		AVFormatContext* _inputFormat;
@@ -241,24 +192,40 @@ namespace OnePunchMan
 		//视频输出
 		FFmpegOutput _outputHandler;
 
-		//解码相关
-		//yuv是否有数据
-		bool _yuvHasData;
-		//图像转换
-		ImageConvert _image;
-
-		//异步队列
-		//当前视频读取是否结束
-		bool _finished;
-		//当前yuv数据的任务号
-		unsigned char _tempTaskId;
-		//当前yuv数据的帧序号
-		unsigned int _tempFrameIndex;
-		//当前yuv数据的帧间隔时长
-		unsigned char _tempFrameSpan;
-
 		//编码
 		EncodeChannel* _encodeChannel;
+
+	private:
+		/**
+		* 初始化解码器
+		* @param playFd 视频句柄
+		* @param frameType 帧类型
+		* @param buffer 帧字节流
+		* @param size 帧字节流长度
+		* @param usr 用户自定义数据
+		*/
+		static void ReceivePacket(int playFd, int frameType, char* buffer, unsigned int size, void* usr);
+
+		/**
+		* 初始化视频输入
+		* @param inputUrl 视频输入地址
+		* @return 视频状态
+		*/
+		bool InitInput(const std::string& inputUrl);
+
+		/**
+		* 结束视频输入
+		*/
+		void UninitInput();
+
+		//重连时间(豪秒)
+		static const int ConnectSpan;
+		//国标休眠时间(毫秒)
+		static const int GbSleepSpan;
+		//最长的处理帧间隔,如果超过这个间隔就会修改通道状态
+		static const int MaxHandleSpan;
+
+		
 	};
 
 }

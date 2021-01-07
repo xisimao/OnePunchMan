@@ -7,7 +7,7 @@ const string TrafficDirectory::TempDir("../temp/");
 const string TrafficDirectory::DataDir("../data/");
 const string TrafficDirectory::FileDir("../files/");
 const string TrafficDirectory::FileLink("files");
-const string TrafficDirectory::WebConfigPath("../web_flow/static/config/base.js");
+const string TrafficDirectory::WebConfigPath("../web/static/config/base.js");
 
 const int TrafficChannel::AllPropertiesFlag = 3;
 
@@ -437,13 +437,16 @@ bool TrafficData::InsertFlowData(const FlowData& data)
 	return _sqlite.ExecuteRowCount(sql) == 1;
 }
 
-vector<FlowData> TrafficData::GetFlowDatas(const string& channelUrl, const string& laneId, int pageNum, int pageSize)
+tuple<vector<FlowData>, int> TrafficData::GetFlowDatas(const string& channelUrl, const string& laneId, long long startTime, long long endTime, int pageNum, int pageSize)
 {
 	SqliteReader reader(_dbName);
 	string sql = "Select * From Flow_Data Where";
 	sql.append(channelUrl.empty() ? " 1=1" : StringEx::Combine(" ChannelUrl='", channelUrl,"'"));
 	sql.append(laneId.empty() ? " And 1=1" : StringEx::Combine(" And LaneId='", laneId,"'"));
+	sql.append(startTime==0||endTime==0 ? " And 1=1" : StringEx::Combine(" And StartTime>=", startTime," And EndTime<=",endTime));
 	sql.append(" Order By Id Desc");
+	int total = reader.ExecuteScalar(sql);
+
 	sql.append(pageNum == 0 || pageSize == 0 ? "" : StringEx::Combine(" Limit ", (pageNum - 1) * pageSize, ",", pageSize));
 	vector<FlowData> datas;
 	if (reader.BeginQuery(sql))
@@ -483,7 +486,7 @@ vector<FlowData> TrafficData::GetFlowDatas(const string& channelUrl, const strin
 		}
 		reader.EndQuery();
 	}
-	return datas;
+	return tuple<vector<FlowData>, int>(datas,total);
 }
 
 void TrafficData::DeleteFlowDatas(int keeyDay)
@@ -509,13 +512,16 @@ bool TrafficData::InsertVehicleData(const VehicleData& data)
 	return _sqlite.ExecuteRowCount(insertSql)==1;
 }
 
-vector<VehicleData> TrafficData::GetVehicleDatas(const string& channelUrl, const string& laneId, int pageNum, int pageSize)
+tuple<vector<VehicleData>,int> TrafficData::GetVehicleDatas(const string& channelUrl, const string& laneId, long long startTime, long long endTime, int pageNum, int pageSize)
 {
 	SqliteReader reader(_dbName);
 	string sql = "Select * From Vehicle_Data Where";
 	sql.append(channelUrl.empty() ? " 1=1" : StringEx::Combine(" ChannelUrl='", channelUrl, "'"));
 	sql.append(laneId.empty() ? " And 1=1" : StringEx::Combine(" And LaneId='", laneId, "'"));
+	sql.append(startTime == 0 || endTime == 0 ? " And 1=1" : StringEx::Combine(" And StartTime>=", startTime, " And EndTime<=", endTime));
 	sql.append(" Order By Id Desc");
+	int total = reader.ExecuteScalar(sql);
+
 	sql.append(pageNum == 0 || pageSize == 0 ? "" : StringEx::Combine(" Limit ", (pageNum - 1) * pageSize, ",", pageSize));
 	vector<VehicleData> datas;
 	if (reader.BeginQuery(sql))
@@ -537,19 +543,19 @@ vector<VehicleData> TrafficData::GetVehicleDatas(const string& channelUrl, const
 		}
 		reader.EndQuery();
 	}
-	return datas;
+	return tuple<vector<VehicleData>, int>(datas, total);
 }
 
 void TrafficData::DeleteVehicleDatas(int keepCount)
 {
 	while (true)
 	{
-		vector<VehicleData> datas = GetVehicleDatas("", "", 2, keepCount);
-		if (datas.empty())
+		tuple<vector<VehicleData>,int> t = GetVehicleDatas("", "",0,0, 2, keepCount);
+		if (get<0>(t).empty())
 		{
 			break;
 		}
-		for (vector<VehicleData>::iterator it = datas.begin(); it != datas.end(); ++it)
+		for (vector<VehicleData>::iterator it = get<0>(t).begin(); it != get<0>(t).end(); ++it)
 		{
 			string deleteSql = StringEx::Combine("Delete From Vehicle_Data Where Id=", it->Id);
 			_sqlite.ExecuteRowCount(deleteSql);
@@ -570,13 +576,16 @@ bool TrafficData::InsertBikeData(const BikeData& data)
 	return _sqlite.ExecuteRowCount(insertSql) == 1;
 }
 
-vector<BikeData> TrafficData::GetBikeDatas(const string& channelUrl, const string& laneId, int pageNum, int pageSize)
+tuple<vector<BikeData>,int> TrafficData::GetBikeDatas(const string& channelUrl, const string& laneId, long long startTime, long long endTime, int pageNum, int pageSize)
 {
 	SqliteReader reader(_dbName);
 	string sql = "Select * From Bike_Data Where";
 	sql.append(channelUrl.empty() ? " 1=1" : StringEx::Combine(" ChannelUrl='", channelUrl, "'"));
 	sql.append(laneId.empty() ? " And 1=1" : StringEx::Combine(" And LaneId='", laneId, "'"));
+	sql.append(startTime == 0 || endTime == 0 ? " And 1=1" : StringEx::Combine(" And StartTime>=", startTime, " And EndTime<=", endTime));
 	sql.append(" Order By Id Desc");
+	int total = reader.ExecuteScalar(sql);
+
 	sql.append(pageNum == 0 || pageSize == 0 ? "" : StringEx::Combine(" Limit ", (pageNum - 1) * pageSize, ",", pageSize));
 	vector<BikeData> datas;
 	if (reader.BeginQuery(sql))
@@ -594,19 +603,19 @@ vector<BikeData> TrafficData::GetBikeDatas(const string& channelUrl, const strin
 		}
 		reader.EndQuery();
 	}
-	return datas;
+	return tuple<vector<BikeData>, int>(datas, total);
 }
 
 void TrafficData::DeleteBikeDatas(int keepCount)
 {
 	while (true)
 	{
-		vector<BikeData> datas = GetBikeDatas("", "", 2, keepCount);
-		if (datas.empty())
+		tuple<vector<BikeData>,int> t = GetBikeDatas("", "",0,0, 2, keepCount);
+		if (get<0>(t).empty())
 		{
 			break;
 		}
-		for (vector<BikeData>::iterator it = datas.begin(); it != datas.end(); ++it)
+		for (vector<BikeData>::iterator it = get<0>(t).begin(); it != get<0>(t).end(); ++it)
 		{
 			string deleteSql = StringEx::Combine("Delete From Bike_Data Where Id=", it->Id);
 			_sqlite.ExecuteRowCount(deleteSql);
@@ -629,13 +638,16 @@ bool TrafficData::InsertPedestrainData(const PedestrainData& data)
 	return _sqlite.ExecuteRowCount(insertSql) == 1;
 }
 
-vector<PedestrainData> TrafficData::GetPedestrainDatas(const string& channelUrl, const string& laneId, int pageNum, int pageSize)
+tuple<vector<PedestrainData>,int> TrafficData::GetPedestrainDatas(const string& channelUrl, const string& laneId, long long startTime, long long endTime, int pageNum, int pageSize)
 {
 	SqliteReader reader(_dbName);
 	string sql = "Select * From Pedestrain_Data Where";
 	sql.append(channelUrl.empty() ? " 1=1" : StringEx::Combine(" ChannelUrl='", channelUrl, "'"));
 	sql.append(laneId.empty() ? " And 1=1" : StringEx::Combine(" And LaneId='", laneId, "'"));
+	sql.append(startTime == 0 || endTime == 0 ? " And 1=1" : StringEx::Combine(" And StartTime>=", startTime, " And EndTime<=", endTime));
 	sql.append(" Order By Id Desc");
+	int total = reader.ExecuteScalar(sql);
+
 	sql.append(pageNum == 0 || pageSize == 0 ? "" : StringEx::Combine(" Limit ", (pageNum - 1) * pageSize, ",", pageSize));
 	vector<PedestrainData> datas;
 	if (reader.BeginQuery(sql))
@@ -655,19 +667,19 @@ vector<PedestrainData> TrafficData::GetPedestrainDatas(const string& channelUrl,
 		}
 		reader.EndQuery();
 	}
-	return datas;
+	return tuple<vector<PedestrainData>, int>(datas,total);
 }
 
 void TrafficData::DeletePedestrainDatas(int keepCount)
 {
 	while (true)
 	{
-		vector<PedestrainData> datas = GetPedestrainDatas("", "", 2, keepCount);
-		if (datas.empty())
+		tuple<vector<PedestrainData>,int> t = GetPedestrainDatas("", "",0,0, 2, keepCount);
+		if (get<0>(t).empty())
 		{
 			break;
 		}
-		for (vector<PedestrainData>::iterator it = datas.begin(); it != datas.end(); ++it)
+		for (vector<PedestrainData>::iterator it = get<0>(t).begin(); it != get<0>(t).end(); ++it)
 		{
 			string deleteSql = StringEx::Combine("Delete From Pedestrain_Data Where Id=", it->Id);
 			_sqlite.ExecuteRowCount(deleteSql);
@@ -678,21 +690,24 @@ void TrafficData::DeletePedestrainDatas(int keepCount)
 
 bool TrafficData::InsertEventData(const EventData& data)
 {
-	string insertSql = StringEx::Combine("Insert Into Event_Data (Guid,ChannelIndex,LaneIndex,TimeStamp,Type) Values "
-		, "('", data.Guid, "',"
-		, data.ChannelIndex, ","
+	string insertSql = StringEx::Combine("Insert Into Event_Data (ChannelUrl,LaneIndex,TimeStamp,Guid,Type) Values "
+		, "('", data.ChannelUrl, "',"
 		, data.LaneIndex, ","
 		, data.TimeStamp, ","
+		, "'", data.Guid, "',"
 		, data.Type, ")");
 	return _sqlite.ExecuteRowCount(insertSql)==1;
 }
 
-vector<EventData> TrafficData::GetEventDatas(int channelIndex, int pageNum, int pageSize)
+tuple<vector<EventData>, int> TrafficData::GetEventDatas(const string& channelUrl, long long startTime, long long endTime, int pageNum, int pageSize)
 {
 	SqliteReader reader(_dbName);
-	string sql = "Select * From Event_Data";
-	sql.append(channelIndex == 0 ? "" : StringEx::Combine(" Where ChannelIndex=", channelIndex));
+	string sql = "Select * From Event_Data Where";
+	sql.append(channelUrl.empty()? " 1=1" : StringEx::Combine(" ChannelUrl='", channelUrl,"'"));
+	sql.append(startTime==0||endTime==0? " And 1=1" : StringEx::Combine(" And StartTime>=", startTime," And EndTime<=",endTime));
 	sql.append(" Order By Id Desc");
+
+	int total = reader.ExecuteScalar(sql);
 	sql.append(pageNum==0||pageSize==0?"":StringEx::Combine(" Limit ",(pageNum-1)*pageSize,",",pageSize));
 	vector<EventData> datas;
 	if (reader.BeginQuery(sql))
@@ -701,7 +716,7 @@ vector<EventData> TrafficData::GetEventDatas(int channelIndex, int pageNum, int 
 		{
 			EventData data;
 			data.Id = reader.GetInt(0);
-			data.ChannelIndex = reader.GetInt(1);
+			data.ChannelUrl = reader.GetString(1);
 			data.LaneIndex = reader.GetInt(2);
 			data.Guid = reader.GetString(3);
 			data.TimeStamp = reader.GetLong(4);
@@ -710,19 +725,19 @@ vector<EventData> TrafficData::GetEventDatas(int channelIndex, int pageNum, int 
 		}
 		reader.EndQuery();
 	}
-	return datas;
+	return tuple<vector<EventData>, int>(datas,total);
 }
 
 void TrafficData::DeleteEventData(int keepCount)
 {
 	while (true)
 	{
-		vector<EventData> datas = GetEventDatas(0, 2, keepCount);
-		if (datas.empty())
+		tuple<vector<EventData>, int> t= GetEventDatas("",0,0, 2,keepCount);
+		if (get<0>(t).empty())
 		{
 			break;
 		}
-		for (vector<EventData>::iterator it = datas.begin(); it != datas.end(); ++it)
+		for (vector<EventData>::iterator it = get<0>(t).begin(); it != get<0>(t).end(); ++it)
 		{
 			string deleteSql = StringEx::Combine("Delete From Event_Data Where Id=", it->Id);
 			_sqlite.ExecuteRowCount(deleteSql);

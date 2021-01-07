@@ -30,6 +30,7 @@ DateTime::DateTime(int year, int month, int day, int hour, int minute, int secon
 	_minute = minute;
 	_second = second;
 	_millisecond = millisecond;
+	_timeStamp = 0;
 
 	if (!Empty())
 	{

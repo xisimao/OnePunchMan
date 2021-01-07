@@ -45,7 +45,7 @@ void DataChannel::StartCore()
 {
 	while (!_cancelled)
 	{
-		this_thread::sleep_for(chrono::minutes(1));
+		this_thread::sleep_for(chrono::seconds(5));
 		TrafficData data;
 		//流量数据
 		unique_lock<mutex> flowLock(_flowMutex);
@@ -56,7 +56,8 @@ void DataChannel::StartCore()
 		{
 			if (fit->ReportProperties == TrafficChannel::AllPropertiesFlag)
 			{
-				data.InsertFlowData(*fit);
+				bool b=data.InsertFlowData(*fit);
+				LogPool::Information("流量入库结果", b);
 			}
 			else
 			{

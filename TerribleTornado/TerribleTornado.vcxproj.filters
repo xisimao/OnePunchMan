@@ -1,46 +1,22 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Flow">
-      <UniqueIdentifier>{6f2d6901-9f1a-40e4-a1cd-1f65cf0bfbb4}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Traffic">
       <UniqueIdentifier>{b3a923ed-eada-4a0a-b328-41057c054f38}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Event">
-      <UniqueIdentifier>{fed1152d-37b3-4891-9bd4-ec884204e15b}</UniqueIdentifier>
+    <Filter Include="Seemmo">
+      <UniqueIdentifier>{bc103bd2-0949-4f9e-8629-f55f4e67f996}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="DG">
+      <UniqueIdentifier>{1340fab1-18cb-4054-8fa8-00f6720d6b2f}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Flow\FlowDetector.cpp">
-      <Filter>Flow</Filter>
-    </ClCompile>
-    <ClCompile Include="Traffic\DetectChannel.cpp">
-      <Filter>Traffic</Filter>
-    </ClCompile>
-    <ClCompile Include="Traffic\RecognChannel.cpp">
-      <Filter>Traffic</Filter>
-    </ClCompile>
-    <ClCompile Include="Traffic\SeemmoSDK.cpp">
-      <Filter>Traffic</Filter>
-    </ClCompile>
-    <ClCompile Include="Traffic\TrafficDetector.cpp">
-      <Filter>Traffic</Filter>
-    </ClCompile>
-    <ClCompile Include="Traffic\TrafficStartup.cpp">
-      <Filter>Traffic</Filter>
-    </ClCompile>
     <ClCompile Include="Traffic\TrafficData.cpp">
       <Filter>Traffic</Filter>
     </ClCompile>
     <ClCompile Include="TerribleTornado.cpp" />
-    <ClCompile Include="Traffic\DecodeChannel.cpp">
-      <Filter>Traffic</Filter>
-    </ClCompile>
     <ClCompile Include="Traffic\EncodeChannel.cpp">
-      <Filter>Traffic</Filter>
-    </ClCompile>
-    <ClCompile Include="Traffic\SqliteLogger.cpp">
       <Filter>Traffic</Filter>
     </ClCompile>
     <ClCompile Include="Traffic\ImageConvert.cpp">
@@ -52,39 +28,48 @@
     <ClCompile Include="Traffic\DataChannel.cpp">
       <Filter>Traffic</Filter>
     </ClCompile>
-    <ClCompile Include="Event\EventDetector.cpp">
-      <Filter>Event</Filter>
+    <ClCompile Include="Traffic\EventDetector.cpp">
+      <Filter>Traffic</Filter>
+    </ClCompile>
+    <ClCompile Include="Traffic\FlowDetector.cpp">
+      <Filter>Traffic</Filter>
+    </ClCompile>
+    <ClCompile Include="DG\DG_DecodeChannel.cpp">
+      <Filter>DG</Filter>
+    </ClCompile>
+    <ClCompile Include="DG\DG_FrameHandler.cpp">
+      <Filter>DG</Filter>
+    </ClCompile>
+    <ClCompile Include="DG\DG_TrafficStartup.cpp">
+      <Filter>DG</Filter>
+    </ClCompile>
+    <ClCompile Include="Seemmo\Seemmo_DecodeChannel.cpp">
+      <Filter>Seemmo</Filter>
+    </ClCompile>
+    <ClCompile Include="Traffic\DecodeChannel.cpp">
+      <Filter>Traffic</Filter>
+    </ClCompile>
+    <ClCompile Include="Seemmo\Seemmo_TrafficStartup.cpp">
+      <Filter>Seemmo</Filter>
+    </ClCompile>
+    <ClCompile Include="Traffic\TrafficStartup.cpp">
+      <Filter>Traffic</Filter>
+    </ClCompile>
+    <ClCompile Include="Seemmo\Seemmo_RecognChannel.cpp">
+      <Filter>Seemmo</Filter>
+    </ClCompile>
+    <ClCompile Include="Seemmo\Seemmo_DetectChannel.cpp">
+      <Filter>Seemmo</Filter>
+    </ClCompile>
+    <ClCompile Include="Seemmo\Seemmo_SDK.cpp">
+      <Filter>Seemmo</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Flow\FlowDetector.h">
-      <Filter>Flow</Filter>
-    </ClInclude>
-    <ClInclude Include="Traffic\DetectChannel.h">
-      <Filter>Traffic</Filter>
-    </ClInclude>
-    <ClInclude Include="Traffic\RecognChannel.h">
-      <Filter>Traffic</Filter>
-    </ClInclude>
-    <ClInclude Include="Traffic\SeemmoSDK.h">
-      <Filter>Traffic</Filter>
-    </ClInclude>
     <ClInclude Include="Traffic\TrafficData.h">
       <Filter>Traffic</Filter>
     </ClInclude>
-    <ClInclude Include="Traffic\TrafficDetector.h">
-      <Filter>Traffic</Filter>
-    </ClInclude>
-    <ClInclude Include="Traffic\TrafficStartup.h">
-      <Filter>Traffic</Filter>
-    </ClInclude>
-    <ClInclude Include="Traffic\DecodeChannel.h">
-      <Filter>Traffic</Filter>
-    </ClInclude>
     <ClInclude Include="Traffic\EncodeChannel.h">
-      <Filter>Traffic</Filter>
-    </ClInclude>
-    <ClInclude Include="Traffic\SqliteLogger.h">
       <Filter>Traffic</Filter>
     </ClInclude>
     <ClInclude Include="Traffic\ImageConvert.h">
@@ -96,8 +81,41 @@
     <ClInclude Include="Traffic\DataChannel.h">
       <Filter>Traffic</Filter>
     </ClInclude>
-    <ClInclude Include="Event\EventDetector.h">
-      <Filter>Event</Filter>
+    <ClInclude Include="Traffic\EventDetector.h">
+      <Filter>Traffic</Filter>
+    </ClInclude>
+    <ClInclude Include="Traffic\FlowDetector.h">
+      <Filter>Traffic</Filter>
+    </ClInclude>
+    <ClInclude Include="DG\DG_TrafficStartup.h">
+      <Filter>DG</Filter>
+    </ClInclude>
+    <ClInclude Include="DG\DG_DecodeChannel.h">
+      <Filter>DG</Filter>
+    </ClInclude>
+    <ClInclude Include="DG\DG_FrameHandler.h">
+      <Filter>DG</Filter>
+    </ClInclude>
+    <ClInclude Include="Seemmo\Seemmo_DecodeChannel.h">
+      <Filter>Seemmo</Filter>
+    </ClInclude>
+    <ClInclude Include="Traffic\DecodeChannel.h">
+      <Filter>Traffic</Filter>
+    </ClInclude>
+    <ClInclude Include="Seemmo\Seemmo_TrafficStartup.h">
+      <Filter>Seemmo</Filter>
+    </ClInclude>
+    <ClInclude Include="Traffic\TrafficStartup.h">
+      <Filter>Traffic</Filter>
+    </ClInclude>
+    <ClInclude Include="Seemmo\Seemmo_RecognChannel.h">
+      <Filter>Seemmo</Filter>
+    </ClInclude>
+    <ClInclude Include="Seemmo\Seemmo_DetectChannel.h">
+      <Filter>Seemmo</Filter>
+    </ClInclude>
+    <ClInclude Include="Seemmo\Seemmo_SDK.h">
+      <Filter>Seemmo</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -1,0 +1,170 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|ARM">
+      <Configuration>Debug</Configuration>
+      <Platform>ARM</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|ARM">
+      <Configuration>Release</Configuration>
+      <Platform>ARM</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|ARM64">
+      <Configuration>Debug</Configuration>
+      <Platform>ARM64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|ARM64">
+      <Configuration>Release</Configuration>
+      <Platform>ARM64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x86">
+      <Configuration>Debug</Configuration>
+      <Platform>x86</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x86">
+      <Configuration>Release</Configuration>
+      <Platform>x86</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{694fe0a2-86ca-42ab-a8a5-a805586fce0e}</ProjectGuid>
+    <Keyword>Linux</Keyword>
+    <RootNamespace>Genos_DG</RootNamespace>
+    <MinimumVisualStudioVersion>15.0</MinimumVisualStudioVersion>
+    <ApplicationType>Linux</ApplicationType>
+    <ApplicationTypeRevision>1.0</ApplicationTypeRevision>
+    <TargetLinuxPlatform>Generic</TargetLinuxPlatform>
+    <LinuxProjectType>{2238F9CD-F817-4ECC-BD14-2524D2669B35}</LinuxProjectType>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'" Label="Configuration">
+    <UseDebugLibraries>true</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'" Label="Configuration">
+    <UseDebugLibraries>false</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'" Label="Configuration">
+    <UseDebugLibraries>true</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'" Label="Configuration">
+    <UseDebugLibraries>false</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <UseDebugLibraries>true</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <UseDebugLibraries>false</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'" Label="Configuration">
+    <UseDebugLibraries>false</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'" Label="Configuration">
+    <UseDebugLibraries>true</UseDebugLibraries>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings" />
+  <ImportGroup Label="Shared" />
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
+    <TargetName>Genos</TargetName>
+  </PropertyGroup>
+  <ItemGroup>
+    <ClCompile Include="..\Fubuki\FFmpeg\FFmpegOutput.cpp" />
+    <ClCompile Include="..\Fubuki\FFmpeg\H264Cache.cpp" />
+    <ClCompile Include="..\Fubuki\Sqlite\Sqlite.cpp" />
+    <ClCompile Include="..\Saitama\Convert\JsonFormatter.cpp" />
+    <ClCompile Include="..\Saitama\Core\Command.cpp" />
+    <ClCompile Include="..\Saitama\Core\DateTime.cpp" />
+    <ClCompile Include="..\Saitama\Core\Thread.cpp" />
+    <ClCompile Include="..\Saitama\Logger\ConsoleLogger.cpp" />
+    <ClCompile Include="..\Saitama\Logger\FileLogger.cpp" />
+    <ClCompile Include="..\Saitama\Logger\LogPool.cpp" />
+    <ClCompile Include="..\Saitama\Net\AsyncHandler.cpp" />
+    <ClCompile Include="..\Saitama\Net\ConnectionChannel.cpp" />
+    <ClCompile Include="..\Saitama\Net\EndPoint.cpp" />
+    <ClCompile Include="..\Saitama\Net\HttpHandler.cpp" />
+    <ClCompile Include="..\Saitama\Net\NoticeHandler.cpp" />
+    <ClCompile Include="..\Saitama\Net\Socket.cpp" />
+    <ClCompile Include="..\Saitama\Net\SocketChannel.cpp" />
+    <ClCompile Include="..\Saitama\Net\SocketHandler.cpp" />
+    <ClCompile Include="..\Saitama\Net\SocketMaid.cpp" />
+    <ClCompile Include="..\Saitama\Net\WebSocket.cpp" />
+    <ClCompile Include="..\Saitama\Net\WebSocketHandler.cpp" />
+    <ClCompile Include="..\Saitama\Text\Path.cpp" />
+    <ClCompile Include="..\Saitama\Text\Security.cpp" />
+    <ClCompile Include="..\Saitama\Text\StringEx.cpp" />
+    <ClCompile Include="..\TerribleTornado\DG\DG_DecodeChannel.cpp" />
+    <ClCompile Include="..\TerribleTornado\DG\DG_FrameHandler.cpp" />
+    <ClCompile Include="..\TerribleTornado\DG\DG_TrafficStartup.cpp" />
+    <ClCompile Include="..\TerribleTornado\Traffic\DataChannel.cpp" />
+    <ClCompile Include="..\TerribleTornado\Traffic\DecodeChannel.cpp" />
+    <ClCompile Include="..\TerribleTornado\Traffic\EncodeChannel.cpp" />
+    <ClCompile Include="..\TerribleTornado\Traffic\EventDetector.cpp" />
+    <ClCompile Include="..\TerribleTornado\Traffic\FlowDetector.cpp" />
+    <ClCompile Include="..\TerribleTornado\Traffic\ImageConvert.cpp" />
+    <ClCompile Include="..\TerribleTornado\Traffic\ImageDrawing.cpp" />
+    <ClCompile Include="..\TerribleTornado\Traffic\TrafficData.cpp" />
+    <ClCompile Include="..\TerribleTornado\Traffic\TrafficStartup.cpp" />
+    <ClCompile Include="main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\Fubuki\FFmpeg\FFmpegOutput.h" />
+    <ClInclude Include="..\Fubuki\FFmpeg\H264Cache.h" />
+    <ClInclude Include="..\Fubuki\Sqlite\Sqlite.h" />
+    <ClInclude Include="..\Saitama\Convert\JsonFormatter.h" />
+    <ClInclude Include="..\Saitama\Core\Command.h" />
+    <ClInclude Include="..\Saitama\Core\DateTime.h" />
+    <ClInclude Include="..\Saitama\Core\Observable.h" />
+    <ClInclude Include="..\Saitama\Core\Shape.h" />
+    <ClInclude Include="..\Saitama\Core\Thread.h" />
+    <ClInclude Include="..\Saitama\Logger\ConsoleLogger.h" />
+    <ClInclude Include="..\Saitama\Logger\FileLogger.h" />
+    <ClInclude Include="..\Saitama\Logger\Logger.h" />
+    <ClInclude Include="..\Saitama\Logger\LogPool.h" />
+    <ClInclude Include="..\Saitama\Net\AsyncHandler.h" />
+    <ClInclude Include="..\Saitama\Net\ConnectionChannel.h" />
+    <ClInclude Include="..\Saitama\Net\EndPoint.h" />
+    <ClInclude Include="..\Saitama\Net\HttpHandler.h" />
+    <ClInclude Include="..\Saitama\Net\NoticeHandler.h" />
+    <ClInclude Include="..\Saitama\Net\Socket.h" />
+    <ClInclude Include="..\Saitama\Net\SocketChannel.h" />
+    <ClInclude Include="..\Saitama\Net\SocketHandler.h" />
+    <ClInclude Include="..\Saitama\Net\SocketMaid.h" />
+    <ClInclude Include="..\Saitama\Net\WebSocket.h" />
+    <ClInclude Include="..\Saitama\Net\WebSocketHandler.h" />
+    <ClInclude Include="..\Saitama\Text\Path.h" />
+    <ClInclude Include="..\Saitama\Text\Security.h" />
+    <ClInclude Include="..\Saitama\Text\StringEx.h" />
+    <ClInclude Include="..\TerribleTornado\DG\DG_DecodeChannel.h" />
+    <ClInclude Include="..\TerribleTornado\DG\DG_FrameHandler.h" />
+    <ClInclude Include="..\TerribleTornado\DG\DG_TrafficStartup.h" />
+    <ClInclude Include="..\TerribleTornado\Traffic\DataChannel.h" />
+    <ClInclude Include="..\TerribleTornado\Traffic\DecodeChannel.h" />
+    <ClInclude Include="..\TerribleTornado\Traffic\EncodeChannel.h" />
+    <ClInclude Include="..\TerribleTornado\Traffic\EventDetector.h" />
+    <ClInclude Include="..\TerribleTornado\Traffic\FlowDetector.h" />
+    <ClInclude Include="..\TerribleTornado\Traffic\ImageConvert.h" />
+    <ClInclude Include="..\TerribleTornado\Traffic\ImageDrawing.h" />
+    <ClInclude Include="..\TerribleTornado\Traffic\TrafficData.h" />
+    <ClInclude Include="..\TerribleTornado\Traffic\TrafficStartup.h" />
+  </ItemGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
+    <Link>
+      <LibraryDependencies>dgnnie;clientsdk;turbojpeg;dsp;isp;ive;hdmi;mpi;nnie;sns_imx277_slvs;sns_imx290;sns_imx334;sns_imx334_slave;sns_imx477;dnvqe;upvqe;VoiceEngine;securec;_hiae;_hiawb;_hidehaze;_hidrc;_hildci;opencv_highgui;opencv_core;opencv_imgproc;opencv_flann;opencv_calib3d;opencv_features2d;avcodec;avdevice;avfilter;avformat;avutil;swresample;swscale;postproc;sqlite3;pthread;%(LibraryDependencies)</LibraryDependencies>
+    </Link>
+    <ClCompile>
+      <AdditionalIncludeDirectories>/usr/local/include;../TerribleTornado/Traffic;../TerribleTornado/DG;../TerribleTornado/Seemmo;../Fubuki/Sqlite;../Fubuki/FFmpeg;../Saitama/Text;../Saitama/Net;../Saitama/Logger;../Saitama/Core;../Saitama/Convert;./Genos_DG;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets" />
+</Project>

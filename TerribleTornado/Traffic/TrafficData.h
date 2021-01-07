@@ -115,6 +115,28 @@ namespace OnePunchMan
 		int IOIndex;
 		//上报属性
 		int ReportProperties;
+
+		std::string ToJson() const
+		{
+			std::string json;
+			JsonSerialization::SerializeValue(&json, "channelIndex", ChannelIndex);
+			JsonSerialization::SerializeValue(&json, "laneId", LaneId);
+			JsonSerialization::SerializeValue(&json, "laneName", LaneName);
+			JsonSerialization::SerializeValue(&json, "laneIndex", LaneIndex);
+			JsonSerialization::SerializeValue(&json, "direction", Direction);
+			JsonSerialization::SerializeValue(&json, "flowDirection", FlowDirection);
+			JsonSerialization::SerializeValue(&json, "ioIp", IOIp);
+			JsonSerialization::SerializeValue(&json, "ioPort", IOPort);
+			JsonSerialization::SerializeValue(&json, "ioIndex", IOIndex);
+			JsonSerialization::SerializeValue(&json, "stopLine", StopLine);
+			JsonSerialization::SerializeValue(&json, "flowDetectLine", FlowDetectLine);
+			JsonSerialization::SerializeValue(&json, "queueDetectLine", QueueDetectLine);
+			JsonSerialization::SerializeValue(&json, "laneLine1", LaneLine1);
+			JsonSerialization::SerializeValue(&json, "laneLine2", LaneLine2);
+			JsonSerialization::SerializeValue(&json, "flowRegion", FlowRegion);
+			JsonSerialization::SerializeValue(&json, "queueRegion", QueueRegion);
+			return json;
+		}
 	};
 
 	//事件车道类型
@@ -159,6 +181,18 @@ namespace OnePunchMan
 		std::string Line;
 		//区域
 		std::string Region;
+
+		std::string ToJson() const
+		{
+			std::string json;
+			JsonSerialization::SerializeValue(&json, "channelIndex", ChannelIndex);
+			JsonSerialization::SerializeValue(&json, "laneIndex", LaneIndex);
+			JsonSerialization::SerializeValue(&json, "laneName", LaneName);
+			JsonSerialization::SerializeValue(&json, "laneType", LaneType);
+			JsonSerialization::SerializeValue(&json, "region", Region);
+			JsonSerialization::SerializeValue(&json, "line", Line);
+			return json;
+		}
 	};
 
 	//通道类型
@@ -273,6 +307,40 @@ namespace OnePunchMan
 		std::string FlvUrl(const std::string ip) const
 		{
 			return StringEx::Combine("http://", ip, ":1936/live?port=1935&app=live&stream=", ChannelIndex);
+		}
+
+		std::string ToJson() const
+		{
+			std::string json;
+			JsonSerialization::SerializeValue(&json, "channelIndex", ChannelIndex);
+			JsonSerialization::SerializeValue(&json, "channelName", ChannelName);
+			JsonSerialization::SerializeValue(&json, "channelUrl", ChannelUrl);
+			JsonSerialization::SerializeValue(&json, "channelType", ChannelType);
+			JsonSerialization::SerializeValue(&json, "deviceId", DeviceId);
+			JsonSerialization::SerializeValue(&json, "loop", Loop);
+			JsonSerialization::SerializeValue(&json, "outputDetect", OutputDetect);
+			JsonSerialization::SerializeValue(&json, "outputImage", OutputImage);
+			JsonSerialization::SerializeValue(&json, "outputReport", OutputReport);
+			JsonSerialization::SerializeValue(&json, "outputRecogn", OutputRecogn);
+			JsonSerialization::SerializeValue(&json, "globalDetect", GlobalDetect);
+			JsonSerialization::SerializeValue(&json, "laneWidth", LaneWidth);
+			JsonSerialization::SerializeValue(&json, "reportProperties", ReportProperties);
+			JsonSerialization::SerializeValue(&json, "freeSpeed", FreeSpeed);
+
+			std::string flowLanesJson;
+			for (std::vector<FlowLane>::const_iterator lit = FlowLanes.begin(); lit != FlowLanes.end(); ++lit)
+			{
+				JsonSerialization::AddClassItem(&flowLanesJson, lit->ToJson());
+			}
+			JsonSerialization::SerializeArray(&json, "flowLanes", flowLanesJson);
+
+			std::string eventLanesJson;
+			for (std::vector<EventLane>::const_iterator lit = EventLanes.begin(); lit != EventLanes.end(); ++lit)
+			{
+				JsonSerialization::AddClassItem(&eventLanesJson, lit->ToJson());
+			}
+			JsonSerialization::SerializeArray(&json, "eventLanes", eventLanesJson);
+			return json;
 		}
 	};
 
@@ -477,46 +545,19 @@ namespace OnePunchMan
 		std::map<std::string, FlowDetectCache> Items;
 
 		/**
-		* 获取excel用的json
-		* @return excel用的json
-		*/
-		std::string ToReportJson()
-		{
-			std::string reportJson;
-			JsonSerialization::SerializeValue(&reportJson, "minute", Minute);
-			JsonSerialization::SerializeValue(&reportJson, "laneId", LaneId);
-			JsonSerialization::SerializeValue(&reportJson, "laneName", LaneName);
-			JsonSerialization::SerializeValue(&reportJson, "direction", Direction);
-			JsonSerialization::SerializeValue(&reportJson, "persons", Persons);
-			JsonSerialization::SerializeValue(&reportJson, "bikes", Bikes);
-			JsonSerialization::SerializeValue(&reportJson, "motorcycles", Motorcycles);
-			JsonSerialization::SerializeValue(&reportJson, "cars", Cars);
-			JsonSerialization::SerializeValue(&reportJson, "tricycles", Tricycles);
-			JsonSerialization::SerializeValue(&reportJson, "buss", Buss);
-			JsonSerialization::SerializeValue(&reportJson, "vans", Vans);
-			JsonSerialization::SerializeValue(&reportJson, "trucks", Trucks);
-			JsonSerialization::SerializeValue(&reportJson, "averageSpeed", static_cast<int>(Speed));
-			JsonSerialization::SerializeValue(&reportJson, "headDistance", HeadDistance);
-			JsonSerialization::SerializeValue(&reportJson, "headSpace", HeadSpace);
-			JsonSerialization::SerializeValue(&reportJson, "timeOccupancy", static_cast<int>(TimeOccupancy));
-			JsonSerialization::SerializeValue(&reportJson, "trafficStatus", TrafficStatus);
-			JsonSerialization::SerializeValue(&reportJson, "queueLength", QueueLength);
-			JsonSerialization::SerializeValue(&reportJson, "spaceOccupancy", SpaceOccupancy);
-			return reportJson;
-		}
-
-		/**
 		* 获取mqtt报告用的json
 		* @return mqtt报告用的json
 		*/
-		std::string ToMessageJson()
+		std::string ToJson()
 		{
 			std::string messageJson;
 			JsonSerialization::SerializeValue(&messageJson, "channelUrl", ChannelUrl);
 			JsonSerialization::SerializeValue(&messageJson, "laneId", LaneId);
-			DateTime time = DateTime::ParseTimeStamp(TimeStamp);
-			DateTime adjustTime = DateTime(time.Year() + 1, time.Month(), time.Day(), time.Hour(), time.Minute(), time.Second(), time.Millisecond());
-			JsonSerialization::SerializeValue(&messageJson, "timeStamp", adjustTime.TimeStamp());
+			JsonSerialization::SerializeValue(&messageJson, "laneName", LaneName);
+			JsonSerialization::SerializeValue(&messageJson, "direction", Direction);
+
+			JsonSerialization::SerializeValue(&messageJson, "timeStamp", TimeStamp);
+			JsonSerialization::SerializeValue(&messageJson, "minute", Minute);
 
 			JsonSerialization::SerializeValue(&messageJson, "persons", Persons);
 			JsonSerialization::SerializeValue(&messageJson, "bikes", Bikes);
@@ -578,17 +619,20 @@ namespace OnePunchMan
 		*/
 		std::string ToJson()
 		{
-			std::string vehicleJson;
-			JsonSerialization::SerializeValue(&vehicleJson, "time", StringEx::Combine(Minute, ":", Second));
-			JsonSerialization::SerializeValue(&vehicleJson, "laneId", LaneId);
-			JsonSerialization::SerializeValue(&vehicleJson, "laneName", LaneName);
-			JsonSerialization::SerializeValue(&vehicleJson, "direction", Direction);
-			JsonSerialization::SerializeValue(&vehicleJson, "carType", CarType);
-			JsonSerialization::SerializeValue(&vehicleJson, "carColor", CarColor);
-			JsonSerialization::SerializeValue(&vehicleJson, "carBrand", CarBrand);
-			JsonSerialization::SerializeValue(&vehicleJson, "plateType", PlateType);
-			JsonSerialization::SerializeValue(&vehicleJson, "plateNumber", PlateNumber);
-			return vehicleJson;
+			std::string json;
+			JsonSerialization::SerializeValue(&json, "channelUrl", ChannelUrl);
+			JsonSerialization::SerializeValue(&json, "laneId", LaneId);
+			JsonSerialization::SerializeValue(&json, "laneName", LaneName);
+			JsonSerialization::SerializeValue(&json, "direction", Direction);
+			JsonSerialization::SerializeValue(&json, "timeStamp", TimeStamp);
+			JsonSerialization::SerializeValue(&json, "time", StringEx::Combine(Minute, ":", Second));
+			
+			JsonSerialization::SerializeValue(&json, "carType", CarType);
+			JsonSerialization::SerializeValue(&json, "carColor", CarColor);
+			JsonSerialization::SerializeValue(&json, "carBrand", CarBrand);
+			JsonSerialization::SerializeValue(&json, "plateType", PlateType);
+			JsonSerialization::SerializeValue(&json, "plateNumber", PlateNumber);
+			return json;
 		}
 	};
 
@@ -619,13 +663,16 @@ namespace OnePunchMan
 		*/
 		std::string ToJson()
 		{
-			std::string bikeJson;
-			JsonSerialization::SerializeValue(&bikeJson, "time", StringEx::Combine(Minute, ":", Second));
-			JsonSerialization::SerializeValue(&bikeJson, "laneId", LaneId);
-			JsonSerialization::SerializeValue(&bikeJson, "laneName", LaneName);
-			JsonSerialization::SerializeValue(&bikeJson, "direction", Direction);
-			JsonSerialization::SerializeValue(&bikeJson, "bikeType", BikeType);
-			return bikeJson;
+			std::string json;
+			JsonSerialization::SerializeValue(&json, "channelUrl", ChannelUrl);
+			JsonSerialization::SerializeValue(&json, "laneId", LaneId);
+			JsonSerialization::SerializeValue(&json, "laneName", LaneName);
+			JsonSerialization::SerializeValue(&json, "direction", Direction);
+			JsonSerialization::SerializeValue(&json, "timeStamp", TimeStamp);
+			JsonSerialization::SerializeValue(&json, "time", StringEx::Combine(Minute, ":", Second));
+			
+			JsonSerialization::SerializeValue(&json, "bikeType", BikeType);
+			return json;
 		}
 	};
 
@@ -658,15 +705,18 @@ namespace OnePunchMan
 		*/
 		std::string ToJson()
 		{
-			std::string pedestrainJson;
-			JsonSerialization::SerializeValue(&pedestrainJson, "time", StringEx::Combine(Minute, ":", Second));
-			JsonSerialization::SerializeValue(&pedestrainJson, "laneId", LaneId);
-			JsonSerialization::SerializeValue(&pedestrainJson, "laneName", LaneName);
-			JsonSerialization::SerializeValue(&pedestrainJson, "direction", Direction);
-			JsonSerialization::SerializeValue(&pedestrainJson, "sex", Sex);
-			JsonSerialization::SerializeValue(&pedestrainJson, "age", Age);
-			JsonSerialization::SerializeValue(&pedestrainJson, "upperColor", UpperColor);
-			return pedestrainJson;
+			std::string json;
+			JsonSerialization::SerializeValue(&json, "channelUrl", ChannelUrl);
+			JsonSerialization::SerializeValue(&json, "laneId", LaneId);
+			JsonSerialization::SerializeValue(&json, "laneName", LaneName);
+			JsonSerialization::SerializeValue(&json, "direction", Direction);
+			JsonSerialization::SerializeValue(&json, "timeStamp", TimeStamp);
+			JsonSerialization::SerializeValue(&json, "time", StringEx::Combine(Minute, ":", Second));
+			
+			JsonSerialization::SerializeValue(&json, "sex", Sex);
+			JsonSerialization::SerializeValue(&json, "age", Age);
+			JsonSerialization::SerializeValue(&json, "upperColor", UpperColor);
+			return json;
 		}
 	};
 
@@ -675,17 +725,146 @@ namespace OnePunchMan
 	{
 	public:
 		EventData()
-			:Id(0), ChannelIndex(), ChannelUrl(), LaneIndex(0), TimeStamp(0), Type(0)
+			:Id(0), ChannelIndex(), ChannelUrl(), LaneIndex(0), TimeStamp(0), Guid(), Type(0)
 		{
 
 		}
 		int Id;
-		std::string Guid;
 		int ChannelIndex;
 		std::string ChannelUrl;
 		int LaneIndex;
 		long long TimeStamp;
+		std::string Guid;
 		int Type;
+
+		std::string ToJson() const
+		{
+			std::string json;
+			JsonSerialization::SerializeValue(&json, "channelUrl", ChannelUrl);
+			JsonSerialization::SerializeValue(&json, "laneIndex", LaneIndex);
+			JsonSerialization::SerializeValue(&json, "timeStamp", TimeStamp);
+			JsonSerialization::SerializeValue(&json, "type", Type);
+			JsonSerialization::SerializeValue(&json, "image1", TrafficDirectory::GetImageLink(Guid, 1));
+			JsonSerialization::SerializeValue(&json, "image2", TrafficDirectory::GetImageLink(Guid, 2));
+			JsonSerialization::SerializeValue(&json, "video", TrafficDirectory::GetVideoLink(Guid));
+			return json;
+		}
+	};
+
+	//io数据
+	class IoData
+	{
+	public:
+		IoData()
+			:ChannelUrl(),LaneId(),TimeStamp(0),Status(0)
+		{
+
+		}
+
+		//视频地址
+		std::string ChannelUrl;
+		//车道编号
+		std::string LaneId;
+		//时间戳
+		long long TimeStamp;
+		//io状态
+		int Status;
+
+		std::string ToJson() const
+		{
+			std::string json;
+			JsonSerialization::SerializeValue(&json, "channelUrl", ChannelUrl);
+			JsonSerialization::SerializeValue(&json, "laneId", LaneId);
+			JsonSerialization::SerializeValue(&json, "timeStamp", TimeStamp);
+			JsonSerialization::SerializeValue(&json, "status", Status);
+			return json;
+		}
+	};
+
+	//检测元素状态
+	enum class DetectStatus
+	{
+		//在区域外
+		Out,
+		//首次进入
+		New,
+		//在区域内
+		In
+	};
+
+	//检测元素类型
+	enum class DetectType
+	{
+		None = 0,
+		Pedestrain = 1,
+		Bike = 2,
+		Motobike = 3,
+		Car = 4,
+		Tricycle = 5,
+		Bus = 6,
+		Van = 7,
+		Truck = 8
+	};
+
+	//检测项
+	class DetectItem
+	{
+	public:
+		DetectItem()
+			:Id(), Region(), Type(DetectType::None), Status(DetectStatus::Out), Distance(0.0)
+		{
+
+		}
+		std::string Id;
+		//输入
+		//检测区域
+		Rectangle Region;
+		//检测元素类型
+		DetectType Type;
+
+		//输出
+		//检测元素状态
+		DetectStatus Status;
+		//车辆距离停止线距离(px)
+		double Distance;
+
+		std::string ToJson()
+		{
+			std::string json;
+			JsonSerialization::SerializeValue(&json, "id", Id);
+			JsonSerialization::SerializeValue(&json, "region", Region.ToJson());
+			JsonSerialization::SerializeValue(&json, "type", static_cast<int>(Type));
+			return json;
+		}
+	};
+
+	//识别项
+	class RecognItem
+	{
+	public:
+		RecognItem()
+			:ChannelIndex(0), FrameIndex(0), FrameSpan(0), TaskId(0), Guid(), Type(DetectType::None), Region(), Width(0), Height(0)
+		{
+
+		}
+		//通道序号
+		int ChannelIndex;
+		//帧序号
+		int FrameIndex;
+		//帧间隔时间(毫秒)
+		unsigned char FrameSpan;
+		//任务号
+		unsigned char TaskId;
+		//guid
+		std::string Guid;
+		//检测项类型
+		DetectType Type;
+		//检测区域
+		Rectangle Region;
+		//宽度
+		int Width;
+		//高度
+		int Height;
 	};
 
 	//数据库
@@ -820,36 +999,38 @@ namespace OnePunchMan
 
 		bool InsertFlowData(const FlowData& data);
 
-		std::vector<FlowData> GetFlowDatas(const std::string& channelUrl, const std::string& laneId, int pageNum, int pageSize);
+		std::tuple<std::vector<FlowData>,int> GetFlowDatas(const std::string& channelUrl, const std::string& laneId,long long startTime,long long endTime, int pageNum, int pageSize);
 
 		void DeleteFlowDatas(int keeyDay);
 
 		bool InsertVehicleData(const VehicleData& data);
 
-		std::vector<VehicleData> GetVehicleDatas(const std::string& channelUrl, const std::string& laneId, int pageNum, int pageSize);
+		std::tuple<std::vector<VehicleData>,int> GetVehicleDatas(const std::string& channelUrl, const std::string& laneId, long long startTime, long long endTime, int pageNum, int pageSize);
 
 		void DeleteVehicleDatas(int keepCount);
 		
 		bool InsertBikeData(const BikeData& data);
 
-		std::vector<BikeData> GetBikeDatas(const std::string& channelUrl, const std::string& laneId, int pageNum, int pageSize);
+		std::tuple<std::vector<BikeData>,int> GetBikeDatas(const std::string& channelUrl, const std::string& laneId, long long startTime, long long endTime, int pageNum, int pageSize);
 
 		void DeleteBikeDatas(int keepCount);
 
 		bool InsertPedestrainData(const PedestrainData& data);
 
-		std::vector<PedestrainData> GetPedestrainDatas(const std::string& channelUrl, const std::string& laneId, int pageNum, int pageSize);
+		std::tuple<std::vector<PedestrainData>, int> GetPedestrainDatas(const std::string& channelUrl, const std::string& laneId, long long startTime, long long endTime, int pageNum, int pageSize);
 		
 		void DeletePedestrainDatas(int keepCount);
 
 		/**
 		* 构造函数
-		* @param channelIndex 视频序号,0表示查询所有
+		* @param channelUrl 视频地址，为空时查询所有
+		* @param startTime 开始时间戳，为0时查询所有
+		* @param endTime 结束时间戳,为0时查询所有
 		* @param pageNum 分页页码,0表示查询所有
 		* @param pageSize 分页数量,0表示查询所有
 		* @return 事件数据集合
 		*/
-		std::vector<EventData> GetEventDatas(int channelIndex,int pageNum,int pageSize);
+		std::tuple<std::vector<EventData>,int> GetEventDatas(const std::string& channelUrl,long long startTime,long long endTime,int pageNum,int pageSize);
 
 		bool InsertEventData(const EventData& data);
 
