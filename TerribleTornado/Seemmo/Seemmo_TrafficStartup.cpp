@@ -28,6 +28,8 @@ void Seemmo_TrafficStartup::Start()
     Seemmo_DecodeChannel::InitFFmpeg();
 
     Seemmo_DecodeChannel::UninitHisi(ChannelCount);
+    EncodeChannel::UninitHisi(ChannelCount);
+
     if (!Seemmo_DecodeChannel::InitHisi(ChannelCount,64)
         ||!EncodeChannel::InitHisi(ChannelCount, Seemmo_DecodeChannel::DestinationWidth,Seemmo_DecodeChannel::DestinationHeight))
     {

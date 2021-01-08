@@ -28,6 +28,12 @@ void DG_TrafficStartup::Start()
     DecodeChannel::InitFFmpeg();
 
     DecodeChannel::UninitHisi(ChannelCount);
+    EncodeChannel::UninitHisi(ChannelCount);
+
+    if (!EncodeChannel::InitHisi(ChannelCount, DecodeChannel::DestinationWidth, DecodeChannel::DestinationHeight))
+    {
+        exit(2);
+    }
     if (!DecodeChannel::InitHisi(ChannelCount, 128))
     {
         exit(2);

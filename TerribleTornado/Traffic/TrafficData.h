@@ -23,14 +23,14 @@ namespace OnePunchMan
 		//页面目录
 		const static std::string WebConfigPath;
 
-		static std::string GetDataFrameJpg(int channelIndex,int frameIndex)
+		static std::string GetDataFrameJpg(int channelIndex, int frameIndex)
 		{
 			return StringEx::Combine(TrafficDirectory::DataDir, "images/", channelIndex, "_", frameIndex, ".jpg");
 		}
 
 		static std::string GetTempFrameJpg(int channelIndex, int frameIndex)
 		{
-			return 	StringEx::Combine(TrafficDirectory::TempDir,channelIndex, "_", frameIndex, ".jpg");
+			return 	StringEx::Combine(TrafficDirectory::TempDir, channelIndex, "_", frameIndex, ".jpg");
 		}
 
 		static std::string GetAllTempFrameJpg(int channelIndex)
@@ -40,7 +40,7 @@ namespace OnePunchMan
 
 		static std::string GetChannelJpg(int channelIndex)
 		{
-			return StringEx::Combine(TrafficDirectory::FileDir,"channel_", channelIndex, ".jpg");
+			return StringEx::Combine(TrafficDirectory::FileDir, "channel_", channelIndex, ".jpg");
 		}
 
 		static std::string GetRecognBmp(const std::string& id)
@@ -48,9 +48,14 @@ namespace OnePunchMan
 			return StringEx::Combine(TrafficDirectory::FileDir, "recogn_", id, ".bmp");
 		}
 
-		static std::string GetEventJpg(const std::string& id,int imageIndex)
+		static std::string GetRecognUrl(const std::string ip, const std::string& id)
 		{
-			return StringEx::Combine(TrafficDirectory::FileDir, "event_",id, "_", imageIndex, ".jpg");
+			return StringEx::Combine("http://", ip, "/", TrafficDirectory::FileLink, "/recogn_", id, ".bmp");
+		}
+
+		static std::string GetEventJpg(const std::string& id, int imageIndex)
+		{
+			return StringEx::Combine(TrafficDirectory::FileDir, "event_", id, "_", imageIndex, ".jpg");
 		}
 
 		static std::string GetEventMp4(const std::string& id)
@@ -244,7 +249,7 @@ namespace OnePunchMan
 		TrafficChannel()
 			:ChannelIndex(0), ChannelName(), ChannelUrl(), ChannelType(0), DeviceId()
 			, Loop(true), OutputDetect(false), OutputImage(false), OutputReport(false), OutputRecogn(false), GlobalDetect(false)
-			, LaneWidth(0.0), ReportProperties(3),FreeSpeed(0.0)
+			, LaneWidth(0.0), ReportProperties(3), FreeSpeed(0.0)
 			, ChannelStatus(0)
 		{
 
@@ -272,7 +277,7 @@ namespace OnePunchMan
 		bool OutputRecogn;
 		//是否全局检测
 		bool GlobalDetect;
-	
+
 		//车道宽度
 		double LaneWidth;
 		//上报属性
@@ -411,7 +416,7 @@ namespace OnePunchMan
 	{
 	public:
 		FlowDetectCache()
-			:LastTimeStamp(0), LastHitPoint(), TotalDistance(0.0), MeterPerPixel(0.0),TotalTime(0)
+			:LastTimeStamp(0), LastHitPoint(), TotalDistance(0.0), MeterPerPixel(0.0), TotalTime(0)
 		{
 
 		}
@@ -432,7 +437,7 @@ namespace OnePunchMan
 	{
 	public:
 		FlowData()
-			: Id(0),LaneIndex(0),ChannelUrl(), LaneId(), LaneName(), IOIp(),IOIndex(0), Direction(0), FlowRegion(), QueueRegion(),ReportProperties(0)
+			: Id(0), LaneIndex(0), ChannelUrl(), LaneId(), LaneName(), IOIp(), IOIndex(0), Direction(0), FlowRegion(), QueueRegion(), ReportProperties(0)
 			, Minute(0), TimeStamp(0)
 			, Persons(0), Bikes(0), Motorcycles(0), Cars(0), Tricycles(0), Buss(0), Vans(0), Trucks(0)
 			, Speed(0.0), TotalDistance(0.0), MeterPerPixel(0.0), TotalTime(0)
@@ -545,47 +550,39 @@ namespace OnePunchMan
 		std::map<std::string, FlowDetectCache> Items;
 
 		/**
-		* 获取mqtt报告用的json
-		* @return mqtt报告用的json
+		* 获取json数据
+		* @return json数据
 		*/
 		std::string ToJson()
 		{
-			std::string messageJson;
-			JsonSerialization::SerializeValue(&messageJson, "channelUrl", ChannelUrl);
-			JsonSerialization::SerializeValue(&messageJson, "laneId", LaneId);
-			JsonSerialization::SerializeValue(&messageJson, "laneName", LaneName);
-			JsonSerialization::SerializeValue(&messageJson, "direction", Direction);
+			std::string json;
+			JsonSerialization::SerializeValue(&json, "channelUrl", ChannelUrl);
+			JsonSerialization::SerializeValue(&json, "laneId", LaneId);
+			JsonSerialization::SerializeValue(&json, "laneName", LaneName);
+			JsonSerialization::SerializeValue(&json, "direction", Direction);
 
-			JsonSerialization::SerializeValue(&messageJson, "timeStamp", TimeStamp);
-			JsonSerialization::SerializeValue(&messageJson, "minute", Minute);
+			JsonSerialization::SerializeValue(&json, "dateTime", DateTime::ParseTimeStamp(TimeStamp).ToString());
+			JsonSerialization::SerializeValue(&json, "minute", Minute);
 
-			JsonSerialization::SerializeValue(&messageJson, "persons", Persons);
-			JsonSerialization::SerializeValue(&messageJson, "bikes", Bikes);
-			JsonSerialization::SerializeValue(&messageJson, "motorcycles", Motorcycles);
-			JsonSerialization::SerializeValue(&messageJson, "cars", Cars);
-			JsonSerialization::SerializeValue(&messageJson, "tricycles", Tricycles);
-			JsonSerialization::SerializeValue(&messageJson, "buss", Buss);
-			JsonSerialization::SerializeValue(&messageJson, "vans", Vans);
-			JsonSerialization::SerializeValue(&messageJson, "trucks", Trucks);
+			JsonSerialization::SerializeValue(&json, "persons", Persons);
+			JsonSerialization::SerializeValue(&json, "bikes", Bikes);
+			JsonSerialization::SerializeValue(&json, "motorcycles", Motorcycles);
+			JsonSerialization::SerializeValue(&json, "cars", Cars);
+			JsonSerialization::SerializeValue(&json, "tricycles", Tricycles);
+			JsonSerialization::SerializeValue(&json, "buss", Buss);
+			JsonSerialization::SerializeValue(&json, "vans", Vans);
+			JsonSerialization::SerializeValue(&json, "trucks", Trucks);
 
-			JsonSerialization::SerializeValue(&messageJson, "averageSpeed", static_cast<int>(Speed));
-			JsonSerialization::SerializeValue(&messageJson, "headDistance", StringEx::Rounding(HeadDistance, 2));
-			JsonSerialization::SerializeValue(&messageJson, "headSpace", StringEx::Rounding(HeadSpace, 2));
-			JsonSerialization::SerializeValue(&messageJson, "timeOccupancy", static_cast<int>(TimeOccupancy));
-			JsonSerialization::SerializeValue(&messageJson, "trafficStatus", TrafficStatus);
+			JsonSerialization::SerializeValue(&json, "averageSpeed", static_cast<int>(Speed));
+			JsonSerialization::SerializeValue(&json, "headDistance", StringEx::Rounding(HeadDistance, 2));
+			JsonSerialization::SerializeValue(&json, "headSpace", StringEx::Rounding(HeadSpace, 2));
+			JsonSerialization::SerializeValue(&json, "timeOccupancy", static_cast<int>(TimeOccupancy));
+			JsonSerialization::SerializeValue(&json, "trafficStatus", TrafficStatus);
 
-			JsonSerialization::SerializeValue(&messageJson, "queueLength", QueueLength);
-			JsonSerialization::SerializeValue(&messageJson, "spaceOccupancy", SpaceOccupancy);
-			return messageJson;
+			JsonSerialization::SerializeValue(&json, "queueLength", QueueLength);
+			JsonSerialization::SerializeValue(&json, "spaceOccupancy", SpaceOccupancy);
+			return json;
 		}
-	};
-
-	//检测类型
-	enum class VideoStructType
-	{
-		Vehicle = 1,
-		Bike = 2,
-		Pedestrain = 3
 	};
 
 	//机动车结构化数据
@@ -593,7 +590,7 @@ namespace OnePunchMan
 	{
 	public:
 		VehicleData()
-			:Id(0),ChannelUrl(),LaneId(), LaneName(), TimeStamp(0), Guid(),Image(), Direction(0), Minute(0), Second(0), CarType(0), CarColor(0), CarBrand(), PlateType(0), PlateNumber()
+			:Id(0), ChannelUrl(), LaneId(), LaneName(), TimeStamp(0), Guid(), Image(), Direction(0), Minute(0), Second(0), CarType(0), CarColor(0), CarBrand(), PlateType(0), PlateNumber()
 		{
 
 		}
@@ -617,16 +614,17 @@ namespace OnePunchMan
 		* 获取数据的json格式
 		* @return 数据的json格式
 		*/
-		std::string ToJson()
+		std::string ToJson(const std::string& ip)
 		{
 			std::string json;
 			JsonSerialization::SerializeValue(&json, "channelUrl", ChannelUrl);
 			JsonSerialization::SerializeValue(&json, "laneId", LaneId);
 			JsonSerialization::SerializeValue(&json, "laneName", LaneName);
 			JsonSerialization::SerializeValue(&json, "direction", Direction);
-			JsonSerialization::SerializeValue(&json, "timeStamp", TimeStamp);
+			JsonSerialization::SerializeValue(&json, "dateTime", DateTime::ParseTimeStamp(TimeStamp).ToString());
 			JsonSerialization::SerializeValue(&json, "time", StringEx::Combine(Minute, ":", Second));
-			
+			JsonSerialization::SerializeValue(&json, "image", TrafficDirectory::GetRecognUrl(ip, Guid));
+
 			JsonSerialization::SerializeValue(&json, "carType", CarType);
 			JsonSerialization::SerializeValue(&json, "carColor", CarColor);
 			JsonSerialization::SerializeValue(&json, "carBrand", CarBrand);
@@ -661,16 +659,17 @@ namespace OnePunchMan
 		* 获取数据的json格式
 		* @return 数据的json格式
 		*/
-		std::string ToJson()
+		std::string ToJson(const std::string& ip)
 		{
 			std::string json;
 			JsonSerialization::SerializeValue(&json, "channelUrl", ChannelUrl);
 			JsonSerialization::SerializeValue(&json, "laneId", LaneId);
 			JsonSerialization::SerializeValue(&json, "laneName", LaneName);
 			JsonSerialization::SerializeValue(&json, "direction", Direction);
-			JsonSerialization::SerializeValue(&json, "timeStamp", TimeStamp);
+			JsonSerialization::SerializeValue(&json, "dateTime", DateTime::ParseTimeStamp(TimeStamp).ToString());
 			JsonSerialization::SerializeValue(&json, "time", StringEx::Combine(Minute, ":", Second));
-			
+			JsonSerialization::SerializeValue(&json, "image", TrafficDirectory::GetRecognUrl(ip, Guid));
+
 			JsonSerialization::SerializeValue(&json, "bikeType", BikeType);
 			return json;
 		}
@@ -681,7 +680,7 @@ namespace OnePunchMan
 	{
 	public:
 		PedestrainData()
-			:Id(0), ChannelUrl(), LaneId(), LaneName(), TimeStamp(0),Guid(), Image(), Direction(0), Minute(0), Second(0), Sex(0), Age(0), UpperColor(0)
+			:Id(0), ChannelUrl(), LaneId(), LaneName(), TimeStamp(0), Guid(), Image(), Direction(0), Minute(0), Second(0), Sex(0), Age(0), UpperColor(0)
 		{
 
 		}
@@ -703,16 +702,17 @@ namespace OnePunchMan
 		* 获取数据的json格式
 		* @return 数据的json格式
 		*/
-		std::string ToJson()
+		std::string ToJson(const std::string& ip)
 		{
 			std::string json;
 			JsonSerialization::SerializeValue(&json, "channelUrl", ChannelUrl);
 			JsonSerialization::SerializeValue(&json, "laneId", LaneId);
 			JsonSerialization::SerializeValue(&json, "laneName", LaneName);
 			JsonSerialization::SerializeValue(&json, "direction", Direction);
-			JsonSerialization::SerializeValue(&json, "timeStamp", TimeStamp);
+			JsonSerialization::SerializeValue(&json, "dateTime", DateTime::ParseTimeStamp(TimeStamp).ToString());
 			JsonSerialization::SerializeValue(&json, "time", StringEx::Combine(Minute, ":", Second));
-			
+			JsonSerialization::SerializeValue(&json, "image", TrafficDirectory::GetRecognUrl(ip, Guid));
+
 			JsonSerialization::SerializeValue(&json, "sex", Sex);
 			JsonSerialization::SerializeValue(&json, "age", Age);
 			JsonSerialization::SerializeValue(&json, "upperColor", UpperColor);
@@ -742,7 +742,7 @@ namespace OnePunchMan
 			std::string json;
 			JsonSerialization::SerializeValue(&json, "channelUrl", ChannelUrl);
 			JsonSerialization::SerializeValue(&json, "laneIndex", LaneIndex);
-			JsonSerialization::SerializeValue(&json, "timeStamp", TimeStamp);
+			JsonSerialization::SerializeValue(&json, "dateTime", DateTime::ParseTimeStamp(TimeStamp).ToString());
 			JsonSerialization::SerializeValue(&json, "type", Type);
 			JsonSerialization::SerializeValue(&json, "image1", TrafficDirectory::GetImageLink(Guid, 1));
 			JsonSerialization::SerializeValue(&json, "image2", TrafficDirectory::GetImageLink(Guid, 2));
@@ -756,7 +756,7 @@ namespace OnePunchMan
 	{
 	public:
 		IoData()
-			:ChannelUrl(),LaneId(),TimeStamp(0),Status(0)
+			:ChannelUrl(), LaneId(), TimeStamp(0), Status(0)
 		{
 
 		}
@@ -775,7 +775,7 @@ namespace OnePunchMan
 			std::string json;
 			JsonSerialization::SerializeValue(&json, "channelUrl", ChannelUrl);
 			JsonSerialization::SerializeValue(&json, "laneId", LaneId);
-			JsonSerialization::SerializeValue(&json, "timeStamp", TimeStamp);
+			JsonSerialization::SerializeValue(&json, "dateTime", DateTime::ParseTimeStamp(TimeStamp).ToString());
 			JsonSerialization::SerializeValue(&json, "status", Status);
 			return json;
 		}
@@ -875,7 +875,7 @@ namespace OnePunchMan
 		* 构造函数
 		* @param dbName 数据库地址
 		*/
-		TrafficData(const std::string& dbName="flow.db");
+		TrafficData(const std::string& dbName = "flow.db");
 
 		/**
 		* 获取最后一个错误信息
@@ -902,7 +902,7 @@ namespace OnePunchMan
 		* @return 设置结果
 		*/
 		bool SetParameter(const std::string& key, const std::string& value);
-	
+
 		/**
 		* 获取国标参数
 		* @return 国标参数
@@ -999,26 +999,26 @@ namespace OnePunchMan
 
 		bool InsertFlowData(const FlowData& data);
 
-		std::tuple<std::vector<FlowData>,int> GetFlowDatas(const std::string& channelUrl, const std::string& laneId,long long startTime,long long endTime, int pageNum, int pageSize);
+		std::tuple<std::vector<FlowData>, int> GetFlowDatas(const std::string& channelUrl, const std::string& laneId, long long startTime, long long endTime, int pageNum, int pageSize);
 
 		void DeleteFlowDatas(int keeyDay);
 
 		bool InsertVehicleData(const VehicleData& data);
 
-		std::tuple<std::vector<VehicleData>,int> GetVehicleDatas(const std::string& channelUrl, const std::string& laneId, long long startTime, long long endTime, int pageNum, int pageSize);
+		std::tuple<std::vector<VehicleData>, int> GetVehicleDatas(const std::string& channelUrl, const std::string& laneId, long long startTime, long long endTime, int pageNum, int pageSize);
 
 		void DeleteVehicleDatas(int keepCount);
-		
+
 		bool InsertBikeData(const BikeData& data);
 
-		std::tuple<std::vector<BikeData>,int> GetBikeDatas(const std::string& channelUrl, const std::string& laneId, long long startTime, long long endTime, int pageNum, int pageSize);
+		std::tuple<std::vector<BikeData>, int> GetBikeDatas(const std::string& channelUrl, const std::string& laneId, long long startTime, long long endTime, int pageNum, int pageSize);
 
 		void DeleteBikeDatas(int keepCount);
 
 		bool InsertPedestrainData(const PedestrainData& data);
 
 		std::tuple<std::vector<PedestrainData>, int> GetPedestrainDatas(const std::string& channelUrl, const std::string& laneId, long long startTime, long long endTime, int pageNum, int pageSize);
-		
+
 		void DeletePedestrainDatas(int keepCount);
 
 		/**
@@ -1030,7 +1030,7 @@ namespace OnePunchMan
 		* @param pageSize 分页数量,0表示查询所有
 		* @return 事件数据集合
 		*/
-		std::tuple<std::vector<EventData>,int> GetEventDatas(const std::string& channelUrl,long long startTime,long long endTime,int pageNum,int pageSize);
+		std::tuple<std::vector<EventData>, int> GetEventDatas(const std::string& channelUrl, long long startTime, long long endTime, int pageNum, int pageSize);
 
 		bool InsertEventData(const EventData& data);
 

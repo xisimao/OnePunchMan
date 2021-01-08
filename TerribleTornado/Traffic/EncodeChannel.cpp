@@ -82,6 +82,7 @@ bool EncodeChannel::InitHisi(int encodeCount, int width, int height)
         s32Ret = HI_MPI_VENC_CreateChn(i, &stVencChnAttr);
         if (HI_SUCCESS != s32Ret)
         {
+            LogPool::Error(LogEvent::Encode, "HI_MPI_VENC_CreateChn", StringEx::ToHex(s32Ret));
             return false;
         }
 
@@ -93,11 +94,12 @@ bool EncodeChannel::InitHisi(int encodeCount, int width, int height)
         s32Ret = HI_MPI_VENC_StartRecvFrame(i, &stRecvParam);
         if (HI_SUCCESS != s32Ret)
         {
+            LogPool::Error(LogEvent::Encode, "HI_MPI_VENC_StartRecvFrame", StringEx::ToHex(s32Ret));
             return false;
         }
     }
 #endif
-    LogPool::Information(LogEvent::Decode, "初始化海思编码");
+    LogPool::Information(LogEvent::Encode, "初始化海思编码");
     return true;
 }
 
@@ -117,7 +119,7 @@ void EncodeChannel::UninitHisi(int encodeCount)
         HI_MPI_VENC_DestroyChn(i);
     }
 #endif // !_WIN32
-    LogPool::Information(LogEvent::Decode, "uninit hisi encode sdk");
+    LogPool::Information(LogEvent::Encode, "uninit hisi encode sdk");
 }
 
 bool EncodeChannel::AddOutput(int channelIndex, const std::string& outputUrl, int frameCount)
@@ -190,7 +192,7 @@ void EncodeChannel::StartCore()
         vencFds[encodeIndex] = HI_MPI_VENC_GetFd(encodeIndex);
         if (vencFds[encodeIndex] < 0)
         {
-            LogPool::Error(LogEvent::Encode, "HI_MPI_VENC_GetFd");
+            LogPool::Error(LogEvent::Encode, "HI_MPI_VENC_GetFd", StringEx::ToHex(vencFds[encodeIndex]));
             return;
         }
         if (maxfd <= vencFds[encodeIndex])
@@ -201,7 +203,7 @@ void EncodeChannel::StartCore()
         s32Ret = HI_MPI_VENC_GetStreamBufInfo(encodeIndex, &stStreamBufInfo[encodeIndex]);
         if (HI_SUCCESS != s32Ret)
         {
-            LogPool::Error(LogEvent::Encode, "HI_MPI_VENC_GetStreamBufInfo");
+            LogPool::Error(LogEvent::Encode, "HI_MPI_VENC_GetStreamBufInfo", StringEx::ToHex(s32Ret));
             return;
         }
     }
@@ -245,7 +247,7 @@ void EncodeChannel::StartCore()
                     s32Ret = HI_MPI_VENC_QueryStatus(encodeIndex, &stStat);
                     if (HI_SUCCESS != s32Ret)
                     {
-                        LogPool::Error(LogEvent::Encode, "HI_MPI_VENC_QueryStatus");
+                        LogPool::Error(LogEvent::Encode, "HI_MPI_VENC_QueryStatus", StringEx::ToHex(s32Ret));
                         break;
                     }
                     /*******************************************************
@@ -274,7 +276,7 @@ void EncodeChannel::StartCore()
                     {
                         free(stStream.pstPack);
                         stStream.pstPack = NULL;
-                        LogPool::Error(LogEvent::Encode, "HI_MPI_VENC_GetStream VENC_PACK_S");
+                        LogPool::Error(LogEvent::Encode, "HI_MPI_VENC_GetStream VENC_PACK_S", StringEx::ToHex(s32Ret));
                         break;
                     }
 
@@ -291,7 +293,7 @@ void EncodeChannel::StartCore()
                     s32Ret = HI_MPI_VENC_ReleaseStream(encodeIndex, &stStream);
                     if (HI_SUCCESS != s32Ret)
                     {
-                        LogPool::Error(LogEvent::Encode, "HI_MPI_VENC_ReleaseStream");
+                        LogPool::Error(LogEvent::Encode, "HI_MPI_VENC_ReleaseStream", StringEx::ToHex(s32Ret));
                         free(stStream.pstPack);
                         stStream.pstPack = NULL;
                         break;

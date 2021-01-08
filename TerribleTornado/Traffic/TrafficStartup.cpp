@@ -304,12 +304,6 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
                     }
                 }
             }
-            if (endTime - startTime > 60 * 60 * 1000)
-            {
-                JsonSerialization::SerializeValue(&e->ResponseJson, "message", WStringEx::ToString(L"\x67E5\x8BE2\x65F6\x95F4\x4E0D\x80FD\x8D85\x8FC7\x4E00\x5C0F\x65F6"));
-                e->Code = HttpCode::BadRequest;
-                return;
-            }
             TrafficData data;
             tuple< vector<FlowData>, int> t = data.GetFlowDatas(channelUrl, laneId, startTime.TimeStamp(), endTime.TimeStamp(), pageNum, pageSize);
             string datasJson;
@@ -402,12 +396,6 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
                     }
                 }
             }
-            if (endTime - startTime > 60 * 60 * 1000)
-            {
-                JsonSerialization::SerializeValue(&e->ResponseJson, "message", WStringEx::ToString(L"\x67E5\x8BE2\x65F6\x95F4\x4E0D\x80FD\x8D85\x8FC7\x4E00\x5C0F\x65F6"));
-                e->Code = HttpCode::BadRequest;
-                return;
-            }
             TrafficData data;
             tuple<vector<EventData>, int> t = data.GetEventDatas(channelUrl, startTime.TimeStamp(), endTime.TimeStamp(), pageNum, pageSize);
             string datasJson;
@@ -494,18 +482,12 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
                     }
                 }
             }
-            if (endTime - startTime > 60 * 60 * 1000)
-            {
-                JsonSerialization::SerializeValue(&e->ResponseJson, "message", WStringEx::ToString(L"\x67E5\x8BE2\x65F6\x95F4\x4E0D\x80FD\x8D85\x8FC7\x4E00\x5C0F\x65F6"));
-                e->Code = HttpCode::BadRequest;
-                return;
-            }
             TrafficData data;
             tuple< vector<VehicleData>, int> t = data.GetVehicleDatas(channelUrl, laneId, startTime.TimeStamp(), endTime.TimeStamp(), pageNum, pageSize);
             string datasJson;
             for (vector<VehicleData>::iterator it = get<0>(t).begin(); it != get<0>(t).end(); ++it)
             {
-                JsonSerialization::AddClassItem(&datasJson, it->ToJson());
+                JsonSerialization::AddClassItem(&datasJson, it->ToJson(e->Host));
             }
             JsonSerialization::SerializeValue(&e->ResponseJson, "total", get<1>(t));
             JsonSerialization::SerializeArray(&e->ResponseJson, "datas", datasJson);
@@ -586,18 +568,12 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
                     }
                 }
             }
-            if (endTime - startTime > 60 * 60 * 1000)
-            {
-                JsonSerialization::SerializeValue(&e->ResponseJson, "message", WStringEx::ToString(L"\x67E5\x8BE2\x65F6\x95F4\x4E0D\x80FD\x8D85\x8FC7\x4E00\x5C0F\x65F6"));
-                e->Code = HttpCode::BadRequest;
-                return;
-            }
             TrafficData data;
             tuple< vector<BikeData>, int> t = data.GetBikeDatas(channelUrl, laneId, startTime.TimeStamp(), endTime.TimeStamp(), pageNum, pageSize);
             string datasJson;
             for (vector<BikeData>::iterator it = get<0>(t).begin(); it != get<0>(t).end(); ++it)
             {
-                JsonSerialization::AddClassItem(&datasJson, it->ToJson());
+                JsonSerialization::AddClassItem(&datasJson, it->ToJson(e->Host));
             }
             JsonSerialization::SerializeValue(&e->ResponseJson, "total", get<1>(t));
             JsonSerialization::SerializeArray(&e->ResponseJson, "datas", datasJson);
@@ -678,18 +654,12 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
                     }
                 }
             }
-            if (endTime - startTime > 60 * 60 * 1000)
-            {
-                JsonSerialization::SerializeValue(&e->ResponseJson, "message", WStringEx::ToString(L"\x67E5\x8BE2\x65F6\x95F4\x4E0D\x80FD\x8D85\x8FC7\x4E00\x5C0F\x65F6"));
-                e->Code = HttpCode::BadRequest;
-                return;
-            }
             TrafficData data;
             tuple< vector<PedestrainData>, int> t = data.GetPedestrainDatas(channelUrl, laneId, startTime.TimeStamp(), endTime.TimeStamp(), pageNum, pageSize);
             string datasJson;
             for (vector<PedestrainData>::iterator it = get<0>(t).begin(); it != get<0>(t).end(); ++it)
             {
-                JsonSerialization::AddClassItem(&datasJson, it->ToJson());
+                JsonSerialization::AddClassItem(&datasJson, it->ToJson(e->Host));
             }
             JsonSerialization::SerializeValue(&e->ResponseJson, "total", get<1>(t));
             JsonSerialization::SerializeArray(&e->ResponseJson, "datas", datasJson);

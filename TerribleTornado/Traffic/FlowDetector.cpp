@@ -141,17 +141,17 @@ void FlowDetector::GetReportJson(string* json)
 	string vehiclesJson;
 	for (vector<VehicleData>::iterator it = _vehicleReportCaches.begin(); it != _vehicleReportCaches.end(); ++it)
 	{
-		JsonSerialization::AddClassItem(&vehiclesJson, it->ToJson());
+		JsonSerialization::AddClassItem(&vehiclesJson, it->ToJson(""));
 	}
 	string bikesJson;
 	for (vector<BikeData>::iterator it = _bikeReportCaches.begin(); it != _bikeReportCaches.end(); ++it)
 	{
-		JsonSerialization::AddClassItem(&bikesJson, it->ToJson());
+		JsonSerialization::AddClassItem(&bikesJson, it->ToJson(""));
 	}
 	string pedestrainsJson;
 	for (vector<PedestrainData>::iterator it = _pedestrainReportCaches.begin(); it != _pedestrainReportCaches.end(); ++it)
 	{
-		JsonSerialization::AddClassItem(&pedestrainsJson, it->ToJson());
+		JsonSerialization::AddClassItem(&pedestrainsJson, it->ToJson(""));
 	}
 	JsonSerialization::SerializeClass(json, "flows", flowsJson);
 	JsonSerialization::SerializeClass(json, "vehicles", vehiclesJson);
