@@ -12,6 +12,65 @@ EncodeChannel::EncodeChannel(int encodeCount)
     }
 }
 
+//dg
+//bool EncodeChannel::InitHisi(int encodeCount, int width, int height)
+//{
+//#ifndef _WIN32
+//    //venc
+//    VENC_CHN_ATTR_S        stVencChnAttr;
+//    memset(&stVencChnAttr, 0, sizeof(VENC_CHN_ATTR_S));
+//
+//    VENC_GOP_ATTR_S pstGopAttr;
+//    memset(&pstGopAttr, 0, sizeof(VENC_GOP_ATTR_S));
+//    pstGopAttr.enGopMode = VENC_GOPMODE_NORMALP;
+//    pstGopAttr.stNormalP.s32IPQpDelta = 3;
+//
+//    memcpy(&stVencChnAttr.stGopAttr, &pstGopAttr, sizeof(VENC_GOP_ATTR_S));
+//
+//    stVencChnAttr.stVencAttr.enType = PT_H264;
+//    stVencChnAttr.stVencAttr.u32Profile = 2;
+//    stVencChnAttr.stVencAttr.u32MaxPicWidth =2560;
+//    stVencChnAttr.stVencAttr.u32MaxPicHeight = 1440;
+//    stVencChnAttr.stVencAttr.u32PicWidth = 1280;/*the picture width*/
+//    stVencChnAttr.stVencAttr.u32PicHeight = 720;/*the picture height*/
+//    stVencChnAttr.stVencAttr.u32BufSize = 2560 * 1440 * 3/2;/*stream buffer size*/
+//    stVencChnAttr.stVencAttr.bByFrame = HI_TRUE;/*get stream mode is slice mode or frame mode?*/
+//    stVencChnAttr.stVencAttr.stAttrH264e.bRcnRefShareBuf = HI_FALSE;
+//    
+//    stVencChnAttr.stRcAttr.enRcMode = VENC_RC_MODE_H264VBR;
+//
+//    VENC_H264_VBR_S stH264Vbr;
+//    memset(&stH264Vbr, 0, sizeof(VENC_H264_VBR_S));
+//    stH264Vbr.u32Gop = 15; /*the interval of IFrame*/
+//    stH264Vbr.u32StatTime = 1; /* stream rate statics time(s) */
+//    stH264Vbr.u32SrcFrameRate = 15; /* input (vi) frame rate */
+//    stH264Vbr.fr32DstFrameRate = 15; /* target frame rate */
+//    stH264Vbr.u32MaxBitRate = 5000;
+//    memcpy(&stVencChnAttr.stRcAttr.stH264Vbr, &stH264Vbr, sizeof(VENC_H264_VBR_S));
+//
+//    for (int i = 0; i < encodeCount; i++)
+//    {
+//        HI_S32 s32Ret = HI_MPI_VENC_CreateChn(i, &stVencChnAttr);
+//        if (HI_SUCCESS != s32Ret)
+//        {
+//            LogPool::Error(LogEvent::Encode, "HI_MPI_VENC_CreateChn",i, VENC_MAX_CHN_NUM,StringEx::ToHex(s32Ret));
+//            return false;
+//        }
+//
+//        VENC_RECV_PIC_PARAM_S  stRecvParam;
+//        stRecvParam.s32RecvPicNum = -1;
+//        s32Ret = HI_MPI_VENC_StartRecvFrame(i, &stRecvParam);
+//        if (HI_SUCCESS != s32Ret)
+//        {
+//            LogPool::Error(LogEvent::Encode, "HI_MPI_VENC_StartRecvFrame", StringEx::ToHex(s32Ret));
+//            return false;
+//        }
+//    }
+//#endif
+//    LogPool::Information(LogEvent::Encode, "初始化海思编码");
+//    return true;
+//}
+
 bool EncodeChannel::InitHisi(int encodeCount, int width, int height)
 {
 #ifndef _WIN32
@@ -97,7 +156,7 @@ bool EncodeChannel::InitHisi(int encodeCount, int width, int height)
             LogPool::Error(LogEvent::Encode, "HI_MPI_VENC_StartRecvFrame", StringEx::ToHex(s32Ret));
             return false;
         }
-    }
+}
 #endif
     LogPool::Information(LogEvent::Encode, "初始化海思编码");
     return true;

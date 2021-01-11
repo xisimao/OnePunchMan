@@ -97,8 +97,6 @@
     <ClCompile Include="..\Saitama\Net\SocketChannel.cpp" />
     <ClCompile Include="..\Saitama\Net\SocketHandler.cpp" />
     <ClCompile Include="..\Saitama\Net\SocketMaid.cpp" />
-    <ClCompile Include="..\Saitama\Net\WebSocket.cpp" />
-    <ClCompile Include="..\Saitama\Net\WebSocketHandler.cpp" />
     <ClCompile Include="..\Saitama\Text\Path.cpp" />
     <ClCompile Include="..\Saitama\Text\Security.cpp" />
     <ClCompile Include="..\Saitama\Text\StringEx.cpp" />
@@ -139,8 +137,6 @@
     <ClInclude Include="..\Saitama\Net\SocketChannel.h" />
     <ClInclude Include="..\Saitama\Net\SocketHandler.h" />
     <ClInclude Include="..\Saitama\Net\SocketMaid.h" />
-    <ClInclude Include="..\Saitama\Net\WebSocket.h" />
-    <ClInclude Include="..\Saitama\Net\WebSocketHandler.h" />
     <ClInclude Include="..\Saitama\Text\Path.h" />
     <ClInclude Include="..\Saitama\Text\Security.h" />
     <ClInclude Include="..\Saitama\Text\StringEx.h" />

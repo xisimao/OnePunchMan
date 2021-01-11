@@ -15,6 +15,12 @@ namespace OnePunchMan
 		DataChannel();
 
 		/**
+		* 初始化配置参数
+		* @param jd 配置参数
+		*/
+		static void Init(const JsonDeserialization& jd);
+
+		/**
 		* 添加新的事件数据
 		* @param data 事件数据
 		*/
@@ -49,7 +55,7 @@ namespace OnePunchMan
 
 	private:
 		//最多保存的事件数据数量
-		const static int MaxDataCount;
+		static int MaxDataCount;
 
 		//流量队列
 		std::mutex _flowMutex;

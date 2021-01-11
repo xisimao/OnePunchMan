@@ -27,18 +27,17 @@ void DG_TrafficStartup::Start()
     Socket::Init();
     DecodeChannel::InitFFmpeg();
 
-    DecodeChannel::UninitHisi(ChannelCount);
     EncodeChannel::UninitHisi(ChannelCount);
+    DecodeChannel::UninitHisi(ChannelCount);
 
-    if (!EncodeChannel::InitHisi(ChannelCount, DecodeChannel::DestinationWidth, DecodeChannel::DestinationHeight))
-    {
-        exit(2);
-    }
     if (!DecodeChannel::InitHisi(ChannelCount, 128))
     {
         exit(2);
     }
-
+    if (!EncodeChannel::InitHisi(ChannelCount, DecodeChannel::DestinationWidth, DecodeChannel::DestinationHeight))
+    {
+        exit(2);
+    }
     _socketMaid = new SocketMaid(2, true);
     _handler.HttpReceived.Subscribe(this);
     if (_socketMaid->AddListenEndPoint(EndPoint(7772), &_handler) == -1)

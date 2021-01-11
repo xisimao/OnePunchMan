@@ -25,17 +25,19 @@ void Seemmo_TrafficStartup::Screenshot(int channelIndex)
 void Seemmo_TrafficStartup::Start()
 {
     Socket::Init();
-    Seemmo_DecodeChannel::InitFFmpeg();
+    DecodeChannel::InitFFmpeg();
 
-    Seemmo_DecodeChannel::UninitHisi(ChannelCount);
     EncodeChannel::UninitHisi(ChannelCount);
+    DecodeChannel::UninitHisi(ChannelCount);
 
-    if (!Seemmo_DecodeChannel::InitHisi(ChannelCount,64)
-        ||!EncodeChannel::InitHisi(ChannelCount, Seemmo_DecodeChannel::DestinationWidth,Seemmo_DecodeChannel::DestinationHeight))
+    if (!DecodeChannel::InitHisi(ChannelCount,64))
     {
         exit(2);
     }
-
+    if (!EncodeChannel::InitHisi(ChannelCount, DecodeChannel::DestinationWidth, DecodeChannel::DestinationHeight))
+    {
+        exit(2);
+    }
     _socketMaid = new SocketMaid(2,true);
     _handler.HttpReceived.Subscribe(this);
     if (_socketMaid->AddListenEndPoint(EndPoint(7772), &_handler) == -1)
@@ -106,9 +108,9 @@ void Seemmo_TrafficStartup::Start()
     vector<Seemmo_DecodeChannel*> decodes;
     for (int i = 0; i < ChannelCount; ++i)
     {
-        FlowDetector* flowDetector = new FlowDetector(Seemmo_DecodeChannel::DestinationWidth, Seemmo_DecodeChannel::DestinationHeight, _socketMaid, _data);
+        FlowDetector* flowDetector = new FlowDetector(DecodeChannel::DestinationWidth, DecodeChannel::DestinationHeight, _socketMaid, _data);
         _flowDetectors.push_back(flowDetector);
-        EventDetector* eventDetector = new EventDetector(Seemmo_DecodeChannel::DestinationWidth, Seemmo_DecodeChannel::DestinationHeight, _encode, _data);
+        EventDetector* eventDetector = new EventDetector(DecodeChannel::DestinationWidth, DecodeChannel::DestinationHeight, _encode, _data);
         _eventDetectors.push_back(eventDetector);
         Seemmo_DecodeChannel* decode = new Seemmo_DecodeChannel(i + 1, loginHandler, _encode);
         _decodes.push_back(decode);
@@ -116,13 +118,13 @@ void Seemmo_TrafficStartup::Start()
     }
     for (int i = 0; i < RecognCount; ++i)
     {
-        Seemmo_RecognChannel* recogn = new Seemmo_RecognChannel(i, Seemmo_DecodeChannel::DestinationWidth, Seemmo_DecodeChannel::DestinationHeight, &_flowDetectors);
+        Seemmo_RecognChannel* recogn = new Seemmo_RecognChannel(i, DecodeChannel::DestinationWidth, DecodeChannel::DestinationHeight, &_flowDetectors);
         _recogns.push_back(recogn);
     }
     vector<Seemmo_DetectChannel*> detects;
     for (int i = 0; i < DetectCount; ++i)
     {
-        Seemmo_DetectChannel* detect = new Seemmo_DetectChannel(i, Seemmo_DecodeChannel::DestinationWidth, Seemmo_DecodeChannel::DestinationHeight);
+        Seemmo_DetectChannel* detect = new Seemmo_DetectChannel(i, DecodeChannel::DestinationWidth, DecodeChannel::DestinationHeight);
         detects.push_back(detect);
     }
     for (int i = 0; i < DetectCount; ++i)
@@ -263,7 +265,7 @@ void Seemmo_TrafficStartup::Start()
 
     Seemmo_SDK::Uninit();
     EncodeChannel::UninitHisi(ChannelCount);
-    Seemmo_DecodeChannel::UninitHisi(ChannelCount);
-    Seemmo_DecodeChannel::UninitFFmpeg();
+    DecodeChannel::UninitHisi(ChannelCount);
+    DecodeChannel::UninitFFmpeg();
     Socket::Uninit();
 }

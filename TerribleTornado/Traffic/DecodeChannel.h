@@ -11,7 +11,9 @@
 #ifndef _WIN32
 #include "clientsdk.h"
 #include "hi_comm_video.h"
+#include "hi_buffer.h"
 #include "mpi_sys.h"
+#include "mpi_vb.h"
 #include "mpi_vdec.h"
 #include "mpi_vpss.h"
 #endif // !_WIN32

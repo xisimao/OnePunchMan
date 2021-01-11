@@ -222,8 +222,6 @@ using namespace OnePunchMan;
 //
 void DebugHttp()
 {
-    JsonDeserialization jd("appsettings.json");
-    LogPool::Init(jd);
     DG_TrafficStartup startup;
     startup.Start();
 }

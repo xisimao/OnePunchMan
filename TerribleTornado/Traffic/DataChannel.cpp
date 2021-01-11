@@ -3,12 +3,18 @@
 using namespace std;
 using namespace OnePunchMan;
 
-const int DataChannel::MaxDataCount = 100;
+int DataChannel::MaxDataCount = 100;
 
 DataChannel::DataChannel()
 	:ThreadObject("data")
 {
 
+}
+
+void DataChannel::Init(const JsonDeserialization& jd)
+{
+	MaxDataCount = jd.Get<int>("Flow:MaxDataCount",100);
+	LogPool::Information(LogEvent::System, "MaxDataCount", MaxDataCount, "px");
 }
 
 void DataChannel::PushEventData(const EventData& data)
@@ -54,11 +60,12 @@ void DataChannel::StartCore()
 		flowLock.unlock();
 		for (vector<FlowData>::iterator fit = flowDatas.begin(); fit != flowDatas.end(); ++fit)
 		{
+			//完整数据
 			if (fit->ReportProperties == TrafficChannel::AllPropertiesFlag)
 			{
-				bool b=data.InsertFlowData(*fit);
-				LogPool::Information("流量入库结果", b);
+				data.InsertFlowData(*fit);
 			}
+			//部分数据
 			else
 			{
 				map<string, FlowData>::iterator it = _mergeFlowDatas.find(fit->LaneId);
@@ -99,7 +106,7 @@ void DataChannel::StartCore()
 				}
 				else
 				{
-					//合并数据，有选择的替换
+					//同时间数据，有选择的替换
 					if (it->second.TimeStamp ==fit->TimeStamp)
 					{
 						if (fit->ReportProperties & 0x01)
@@ -125,7 +132,7 @@ void DataChannel::StartCore()
 							it->second.SpaceOccupancy =fit->SpaceOccupancy;
 						}
 					}
-					//新时间段数据，有选择的清空旧数据
+					//新时间数据，有选择的清空旧数据
 					else if (it->second.TimeStamp <fit->TimeStamp)
 					{
 						if (fit->TimeStamp - it->second.TimeStamp == 60000)
@@ -184,7 +191,7 @@ void DataChannel::StartCore()
 				}
 			}
 		}
-
+		//机动车数据
 		unique_lock<mutex> vehicleLock(_vehicleMutex);
 		vector<VehicleData> vehicleDatas(_vehicleDatas.begin(), _vehicleDatas.end());
 		_vehicleDatas.clear();
@@ -194,7 +201,7 @@ void DataChannel::StartCore()
 			data.InsertVehicleData(*it);
 		}
 		data.DeleteVehicleDatas(MaxDataCount);
-
+		//非机动车数据
 		unique_lock<mutex> bikeLock(_bikeMutex);
 		vector<BikeData> bikeDatas(_bikeDatas.begin(), _bikeDatas.end());
 		_bikeDatas.clear();
@@ -204,7 +211,7 @@ void DataChannel::StartCore()
 			data.InsertBikeData(*it);
 		}
 		data.DeleteBikeDatas(MaxDataCount);
-
+		//行人数据
 		unique_lock<mutex> pedestrainMutex(_pedestrainMutex);
 		vector<PedestrainData> pedestrainDatas(_pedestrainDatas.begin(), _pedestrainDatas.end());
 		_pedestrainDatas.clear();
@@ -214,7 +221,7 @@ void DataChannel::StartCore()
 			data.InsertPedestrainData(*it);
 		}
 		data.DeletePedestrainDatas(MaxDataCount);
-
+		//事件数据
 		unique_lock<mutex> eventLock(_eventMutex);
 		vector<EventData> eventDatas(_eventDatas.begin(), _eventDatas.end());
 		_eventDatas.clear();

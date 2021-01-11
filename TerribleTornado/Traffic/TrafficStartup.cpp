@@ -10,8 +10,10 @@ TrafficStartup::TrafficStartup()
     , _data(NULL), _encode(NULL)
 {
     JsonDeserialization jd("appsettings.json");
+    LogPool::Init(jd);
     FlowDetector::Init(jd);
     EventDetector::Init(jd);
+    DataChannel::Init(jd);
 }
 
 TrafficStartup::~TrafficStartup()
@@ -695,14 +697,25 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
                     }
                 }
             }
-            if (!CheckChannelIndex(channelIndex))
+            vector<IoData> ioDatas;
+            if (channelIndex == 0)
             {
-                JsonSerialization::SerializeValue(&e->ResponseJson, "message", WStringEx::Combine(L"\x901A\x9053\x5E8F\x53F7\x5FC5\x987B\x5728 1-", ChannelCount, L" \x4E4B\x95F4"));
-                e->Code = HttpCode::BadRequest;
-                return;
+                for (unsigned int i = 0; i < _flowDetectors.size(); ++i)
+                {
+                    vector<IoData> tempIoDatas = _flowDetectors[i]->GetIoDatas("");
+                    ioDatas.insert(ioDatas.end(), tempIoDatas.begin(), tempIoDatas.end());
+                }
             }
-            vector<IoData> ioDatas = _flowDetectors[channelIndex - 1]->GetIoDatas(laneId);
-
+            else
+            {
+                if (!CheckChannelIndex(channelIndex))
+                {
+                    JsonSerialization::SerializeValue(&e->ResponseJson, "message", WStringEx::Combine(L"\x901A\x9053\x5E8F\x53F7\x5FC5\x987B\x5728 1-", ChannelCount, L" \x4E4B\x95F4"));
+                    e->Code = HttpCode::BadRequest;
+                    return;
+                }
+                ioDatas= _flowDetectors[channelIndex - 1]->GetIoDatas(laneId);
+            }
             for (vector<IoData>::iterator it = ioDatas.begin(); it != ioDatas.end(); ++it)
             {
                 JsonSerialization::AddClassItem(&e->ResponseJson, it->ToJson());

@@ -8,7 +8,7 @@
 
 #include "error.h"
 #include "dg_types.h"
-#include "hisi/hi_comm_video.h"
+#include "hi_comm_video.h"
 
 #include "opencv2/core/types.hpp"
 #include <vector>
