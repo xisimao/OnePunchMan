@@ -178,6 +178,31 @@ vector<IoData> FlowDetector::GetIoDatas(const std::string& laneId)
 	return ioDatas;
 }
 
+vector<IoData> FlowDetector::GetIoStatus(const std::string& laneId)
+{
+	lock_guard<mutex> detectLock(_laneMutex);
+	vector<IoData> ioDatas;
+	for (map<string, list<IoData>>::iterator it = _ioDatas.begin(); it != _ioDatas.end(); ++it)
+	{
+		if (laneId.empty())
+		{
+			if (!it->second.empty())
+			{
+				ioDatas.push_back(it->second.back());
+			}	
+		}
+		else if (it->first.compare(laneId) == 0)
+		{
+			if (!it->second.empty())
+			{
+				ioDatas.push_back(it->second.back());
+			}
+			break;
+		}
+	}
+	return ioDatas;
+}
+
 FlowData FlowDetector::CalculateMinuteFlow(FlowData* laneCache)
 {
 	FlowData data;

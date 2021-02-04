@@ -51,7 +51,7 @@ SocketHandler::ProtocolPacket HttpHandler::HandleCore(int socket, unsigned int i
 			return ProtocolPacket(AnalysisResult::Empty, 0, static_cast<unsigned int>(httpProtocol.size()), 0, 0);
 		}
 		e.Function = StringEx::ToUpper(datas[0]);
-		e.Url = StringEx::ToLower(datas[1]);
+		e.Url = StringEx::UnescapeUriDataString(StringEx::ToLower(datas[1]));
 		//默认设置为404,如果后续没有处理则认为无效的url
 		e.Code = HttpCode::NotFound;
 

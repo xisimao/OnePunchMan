@@ -270,8 +270,6 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
                             string value = pair[1];
                             if (value.size() >= 19)
                             {
-                                value = StringEx::Replace(value, "%20", " ");
-                                value = StringEx::Replace(value, "%3A", ":");
                                 startTime = DateTime::ParseString("%d-%d-%d %d:%d:%d", value);
                             }
                         }
@@ -283,8 +281,6 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
                             string value = pair[1];
                             if (value.size() >= 19)
                             {
-                                value = StringEx::Replace(value, "%20", " ");
-                                value = StringEx::Replace(value, "%3A", ":");
                                 endTime = DateTime::ParseString("%d-%d-%d %d:%d:%d", value);
                             }
                         }
@@ -362,8 +358,6 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
                             string value = pair[1];
                             if (value.size() >= 19)
                             {
-                                value = StringEx::Replace(value, "%20", " ");
-                                value = StringEx::Replace(value, "%3A", ":");
                                 startTime = DateTime::ParseString("%d-%d-%d %d:%d:%d", value);
                             }
                         }
@@ -375,8 +369,6 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
                             string value = pair[1];
                             if (value.size() >= 19)
                             {
-                                value = StringEx::Replace(value, "%20", " ");
-                                value = StringEx::Replace(value, "%3A", ":");
                                 endTime = DateTime::ParseString("%d-%d-%d %d:%d:%d", value);
                             }
                         }
@@ -403,7 +395,7 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
             string datasJson;
             for (vector<EventData>::iterator it = get<0>(t).begin(); it != get<0>(t).end(); ++it)
             {
-                JsonSerialization::AddClassItem(&datasJson, it->ToJson());
+                JsonSerialization::AddClassItem(&datasJson, it->ToJson(e->Host));
             }
             JsonSerialization::SerializeValue(&e->ResponseJson, "total", get<1>(t));
             JsonSerialization::SerializeArray(&e->ResponseJson, "datas", datasJson);
@@ -448,8 +440,6 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
                             string value = pair[1];
                             if (value.size() >= 19)
                             {
-                                value = StringEx::Replace(value, "%20", " ");
-                                value = StringEx::Replace(value, "%3A", ":");
                                 startTime = DateTime::ParseString("%d-%d-%d %d:%d:%d", value);
                             }
                         }
@@ -461,8 +451,6 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
                             string value = pair[1];
                             if (value.size() >= 19)
                             {
-                                value = StringEx::Replace(value, "%20", " ");
-                                value = StringEx::Replace(value, "%3A", ":");
                                 endTime = DateTime::ParseString("%d-%d-%d %d:%d:%d", value);
                             }
                         }
@@ -534,8 +522,6 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
                             string value = pair[1];
                             if (value.size() >= 19)
                             {
-                                value = StringEx::Replace(value, "%20", " ");
-                                value = StringEx::Replace(value, "%3A", ":");
                                 startTime = DateTime::ParseString("%d-%d-%d %d:%d:%d", value);
                             }
                         }
@@ -547,8 +533,6 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
                             string value = pair[1];
                             if (value.size() >= 19)
                             {
-                                value = StringEx::Replace(value, "%20", " ");
-                                value = StringEx::Replace(value, "%3A", ":");
                                 endTime = DateTime::ParseString("%d-%d-%d %d:%d:%d", value);
                             }
                         }
@@ -620,8 +604,6 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
                             string value = pair[1];
                             if (value.size() >= 19)
                             {
-                                value = StringEx::Replace(value, "%20", " ");
-                                value = StringEx::Replace(value, "%3A", ":");
                                 startTime = DateTime::ParseString("%d-%d-%d %d:%d:%d", value);
                             }
                         }
@@ -633,8 +615,6 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
                             string value = pair[1];
                             if (value.size() >= 19)
                             {
-                                value = StringEx::Replace(value, "%20", " ");
-                                value = StringEx::Replace(value, "%3A", ":");
                                 endTime = DateTime::ParseString("%d-%d-%d %d:%d:%d", value);
                             }
                         }
@@ -715,6 +695,62 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
                     return;
                 }
                 ioDatas= _flowDetectors[channelIndex - 1]->GetIoDatas(laneId);
+            }
+            for (vector<IoData>::iterator it = ioDatas.begin(); it != ioDatas.end(); ++it)
+            {
+                JsonSerialization::AddClassItem(&e->ResponseJson, it->ToJson());
+            }
+
+        }
+        e->Code = HttpCode::OK;
+    }
+    else if (UrlStartWith(e->Url, "/api/io/status"))
+    {
+        vector<string> datas = StringEx::Split(e->Url, "?", true);
+        if (datas.size() > 1)
+        {
+            int channelIndex = 0;
+            string laneId;
+            vector<string> params = StringEx::Split(datas[1], "&", true);
+            for (vector<string>::iterator mit = params.begin(); mit != params.end(); ++mit)
+            {
+                vector<string> pair = StringEx::Split(*mit, "=", true);
+                if (pair.size() >= 1)
+                {
+                    if (pair[0].compare("channelindex") == 0)
+                    {
+                        if (pair.size() >= 2)
+                        {
+                            channelIndex = StringEx::Convert<int>(pair[1]);
+                        }
+                    }
+                    else if (pair[0].compare("laneid") == 0)
+                    {
+                        if (pair.size() >= 2)
+                        {
+                            laneId = StringEx::Convert<string>(pair[1]);
+                        }
+                    }
+                }
+            }
+            vector<IoData> ioDatas;
+            if (channelIndex == 0)
+            {
+                for (unsigned int i = 0; i < _flowDetectors.size(); ++i)
+                {
+                    vector<IoData> tempIoDatas = _flowDetectors[i]->GetIoStatus(laneId);
+                    ioDatas.insert(ioDatas.end(), tempIoDatas.begin(), tempIoDatas.end());
+                }
+            }
+            else
+            {
+                if (!CheckChannelIndex(channelIndex))
+                {
+                    JsonSerialization::SerializeValue(&e->ResponseJson, "message", WStringEx::Combine(L"\x901A\x9053\x5E8F\x53F7\x5FC5\x987B\x5728 1-", ChannelCount, L" \x4E4B\x95F4"));
+                    e->Code = HttpCode::BadRequest;
+                    return;
+                }
+                ioDatas = _flowDetectors[channelIndex - 1]->GetIoStatus(laneId);
             }
             for (vector<IoData>::iterator it = ioDatas.begin(); it != ioDatas.end(); ++it)
             {

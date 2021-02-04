@@ -141,7 +141,10 @@ namespace OnePunchMan
 		* @param frameSpan 两帧的间隔时间(毫秒)
 		* @return 解码成功返回true，否则返回false
 		*/
-		virtual bool Decode(unsigned char* buffer, unsigned int size, unsigned char taskId, unsigned int frameIndex, unsigned char frameSpan) = 0;
+		virtual bool Decode(unsigned char* buffer, unsigned int size, unsigned char taskId, unsigned int frameIndex, unsigned char frameSpan)
+		{
+			return true;
+		}
 
 		//构造函数时改变
 		//通道序号

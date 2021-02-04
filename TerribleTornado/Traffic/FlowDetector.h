@@ -60,11 +60,18 @@ namespace OnePunchMan
 		void GetReportJson(std::string* json);
 
 		/**
-		* 获取报告json数据
+		* 获取io数据集合
 		* @param laneId 车道编号，为空时查询所有
 		* @return io数据集合
 		*/
 		std::vector<IoData> GetIoDatas(const std::string& laneId);
+
+		/**
+		* 获取IO状态
+		* @param laneId 车道编号，为空时查询所有
+		* @return io状态集合
+		*/
+		std::vector<IoData> GetIoStatus(const std::string& laneId);
 
 		/**
 		* 流量检测

@@ -178,7 +178,7 @@ void EncodeChannel::UninitHisi(int encodeCount)
         HI_MPI_VENC_DestroyChn(i);
     }
 #endif // !_WIN32
-    LogPool::Information(LogEvent::Encode, "uninit hisi encode sdk");
+    LogPool::Information(LogEvent::Encode, "–∂‘ÿ∫£Àº±‡¬Îsdk");
 }
 
 bool EncodeChannel::AddOutput(int channelIndex, const std::string& outputUrl, int frameCount)

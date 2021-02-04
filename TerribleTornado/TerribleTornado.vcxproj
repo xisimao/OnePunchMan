@@ -153,6 +153,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Hisi\Hisi_DecodeChannel.cpp" />
+    <ClCompile Include="Hisi\Hisi_TrafficStartup.cpp" />
     <ClCompile Include="Traffic\TrafficStartup.cpp" />
     <ClCompile Include="Traffic\DecodeChannel.cpp" />
     <ClCompile Include="DG\DG_DecodeChannel.cpp" />
@@ -173,6 +175,8 @@
     <ClCompile Include="Seemmo\Seemmo_SDK.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Hisi\Hisi_DecodeChannel.h" />
+    <ClInclude Include="Hisi\Hisi_TrafficStartup.h" />
     <ClInclude Include="Traffic\TrafficStartup.h" />
     <ClInclude Include="Traffic\DecodeChannel.h" />
     <ClInclude Include="DG\DG_DecodeChannel.h" />

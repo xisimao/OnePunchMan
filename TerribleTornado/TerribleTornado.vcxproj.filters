@@ -10,6 +10,9 @@
     <Filter Include="DG">
       <UniqueIdentifier>{1340fab1-18cb-4054-8fa8-00f6720d6b2f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Hisi">
+      <UniqueIdentifier>{46fb97e7-24ad-4203-b286-ef0eeb31dbd6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Traffic\TrafficData.cpp">
@@ -64,6 +67,12 @@
     <ClCompile Include="Seemmo\Seemmo_SDK.cpp">
       <Filter>Seemmo</Filter>
     </ClCompile>
+    <ClCompile Include="Hisi\Hisi_DecodeChannel.cpp">
+      <Filter>Hisi</Filter>
+    </ClCompile>
+    <ClCompile Include="Hisi\Hisi_TrafficStartup.cpp">
+      <Filter>Hisi</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Traffic\TrafficData.h">
@@ -116,6 +125,12 @@
     </ClInclude>
     <ClInclude Include="Seemmo\Seemmo_SDK.h">
       <Filter>Seemmo</Filter>
+    </ClInclude>
+    <ClInclude Include="Hisi\Hisi_TrafficStartup.h">
+      <Filter>Hisi</Filter>
+    </ClInclude>
+    <ClInclude Include="Hisi\Hisi_DecodeChannel.h">
+      <Filter>Hisi</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

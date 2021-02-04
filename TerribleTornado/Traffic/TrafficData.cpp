@@ -12,7 +12,7 @@ const string TrafficDirectory::WebConfigPath("../web/static/config/base.js");
 const int TrafficChannel::AllPropertiesFlag = 3;
 
 TrafficData::TrafficData(const std::string& dbName)
-	:_dbName(dbName),_sqlite(dbName)
+	:_dbName(dbName), _sqlite(dbName)
 {
 
 }
@@ -743,8 +743,8 @@ tuple<vector<EventData>, int> TrafficData::GetEventDatas(const string& channelUr
 			data.Id = reader.GetInt(0);
 			data.ChannelUrl = reader.GetString(1);
 			data.LaneIndex = reader.GetInt(2);
-			data.Guid = reader.GetString(3);
-			data.TimeStamp = reader.GetLong(4);
+			data.TimeStamp = reader.GetLong(3);
+			data.Guid = reader.GetString(4);
 			data.Type = reader.GetInt(5);
 			datas.push_back(data);
 		}

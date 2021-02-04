@@ -63,14 +63,14 @@ namespace OnePunchMan
 			return StringEx::Combine(TrafficDirectory::FileDir, "event_", id, ".mp4");
 		}
 
-		static std::string GetImageLink(const std::string& id, int imageIndex)
+		static std::string GetImageLink(const std::string& ip,const std::string& id, int imageIndex)
 		{
-			return StringEx::Combine(TrafficDirectory::FileLink, "/event_", id, "_", imageIndex, ".jpg");
+			return StringEx::Combine("http://", ip, "/", TrafficDirectory::FileLink, "/event_", id, "_", imageIndex, ".jpg");
 		}
 
-		static std::string GetVideoLink(const std::string& id)
+		static std::string GetVideoLink(const std::string& ip, const std::string& id)
 		{
-			return StringEx::Combine(TrafficDirectory::FileLink, "/event_", id, ".mp4");
+			return StringEx::Combine("http://", ip, "/", TrafficDirectory::FileLink, "/event_", id, ".mp4");
 		}
 	};
 
@@ -737,16 +737,20 @@ namespace OnePunchMan
 		std::string Guid;
 		int Type;
 
-		std::string ToJson() const
+		/**
+		* 获取数据的json格式
+		* @return 数据的json格式
+		*/
+		std::string ToJson(const std::string& ip)
 		{
 			std::string json;
 			JsonSerialization::SerializeValue(&json, "channelUrl", ChannelUrl);
 			JsonSerialization::SerializeValue(&json, "laneIndex", LaneIndex);
 			JsonSerialization::SerializeValue(&json, "dateTime", DateTime::ParseTimeStamp(TimeStamp).ToString());
 			JsonSerialization::SerializeValue(&json, "type", Type);
-			JsonSerialization::SerializeValue(&json, "image1", TrafficDirectory::GetImageLink(Guid, 1));
-			JsonSerialization::SerializeValue(&json, "image2", TrafficDirectory::GetImageLink(Guid, 2));
-			JsonSerialization::SerializeValue(&json, "video", TrafficDirectory::GetVideoLink(Guid));
+			JsonSerialization::SerializeValue(&json, "image1", TrafficDirectory::GetImageLink(ip,Guid, 1));
+			JsonSerialization::SerializeValue(&json, "image2", TrafficDirectory::GetImageLink(ip, Guid, 2));
+			JsonSerialization::SerializeValue(&json, "video", TrafficDirectory::GetVideoLink(ip, Guid));
 			return json;
 		}
 	};

@@ -106,6 +106,13 @@ namespace OnePunchMan
 		* @return 替换后的字符串
 		*/
 		static std::string Replace(const std::string& value, const std::string& oldValue, const std::string& newValue);
+		
+		/**
+		* 替换url的转义字符
+		* @param value 字符串
+		* @return 替换后的字符串
+		*/
+		static std::string UnescapeUriDataString(const std::string& value);
 
 		/**
 		* 将字符串转换为数字或者布尔类型

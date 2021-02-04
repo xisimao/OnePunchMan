@@ -257,3 +257,34 @@ string StringEx::Replace(const string& value, const string& oldValue, const stri
 	}
 	return temp;
 }
+
+string StringEx::UnescapeUriDataString(const string& value)
+{
+	string result= StringEx::Replace(value, "%20", " ");
+	result = StringEx::Replace(result, "%22", "\"");
+	result = StringEx::Replace(result, "%23", "#");
+	result = StringEx::Replace(result, "%25", "%");
+	result = StringEx::Replace(result, "%26", "&");
+	result = StringEx::Replace(result, "%28", "(");
+	result = StringEx::Replace(result, "%29", ")");
+	result = StringEx::Replace(result, "%2b", "+");
+	result = StringEx::Replace(result, "%2c", ",");
+	result = StringEx::Replace(result, "%2f", "/");
+	result = StringEx::Replace(result, "%3a", ":");
+	result = StringEx::Replace(result, "%3b", ";");
+	result = StringEx::Replace(result, "%3c", "<");
+	result = StringEx::Replace(result, "%3d", "=");
+	result = StringEx::Replace(result, "%3e", ">");
+	result = StringEx::Replace(result, "%3f", "?");
+	result = StringEx::Replace(result, "%40", "@");
+	result = StringEx::Replace(result, "%5c", "\\");
+	result = StringEx::Replace(result, "%7c", "|");
+	if (result.size() == value.size())
+	{
+		return result;
+	}
+	else
+	{
+		return UnescapeUriDataString(result);
+	}
+}

@@ -158,7 +158,7 @@
       <LibraryDependencies>dgnnie;clientsdk;turbojpeg;dsp;isp;ive;hdmi;mpi;nnie;sns_imx277_slvs;sns_imx290;sns_imx334;sns_imx334_slave;sns_imx477;dnvqe;upvqe;VoiceEngine;securec;_hiae;_hiawb;_hidehaze;_hidrc;_hildci;opencv_highgui;opencv_core;opencv_imgproc;opencv_flann;opencv_calib3d;opencv_features2d;avcodec;avdevice;avfilter;avformat;avutil;swresample;swscale;postproc;sqlite3;pthread;%(LibraryDependencies)</LibraryDependencies>
     </Link>
     <ClCompile>
-      <AdditionalIncludeDirectories>/usr/local/include;../TerribleTornado/Traffic;../TerribleTornado/DG;../TerribleTornado/Seemmo;../Fubuki/Sqlite;../Fubuki/FFmpeg;../Saitama/Text;../Saitama/Net;../Saitama/Logger;../Saitama/Core;../Saitama/Convert;./Genos_DG;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>/usr/local/include;../TerribleTornado/Traffic;../TerribleTornado/DG;../Fubuki/Sqlite;../Fubuki/FFmpeg;../Saitama/Text;../Saitama/Net;../Saitama/Logger;../Saitama/Core;../Saitama/Convert;./Genos_DG;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
