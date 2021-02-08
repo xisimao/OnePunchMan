@@ -228,7 +228,7 @@ void DebugHttp()
 
 int main(int argc, char* argv[])
 {
-
+    long long l=DateTime::NowTimeStamp();
     DebugHttp();
 
     //DebugByFile();

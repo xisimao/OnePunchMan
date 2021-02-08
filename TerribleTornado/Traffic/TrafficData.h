@@ -755,6 +755,32 @@ namespace OnePunchMan
 		}
 	};
 
+	//事件统计
+	class EventStatistics
+	{
+	public:
+		EventStatistics()
+			:Type(0),Count(0)
+		{
+
+		}
+		
+		int Type;
+		int Count;
+
+		/**
+		* 获取数据的json格式
+		* @return 数据的json格式
+		*/
+		std::string ToJson()
+		{
+			std::string json;
+			JsonSerialization::SerializeValue(&json, "type", Type);
+			JsonSerialization::SerializeValue(&json, "count", Count);
+			return json;
+		}
+	};
+
 	//io数据
 	class IoData
 	{
@@ -1001,43 +1027,146 @@ namespace OnePunchMan
 		*/
 		std::vector<FlowLane> GetFlowLanes(int channelIndex, const std::string& laneId);
 
+		/**
+		* 添加流量数据
+		* @param data 通道序号
+		* @return 操作结果
+		*/
 		bool InsertFlowData(const FlowData& data);
 
+		/**
+		* 查询流量数据
+		* @param channelUrl 通道地址，为空时查询所有
+		* @param laneId 车道编号，为空时查询所有
+		* @param startTime 开始时间，为0时查询所有
+		* @param endTime 结束时间，为0时查询所有
+		* @param pageNum 分页页码，为0时查询所有
+		* @param pageSize 每页数量，为0时查询所有
+		* @return 操作结果
+		*/
 		std::tuple<std::vector<FlowData>, int> GetFlowDatas(const std::string& channelUrl, const std::string& laneId, long long startTime, long long endTime, int pageNum, int pageSize);
+		
+		/**
+		* 删除流量数据
+		* @param keepDay 保存天数
+		* @return 操作结果
+		*/
+		void DeleteFlowDatas(int keepDay);
 
-		void DeleteFlowDatas(int keeyDay);
-
+		/**
+		* 添加机动车结构化数据
+		* @param data 通道序号
+		* @return 操作结果
+		*/
 		bool InsertVehicleData(const VehicleData& data);
 
-		std::tuple<std::vector<VehicleData>, int> GetVehicleDatas(const std::string& channelUrl, const std::string& laneId, long long startTime, long long endTime, int pageNum, int pageSize);
-
+		/**
+		* 查询机动车结构化数据
+		* @param channelUrl 通道地址，为空时查询所有
+		* @param laneId 车道编号，为空时查询所有
+		* @param carType 车辆类型，为0时查询所有
+		* @param startTime 开始时间，为0时查询所有
+		* @param endTime 结束时间，为0时查询所有
+		* @param pageNum 分页页码，为0时查询所有
+		* @param pageSize 每页数量，为0时查询所有
+		* @return 操作结果
+		*/
+		std::tuple<std::vector<VehicleData>, int> GetVehicleDatas(const std::string& channelUrl, const std::string& laneId,int carType, long long startTime, long long endTime, int pageNum, int pageSize);
+		
+		/**
+		* 删除机动车结构化数据
+		* @param keepDay 保存天数
+		* @return 操作结果
+		*/
 		void DeleteVehicleDatas(int keepCount);
 
+		/**
+		* 添加非机动车结构化数据
+		* @param data 通道序号
+		* @return 操作结果
+		*/
 		bool InsertBikeData(const BikeData& data);
 
-		std::tuple<std::vector<BikeData>, int> GetBikeDatas(const std::string& channelUrl, const std::string& laneId, long long startTime, long long endTime, int pageNum, int pageSize);
-
+		/**
+		* 查询非机动车结构化数据
+		* @param channelUrl 通道地址，为空时查询所有
+		* @param laneId 车道编号，为空时查询所有
+		* @param bikeType 非机动车类型，为0时查询所有
+		* @param startTime 开始时间，为0时查询所有
+		* @param endTime 结束时间，为0时查询所有
+		* @param pageNum 分页页码，为0时查询所有
+		* @param pageSize 每页数量，为0时查询所有
+		* @return 操作结果
+		*/
+		std::tuple<std::vector<BikeData>, int> GetBikeDatas(const std::string& channelUrl, const std::string& laneId,int bikeType, long long startTime, long long endTime, int pageNum, int pageSize);
+		
+		/**
+		* 删除非机动车结构化数据
+		* @param keepDay 保存天数
+		* @return 操作结果
+		*/
 		void DeleteBikeDatas(int keepCount);
 
+		/**
+		* 添加行人结构化数据
+		* @param data 通道序号
+		* @return 操作结果
+		*/
 		bool InsertPedestrainData(const PedestrainData& data);
 
+		/**
+		* 查询行人结构化数据
+		* @param channelUrl 通道地址，为空时查询所有
+		* @param laneId 车道编号，为空时查询所有
+		* @param startTime 开始时间，为0时查询所有
+		* @param endTime 结束时间，为0时查询所有
+		* @param pageNum 分页页码，为0时查询所有
+		* @param pageSize 每页数量，为0时查询所有
+		* @return 操作结果
+		*/
 		std::tuple<std::vector<PedestrainData>, int> GetPedestrainDatas(const std::string& channelUrl, const std::string& laneId, long long startTime, long long endTime, int pageNum, int pageSize);
-
+		
+		/**
+		* 删除行人结构化数据
+		* @param keepDay 保存天数
+		* @return 操作结果
+		*/
 		void DeletePedestrainDatas(int keepCount);
+
+		/**
+		* 添加事件数据
+		* @param data 通道序号
+		* @return 操作结果
+		*/
+		bool InsertEventData(const EventData& data);
 
 		/**
 		* 构造函数
 		* @param channelUrl 视频地址，为空时查询所有
+		* @param type 事件类型
 		* @param startTime 开始时间戳，为0时查询所有
 		* @param endTime 结束时间戳,为0时查询所有
 		* @param pageNum 分页页码,0表示查询所有
 		* @param pageSize 分页数量,0表示查询所有
 		* @return 事件数据集合
 		*/
-		std::tuple<std::vector<EventData>, int> GetEventDatas(const std::string& channelUrl, long long startTime, long long endTime, int pageNum, int pageSize);
+		std::tuple<std::vector<EventData>, int> GetEventDatas(const std::string& channelUrl,int type, long long startTime, long long endTime, int pageNum, int pageSize);
+		
+		/**
+		* 构造函数
+		* @param channelUrl 视频地址，为空时查询所有
+		* @param type 事件类型
+		* @param startTime 开始时间戳，为0时查询所有
+		* @param endTime 结束时间戳,为0时查询所有
+		* @return 事件数据集合
+		*/
+		std::vector<EventStatistics> GetEventStatistics(const std::string& channelUrl, int type, long long startTime, long long endTime);
 
-		bool InsertEventData(const EventData& data);
-
+		/**
+		* 删除事件数据
+		* @param keepDay 保存天数
+		* @return 操作结果
+		*/
 		void DeleteEventData(int keepCount);
 
 	private:

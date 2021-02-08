@@ -443,7 +443,7 @@ tuple<vector<FlowData>, int> TrafficData::GetFlowDatas(const string& channelUrl,
 	string whereSql(" Where");
 	whereSql.append(channelUrl.empty() ? " 1=1" : StringEx::Combine(" ChannelUrl='", channelUrl, "'"));
 	whereSql.append(laneId.empty() ? " And 1=1" : StringEx::Combine(" And LaneId='", laneId, "'"));
-	whereSql.append(startTime == 0 || endTime == 0 ? " And 1=1" : StringEx::Combine(" And StartTime>=", startTime, " And EndTime<=", endTime));
+	whereSql.append(startTime == 0 || endTime == 0 ? " And 1=1" : StringEx::Combine(" And TimeStamp>=", startTime, " And TimeStamp<=", endTime));
 
 	string totalSql = "Select Count(*) From Flow_Data";
 	totalSql.append(whereSql);
@@ -517,13 +517,14 @@ bool TrafficData::InsertVehicleData(const VehicleData& data)
 	return _sqlite.ExecuteRowCount(insertSql) == 1;
 }
 
-tuple<vector<VehicleData>, int> TrafficData::GetVehicleDatas(const string& channelUrl, const string& laneId, long long startTime, long long endTime, int pageNum, int pageSize)
+tuple<vector<VehicleData>, int> TrafficData::GetVehicleDatas(const string& channelUrl, const string& laneId,int carType, long long startTime, long long endTime, int pageNum, int pageSize)
 {
 	SqliteReader reader(_dbName);
 	string whereSql(" Where");
 	whereSql.append(channelUrl.empty() ? " 1=1" : StringEx::Combine(" ChannelUrl='", channelUrl, "'"));
 	whereSql.append(laneId.empty() ? " And 1=1" : StringEx::Combine(" And LaneId='", laneId, "'"));
-	whereSql.append(startTime == 0 || endTime == 0 ? " And 1=1" : StringEx::Combine(" And StartTime>=", startTime, " And EndTime<=", endTime));
+	whereSql.append(carType==0 ? " And 1=1" : StringEx::Combine(" And CarType=", carType));
+	whereSql.append(startTime == 0 || endTime == 0 ? " And 1=1" : StringEx::Combine(" And TimeStamp>=", startTime, " And TimeStamp<=", endTime));
 
 	string totalSql = "Select Count(*) From Vehicle_Data";
 	totalSql.append(whereSql);
@@ -560,7 +561,7 @@ void TrafficData::DeleteVehicleDatas(int keepCount)
 {
 	while (true)
 	{
-		tuple<vector<VehicleData>, int> t = GetVehicleDatas("", "", 0, 0, 2, keepCount);
+		tuple<vector<VehicleData>, int> t = GetVehicleDatas("", "", 0, 0,0, 2, keepCount);
 		if (get<0>(t).empty())
 		{
 			break;
@@ -586,13 +587,14 @@ bool TrafficData::InsertBikeData(const BikeData& data)
 	return _sqlite.ExecuteRowCount(insertSql) == 1;
 }
 
-tuple<vector<BikeData>, int> TrafficData::GetBikeDatas(const string& channelUrl, const string& laneId, long long startTime, long long endTime, int pageNum, int pageSize)
+tuple<vector<BikeData>, int> TrafficData::GetBikeDatas(const string& channelUrl, const string& laneId,int bikeType, long long startTime, long long endTime, int pageNum, int pageSize)
 {
 	SqliteReader reader(_dbName);
 	string whereSql(" Where");
 	whereSql.append(channelUrl.empty() ? " 1=1" : StringEx::Combine(" ChannelUrl='", channelUrl, "'"));
 	whereSql.append(laneId.empty() ? " And 1=1" : StringEx::Combine(" And LaneId='", laneId, "'"));
-	whereSql.append(startTime == 0 || endTime == 0 ? " And 1=1" : StringEx::Combine(" And StartTime>=", startTime, " And EndTime<=", endTime));
+	whereSql.append(bikeType==0 ? " And 1=1" : StringEx::Combine(" And BikeType=", bikeType));
+	whereSql.append(startTime == 0 || endTime == 0 ? " And 1=1" : StringEx::Combine(" And TimeStamp>=", startTime, " And TimeStamp<=", endTime));
 
 	string totalSql = "Select Count(*) From Bike_Data";
 	totalSql.append(whereSql);
@@ -625,7 +627,7 @@ void TrafficData::DeleteBikeDatas(int keepCount)
 {
 	while (true)
 	{
-		tuple<vector<BikeData>, int> t = GetBikeDatas("", "", 0, 0, 2, keepCount);
+		tuple<vector<BikeData>, int> t = GetBikeDatas("", "", 0,0, 0, 2, keepCount);
 		if (get<0>(t).empty())
 		{
 			break;
@@ -659,7 +661,7 @@ tuple<vector<PedestrainData>, int> TrafficData::GetPedestrainDatas(const string&
 	string whereSql(" Where");
 	whereSql.append(channelUrl.empty() ? " 1=1" : StringEx::Combine(" ChannelUrl='", channelUrl, "'"));
 	whereSql.append(laneId.empty() ? " And 1=1" : StringEx::Combine(" And LaneId='", laneId, "'"));
-	whereSql.append(startTime == 0 || endTime == 0 ? " And 1=1" : StringEx::Combine(" And StartTime>=", startTime, " And EndTime<=", endTime));
+	whereSql.append(startTime == 0 || endTime == 0 ? " And 1=1" : StringEx::Combine(" And TimeStamp>=", startTime, " And TimeStamp<=", endTime));
 
 	string totalSql = "Select Count(*) From Pedestrain_Data";
 	totalSql.append(whereSql);
@@ -719,12 +721,13 @@ bool TrafficData::InsertEventData(const EventData& data)
 	return _sqlite.ExecuteRowCount(insertSql) == 1;
 }
 
-tuple<vector<EventData>, int> TrafficData::GetEventDatas(const string& channelUrl, long long startTime, long long endTime, int pageNum, int pageSize)
+tuple<vector<EventData>, int> TrafficData::GetEventDatas(const string& channelUrl, int type, long long startTime, long long endTime, int pageNum, int pageSize)
 {
 	SqliteReader reader(_dbName);
 	string whereSql(" Where");
 	whereSql.append(channelUrl.empty() ? " 1=1" : StringEx::Combine(" ChannelUrl='", channelUrl, "'"));
-	whereSql.append(startTime == 0 || endTime == 0 ? " And 1=1" : StringEx::Combine(" And StartTime>=", startTime, " And EndTime<=", endTime));
+	whereSql.append(type == 0 ? " And 1=1" : StringEx::Combine(" And Type=", type));
+	whereSql.append(startTime == 0 || endTime == 0 ? " And 1=1" : StringEx::Combine(" And TimeStamp>=", startTime, " And TimeStamp<=", endTime));
 
 	string totalSql = "Select Count(*) From Event_Data";
 	totalSql.append(whereSql);
@@ -753,11 +756,35 @@ tuple<vector<EventData>, int> TrafficData::GetEventDatas(const string& channelUr
 	return tuple<vector<EventData>, int>(datas, total);
 }
 
+vector<EventStatistics> TrafficData::GetEventStatistics(const string& channelUrl, int type, long long startTime, long long endTime)
+{
+	SqliteReader reader(_dbName);
+
+	string sql = "Select Type,Count(*) From Event_Data Where";
+	sql.append(channelUrl.empty() ? " 1=1" : StringEx::Combine(" ChannelUrl='", channelUrl, "'"));
+	sql.append(type == 0 ? " And 1=1" : StringEx::Combine(" And Type=", type));
+	sql.append(startTime == 0 || endTime == 0 ? " And 1=1" : StringEx::Combine(" And TimeStamp>=", startTime, " And TimeStamp<=", endTime));
+	sql.append(" Group By Type");
+	vector<EventStatistics> datas;
+	if (reader.BeginQuery(sql))
+	{
+		while (reader.HasRow())
+		{
+			EventStatistics data;
+			data.Type = reader.GetInt(0);
+			data.Count = reader.GetInt(1);
+			datas.push_back(data);
+		}
+		reader.EndQuery();
+	}
+	return datas;
+}
+
 void TrafficData::DeleteEventData(int keepCount)
 {
 	while (true)
 	{
-		tuple<vector<EventData>, int> t = GetEventDatas("", 0, 0, 2, keepCount);
+		tuple<vector<EventData>, int> t = GetEventDatas("", 0, 0, 0, 2, keepCount);
 		if (get<0>(t).empty())
 		{
 			break;

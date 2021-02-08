@@ -334,6 +334,7 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
         if (datas.size() > 1)
         {
             string channelUrl;
+            int type=0;
             DateTime startTime;
             DateTime endTime;
             int pageNum = 0;
@@ -349,6 +350,13 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
                         if (pair.size() >= 2)
                         {
                             channelUrl = StringEx::Convert<string>(pair[1]);
+                        }
+                    }
+                    else if (pair[0].compare("type") == 0)
+                    {
+                        if (pair.size() >= 2)
+                        {
+                            type = StringEx::Convert<int>(pair[1]);
                         }
                     }
                     else if (pair[0].compare("starttime") == 0)
@@ -391,7 +399,7 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
                 }
             }
             TrafficData data;
-            tuple<vector<EventData>, int> t = data.GetEventDatas(channelUrl, startTime.TimeStamp(), endTime.TimeStamp(), pageNum, pageSize);
+            tuple<vector<EventData>, int> t = data.GetEventDatas(channelUrl, type,startTime.TimeStamp(), endTime.TimeStamp(), pageNum, pageSize);
             string datasJson;
             for (vector<EventData>::iterator it = get<0>(t).begin(); it != get<0>(t).end(); ++it)
             {
@@ -402,6 +410,68 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
         }
         e->Code = HttpCode::OK;
     }
+    else if (UrlStartWith(e->Url, "/api/event/statistics"))
+    {
+        vector<string> datas = StringEx::Split(e->Url, "?", true);
+        if (datas.size() > 1)
+        {
+            string channelUrl;
+            int type = 0;
+            DateTime startTime;
+            DateTime endTime;
+            vector<string> params = StringEx::Split(datas[1], "&", true);
+            for (vector<string>::iterator mit = params.begin(); mit != params.end(); ++mit)
+            {
+                vector<string> pair = StringEx::Split(*mit, "=", true);
+                if (pair.size() >= 1)
+                {
+                    if (pair[0].compare("channelurl") == 0)
+                    {
+                        if (pair.size() >= 2)
+                        {
+                            channelUrl = StringEx::Convert<string>(pair[1]);
+                        }
+                    }
+                    else if (pair[0].compare("type") == 0)
+                    {
+                        if (pair.size() >= 2)
+                        {
+                            type = StringEx::Convert<int>(pair[1]);
+                        }
+                    }
+                    else if (pair[0].compare("starttime") == 0)
+                    {
+                        if (pair.size() >= 2)
+                        {
+                            string value = pair[1];
+                            if (value.size() >= 19)
+                            {
+                                startTime = DateTime::ParseString("%d-%d-%d %d:%d:%d", value);
+                            }
+                        }
+                    }
+                    else if (pair[0].compare("endtime") == 0)
+                    {
+                        if (pair.size() >= 2)
+                        {
+                            string value = pair[1];
+                            if (value.size() >= 19)
+                            {
+                                endTime = DateTime::ParseString("%d-%d-%d %d:%d:%d", value);
+                            }
+                        }
+                    }
+                }
+            }
+            TrafficData data;
+            vector<EventStatistics> datas = data.GetEventStatistics(channelUrl, type, startTime.TimeStamp(), endTime.TimeStamp());
+            for (vector<EventStatistics>::iterator it = datas.begin(); it != datas.end(); ++it)
+            {
+                JsonSerialization::AddClassItem(&e->ResponseJson, it->ToJson());
+            }
+        }
+        e->Code = HttpCode::OK;
+    }
     else if (UrlStartWith(e->Url, "/api/videostruct/vehicle"))
     {
         vector<string> datas = StringEx::Split(e->Url, "?", true);
@@ -409,6 +479,7 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
         {
             string channelUrl;
             string laneId;
+            int carType = 0;
             DateTime startTime;
             DateTime endTime;
             int pageNum = 0;
@@ -433,6 +504,13 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
                             laneId = StringEx::Convert<string>(pair[1]);
                         }
                     }
+                    else if (pair[0].compare("cartype") == 0)
+                    {
+                        if (pair.size() >= 2)
+                        {
+                            carType = StringEx::Convert<int>(pair[1]);
+                        }
+                    }
                     else if (pair[0].compare("starttime") == 0)
                     {
                         if (pair.size() >= 2)
@@ -473,7 +551,7 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
                 }
             }
             TrafficData data;
-            tuple< vector<VehicleData>, int> t = data.GetVehicleDatas(channelUrl, laneId, startTime.TimeStamp(), endTime.TimeStamp(), pageNum, pageSize);
+            tuple< vector<VehicleData>, int> t = data.GetVehicleDatas(channelUrl, laneId, carType, startTime.TimeStamp(), endTime.TimeStamp(), pageNum, pageSize);
             string datasJson;
             for (vector<VehicleData>::iterator it = get<0>(t).begin(); it != get<0>(t).end(); ++it)
             {
@@ -491,6 +569,7 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
         {
             string channelUrl;
             string laneId;
+            int bikeType = 0;
             DateTime startTime;
             DateTime endTime;
             int pageNum = 0;
@@ -513,6 +592,13 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
                         if (pair.size() >= 2)
                         {
                             laneId = StringEx::Convert<string>(pair[1]);
+                        }
+                    }
+                    else if (pair[0].compare("biketype") == 0)
+                    {
+                        if (pair.size() >= 2)
+                        {
+                            bikeType = StringEx::Convert<int>(pair[1]);
                         }
                     }
                     else if (pair[0].compare("starttime") == 0)
@@ -555,7 +641,7 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
                 }
             }
             TrafficData data;
-            tuple< vector<BikeData>, int> t = data.GetBikeDatas(channelUrl, laneId, startTime.TimeStamp(), endTime.TimeStamp(), pageNum, pageSize);
+            tuple< vector<BikeData>, int> t = data.GetBikeDatas(channelUrl, laneId,bikeType, startTime.TimeStamp(), endTime.TimeStamp(), pageNum, pageSize);
             string datasJson;
             for (vector<BikeData>::iterator it = get<0>(t).begin(); it != get<0>(t).end(); ++it)
             {
