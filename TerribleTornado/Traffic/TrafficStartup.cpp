@@ -267,22 +267,14 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
                     {
                         if (pair.size() >= 2)
                         {
-                            string value = pair[1];
-                            if (value.size() >= 19)
-                            {
-                                startTime = DateTime::ParseString("%d-%d-%d %d:%d:%d", value);
-                            }
+                            startTime = DateTime::ParseString("%d-%d-%d %d:%d:%d", pair[1]);
                         }
                     }
                     else if (pair[0].compare("endtime") == 0)
                     {
                         if (pair.size() >= 2)
                         {
-                            string value = pair[1];
-                            if (value.size() >= 19)
-                            {
-                                endTime = DateTime::ParseString("%d-%d-%d %d:%d:%d", value);
-                            }
+                            endTime = DateTime::ParseString("%d-%d-%d %d:%d:%d", pair[1]);
                         }
                     }
                     else if (pair[0].compare("pagenum") == 0)
@@ -363,22 +355,14 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
                     {
                         if (pair.size() >= 2)
                         {
-                            string value = pair[1];
-                            if (value.size() >= 19)
-                            {
-                                startTime = DateTime::ParseString("%d-%d-%d %d:%d:%d", value);
-                            }
+                            startTime = DateTime::ParseString("%d-%d-%d %d:%d:%d", pair[1]);
                         }
                     }
                     else if (pair[0].compare("endtime") == 0)
                     {
                         if (pair.size() >= 2)
                         {
-                            string value = pair[1];
-                            if (value.size() >= 19)
-                            {
-                                endTime = DateTime::ParseString("%d-%d-%d %d:%d:%d", value);
-                            }
+                            endTime = DateTime::ParseString("%d-%d-%d %d:%d:%d", pair[1]);
                         }
                     }
                     else if (pair[0].compare("pagenum") == 0)
@@ -443,22 +427,14 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
                     {
                         if (pair.size() >= 2)
                         {
-                            string value = pair[1];
-                            if (value.size() >= 19)
-                            {
-                                startTime = DateTime::ParseString("%d-%d-%d %d:%d:%d", value);
-                            }
+                            startTime = DateTime::ParseString("%d-%d-%d %d:%d:%d", pair[1]);
                         }
                     }
                     else if (pair[0].compare("endtime") == 0)
                     {
                         if (pair.size() >= 2)
                         {
-                            string value = pair[1];
-                            if (value.size() >= 19)
-                            {
-                                endTime = DateTime::ParseString("%d-%d-%d %d:%d:%d", value);
-                            }
+                            endTime = DateTime::ParseString("%d-%d-%d %d:%d:%d", pair[1]);
                         }
                     }
                 }
@@ -515,22 +491,14 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
                     {
                         if (pair.size() >= 2)
                         {
-                            string value = pair[1];
-                            if (value.size() >= 19)
-                            {
-                                startTime = DateTime::ParseString("%d-%d-%d %d:%d:%d", value);
-                            }
+                            startTime = DateTime::ParseString("%d-%d-%d %d:%d:%d", pair[1]);
                         }
                     }
                     else if (pair[0].compare("endtime") == 0)
                     {
                         if (pair.size() >= 2)
                         {
-                            string value = pair[1];
-                            if (value.size() >= 19)
-                            {
-                                endTime = DateTime::ParseString("%d-%d-%d %d:%d:%d", value);
-                            }
+                            endTime = DateTime::ParseString("%d-%d-%d %d:%d:%d", pair[1]);
                         }
                     }
                     else if (pair[0].compare("pagenum") == 0)
@@ -605,22 +573,14 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
                     {
                         if (pair.size() >= 2)
                         {
-                            string value = pair[1];
-                            if (value.size() >= 19)
-                            {
-                                startTime = DateTime::ParseString("%d-%d-%d %d:%d:%d", value);
-                            }
+                            startTime = DateTime::ParseString("%d-%d-%d %d:%d:%d", pair[1]);
                         }
                     }
                     else if (pair[0].compare("endtime") == 0)
                     {
                         if (pair.size() >= 2)
                         {
-                            string value = pair[1];
-                            if (value.size() >= 19)
-                            {
-                                endTime = DateTime::ParseString("%d-%d-%d %d:%d:%d", value);
-                            }
+                            endTime = DateTime::ParseString("%d-%d-%d %d:%d:%d", pair[1]);
                         }
                     }
                     else if (pair[0].compare("pagenum") == 0)
@@ -687,22 +647,14 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
                     {
                         if (pair.size() >= 2)
                         {
-                            string value = pair[1];
-                            if (value.size() >= 19)
-                            {
-                                startTime = DateTime::ParseString("%d-%d-%d %d:%d:%d", value);
-                            }
+                            startTime = DateTime::ParseString("%d-%d-%d %d:%d:%d", pair[1]);
                         }
                     }
                     else if (pair[0].compare("endtime") == 0)
                     {
                         if (pair.size() >= 2)
                         {
-                            string value = pair[1];
-                            if (value.size() >= 19)
-                            {
-                                endTime = DateTime::ParseString("%d-%d-%d %d:%d:%d", value);
-                            }
+                            endTime = DateTime::ParseString("%d-%d-%d %d:%d:%d", pair[1]);
                         }
                     }
                     else if (pair[0].compare("pagenum") == 0)
