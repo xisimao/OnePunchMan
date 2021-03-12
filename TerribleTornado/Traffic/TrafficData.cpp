@@ -186,6 +186,7 @@ TrafficChannel TrafficData::FillChannel(const SqliteReader& sqlite)
 	channel.LaneWidth = sqlite.GetDouble(11);
 	channel.ReportProperties = sqlite.GetInt(12);
 	channel.FreeSpeed = sqlite.GetDouble(13);
+	channel.DesignSpeed = sqlite.GetInt(14);
 
 	SqliteReader flowLaneSqlite(_dbName);
 	string flowLaneSql(StringEx::Combine("Select * From Flow_Lane Where ChannelIndex=", channel.ChannelIndex, " Order By LaneIndex"));
@@ -301,7 +302,7 @@ bool TrafficData::SetChannels(const vector<TrafficChannel>& channels)
 
 bool TrafficData::InsertChannel(const TrafficChannel& channel)
 {
-	string sql = StringEx::Combine("Insert Into System_Channel (ChannelIndex,ChannelName,ChannelUrl,ChannelType,Loop,OutputDetect,OutputImage,OutputReport,OutputRecogn,GlobalDetect,DeviceId,LaneWidth,ReportProperties,FreeSpeed) Values ("
+	string sql = StringEx::Combine("Insert Into System_Channel (ChannelIndex,ChannelName,ChannelUrl,ChannelType,Loop,OutputDetect,OutputImage,OutputReport,OutputRecogn,GlobalDetect,DeviceId,LaneWidth,ReportProperties,FreeSpeed,DesignSpeed) Values ("
 		, channel.ChannelIndex, ","
 		, "'", channel.ChannelName, "',"
 		, "'", channel.ChannelUrl, "',"
@@ -315,7 +316,8 @@ bool TrafficData::InsertChannel(const TrafficChannel& channel)
 		, "'", channel.DeviceId, "',"
 		, channel.LaneWidth, ","
 		, channel.ReportProperties, ","
-		, channel.FreeSpeed
+		, channel.FreeSpeed, ","
+		, channel.DesignSpeed
 		, ")");
 
 	if (_sqlite.ExecuteRowCount(sql) == 1)
@@ -405,7 +407,7 @@ vector<FlowLane> TrafficData::GetFlowLanes(int channelIndex, const std::string& 
 
 bool TrafficData::InsertFlowData(const FlowData& data)
 {
-	string sql = StringEx::Combine("Insert Into Flow_Data (ChannelUrl,LaneId,TimeStamp,Persons,Bikes,Motorcycles,Cars,Tricycles,Buss,Vans,Trucks,Speed,TotalDistance,MeterPerPixel,TotalTime,HeadDistance,TotalSpan,HeadSpace,TimeOccupancy,TotalInTime,QueueLength,SpaceOccupancy,TotalQueueLength,LaneLength,CountQueueLength,TrafficStatus,FreeSpeed) Values ("
+	string sql = StringEx::Combine("Insert Into Flow_Data (ChannelUrl,LaneId,TimeStamp,Persons,Bikes,Motorcycles,Cars,Tricycles,Buss,Vans,Trucks,Speed,TotalDistance,MeterPerPixel,TotalTime,HeadDistance,TotalSpan,HeadSpace,TimeOccupancy,TotalInTime,QueueLength,SpaceOccupancy,TotalQueueLength,LaneLength,CountQueueLength,TrafficStatus,FreeSpeed,DesignSpeed) Values ("
 		, "'", data.ChannelUrl, "',"
 		, "'", data.LaneId, "',"
 		, data.TimeStamp, ","
@@ -432,7 +434,8 @@ bool TrafficData::InsertFlowData(const FlowData& data)
 		, data.LaneLength, ","
 		, data.CountQueueLength, ","
 		, data.TrafficStatus, ","
-		, data.FreeSpeed
+		, data.FreeSpeed, ","
+		, data.DesignSpeed
 		, ")");
 	return _sqlite.ExecuteRowCount(sql) == 1;
 }
@@ -486,7 +489,8 @@ tuple<vector<FlowData>, int> TrafficData::GetFlowDatas(const string& channelUrl,
 			data.LaneLength = reader.GetInt(24);
 			data.CountQueueLength = reader.GetInt(25);
 			data.TrafficStatus = reader.GetInt(26);
-			data.FreeSpeed = reader.GetInt(27);
+			data.FreeSpeed = reader.GetDouble(27);
+			data.DesignSpeed = reader.GetInt(28);
 			datas.push_back(data);
 		}
 		reader.EndQuery();

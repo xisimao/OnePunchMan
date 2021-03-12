@@ -67,6 +67,7 @@ void FlowDetector::UpdateChannel(const unsigned char taskId, const TrafficChanne
 			laneCache.LaneLength = stopLine.Middle().Distance(queueDetectLine.Middle()) * laneCache.MeterPerPixel;
 			laneCache.StopPoint = stopLine.Middle();
 			laneCache.FreeSpeed = channel.FreeSpeed;
+			laneCache.DesignSpeed = channel.DesignSpeed;
 			_laneCaches.push_back(laneCache);
 
 			log.append(StringEx::Combine("通道:", it->ChannelIndex, "车道:", it->LaneIndex, "初始化成功", "流量区域:", laneCache.FlowRegion.ToJson(), "排队区域:", laneCache.QueueRegion.ToJson(), "换算比例:", laneCache.MeterPerPixel, "m/px", "排队区域长度:", laneCache.LaneLength));
@@ -243,20 +244,61 @@ FlowData FlowDetector::CalculateMinuteFlow(FlowData* laneCache)
 	//时间占用率(%)
 	data.TimeOccupancy = static_cast<double>(laneCache->TotalInTime) / 60000.0 * 100;
 	
-	//自由流行程时间(h)
-	double freeTime = totalDistance / laneCache->FreeSpeed;
-	//车均延误时间(s)
-	double delayTime = (totalTime - freeTime)*3600;
-	//交通状态
-	if (delayTime<55)
+	////自由流行程时间(h)
+	//double freeTime = totalDistance / laneCache->FreeSpeed;
+	////车均延误时间(s)
+	//double delayTime = (totalTime - freeTime)*3600;
+	////交通状态
+	//if (delayTime<55)
+	//{
+	//	data.TrafficStatus = static_cast<int>(TrafficStatus::Good);
+	//}
+	//else if (delayTime>=55&& delayTime<100)
+	//{
+	//	data.TrafficStatus = static_cast<int>(TrafficStatus::Warning);
+	//}
+	//else if (delayTime>=100&& delayTime<145)
+	//{
+	//	data.TrafficStatus = static_cast<int>(TrafficStatus::Bad);
+	//}
+	//else
+	//{
+	//	data.TrafficStatus = static_cast<int>(TrafficStatus::Dead);
+	//}
+	//通行能力(pcu/min)
+	double trafficCapacity=0;
+	if (data.DesignSpeed == 20)
 	{
-		data.TrafficStatus = static_cast<int>(TrafficStatus::Good);
+		trafficCapacity = 1400/60.0;
 	}
-	else if (delayTime>=55&& delayTime<100)
+	else if (data.DesignSpeed == 30)
+	{
+		trafficCapacity = 1600 / 60.0;
+	}
+	else if (data.DesignSpeed == 40)
+	{
+		trafficCapacity = 1650 / 60.0;
+	}
+	else if (data.DesignSpeed == 50)
+	{
+		trafficCapacity = 1700 / 60.0;
+	}
+	else
+	{
+		trafficCapacity = 1800 / 60.0;
+	}
+	//饱和度
+	double saturation = vehicles / trafficCapacity;
+
+	if (saturation >= 0 && saturation <= 0.6)
+	{
+		data.TrafficStatus= static_cast<int>(TrafficStatus::Good);
+	}
+	else if (saturation >0.6 && saturation <= 0.8)
 	{
 		data.TrafficStatus = static_cast<int>(TrafficStatus::Warning);
 	}
-	else if (delayTime>=100&& delayTime<145)
+	else if (saturation > 0.6 && saturation <= 0.8)
 	{
 		data.TrafficStatus = static_cast<int>(TrafficStatus::Bad);
 	}
@@ -279,7 +321,7 @@ FlowData FlowDetector::CalculateMinuteFlow(FlowData* laneCache)
 		, "时间占有率(%):", data.TimeOccupancy, "区域占用总时间(ms):", laneCache->TotalInTime
 		, "排队长度(m):", data.QueueLength
 		, "空间占有率(%):", data.SpaceOccupancy, "总排队长度(m):", laneCache->TotalQueueLength, "车道长度(m):", laneCache->LaneLength, "总排队长度计数次数:", laneCache->CountQueueLength
-		, "交通状态:", data.TrafficStatus, "自由流速度(km/h)", data.FreeSpeed);
+		, "交通状态:", data.TrafficStatus, "自由流速度(km/h)", data.FreeSpeed, "城市道路设计行车速度(km/h)", data.DesignSpeed,"通行能力(pcu/min)",trafficCapacity);
 
 	laneCache->Persons = 0;
 	laneCache->Bikes = 0;

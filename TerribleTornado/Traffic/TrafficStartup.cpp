@@ -1245,6 +1245,7 @@ void TrafficStartup::FillChannel(TrafficChannel* channel, const JsonDeserializat
     channel->LaneWidth = jd.Get<double>("laneWidth");
     channel->ReportProperties = jd.Get<int>("reportProperties");
     channel->FreeSpeed = jd.Get<double>("freeSpeed");
+    channel->DesignSpeed = jd.Get<int>("designSpeed");
 }
 
 void TrafficStartup::FillChannel(TrafficChannel* channel, const JsonDeserialization& jd, int itemIndex)
@@ -1265,6 +1266,7 @@ void TrafficStartup::FillChannel(TrafficChannel* channel, const JsonDeserializat
     channel->LaneWidth = jd.Get<double>(StringEx::Combine("channels:", itemIndex, ":laneWidth"));
     channel->ReportProperties = jd.Get<int>(StringEx::Combine("channels:", itemIndex, ":reportProperties"));
     channel->FreeSpeed = jd.Get<double>(StringEx::Combine("channels:", itemIndex, ":freeSpeed"));
+    channel->DesignSpeed = jd.Get<int>(StringEx::Combine("channels:", itemIndex, ":designSpeed"));
 }
 
 string TrafficStartup::GetChannelJson(const string& host, int channelIndex)

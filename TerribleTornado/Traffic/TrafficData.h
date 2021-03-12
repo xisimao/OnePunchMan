@@ -249,7 +249,7 @@ namespace OnePunchMan
 		TrafficChannel()
 			:ChannelIndex(0), ChannelName(), ChannelUrl(), ChannelType(0), DeviceId()
 			, Loop(true), OutputDetect(false), OutputImage(false), OutputReport(false), OutputRecogn(false), GlobalDetect(false)
-			, LaneWidth(0.0), ReportProperties(3), FreeSpeed(0.0)
+			, LaneWidth(0.0), ReportProperties(3), FreeSpeed(0.0), DesignSpeed(0)
 			, ChannelStatus(0)
 		{
 
@@ -284,6 +284,8 @@ namespace OnePunchMan
 		int ReportProperties;
 		//自由流速度(km/h)
 		double FreeSpeed;
+		//城市道路设计行车速度(km/h)
+		int DesignSpeed;
 
 		//流量车道集合
 		std::vector<FlowLane> FlowLanes;
@@ -331,6 +333,7 @@ namespace OnePunchMan
 			JsonSerialization::SerializeValue(&json, "laneWidth", LaneWidth);
 			JsonSerialization::SerializeValue(&json, "reportProperties", ReportProperties);
 			JsonSerialization::SerializeValue(&json, "freeSpeed", FreeSpeed);
+			JsonSerialization::SerializeValue(&json, "designSpeed", DesignSpeed);
 
 			std::string flowLanesJson;
 			for (std::vector<FlowLane>::const_iterator lit = FlowLanes.begin(); lit != FlowLanes.end(); ++lit)
@@ -446,7 +449,7 @@ namespace OnePunchMan
 			, TimeOccupancy(0.0), TotalInTime(0)
 			, QueueLength(0), MaxQueueLength(0), CurrentQueueLength(0), StopPoint()
 			, SpaceOccupancy(0.0), TotalQueueLength(0), LaneLength(0.0), CountQueueLength(0)
-			, TrafficStatus(0), FreeSpeed(0.0)
+			, TrafficStatus(0), FreeSpeed(0.0),DesignSpeed(0)
 			, IoStatus(false)
 		{
 
@@ -542,6 +545,8 @@ namespace OnePunchMan
 		int TrafficStatus;
 		//自由流速度(km/h)
 		double FreeSpeed;
+		//城市道路设计行车速度(km/h)
+		int DesignSpeed;
 
 		//io状态
 		bool IoStatus;
