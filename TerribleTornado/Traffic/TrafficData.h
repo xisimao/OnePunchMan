@@ -447,7 +447,7 @@ namespace OnePunchMan
 			, HeadDistance(0.0), TotalSpan(0), LastInRegion(0)
 			, HeadSpace(0.0)
 			, TimeOccupancy(0.0), TotalInTime(0)
-			, QueueLength(0), MaxQueueLength(0), CurrentQueueLength(0), StopPoint()
+			, QueueLength(0), MaxQueueLength(0), CurrentQueueLength(0), StopPoint(), StartCalculateQueue(0),SecondQueue(0)
 			, SpaceOccupancy(0.0), TotalQueueLength(0), LaneLength(0.0), CountQueueLength(0)
 			, TrafficStatus(0), FreeSpeed(0.0),DesignSpeed(0)
 			, IoStatus(false)
@@ -531,6 +531,10 @@ namespace OnePunchMan
 		int CurrentQueueLength;
 		//停止线检测的点，计算时需要
 		Point StopPoint;
+		//准备计算二次排队的时间戳
+		long long ReadyCalculateQueueTimeStamp;
+		//二次排队(m)
+		int SecondQueue;
 
 		//空间占有率(%)
 		double SpaceOccupancy;
@@ -1045,11 +1049,12 @@ namespace OnePunchMan
 		* @param laneId 车道编号，为空时查询所有
 		* @param startTime 开始时间，为0时查询所有
 		* @param endTime 结束时间，为0时查询所有
+		* @param minute 按分钟分组，为0时不分组
 		* @param pageNum 分页页码，为0时查询所有
 		* @param pageSize 每页数量，为0时查询所有
 		* @return 操作结果
 		*/
-		std::tuple<std::vector<FlowData>, int> GetFlowDatas(const std::string& channelUrl, const std::string& laneId, long long startTime, long long endTime, int pageNum, int pageSize);
+		std::tuple<std::vector<FlowData>, int> GetFlowDatas(const std::string& channelUrl, const std::string& laneId, long long startTime, long long endTime,int minute, int pageNum, int pageSize);
 		
 		/**
 		* 删除流量数据

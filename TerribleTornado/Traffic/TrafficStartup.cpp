@@ -295,7 +295,7 @@ void TrafficStartup::Update(HttpReceivedEventArgs* e)
                 }
             }
             TrafficData data;
-            tuple< vector<FlowData>, int> t = data.GetFlowDatas(channelUrl, laneId, startTime.TimeStamp(), endTime.TimeStamp(), pageNum, pageSize);
+            tuple< vector<FlowData>, int> t = data.GetFlowDatas(channelUrl, laneId, startTime.TimeStamp(), endTime.TimeStamp(),0, pageNum, pageSize);
             string datasJson;
             for (vector<FlowData>::iterator it = get<0>(t).begin(); it != get<0>(t).end(); ++it)
             {

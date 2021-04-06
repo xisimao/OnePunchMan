@@ -228,7 +228,42 @@ void DebugHttp()
 
 int main(int argc, char* argv[])
 {
-    DebugHttp();
+
+    TrafficData data;
+    DateTime startTime(2021, 4, 6, 12, 0, 0);
+    DateTime endTime(2021, 4, 6, 12, 10, 0);
+    tuple< vector<FlowData> ,int> t=data.GetFlowDatas("c1","l1", startTime.TimeStamp(), endTime.TimeStamp(), 0,1, 10);
+
+    cout << get<1>(t) << endl;
+    for(int i = 0; i < get<0>(t).size(); ++i)
+    {
+        DateTime d = DateTime::ParseTimeStamp(get<0>(t)[i].TimeStamp);
+        cout << d.ToString() << endl;
+    }
+
+    DateTime d1(2021, 4, 6, 12, 12, 0);
+    DateTime d2(2021, 4, 6, 12, 13, 0);
+    int minute = 2;
+    long long l1 = d1.TimeStamp();
+    long long l2=  d2.TimeStamp();
+    long long l3 = l1 / (minute*60*1000)*(minute*60*1000);
+    long long l4 = l2 / (minute * 60 * 1000) * (minute * 60 * 1000);
+    DateTime d3 = DateTime::ParseTimeStamp(l3);
+    DateTime d4 = DateTime::ParseTimeStamp(l4);
+    //for (int i = 0; i < 10; ++i)
+    //{
+    //    FlowData f1;
+    //    f1.Bikes = 1;
+    //    f1.ChannelUrl = "c1";
+    //    f1.LaneId = "l1";
+    //    DateTime d(2021, 4, 6, 12, i, 0);
+    //    f1.TimeStamp = d.TimeStamp();
+
+    //    bool b = data.InsertFlowData(f1);
+    //    cout << b << endl;
+    //}
+
+   /* DebugHttp();*/
 
     //DebugByFile();
    

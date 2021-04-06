@@ -9,6 +9,8 @@ const string FlowDetector::VideoStructTopic("VideoStruct");
 const int FlowDetector::ReportMaxSpan = 60 * 1000;
 const int FlowDetector::DeleteSpan = 60 * 1000;
 int FlowDetector::QueueMinDistance = 200;
+int FlowDetector::ReadyCalculateQueueCarSpan = 45000;
+int FlowDetector::WaitCalculateQueueSpan = 3000;
 
 FlowDetector::FlowDetector(int width, int height,SocketMaid* maid, DataChannel* data)
 	: _channelIndex(0), _channelUrl(), _width(width), _height(height), _lanesInited(false)
@@ -344,7 +346,6 @@ FlowData FlowDetector::CalculateMinuteFlow(FlowData* laneCache)
 	laneCache->TotalQueueLength = 0;
 	laneCache->CountQueueLength = 0;
 	laneCache->CurrentQueueLength = 0;
-
 	return data;
 }
 
@@ -462,7 +463,13 @@ void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long 
 					}
 					if (laneCache.LastInRegion != 0)
 					{
-						laneCache.TotalSpan += timeStamp - laneCache.LastInRegion;
+						long long currentSpan = timeStamp - laneCache.LastInRegion;
+						laneCache.TotalSpan += currentSpan;
+						//瞬时车头时距满足参数开始计算二次排队
+						if (currentSpan >= ReadyCalculateQueueCarSpan)
+						{
+							laneCache.ReadyCalculateQueueTimeStamp = timeStamp;
+						}
 					}
 					laneCache.LastInRegion = timeStamp;
 					FlowDetectCache detectCache;
@@ -507,6 +514,17 @@ void FlowDetector::HandleDetect(map<string, DetectItem>* detectItems, long long 
 			}		
 		}
 	
+		//计算二次排队
+		//当前时间戳满足开始计算+等待间隔
+		if (laneCache.ReadyCalculateQueueTimeStamp != 0
+			&& timeStamp >= laneCache.ReadyCalculateQueueTimeStamp + WaitCalculateQueueSpan)
+		{
+			//暂时不重置二次排队，看后续如何使用二次排队
+			laneCache.SecondQueue = laneCache.CurrentQueueLength;
+			//只要计算了就重置开始时间，无论是否有二次排队
+			laneCache.ReadyCalculateQueueTimeStamp = 0;
+		}
+
 		//如果上一次有车,则认为到这次检测为止都有车
 		//时间占有率=总时间/一分钟
 		if (laneCache.IoStatus)

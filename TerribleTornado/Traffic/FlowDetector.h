@@ -155,6 +155,10 @@ namespace OnePunchMan
 		static const int DeleteSpan;
 		//计算两车是否处于排队状态的最小距离(px)
 		static int QueueMinDistance;
+		//准备计算二次排队的瞬时车头时距(ms)
+		static int ReadyCalculateQueueCarSpan;
+		//等待计算排队的间隔时间(ms)
+		static int WaitCalculateQueueSpan;
 
 		//视频序号
 		int _channelIndex;
@@ -206,6 +210,7 @@ namespace OnePunchMan
 		int _currentReportMinute;
 		//是否输出识别项
 		bool _outputRecogn;
+
 	};
 
 }

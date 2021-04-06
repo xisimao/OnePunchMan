@@ -440,7 +440,7 @@ bool TrafficData::InsertFlowData(const FlowData& data)
 	return _sqlite.ExecuteRowCount(sql) == 1;
 }
 
-tuple<vector<FlowData>, int> TrafficData::GetFlowDatas(const string& channelUrl, const string& laneId, long long startTime, long long endTime, int pageNum, int pageSize)
+tuple<vector<FlowData>, int> TrafficData::GetFlowDatas(const string& channelUrl, const string& laneId, long long startTime, long long endTime, int minute, int pageNum, int pageSize)
 {
 	SqliteReader reader(_dbName);
 	string whereSql(" Where");
@@ -448,12 +448,22 @@ tuple<vector<FlowData>, int> TrafficData::GetFlowDatas(const string& channelUrl,
 	whereSql.append(laneId.empty() ? " And 1=1" : StringEx::Combine(" And LaneId='", laneId, "'"));
 	whereSql.append(startTime == 0 || endTime == 0 ? " And 1=1" : StringEx::Combine(" And TimeStamp>=", startTime, " And TimeStamp<=", endTime));
 
+	string groupSql(minute == 0 ? "":StringEx::Combine(" Group By TimeStamp/(",minute,"*60*1000)*(", minute, "*60*1000)"));
+
 	string totalSql = "Select Count(*) From Flow_Data";
 	totalSql.append(whereSql);
+	totalSql.append(groupSql);
+
+	if (minute != 0)
+	{
+		totalSql = StringEx::Combine("Select Count(*) From (", totalSql, ")");
+	}
+
 	int total = reader.ExecuteScalar(totalSql);
 
-	string dataSql = "Select * From Flow_Data";
+	string dataSql = minute==0?"Select * From Flow_Data":"Select Id,ChannelUrl,LaneId,Min(TimeStamp),Sum(Persons),Sum(Bikes),Sum(Motorcycles),Sum(Cars),Sum(Tricycles),Sum(Buss),Sum(Vans),Sum(Trucks),Avg(Speed),Sum(TotalDistance),MeterPerPixel,Sum(TotalTime),Avg(HeadDistance),Sum(TotalSpan),Avg(HeadSpace),Avg(TimeOccupancy),Sum(TotalInTime),Max(QueueLength),Avg(SpaceOccupancy),Sum(TotalQueueLength),LaneLength,Sum(CountQueueLength),Min(TrafficStatus),FreeSpeed,DesignSpeed From Flow_Data";
 	dataSql.append(whereSql);
+	dataSql.append(groupSql);
 	dataSql.append(" Order By Id Desc");
 	dataSql.append(pageNum == 0 || pageSize == 0 ? "" : StringEx::Combine(" Limit ", (pageNum - 1) * pageSize, ",", pageSize));
 	vector<FlowData> datas;
